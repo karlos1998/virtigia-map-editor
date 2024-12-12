@@ -12,3 +12,5 @@ Route::get('/test', function () {
     dd($maps);
 });
 
+Route::get('dashboard', \App\Http\Controllers\DashboardController::class);
+
