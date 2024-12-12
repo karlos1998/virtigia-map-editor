@@ -1,9 +1,13 @@
 <script setup lang="ts">
 
+import AppLayout from "../layout/AppLayout.vue";
 </script>
 
 <template>
-    dashboard
+    <AppLayout>
+        test
+    </AppLayout>
+
 </template>
 
 <style scoped>

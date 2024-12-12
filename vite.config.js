@@ -19,10 +19,11 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-            // '/demo': fileURLToPath(new URL('/public/demo', import.meta.url)),
-            // '/layout': fileURLToPath(new URL('/public/layout', import.meta.url)),
-            // '@advance-table': fileURLToPath(new URL('/packages/karlos3098/laravel-primevue-table-service/src/Assets', import.meta.url)),
-            // '@advance-table-primevue-dir': fileURLToPath(new URL('/packages/karlos3098/laravel-primevue-table-service/src/Assets/PrimeVue/4.0.5', import.meta.url)),
+            '@': fileURLToPath(new URL('./resources/js', import.meta.url)),
+            '/demo': fileURLToPath(new URL('/public/demo', import.meta.url)),
+            '/layout': fileURLToPath(new URL('/public/layout', import.meta.url)),
+            '@advance-table': fileURLToPath(new URL('./resources/js/karlos3098-LaravelPrimevueTable/', import.meta.url)),
+            '@advance-table-primevue-dir': fileURLToPath(new URL('./resources/js/karlos3098-LaravelPrimevueTable/PrimeVue/4.0.5', import.meta.url)),
         }
     }
 });
