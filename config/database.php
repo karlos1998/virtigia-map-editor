@@ -112,6 +112,19 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'retro' => [
+            'driver' => env('REMOTE_DB_CONNECTION', 'mysql'),
+            'host' => env('REMOTE_DB_HOST', 'srv01.letscode.it'),
+            'port' => env('REMOTE_DB_PORT', '3436'),
+            'database' => env('RETRO_DB_DATABASE', 'retro_database'),
+            'username' => env('REMOTE_DB_USERNAME', ''),
+            'password' => env('REMOTE_DB_PASSWORD', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+            'engine' => null,
+        ],
 
     ],
 

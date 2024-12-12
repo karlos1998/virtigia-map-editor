@@ -10,6 +10,7 @@ class Map extends Model
     protected $table = 'maps';
     protected $guarded = [];
 
+
     public function setConnectionName(string $connection): self
     {
         return $this->setConnection($connection);

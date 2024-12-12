@@ -7,16 +7,25 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    Badge: typeof import('primevue/badge')['default']
     Button: typeof import('primevue/button')['default']
+    Calendar: typeof import('primevue/calendar')['default']
+    Checkbox: typeof import('primevue/checkbox')['default']
+    Column: typeof import('primevue/column')['default']
     Drawer: typeof import('primevue/drawer')['default']
+    Dropdown: typeof import('primevue/dropdown')['default']
     IconField: typeof import('primevue/iconfield')['default']
     InputIcon: typeof import('primevue/inputicon')['default']
     InputText: typeof import('primevue/inputtext')['default']
     RadioButton: typeof import('primevue/radiobutton')['default']
+    Select: typeof import('primevue/select')['default']
     SelectButton: typeof import('primevue/selectbutton')['default']
+    Tag: typeof import('primevue/tag')['default']
     Toast: typeof import('primevue/toast')['default']
   }
   export interface ComponentCustomProperties {
+    FocusTrap: typeof import('primevue/focustrap')['default']
+    Ripple: typeof import('primevue/ripple')['default']
     StyleClass: typeof import('primevue/styleclass')['default']
   }
 }
