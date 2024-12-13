@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Providers\Socialite\VirtigiaPageProvider;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Socialite\Facades\Socialite;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +22,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Socialite::extend('virtigia_page', function ($app) {
+            $config = $app['config']['services.virtigia_page'];
+            return Socialite::buildProvider(VirtigiaPageProvider::class, $config);
+        });
+
+        Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event) {
+            $event->extendSocialite('laravelpassport', \SocialiteProviders\LaravelPassport\Provider::class);
+        });
     }
 }

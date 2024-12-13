@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    'virtigia_page' => [
+        'client_id' => env('VIRTIGIA_PAGE_CLIENT_ID'),
+        'client_secret' => env('VIRTIGIA_PAGE_CLIENT_SECRET'),
+        'redirect' => env('VIRTIGIA_PAGE_REDIRECT'),
+        'url' => env('VIRTIGIA_PAGE_URL'), // Dodaj URL aplikacji A
+    ],
+
+    'laravelpassport' => [
+        'client_id' => env('LARAVELPASSPORT_CLIENT_ID'),
+        'client_secret' => env('LARAVELPASSPORT_CLIENT_SECRET'),
+        'redirect' => env('LARAVELPASSPORT_REDIRECT_URI'),
+        'host' => env('LARAVELPASSPORT_HOST'),
+    ],
+
 ];

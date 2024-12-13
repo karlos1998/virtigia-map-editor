@@ -1,10 +1,7 @@
 <?php
 
+use App\Http\Controllers\LoginController;
 use Illuminate\Support\Facades\Route;
-
-Route::get('/', function () {
-    return view('welcome');
-});
 
 Route::get('/test', function () {
     $mapModel = (new \App\Models\Map())->setConnectionName('retro');
@@ -12,5 +9,7 @@ Route::get('/test', function () {
     dd($maps);
 });
 
-Route::get('dashboard', \App\Http\Controllers\DashboardController::class);
+Route::get('/', \App\Http\Controllers\DashboardController::class);
 
+Route::get('login', [LoginController::class, 'redirectToLogin']);
+Route::get('callback', [LoginController::class, 'handleCallback']);
