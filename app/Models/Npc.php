@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Map extends Model
+class Npc extends Model
 {
     public function setConnectionName(string $connection): self
     {

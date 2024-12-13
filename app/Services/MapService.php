@@ -21,6 +21,5 @@ final class MapService extends BaseService
             MapResource::class,
             $this->mapModel->newQuery()
         );
-//        dd($this->mapModel->newQuery()->get());
     }
 }
