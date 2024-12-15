@@ -5,6 +5,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\NpcController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/test', function () {
     $mapModel = (new \App\Models\Map())->setConnectionName('retro');
@@ -17,7 +18,9 @@ Route::get('/', \App\Http\Controllers\DashboardController::class);
 Route::get('login', [LoginController::class, 'redirectToLogin']);
 Route::get('callback', [LoginController::class, 'handleCallback']);
 
-
+Route::get('dialogs', function () {
+    return Inertia::render('Dialogs');
+});
 
 Route::get('maps', [MapController::class, 'index'])->name('maps.index');
 Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');
