@@ -5,8 +5,12 @@
 
 @import '@/assets/demo/flags/flags.css';
 
-///* these are necessary styles for vue flow */
-//@import '@vue-flow/core/dist/style.css';
-//
-///* this contains the default theme, these are optional styles */
-//@import '@vue-flow/core/dist/theme-default.css';
+/* these are necessary styles for vue flow */
+@import '@vue-flow/core/dist/style.css';
+
+/* this contains the default theme, these are optional styles */
+@import '@vue-flow/core/dist/theme-default.css';
+
+.vue-flow__handle {
+    @apply w-3 h-6 rounded-sm border-black/30;
+}

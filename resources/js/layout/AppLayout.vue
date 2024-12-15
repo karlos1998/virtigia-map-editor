@@ -1,12 +1,13 @@
 <script setup>
-import { useLayout } from '@/layout/composables/layout';
-import { computed, onBeforeUnmount, onMounted } from 'vue';
+import {useLayout} from '@/layout/composables/layout';
+import {onBeforeUnmount, onMounted} from 'vue';
 import AppBreadcrumb from './AppBreadcrumb.vue';
 import AppConfig from './AppConfig.vue';
 import AppRightMenu from './AppRightMenu.vue';
 import AppTopbar from './AppTopbar.vue';
+import DynamicDialog from 'primevue/dynamicdialog';
 
-const { layoutConfig, layoutState, watchSidebarActive, unbindOutsideClickListener, containerClass } = useLayout();
+const {watchSidebarActive, unbindOutsideClickListener, containerClass} = useLayout();
 
 onMounted(() => {
     watchSidebarActive();
@@ -39,6 +40,7 @@ onBeforeUnmount(() => {
         <div class="layout-mask"></div>
     </div>
     <Toast></Toast>
+    <DynamicDialog/>
 </template>
 
 <style lang="scss"></style>

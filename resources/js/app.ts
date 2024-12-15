@@ -1,7 +1,6 @@
 import './bootstrap';
 // import './echo';
 // import '../css/app.css';
-
 import '@/assets/styles.scss';
 import '@/assets/tailwind.css';
 
@@ -10,31 +9,28 @@ import ConfirmationService from 'primevue/confirmationservice';
 import ToastService from 'primevue/toastservice';
 
 // import BlockViewer from '@/Components/BlockViewer.vue';
-
 // import '@/assets/styles.scss';
-
-import { createApp, h, DefineComponent } from 'vue';
-import { createInertiaApp } from '@inertiajs/vue3';
-import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
+import {createApp, DefineComponent, h} from 'vue';
+import {createInertiaApp} from '@inertiajs/vue3';
+import {resolvePageComponent} from 'laravel-vite-plugin/inertia-helpers';
 
 /* import font awesome icon component */
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { fas } from '@fortawesome/free-solid-svg-icons';
-import { library } from '@fortawesome/fontawesome-svg-core';
-import { ZiggyVue } from 'ziggy-js';
-// import OwnDataTable from '@/../../packages/karlos3098/laravel-primevue-table-service/src/Assets/PrimeVue/4.0.5/OwnDataTable.vue';
+import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome';
+import {fas} from '@fortawesome/free-solid-svg-icons';
+import {library} from '@fortawesome/fontawesome-svg-core';
+import {ZiggyVue} from 'ziggy-js';
+import {usePrimeVueLocalePL} from '@advance-table/PrimeVueLocale';
+import Aura from '@primevue/themes/aura';
 
-import InputGroup from 'primevue/inputgroup';
+import Tooltip from 'primevue/tooltip';
+import DialogService from 'primevue/dialogservice';
+
+import {createPinia} from 'pinia'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
+// import OwnDataTable from '@/../../packages/karlos3098/laravel-primevue-table-service/src/Assets/PrimeVue/4.0.5/OwnDataTable.vue';
 
 library.add(fas);
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
-
-import { usePrimeVueLocalePL } from '@advance-table/PrimeVueLocale';
-import Aura from '@primevue/themes/aura';
-
-
-import { createPinia } from 'pinia'
-import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
@@ -60,10 +56,10 @@ createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) =>
         resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob<DefineComponent>('./Pages/**/*.vue')),
-    setup({ el, App, props, plugin }) {
-        createApp({ render: () => h(App, props) })
+    setup({el, App, props, plugin}) {
+        createApp({render: () => h(App, props)})
             .use(plugin)
-            .use(ZiggyVue ) // /** , Ziggy * /
+            .use(ZiggyVue) // /** , Ziggy * /
 
             // .use(router)
 
@@ -80,6 +76,8 @@ createInertiaApp({
             })
             .use(ToastService)
             .use(ConfirmationService)
+            .use(DialogService)
+            .directive('tooltip', Tooltip)
 
             // .component('BlockViewer', BlockViewer)
 
@@ -89,4 +87,5 @@ createInertiaApp({
 
             .mount(el);
     },
-}).then((r) => {});
+}).then((_) => {
+});
