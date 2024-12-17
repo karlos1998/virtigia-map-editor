@@ -10,11 +10,14 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('dialogs', function (Blueprint $table) {
+        Schema::create('dialog_nodes', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
-            $table->text('content');
-            $table->foreignId('source_group_id')->constrained('dialog_groups');
+
+            $table->string('type')->default('special');
+            $table->json('position');//->default(json_encode(['x'=>0, 'y'=>0])); //w mysql nie dziala
+
+            $table->text('content')->nullable();
+            $table->foreignId('source_dialog_id')->constrained('dialogs');
             $table->timestamps();
         });
     }
@@ -24,6 +27,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('dialogs');
+        Schema::dropIfExists('dialog_nodes');
     }
 };

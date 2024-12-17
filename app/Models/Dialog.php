@@ -5,24 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Dialog extends Model
 {
-    /** @use HasFactory<\Database\Factories\DialogFactory> */
     use HasFactory;
 
-    protected $table = 'dialog';
-
-    protected $fillable = ['title', 'content', 'group_id'];
-
-    public function options(): HasMany
+    public function edges(): HasMany
     {
-        return $this->hasMany(DialogOption::class, 'dialog_id');
+        return $this->hasMany(DialogEdge::class, 'source_dialog_id');
     }
 
-    public function group(): HasOne
+    public function nodes()
     {
-        return $this->hasOne(DialogGroup::class, 'id', 'group_id');
+        return $this->hasMany(DialogNode::class, 'source_dialog_id');
     }
 }

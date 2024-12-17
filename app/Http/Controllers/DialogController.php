@@ -2,50 +2,47 @@
 
 namespace App\Http\Controllers;
 
-use App\DTO\DialogDto;
+use App\Http\Resources\DialogEdgeResource;
+use App\Http\Resources\DialogNodeResource;
+use App\Models\Dialog;
 use App\Services\DialogService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class DialogController extends Controller
 {
-    protected DialogService $service;
-
-    public function __construct(DialogService $service)
+    public function __construct(private readonly DialogService $service)
     {
-        $this->service = $service;
     }
 
-    public function index(): Response
+    public function index()
     {
-        return Inertia::render('Dialogs');
+
     }
 
-    public function store(Request $request, int $groupId): JsonResponse
+    public function show(Dialog $dialog): \Inertia\Response
     {
-        $dialogDto = new DialogDto($request->all());
-        $dialog = $this->service->createDialog($groupId, $dialogDto);
-        return response()->json($dialog, 201);
+        return Inertia::render('Dialog/Show', [
+            'nodes' => DialogNodeResource::collection($dialog->nodes),
+            'edges' => DialogEdgeResource::collection($dialog->edges),
+        ]);
     }
 
-    public function show(int $dialogId): JsonResponse
-    {
-        $dialog = $this->service->getDialog($dialogId);
-        return response()->json($dialog, 200);
-    }
-
-    public function destroy(int $dialogId): JsonResponse
-    {
-        $this->service->deleteDialog($dialogId);
-        return response()->json(null, 204);
-    }
-
-    public function update(Request $request, int $dialogId): JsonResponse
-    {
-        $dialogDto = new DialogDto($request->all());
-        $dialog = $this->service->updateDialog($dialogId, $dialogDto);
-        return response()->json($dialog, 200);
-    }
+//    public function store(): JsonResponse
+//    {
+//        $group = $this->service->createGroup();
+//        return response()->json($group, 201);
+//    }
+//
+//    public function show(int $groupId): JsonResponse
+//    {
+//        $group = $this->service->getGroup($groupId);
+//        return response()->json($group, 200);
+//    }
+//
+//    public function destroy(int $groupId): JsonResponse
+//    {
+//        $this->service->deleteGroup($groupId);
+//        return response()->json(null, 204);
+//    }
 }

@@ -1,19 +1,25 @@
 <script setup lang="ts">
-import AppLayout from '../layout/AppLayout.vue';
+import AppLayout from '../../layout/AppLayout.vue';
 
 import { MiniMap } from '@vue-flow/minimap';
 import { ConnectionMode, NodeProps, useVueFlow, VueFlow } from '@vue-flow/core';
 
-import SpecialNode from '@/Pages/Dialogs/SpecialNode.vue';
+import SpecialNode from '@/Pages/Dialog/SpecialNode.vue';
 import { Controls } from '@vue-flow/controls';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import StartNode from '@/Pages/Dialogs/StartNode.vue';
-import { DialogGroupResource } from '../Resources/DialogGroup.resource';
+import StartNode from '@/Pages/Dialog/StartNode.vue';
+import { DialogGroupResource } from '@/Resources/DialogGroup.resource';
 import { DialogResource } from '@/Resources/Dialog.resource';
 // import { DialogConnectionResource } from '@/Resources/DialogConnection.resource';
 import { DialogOptionResource } from '@/Resources/DialogOption.resource';
+import {computed} from "vue";
 
-const { nodes, onConnect, findNode, addEdges, addNodes, viewport } = useVueFlow();
+const props = defineProps<{
+    nodes: any[], //todo
+    edges: any[],
+}>();
+
+const { nodes, onConnect, findNode, addEdges, addNodes, viewport, edges } = useVueFlow();
 
 onConnect(({ source, target, sourceHandle, targetHandle }) => {
     addEdges([
@@ -54,73 +60,25 @@ const addNode = () => {
         },
         data: {
             label: 'NPC',
-            content: 'Dialog',
+            content: 'DialogNode',
             options: []
         }
     });
 };
 
-const startNodes = [
-    {
-        id: '1',
-        type: 'start',
-        position: { x: 0, y: 0 },
-        data: {
-            label: 'NPC',
-            content: 'Dialog',
-            options: []
-        }
-    }
-];
-
+const startNodes = computed(() => props.nodes);
+const startEdges = computed(() => props.edges);
 
 // import { DialogRuleResource } from '@/Resources/DialogRule.resource';
 
-const saveDialog = () => {
-    // TODO: export nodes to API
-
-    const group: DialogGroupResource = {
-        id: null // set id if group exists
-    };
-
-    const dialogs: DialogResource[] = [];
-    for (const node of nodes.value) {
-        if (node.type !== 'special') {
-            continue;
-        }
-
-        const dialog: DialogResource = {
-            id: null, // set id if dialog exists
-            groupId: group.id,
-            content: node.data.content,
-            title: node.data.label,
-            options: []
-        };
-
-        for (const option of node.data.options) {
-            const dialogOption: DialogOptionResource = {
-                id: null, // set id if option exists
-                content: option.label,
-                dialogId: dialog.id, // not really needed because we can get dialogId from dialog
-                targetDialogs: []
-            };
-            // loop over edges, find target dialogs and add connections to dialogOption.targetDialogs
-            // we need to defer this because we need dialogs ids, which are not set before saving dialogs (unless they already exist)
-
-            dialog.options.push(dialogOption);
-        }
-
-        dialogs.push(dialog);
-    }
-
-    console.log('saveDialog', group, dialogs);
-};
 </script>
 
 <template>
     <AppLayout>
+<!--        <pre v-text="startEdges" />-->
+<!--        <pre v-text="edges" />-->
         <div class="w-full h-full max-h-[85vh]">
-            <VueFlow :nodes="startNodes" :connection-mode="ConnectionMode.Strict" :max-zoom="1" fit-view-on-init>
+            <VueFlow :nodes="startNodes" :edges="startEdges" :connection-mode="ConnectionMode.Strict" :max-zoom="1" fit-view-on-init>
                 <!-- bind your custom node type to a component by using slots, slot names are always `node-<type>` -->
                 <template #node-special="specialNodeProps">
                     <!--suppress RequiredAttributes -->
@@ -135,9 +93,9 @@ const saveDialog = () => {
                     <Button @click="addNode">
                         <FontAwesomeIcon icon="plus" />
                     </Button>
-                    <Button @click="saveDialog">
-                        <FontAwesomeIcon icon="save" />
-                    </Button>
+<!--                    <Button @click="saveDialog">-->
+<!--                        <FontAwesomeIcon icon="save" />-->
+<!--                    </Button>-->
                 </Controls>
 
                 <MiniMap :node-stroke-color="nodeStroke" :node-color="nodeColor" />

@@ -3,13 +3,13 @@
 namespace App\Services;
 
 use App\DTO\ConnectionDto;
-use App\Models\DialogConnection;
+use App\Models\DialogEdge;
 
 class DialogConnectionService
 {
-    public function connectGroupToDialog(int $groupId, int $dialogId, array $rules): DialogConnection
+    public function connectGroupToDialog(int $groupId, int $dialogId, array $rules): DialogEdge
     {
-        $connection = new DialogConnection();
+        $connection = new DialogEdge();
         $connection->source_group_id = $groupId;
         $connection->target_dialog_id = $dialogId;
         $connection->rules = json_encode($rules);
@@ -18,9 +18,9 @@ class DialogConnectionService
         return $connection;
     }
 
-    public function connectDialogOptionToDialog(int $optionId, int $dialogId, array $rules): DialogConnection
+    public function connectDialogOptionToDialog(int $optionId, int $dialogId, array $rules): DialogEdge
     {
-        $connection = new DialogConnection();
+        $connection = new DialogEdge();
         $connection->source_option_id = $optionId;
         $connection->target_dialog_id = $dialogId;
         $connection->rules = json_encode($rules);

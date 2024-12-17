@@ -3,9 +3,9 @@ import { reactive, ref, watch } from 'vue';
 import { ConnectionLookup, Handle, NodeProps, Position, useVueFlow } from '@vue-flow/core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { useDialog } from 'primevue/usedialog';
-import EditOption from '@/Pages/Dialogs/Modals/EditOption.vue';
+import EditOption from '@/Pages/Dialog/Modals/EditOption.vue';
 import { DynamicDialogCloseOptions } from 'primevue/dynamicdialogoptions';
-import EditDialog from '@/Pages/Dialogs/Modals/EditDialog.vue';
+import EditDialog from '@/Pages/Dialog/Modals/EditDialog.vue';
 
 const primeDialog = useDialog();
 
@@ -75,13 +75,9 @@ const editNode = () => {
           header: 'Edit dialog'
         },
         data: {
-            label: state.value.label,
           content: state.value.content
         },
         onClose(options) {
-            if (options.data.label) {
-                state.value.label = options.data.label;
-            }
 
             if (options.data.content) {
                 state.value.content = options.data.content;
