@@ -33,6 +33,7 @@ class DialogSeeder extends Seeder
         ]);
 
         $option = $node->options()->create(['label' => 'Chce przejść do kolejnego etapu rozmowy']);
+        $node->options()->create(['label' => 'Pokaż mi swoje towary']);
         $node->options()->create(['label' => 'Chcę zakończyć rozmowę']);
 
         $dialog
@@ -52,12 +53,20 @@ class DialogSeeder extends Seeder
             'content' => 'Oto kolejny etap dialogu'
         ]);
 
+        $option2 = $node2->options()->create(['label' => 'Wróć do poprzedniego kroku']);
         $node2->options()->create(['label' => 'Zakończ rozmowę']);
 
         $dialog
             ->edges()->make()
             ->sourceOption()->associate($option)
             ->targetNode()->associate($node2)
+            ->save();
+
+
+        $dialog
+            ->edges()->make()
+            ->sourceOption()->associate($option2)
+            ->targetNode()->associate($node)
             ->save();
     }
 }
