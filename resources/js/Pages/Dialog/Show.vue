@@ -13,13 +13,16 @@ import { DialogResource } from '@/Resources/Dialog.resource';
 // import { DialogConnectionResource } from '@/Resources/DialogConnection.resource';
 import { DialogOptionResource } from '@/Resources/DialogOption.resource';
 import {computed} from "vue";
+import axios from "axios";
+import {route} from "ziggy-js";
 
 const props = defineProps<{
+    dialog: DialogResource,
     nodes: any[], //todo
     edges: any[],
 }>();
 
-const { nodes, onConnect, findNode, addEdges, addNodes, viewport, edges } = useVueFlow();
+const { nodes, onConnect, findNode, addEdges, addNodes, viewport, edges, onNodeDragStop } = useVueFlow();
 
 onConnect(({ source, target, sourceHandle, targetHandle }) => {
     addEdges([
@@ -51,20 +54,27 @@ function nodeColor(n: NodeProps) {
 }
 
 const addNode = () => {
-    addNodes({
-        id: Math.random().toString(36).substring(3),
-        type: 'special',
+    axios.post(route('dialogs.nodes.store', {dialog: props.dialog.id}), {
         position: {
             x: -viewport.value.x,
             y: -viewport.value.y
-        },
-        data: {
-            label: 'NPC',
-            content: 'DialogNode',
-            options: []
         }
+    }).then(({data: {node}}) => {
+        console.log('add node ->', node)
+        addNodes([node]);
     });
 };
+
+onNodeDragStop(({node}) => {
+    axios.post(route('dialogs.nodes.move', {
+        dialog: props.dialog.id,
+        dialogNode: node.id,
+    }), {
+        position: node.position,
+    }).catch((error) => {
+        //todo - toast ze nie udalo sie przeniesc
+    });
+})
 
 const startNodes = computed(() => props.nodes);
 const startEdges = computed(() => props.edges);

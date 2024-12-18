@@ -25,6 +25,9 @@ Route::get('callback', [LoginController::class, 'handleCallback']);
 
 Route::get('dialogs', [DialogController::class, 'index']);
 Route::get('dialogs/{dialog}', [DialogController::class, 'show']);
+Route::post('dialogs/{dialog}/nodes', [DialogController::class, 'addNode'])->name('dialogs.nodes.store');
+Route::post('dialogs/{dialog}/nodes/{dialogNode}', [DialogController::class, 'moveNode'])->name('dialogs.nodes.move');
+Route::post('dialogs/{dialog}/edges', [DialogController::class, 'addEdge'])->name('dialogs.edges.store');
 
 Route::get('maps', [MapController::class, 'index'])->name('maps.index');
 Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');

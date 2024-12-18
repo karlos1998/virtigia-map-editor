@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\MoveDialogNodeRequest;
+use App\Http\Requests\StoreDialogNodeRequest;
 use App\Http\Resources\DialogEdgeResource;
 use App\Http\Resources\DialogNodeResource;
 use App\Models\Dialog;
+use App\Models\DialogNode;
 use App\Services\DialogService;
 use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 
 class DialogController extends Controller
 {
-    public function __construct(private readonly DialogService $service)
+    public function __construct(private readonly DialogService $dialogService)
     {
     }
 
@@ -23,26 +26,27 @@ class DialogController extends Controller
     public function show(Dialog $dialog): \Inertia\Response
     {
         return Inertia::render('Dialog/Show', [
+            'dialog' => $dialog->only('id'),
             'nodes' => DialogNodeResource::collection($dialog->nodes),
             'edges' => DialogEdgeResource::collection($dialog->edges),
         ]);
     }
 
-//    public function store(): JsonResponse
-//    {
-//        $group = $this->service->createGroup();
-//        return response()->json($group, 201);
-//    }
-//
-//    public function show(int $groupId): JsonResponse
-//    {
-//        $group = $this->service->getGroup($groupId);
-//        return response()->json($group, 200);
-//    }
-//
-//    public function destroy(int $groupId): JsonResponse
-//    {
-//        $this->service->deleteGroup($groupId);
-//        return response()->json(null, 204);
-//    }
+    public function addNode(Dialog $dialog, StoreDialogNodeRequest $request)
+    {
+        $node = $this->dialogService->addNode($dialog, $request->validated());
+        return response()->json([
+            'node' => DialogNodeResource::make($node),
+        ]);
+    }
+
+    public function moveNode(Dialog $dialog, DialogNode $dialogNode, MoveDialogNodeRequest $request)
+    {
+        $this->dialogService->moveNode($dialogNode, $request->validated());
+    }
+
+    public function addEdge(Dialog $dialog)
+    {
+
+    }
 }
