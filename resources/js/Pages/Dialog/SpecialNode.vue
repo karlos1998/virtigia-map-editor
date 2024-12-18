@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import {reactive, ref, watch} from 'vue'
-import {ConnectionLookup, Handle, NodeProps, Position, useVueFlow} from '@vue-flow/core'
-import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {useDialog} from 'primevue/usedialog';
-import EditOption from "@/Pages/Dialogs/Modals/EditOption.vue";
-import {DynamicDialogCloseOptions} from "primevue/dynamicdialogoptions";
-import EditDialog from "@/Pages/Dialogs/Modals/EditDialog.vue";
+import { reactive, ref, watch } from 'vue';
+import { ConnectionLookup, Handle, NodeProps, Position, useVueFlow } from '@vue-flow/core';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { useDialog } from 'primevue/usedialog';
+import EditOption from '@/Pages/Dialog/Modals/EditOption.vue';
+import { DynamicDialogCloseOptions } from 'primevue/dynamicdialogoptions';
+import EditDialog from '@/Pages/Dialog/Modals/EditDialog.vue';
 
 const primeDialog = useDialog();
 
@@ -18,25 +18,25 @@ const props = defineProps<NodeProps<{
     label: string,
     content: string,
     options: Array<Option>
-}>>()
+}>>();
 
-const {edges, removeEdges, removeNodes, connectionLookup} = useVueFlow()
+const { updateNodeData, edges, removeEdges, removeNodes, connectionLookup } = useVueFlow();
 
 const state = ref({
     label: props.data.label ?? '',
-    content: props.data.content ?? '',
-})
-const options = ref(props.data.options)
+  content: props.data.content ?? ''
+});
+const options = ref(props.data.options);
 
 const editOption = (option: Option) => {
     // noinspection JSUnusedGlobalSymbols
     primeDialog.open(EditOption, {
         props: {
-            header: 'Edit option',
+          header: 'Edit option'
         },
         data: {
             parent: props.id,
-            option,
+          option
         },
         onClose(closeOptions: DynamicDialogCloseOptions & { data: { remove?: boolean, label?: string } }) {
             if (closeOptions.data.remove) {
@@ -47,45 +47,46 @@ const editOption = (option: Option) => {
             if (closeOptions.data.label) {
                 option.label = closeOptions.data.label;
             }
-        },
+
+          updateNodeData(props.id, {
+            options: [...options.value]
+          });
+          console.log(options.value);
+        }
     });
-}
+};
 
 const removeSourceConnections = (option: { label: string, id: string }) => {
     const foundEdges = edges.value.filter((edge) => edge.source === props.id)
         .filter((edge) => edge.sourceHandle === `source-${option.id}`);
     console.log('removeSourceConnections', foundEdges);
     removeEdges(foundEdges);
-}
+};
 
 const addOption = () => {
     const id = Math.random().toString(36).substring(3);
-    options.value.push({id, label: ''});
+  options.value.push({ id, label: '' });
     editOption(options.value[options.value.length - 1]);
-}
+};
 
 const editNode = () => {
     primeDialog.open(EditDialog, {
         props: {
-            header: 'Edit dialog',
+          header: 'Edit dialog'
         },
         data: {
-            label: state.value.label,
-            content: state.value.content,
+          content: state.value.content
         },
         onClose(options) {
-            if (options.data.label) {
-                state.value.label = options.data.label;
-            }
 
             if (options.data.content) {
                 state.value.content = options.data.content;
             }
-        },
+        }
     });
-}
+};
 
-const handleHasConnections = reactive<Record<string, boolean>>({})
+const handleHasConnections = reactive<Record<string, boolean>>({});
 
 watch(connectionLookup, (value: ConnectionLookup) => {
     for (const i in options.value) {
@@ -94,25 +95,25 @@ watch(connectionLookup, (value: ConnectionLookup) => {
         handleHasConnections[`source-${options.value[i].id}`] = optionConnections?.size > 0;
     }
     console.log('handleHasConnections', value, handleHasConnections);
-}, {deep: true, immediate: true, flush: 'post'})
+}, { deep: true, immediate: true, flush: 'post' });
 </script>
 
 <script lang="ts">
 export default {
     inheritAttrs: true
-}
+};
 </script>
 
 <template>
     <div class="vue-flow__node-default">
-        <Handle class="dialog-input" type="target" :position="Position.Left"/>
+      <Handle class="dialog-input" type="target" :position="Position.Left" />
         <div class="font-bold text-lg flex flex-row gap-1">
             <span class="grow">{{ state.label }}</span>
             <Button severity="info" size="small" class="align-self-end" @click="editNode()">
-                <FontAwesomeIcon icon="edit"/>
+              <FontAwesomeIcon icon="edit" />
             </Button>
             <Button severity="danger" size="small" class="align-self-end" @click="removeNodes(props.id)">
-                <FontAwesomeIcon icon="trash"/>
+              <FontAwesomeIcon icon="trash" />
             </Button>
         </div>
         <div>
@@ -127,10 +128,10 @@ export default {
                 <Handle v-tooltip.top="'Drag to connect to dialog, right click to remove connections'"
                         :id="`source-${option.id}`"
                         class="dialog-output" type="source" :position="Position.Right"
-                        @contextmenu.prevent="removeSourceConnections(option)"/>
+                        @contextmenu.prevent="removeSourceConnections(option)" />
             </div>
             <div class="option add-option" @click="addOption">
-                <FontAwesomeIcon icon="plus" class="text-green-500 mr-2"/>
+              <FontAwesomeIcon icon="plus" class="text-green-500 mr-2" />
                 Dodaj opcję
             </div>
         </div>
