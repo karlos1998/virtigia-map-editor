@@ -22,7 +22,7 @@ const props = defineProps<{
     edges: any[],
 }>();
 
-const { nodes, onConnect, findNode, addEdges, addNodes, viewport, edges, onNodeDragStop } = useVueFlow();
+const { nodes, onConnect, findNode, addEdges, addNodes, viewport, edges, onNodeDragStop, onEdgesChange, applyEdgeChanges, onNodesChange, applyNodeChanges } = useVueFlow();
 
 onConnect(({ source, target, sourceHandle, targetHandle }) => {
     addEdges([
@@ -79,6 +79,67 @@ onNodeDragStop(({node}) => {
 const startNodes = computed(() => props.nodes);
 const startEdges = computed(() => props.edges);
 
+
+
+onNodesChange(async (changes) => {
+    const nextChanges = []
+
+    console.log('onNodesChange', changes);
+
+    for (const change of changes) {
+        if (change.type === 'remove') {
+            if(nodes.value.find((node) => node.id.toString() === change.id && node.type === 'input')) {
+                //...
+            } else {
+                // confirmDeleteNode(change);
+            }
+        } else if (change.type === 'select' && change.selected) {
+            // console.log('selected node: ' + change.id)
+        } else {
+            nextChanges.push(change)
+        }
+    }
+
+    applyNodeChanges(nextChanges)
+})
+
+onEdgesChange(async (changes) => {
+    const nextChanges = []
+
+    console.log('onEdgesChange', changes);
+
+    for (const change of changes) {
+        if (change.type === 'add') {
+            axios.post(route('dialogs.edges.store', {
+                dialog: props.dialog.id,
+            }), {
+                sourceNodeIsInput: change.item.sourceNode.type == 'start',
+                sourceNodeId: change.item.sourceNode.id,
+                sourceOptionId: change.item.sourceNode.type != 'start' ?  change.item.sourceHandle.substring(7) : null,
+                targetNodeId: change.item.targetNode.id,
+            }).then(({data: {edge}}) => {
+
+            }).catch((error) => {
+                applyEdgeChanges([{
+                    type: 'remove',
+                    id: change.item.id,
+                    source: change.item.source,
+                    sourceHandle: change.item.sourceHandle,
+                    target: change.item.target,
+                    targetHandle: change.item.targetHandle,
+                }])
+            })
+            nextChanges.push(change)
+        } else if (change.type === 'remove') {
+            //todo ....
+        } else {
+            nextChanges.push(change)
+        }
+    }
+
+    applyEdgeChanges(nextChanges)
+})
+
 // import { DialogRuleResource } from '@/Resources/DialogRule.resource';
 
 </script>
@@ -88,7 +149,14 @@ const startEdges = computed(() => props.edges);
 <!--        <pre v-text="startEdges" />-->
 <!--        <pre v-text="edges" />-->
         <div class="w-full h-full max-h-[85vh]">
-            <VueFlow :nodes="startNodes" :edges="startEdges" :connection-mode="ConnectionMode.Strict" :max-zoom="1" fit-view-on-init>
+            <VueFlow
+                :nodes="startNodes"
+                :edges="startEdges"
+                :connection-mode="ConnectionMode.Strict"
+                :max-zoom="1"
+                fit-view-on-init
+                :apply-default="false"
+            >
                 <!-- bind your custom node type to a component by using slots, slot names are always `node-<type>` -->
                 <template #node-special="specialNodeProps">
                     <!--suppress RequiredAttributes -->
