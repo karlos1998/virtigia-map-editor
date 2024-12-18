@@ -14,7 +14,7 @@ final class BaseItemService extends BaseService
         $this->baseItemModel = $baseItem->setConnectionName('retro');
     }
 
-    /**
+    /**§
      * @throws \Exception
      */
     public function getAll(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
