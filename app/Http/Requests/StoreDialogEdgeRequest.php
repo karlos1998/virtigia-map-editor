@@ -33,13 +33,14 @@ class StoreDialogEdgeRequest extends FormRequest
             ],
 
             'sourceOptionId' => [
-                'required',
+                'nullable',
+                'required_if:sourceNodeIsInput,false',
                 'integer',
             ],
 
             'targetNodeId' => [
-              'required',
-              'integer',
+                'required',
+                'integer',
             ],
         ];
     }
