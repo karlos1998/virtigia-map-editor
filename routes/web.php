@@ -1,11 +1,12 @@
 <?php
 
 use App\Http\Controllers\BaseItemController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DialogController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\NpcController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::get('/test', function () {
     $mapModel = (new \App\Models\Map())->setConnectionName('retro');
@@ -13,14 +14,20 @@ Route::get('/test', function () {
     dd($maps);
 });
 
-Route::get('/', \App\Http\Controllers\DashboardController::class);
+Route::get('/', DashboardController::class);
 
 Route::get('login', [LoginController::class, 'redirectToLogin']);
 Route::get('callback', [LoginController::class, 'handleCallback']);
 
-Route::get('dialogs', function () {
-    return Inertia::render('Dialogs');
-});
+//Route::resource('dialogs', DialogController::class);
+//Route::resource('dialogs/group', DialogGroupController::class);
+//Route::resource('dialogs/option', DialogOptionController::class);
+
+Route::get('dialogs', [DialogController::class, 'index']);
+Route::get('dialogs/{dialog}', [DialogController::class, 'show']);
+Route::post('dialogs/{dialog}/nodes', [DialogController::class, 'addNode'])->name('dialogs.nodes.store');
+Route::post('dialogs/{dialog}/nodes/{dialogNode}', [DialogController::class, 'moveNode'])->name('dialogs.nodes.move');
+Route::post('dialogs/{dialog}/edges', [DialogController::class, 'addEdge'])->name('dialogs.edges.store');
 
 Route::get('maps', [MapController::class, 'index'])->name('maps.index');
 Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');

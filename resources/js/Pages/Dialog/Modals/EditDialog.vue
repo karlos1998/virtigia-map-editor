@@ -30,7 +30,7 @@ const save = () => {
 
 <template>
     <div class="flex flex-col gap-2">
-        <Textarea v-model="label" rows="1" cols="50" />
+<!--        <Textarea v-model="label" rows="1" cols="50" />-->
         <Textarea v-model="content" rows="5" cols="50" />
         <Button fluid @click="save">Save</Button>
     </div>
