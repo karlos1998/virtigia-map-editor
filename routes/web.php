@@ -6,6 +6,7 @@ use App\Http\Controllers\DialogController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\NpcController;
+use App\Http\Controllers\ShopController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/test', function () {
@@ -35,3 +36,7 @@ Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');
 Route::get('base-items', [BaseItemController::class, 'index'])->name('base-items.index');
 
 Route::get('npcs', [NpcController::class, 'index'])->name('npcs.index');
+
+Route::get('shops/{shop}', [ShopController::class, 'show'])->name('shops.show');
+
+Route::get('base-items/search', [BaseItemController::class, 'search'])->name('base-items.search');

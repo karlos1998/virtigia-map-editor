@@ -24,4 +24,9 @@ final class BaseItemService extends BaseService
             $this->baseItemModel->newQuery()
         );
     }
+
+    public function search(string $search = '')
+    {
+        return $this->baseItemModel->newQuery()->where('name', 'like', '%' . $search . '%')->limit(10)->get();
+    }
 }

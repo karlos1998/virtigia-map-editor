@@ -20,4 +20,9 @@ class BaseItemController extends Controller
             'items' => $this->baseItemService->getAll(),
         ]);
     }
+
+    public function search(Request $request)
+    {
+        return response()->json($this->baseItemService->search($request->get('query', '')));
+    }
 }
