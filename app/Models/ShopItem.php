@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ShopItem extends Model
+class ShopItem extends DynamicModel
 {
     //
 }

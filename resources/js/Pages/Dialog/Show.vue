@@ -8,6 +8,7 @@ import SpecialNode from '@/Pages/Dialog/SpecialNode.vue';
 import { Controls } from '@vue-flow/controls';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import StartNode from '@/Pages/Dialog/StartNode.vue';
+import ShopNode from '@/Pages/Dialog/ShopNode.vue';
 import { DialogGroupResource } from '@/Resources/DialogGroup.resource';
 import { DialogResource } from '@/Resources/Dialog.resource';
 // import { DialogConnectionResource } from '@/Resources/DialogConnection.resource';
@@ -165,6 +166,10 @@ onEdgesChange(async (changes) => {
                 <template #node-start="startNodeProps">
                     <!--suppress RequiredAttributes -->
                     <StartNode v-bind="startNodeProps" />
+                </template>
+                <template #node-shop="shopNodeProps">
+                    <!--suppress RequiredAttributes -->
+                    <ShopNode v-bind="shopNodeProps" />
                 </template>
 
                 <Controls>

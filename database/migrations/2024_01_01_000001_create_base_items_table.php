@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
 
             $table->string('name')->nullable();
-            $table->string('stats', 1024)->nullable();
+            $table->text('stats')->nullable();
             $table->string('pr')->nullable();
             $table->string('cl')->nullable();
             $table->string('src')->nullable();

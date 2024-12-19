@@ -2,12 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-
-class BaseItem extends Model
+class BaseItem extends DynamicModel
 {
-    public function setConnectionName(string $connection): self
-    {
-        return $this->setConnection($connection);
-    }
+
 }
