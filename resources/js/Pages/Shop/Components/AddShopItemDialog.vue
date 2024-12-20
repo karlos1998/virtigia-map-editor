@@ -9,24 +9,11 @@ import axios from "axios";
 import {route} from "ziggy-js";
 import {BaseItemResource} from "@/Resources/BaseItem.resource";
 
-const dialogRef = inject<Ref<DynamicDialogInstance & {
-    data: {
-        label: string,
-        content: string,
-    }
-}> | null>('dialogRef');
-
-const label = ref('');
-const content = ref('');
-onMounted(() => {
-    label.value = dialogRef.value.data?.label ?? '';
-    content.value = dialogRef.value.data?.content ?? '';
-})
+const dialogRef = inject<Ref<DynamicDialogInstance> | null>('dialogRef');
 
 const save = () => {
     dialogRef.value.close({
-        label: label.value,
-        content: content.value,
+        item: selectedItem.value,
     });
 }
 
@@ -36,7 +23,7 @@ const search = async  (query: string) => {
     return data;
 }
 
-const selectedItem = ref();
+const selectedItem = ref<BaseItemResource|null>();
 
 const filteredItems = ref<BaseItemResource[]>([]);
 
@@ -56,6 +43,7 @@ const filterItems = async ({ query }: { query: string }) => {
             :suggestions="filteredItems"
             @complete="filterItems"
             :option-label="(contact: BaseItemResource|null) => `${contact?.name}`"
+            fluid
         >
             <template #option="slotProps">
                 <div class="name-item flex align-items-center justify-content-between">
@@ -70,7 +58,7 @@ const filterItems = async ({ query }: { query: string }) => {
             </template>
         </AutoComplete>
 
-        <Button fluid @click="save">Save</Button>
+        <Button fluid @click="save">Dodaj</Button>
     </div>
 </template>
 

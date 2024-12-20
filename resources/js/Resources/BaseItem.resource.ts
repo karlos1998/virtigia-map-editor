@@ -5,3 +5,7 @@ export interface BaseItemResource {
     src: string
     // ...
 }
+
+export type BaseItemWithPosition = BaseItemResource & {
+    position: number
+}

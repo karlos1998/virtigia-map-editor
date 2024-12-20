@@ -2,9 +2,13 @@
 
 namespace App\Http\Resources;
 
+use App\Models\BaseItem;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @property-read BaseItem $resource
+ */
 class BaseItemResource extends JsonResource
 {
     /**
@@ -14,6 +18,11 @@ class BaseItemResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            ...parent::toArray($request),
+            $this->mergeWhen($this->resource->pivot?->position >= 0, fn() => [
+                'position' => $this->resource->pivot->position,
+            ])
+        ];
     }
 }

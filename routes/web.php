@@ -38,5 +38,6 @@ Route::get('base-items', [BaseItemController::class, 'index'])->name('base-items
 Route::get('npcs', [NpcController::class, 'index'])->name('npcs.index');
 
 Route::get('shops/{shop}', [ShopController::class, 'show'])->name('shops.show');
+Route::post('shops/{shop}/items', [ShopController::class, 'addItem'])->name('shops.items.store');
 
 Route::get('base-items/search', [BaseItemController::class, 'search'])->name('base-items.search');

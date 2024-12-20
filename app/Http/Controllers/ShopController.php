@@ -2,13 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AddBaseItemToShopRequest;
 use App\Http\Requests\StoreShopRequest;
 use App\Http\Requests\UpdateShopRequest;
+use App\Http\Resources\BaseItemResource;
 use App\Models\Shop;
+use App\Services\ShopService;
 use Inertia\Inertia;
 
 class ShopController extends Controller
 {
+    public function __construct(private readonly ShopService $shopService)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -39,7 +46,8 @@ class ShopController extends Controller
     public function show(Shop $shop)
     {
         return Inertia::render('Shop/Show', [
-
+            'shop' => $shop->only('id', 'name'),
+            'items' => BaseItemResource::collection($shop->items),
         ]);
     }
 
@@ -65,5 +73,10 @@ class ShopController extends Controller
     public function destroy(Shop $shop)
     {
         //
+    }
+
+    public function addItem(Shop $shop, AddBaseItemToShopRequest $request)
+    {
+        $this->shopService->addItem($shop, $request->post('baseItemId'), $request->post('position'));
     }
 }
