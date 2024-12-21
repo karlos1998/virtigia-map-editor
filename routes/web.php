@@ -24,20 +24,24 @@ Route::get('callback', [LoginController::class, 'handleCallback']);
 //Route::resource('dialogs/group', DialogGroupController::class);
 //Route::resource('dialogs/option', DialogOptionController::class);
 
-Route::get('dialogs', [DialogController::class, 'index']);
-Route::get('dialogs/{dialog}', [DialogController::class, 'show']);
-Route::post('dialogs/{dialog}/nodes', [DialogController::class, 'addNode'])->name('dialogs.nodes.store');
-Route::post('dialogs/{dialog}/nodes/{dialogNode}', [DialogController::class, 'moveNode'])->name('dialogs.nodes.move');
-Route::post('dialogs/{dialog}/edges', [DialogController::class, 'addEdge'])->name('dialogs.edges.store');
+Route::middleware(\App\Http\Middleware\SetDynamicModelConnection::class)->group(function () {
 
-Route::get('maps', [MapController::class, 'index'])->name('maps.index');
-Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');
+    Route::get('dialogs', [DialogController::class, 'index']);
+    Route::get('dialogs/{dialog}', [DialogController::class, 'show']);
+    Route::post('dialogs/{dialog}/nodes', [DialogController::class, 'addNode'])->name('dialogs.nodes.store');
+    Route::post('dialogs/{dialog}/nodes/{dialogNode}', [DialogController::class, 'moveNode'])->name('dialogs.nodes.move');
+    Route::post('dialogs/{dialog}/edges', [DialogController::class, 'addEdge'])->name('dialogs.edges.store');
 
-Route::get('base-items', [BaseItemController::class, 'index'])->name('base-items.index');
+    Route::get('maps', [MapController::class, 'index'])->name('maps.index');
+    Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');
 
-Route::get('npcs', [NpcController::class, 'index'])->name('npcs.index');
+    Route::get('base-items', [BaseItemController::class, 'index'])->name('base-items.index');
 
-Route::get('shops/{shop}', [ShopController::class, 'show'])->name('shops.show');
-Route::post('shops/{shop}/items', [ShopController::class, 'addItem'])->name('shops.items.store');
+    Route::get('npcs', [NpcController::class, 'index'])->name('npcs.index');
 
-Route::get('base-items/search', [BaseItemController::class, 'search'])->name('base-items.search');
+    Route::get('shops/{shop}', [ShopController::class, 'show'])->name('shops.show');
+    Route::post('shops/{shop}/items', [ShopController::class, 'addItem'])->name('shops.items.store');
+
+    Route::get('base-items/search', [BaseItemController::class, 'search'])->name('base-items.search');
+
+});

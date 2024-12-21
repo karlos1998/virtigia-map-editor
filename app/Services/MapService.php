@@ -8,11 +8,8 @@ use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 
 final class MapService extends BaseService
 {
-
-    private Map $mapModel;
-    public function __construct(Map $map)
+    public function __construct(private readonly Map $mapModel)
     {
-        $this->mapModel = $map->setConnectionName('retro');
     }
 
     public function getAll()

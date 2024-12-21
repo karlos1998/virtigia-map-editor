@@ -10,17 +10,15 @@ use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 
 class NpcService extends BaseService
 {
-    private Npc $npcModel;
-    public function __construct(Npc $npc)
+    public function __construct(private readonly Npc $npcModel)
     {
-        $this->npcModel = $npc->setConnectionName('retro');
     }
 
     public function getAll()
     {
         return $this->fetchData(
             NpcResource::class,
-            $this->npcModel->newQuery()
+            $this->npcModel
         );
     }
 }

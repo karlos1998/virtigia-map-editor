@@ -33,5 +33,6 @@ const margin = ref(0);
     background-size: cover;
     transition: transform 0.2s ease-in-out;
     box-shadow: none;
+    background-color: rgba(100, 237, 226, 0.3);
 }
 </style>

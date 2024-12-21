@@ -8,10 +8,8 @@ use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 
 final class BaseItemService extends BaseService
 {
-    private BaseItem $baseItemModel;
-    public function __construct(BaseItem $baseItem)
+    public function __construct(private readonly BaseItem $baseItemModel)
     {
-        $this->baseItemModel = $baseItem->setConnectionName('retro');
     }
 
     /**§
@@ -21,12 +19,12 @@ final class BaseItemService extends BaseService
     {
         return $this->fetchData(
             BaseItemResource::class,
-            $this->baseItemModel->newQuery()
+            $this->baseItemModel
         );
     }
 
     public function search(string $search = '')
     {
-        return $this->baseItemModel->newQuery()->where('name', 'like', '%' . $search . '%')->limit(10)->get();
+        return $this->baseItemModel->where('name', 'like', '%' . $search . '%')->limit(10)->get();
     }
 }
