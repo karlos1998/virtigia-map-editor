@@ -19,4 +19,9 @@ final class MapService extends BaseService
             $this->mapModel
         );
     }
+
+    public function search(string $search = '')
+    {
+        return $this->mapModel->where('name', 'like', '%' . $search . '%')->limit(10)->get();
+    }
 }

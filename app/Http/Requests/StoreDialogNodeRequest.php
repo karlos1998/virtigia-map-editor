@@ -33,6 +33,11 @@ class StoreDialogNodeRequest extends FormRequest
             'position.y' => [
                 'required',
                 'numeric',
+            ],
+
+            'type' => [
+                'nullable',
+                'in:shop,teleportation',
             ]
         ];
     }

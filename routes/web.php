@@ -32,6 +32,7 @@ Route::middleware(\App\Http\Middleware\SetDynamicModelConnection::class)->group(
     Route::post('dialogs/{dialog}/nodes/{dialogNode}', [DialogController::class, 'moveNode'])->name('dialogs.nodes.move');
     Route::post('dialogs/{dialog}/edges', [DialogController::class, 'addEdge'])->name('dialogs.edges.store');
 
+    Route::get('maps/search', [MapController::class, 'search'])->name('maps.search');
     Route::get('maps', [MapController::class, 'index'])->name('maps.index');
     Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');
 

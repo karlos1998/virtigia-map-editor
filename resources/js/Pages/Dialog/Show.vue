@@ -13,9 +13,10 @@ import { DialogGroupResource } from '@/Resources/DialogGroup.resource';
 import { DialogResource } from '@/Resources/Dialog.resource';
 // import { DialogConnectionResource } from '@/Resources/DialogConnection.resource';
 import { DialogOptionResource } from '@/Resources/DialogOption.resource';
-import {computed} from "vue";
+import {computed, ref} from "vue";
 import axios from "axios";
 import {route} from "ziggy-js";
+import TeleporationNode from "@/Pages/Dialog/TeleporationNode.vue";
 
 const props = defineProps<{
     dialog: DialogResource,
@@ -54,12 +55,13 @@ function nodeColor(n: NodeProps) {
     return '#fff';
 }
 
-const addNode = () => {
+const addNode = (type?: string) => {
     axios.post(route('dialogs.nodes.store', {dialog: props.dialog.id}), {
         position: {
             x: -viewport.value.x,
             y: -viewport.value.y
-        }
+        },
+        type,
     }).then(({data: {node}}) => {
         console.log('add node ->', node)
         addNodes([node]);
@@ -143,6 +145,30 @@ onEdgesChange(async (changes) => {
 
 // import { DialogRuleResource } from '@/Resources/DialogRule.resource';
 
+const items = ref([
+    {
+        label: 'Add',
+        icon: 'pi pi-credit-card',
+        command: () => {
+            addNode();
+        }
+    },
+    {
+        label: 'Shop',
+        icon: 'pi pi-shopping-cart',
+        command: () => {
+            addNode('shop');
+        }
+    },
+    {
+        label: 'Teleport',
+        icon: 'pi pi-forward',
+        command: () => {
+            addNode('teleportation');
+        }
+    },
+])
+
 </script>
 
 <template>
@@ -171,11 +197,17 @@ onEdgesChange(async (changes) => {
                     <!--suppress RequiredAttributes -->
                     <ShopNode v-bind="shopNodeProps" />
                 </template>
+                <template #node-teleporatation="teleportationNodeProps">
+                    <TeleporationNode v-bind="teleportationNodeProps" />
+                </template>
 
                 <Controls>
-                    <Button @click="addNode">
-                        <FontAwesomeIcon icon="plus" />
-                    </Button>
+<!--                    <Button @click="addNode">-->
+<!--                        <FontAwesomeIcon icon="plus" />-->
+<!--                    </Button>-->
+
+                    <SpeedDial :model="items" direction="up" />
+
 <!--                    <Button @click="saveDialog">-->
 <!--                        <FontAwesomeIcon icon="save" />-->
 <!--                    </Button>-->
