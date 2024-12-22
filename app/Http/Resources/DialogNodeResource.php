@@ -20,9 +20,10 @@ class DialogNodeResource extends JsonResource
             'position' => $this->resource->position,
             $this->mergeWhen($this->resource->type == 'special', fn() => [
                 'data' => [
+                    'dialog_id' => $this->resource->source_dialog_id,
                     'label' => 'Nazwa Npc',
                     'content' => $this->resource->content,
-                    'options' => $this->resource->options,
+                    'options' => DialogNodeOptionResource::collection($this->resource->options),
                 ]
             ])
         ];

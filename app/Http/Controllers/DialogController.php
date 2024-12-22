@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\MoveDialogNodeRequest;
 use App\Http\Requests\StoreDialogEdgeRequest;
+use App\Http\Requests\StoreDialogNodeOptionRequest;
 use App\Http\Requests\StoreDialogNodeRequest;
 use App\Http\Resources\DialogEdgeResource;
+use App\Http\Resources\DialogNodeOptionResource;
 use App\Http\Resources\DialogNodeResource;
 use App\Models\Dialog;
 use App\Models\DialogNode;
@@ -51,6 +53,13 @@ class DialogController extends Controller
         $edge = $this->dialogService->addEdge($dialog, $request->validated());
         return response()->json([
             'edge' => DialogEdgeResource::make($edge),
+        ]);
+    }
+
+    public function addOption(Dialog $dialog, DialogNode $dialogNode, StoreDialogNodeOptionRequest $request)
+    {
+        return response()->json([
+            'option' => DialogNodeOptionResource::make($this->dialogService->addOption($dialogNode)),
         ]);
     }
 }

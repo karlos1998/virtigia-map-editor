@@ -40,4 +40,11 @@ class DialogService
         $edge->save();
         return $edge->fresh();
     }
+
+    public function addOption(DialogNode $dialogNode)
+    {
+        return $dialogNode->options()->create([
+            'label' => 'Treść odpowiedzi',
+        ]);
+    }
 }

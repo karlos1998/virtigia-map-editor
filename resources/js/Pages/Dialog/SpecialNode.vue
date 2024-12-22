@@ -6,6 +6,9 @@ import { useDialog } from 'primevue/usedialog';
 import EditOption from '@/Pages/Dialog/Modals/EditOption.vue';
 import { DynamicDialogCloseOptions } from 'primevue/dynamicdialogoptions';
 import EditDialog from '@/Pages/Dialog/Modals/EditDialog.vue';
+import axios from "axios";
+import {route} from "ziggy-js";
+import {DialogOptionResource} from "@/Resources/DialogOption.resource";
 
 const primeDialog = useDialog();
 
@@ -15,6 +18,7 @@ interface Option {
 }
 
 const props = defineProps<NodeProps<{
+    dialog_id: number
     label: string,
     content: string,
     options: Array<Option>
@@ -63,10 +67,17 @@ const removeSourceConnections = (option: { label: string, id: string }) => {
     removeEdges(foundEdges);
 };
 
-const addOption = () => {
-    const id = Math.random().toString(36).substring(3);
-  options.value.push({ id, label: '' });
-    editOption(options.value[options.value.length - 1]);
+const addOption = async () => {
+    const {data} = await axios.post<{option: DialogOptionResource}>(route('dialogs.nodes.options.store', {
+        dialog: props.data.dialog_id,
+        dialogNode: props.id,
+    }))
+    if(data && data?.option) {
+        options.value.push(data.option);
+    }
+  //   const id = Math.random().toString(36).substring(3);
+  // options.value.push({ id, label: '' });
+  //   editOption(options.value[options.value.length - 1]);
 };
 
 const editNode = () => {
