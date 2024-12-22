@@ -13,7 +13,6 @@ const width = ref(8); // ilosc w lini
 const margin = ref(0);
 </script>
 <template>
-    {{item.position}}
     <div
         class="item"
         :style="{

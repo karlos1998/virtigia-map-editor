@@ -2,9 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\Map;
 use App\Providers\Socialite\VirtigiaPageProvider;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Socialite\Facades\Socialite;
 

@@ -22,7 +22,6 @@ class SetDynamicModelConnection
 
         DynamicModel::setGlobalConnection($connectionName);
 
-
         return $next($request);
     }
 }

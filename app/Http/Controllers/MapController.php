@@ -22,6 +22,7 @@ class MapController extends Controller
 
     public function show(Map $map)
     {
+        dd($map);
         return Inertia::render('Map/Show', [
 
         ]);

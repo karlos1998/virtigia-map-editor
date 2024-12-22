@@ -16,7 +16,7 @@ final class MapService extends BaseService
     {
         return $this->fetchData(
             MapResource::class,
-            $this->mapModel->newQuery()
+            $this->mapModel
         );
     }
 }

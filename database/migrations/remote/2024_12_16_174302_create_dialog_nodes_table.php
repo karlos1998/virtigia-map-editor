@@ -18,6 +18,7 @@ return new class extends Migration {
 
             $table->text('content')->nullable();
             $table->foreignId('source_dialog_id')->constrained('dialogs');
+
             $table->timestamps();
         });
     }
