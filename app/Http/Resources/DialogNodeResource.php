@@ -24,6 +24,7 @@ class DialogNodeResource extends JsonResource
                     'label' => 'Nazwa Npc',
                     'content' => $this->resource->content,
                     'options' => DialogNodeOptionResource::collection($this->resource->options),
+                    'action_data' => $this->resource->action_data,
                 ]
             ])
         ];
