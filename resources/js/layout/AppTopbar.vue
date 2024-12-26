@@ -4,10 +4,11 @@ import { useLayout } from '@/layout/composables/layout';
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
+import {route} from "ziggy-js";
 
 const { isHorizontal, onMenuToggle, showConfigSidebar, showSidebar } = useLayout();
 
-// const user = computed(() => usePage().props.auth.user);
+const user = computed(() => usePage().props.auth.user);
 </script>
 
 <template>
@@ -45,7 +46,9 @@ const { isHorizontal, onMenuToggle, showConfigSidebar, showSidebar } = useLayout
 
                 <li class="topbar-item">
                     <a v-styleclass="{ selector: '@next', enterFromClass: '!hidden', enterActiveClass: 'animate-scalein', leaveToClass: '!hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: 'true' }" class="cursor-pointer">
-<!--                        <img class="rounded-xl" :src="user.avatar" alt="Profile" />-->
+                        <div class="avatar rounded-xl" :style="{
+                            'background-image': `url(${user.src})`
+                        }" />
                     </a>
                     <ul :class="'topbar-menu active-topbar-menu !p-6 w-60 z-50 !hidden'">
                         <li role="menuitem" class="!m-0 !mb-4">
@@ -55,7 +58,7 @@ const { isHorizontal, onMenuToggle, showConfigSidebar, showSidebar } = useLayout
                                 v-styleclass="{ selector: '@grandparent', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: 'true' }"
                             >
                                 <i class="pi pi-fw pi-lock mr-2"></i>
-<!--                                <span>{{ user.name }}</span>-->
+                                <span>{{ user.name }}</span>
                             </a>
                         </li>
                         <li role="menuitem" class="!m-0 !mb-4">
@@ -69,15 +72,15 @@ const { isHorizontal, onMenuToggle, showConfigSidebar, showSidebar } = useLayout
 <!--                            </Link>-->
                         </li>
                         <li role="menuitem" class="!m-0">
-<!--                            <Link-->
-<!--                                :href="route('logout')"-->
-<!--                                method="post"-->
-<!--                                class="flex items-center hover:text-primary-500 duration-200"-->
-<!--                                v-styleclass="{ selector: '@grandparent', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: 'true' }"-->
-<!--                            >-->
-<!--                                <i class="pi pi-fw pi-sign-out mr-2"></i>-->
-<!--                                <span>Wyloguj się</span>-->
-<!--                            </Link>-->
+                            <Link
+                                :href="route('logout')"
+                                method="post"
+                                class="flex items-center hover:text-primary-500 duration-200"
+                                v-styleclass="{ selector: '@grandparent', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: 'true' }"
+                            >
+                                <i class="pi pi-fw pi-sign-out mr-2"></i>
+                                <span>Wyloguj się</span>
+                            </Link>
                         </li>
                     </ul>
                 </li>
@@ -92,3 +95,11 @@ const { isHorizontal, onMenuToggle, showConfigSidebar, showSidebar } = useLayout
         </div>
     </div>
 </template>
+
+<style scoped>
+.avatar {
+    width: 32px;
+    height:32px;
+    background-repeat: no-repeat;
+}
+</style>

@@ -7,6 +7,7 @@ use App\Providers\Socialite\VirtigiaPageProvider;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -28,6 +29,9 @@ class AppServiceProvider extends ServiceProvider
 
         JsonResource::withoutWrapping();
 
+        if (config('app.force_https')) {
+            URL::forceScheme('https');
+        }
 
         Socialite::extend('virtigia_page', function ($app) {
             $config = $app['config']['services.virtigia_page'];

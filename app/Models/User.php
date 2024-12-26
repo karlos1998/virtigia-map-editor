@@ -18,9 +18,19 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
+        'id',
+        'login',
         'name',
         'email',
-        'password',
+        'forum_background_src',
+        'src',
+        'roles',
+        'permissions',
+    ];
+
+    protected $casts = [
+        'roles' => 'array',
+        'permissions' => 'array',
     ];
 
     /**
@@ -29,8 +39,8 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $hidden = [
-        'password',
-        'remember_token',
+//        'password',
+//        'remember_token',
     ];
 
     /**

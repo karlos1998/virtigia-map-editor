@@ -2,11 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 
 class LoginController extends Controller
 {
+
+    public function show()
+    {
+        return 'test';
+    }
     public function redirectToLogin()
     {
         return Socialite::driver('laravelpassport')->redirect();
@@ -16,6 +23,17 @@ class LoginController extends Controller
     {
         $user = Socialite::driver('laravelpassport')->user();
 
-        dd($user);
+        $user = User::updateOrCreate([
+            'id' => $user->getId(),
+        ], $user->user);
+
+        Auth::login($user);
+
+        return to_route('dashboard');
+    }
+
+    public function logout() {
+        Auth::logout();
+        to_route('home');
     }
 }
