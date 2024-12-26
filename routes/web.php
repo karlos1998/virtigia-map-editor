@@ -21,7 +21,7 @@ Route::get('/', function () {
 
 Route::get('login', [LoginController::class, 'show'])->name('login');
 Route::get('login/redirect', [LoginController::class, 'redirectToLogin'])->name('login.redirect');
-Route::get('callback', [LoginController::class, 'handleCallback']);
+Route::get('login/callback', [LoginController::class, 'handleCallback']);
 
 Route::middleware(['auth'])->group(function () {
 
