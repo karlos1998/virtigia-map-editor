@@ -23,6 +23,8 @@ class LoginController extends Controller
     {
         $user = Socialite::driver('laravelpassport')->user();
 
+        dd($user);
+
         $user = User::updateOrCreate([
             'id' => $user->getId(),
         ], $user->user);
