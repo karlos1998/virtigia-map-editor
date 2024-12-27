@@ -5,6 +5,8 @@ import AdvanceTable from "@advance-table/Components/AdvanceTable.vue";
 import AdvanceColumn from "@advance-table/Components/AdvanceColumn.vue";
 import {MapResource} from "@/Resources/Map.resource";
 
+import { Link } from '@inertiajs/vue3';
+import {route} from "ziggy-js";
 type Data = {
     data: MapResource
 }
@@ -35,14 +37,20 @@ type Data = {
                 </AdvanceColumn>
 
                 <Column header="Action" style="width: 20%">
-                    <template #body="slotProps">
+                    <template #body="{data}">
                         <div style="white-space: nowrap">
                             <span class="p-buttonset">
-                                <Button
-                                    class="px-2"
-                                    icon="pi pi-eye"
-                                    label="Podgląd"
-                                />
+                                <Link
+                                    :href="route('maps.show', {map: data.id})"
+                                    >
+                                    <Button
+                                        class="px-2"
+                                        icon="pi pi-eye"
+                                        label="Podgląd"
+                                    />
+                                </Link>
+
+
                                 <!-- @click="navigateToApiKeysShow(slotProps.data.id)" -->
                                 <!--                                        <Button class="px-5" label="Edytuj" icon="pi pi-pencil"/>-->
                                 <!--                                        <Button class="px-2" severity="danger" icon="pi pi-trash"/>-->
