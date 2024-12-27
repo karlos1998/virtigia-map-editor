@@ -12,6 +12,7 @@ defineProps<{
 }>();
 
 const scale = ref(1);
+const npcOffsets = ref<Record<string, number>>({});
 
 const zoomIn = () => {
     scale.value = Math.min(scale.value + 0.1, 2);
@@ -19,6 +20,14 @@ const zoomIn = () => {
 
 const zoomOut = () => {
     scale.value = Math.max(scale.value - 0.1, 0.5);
+};
+
+const adjustNpcOffset = (id: string, element: HTMLImageElement) => {
+    const npcHeight = element.clientHeight;
+    npcOffsets.value = {
+        ...npcOffsets.value,
+        [id]: npcHeight,
+    };
 };
 </script>
 
@@ -51,13 +60,27 @@ const zoomOut = () => {
                     :key="npc.id"
                     class="absolute npc"
                     :style="{
-                        'min-width': `${32 * scale}px`,
-                        'min-height': `${32 * scale}px`,
-                        top: `${npc.y * 32 * scale}px`,
+                        width: `${32 * scale}px`,
+                        height: `${32 * scale}px`,
+                        top: `${npc.y * 32 * scale - ((npcOffsets[npc.id] || 0) - 32 * scale)}px`,
                         left: `${npc.x * 32 * scale}px`,
                     }"
                 >
-                    <img :src="`https://virtigia-assets.letscode.it/img/npc/${npc.src}`" :style="{ transform: `scale(${scale})`, transformOrigin: 'top left' }" />
+                    <!-- Czerwony kwadrat u podstawy -->
+                    <div
+                        class="npc-footer"
+                        :style="{
+                            width: `${32 * scale}px`,
+                            height: `${32 * scale}px`,
+                            bottom: `-${((npcOffsets[npc.id] || 0) - 32) * scale}px`,
+                        }"
+                    />
+                    <!-- Obrazek NPC -->
+                    <img
+                        :src="`https://virtigia-assets.letscode.it/img/npc/${npc.src}`"
+                        :style="{ transform: `scale(${scale})`, transformOrigin: 'top left' }"
+                        @load="adjustNpcOffset(npc.id, $event.target)"
+                    />
                 </div>
             </div>
         </div>
@@ -73,7 +96,11 @@ const zoomOut = () => {
 }
 
 .npc {
-    background-color: red;
     position: absolute;
+}
+
+.npc-footer {
+    position: absolute;
+    background-color: red;
 }
 </style>
