@@ -18,7 +18,11 @@ class SetDynamicModelConnection
     {
 
 //        $connectionName = auth()->check() ? 'retro' : config('database.default');
-        $connectionName = 'retro';
+        $connectionName = session("world");
+
+        if(!$connectionName) {
+            return response()->redirectToRoute("home");
+        }
 
         DynamicModel::setGlobalConnection($connectionName);
 

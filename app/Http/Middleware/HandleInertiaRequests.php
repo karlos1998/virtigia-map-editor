@@ -40,6 +40,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user()->only('id', 'name', 'email', 'src', 'forum_background_src'),
                 'roles' => $request->user()->roles,
                 'permissions' => $request->user()->permissions,
+                'world' => session("world"),
             ] : null,
         ]);
     }

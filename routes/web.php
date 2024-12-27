@@ -33,7 +33,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route
 //        ->where(['retro', 'classic'])
-        ::middleware([SetDynamicModelConnection::class, RemoveWorldTemplateNameFromRouteParameters::class])
+        ::middleware([
+            SetDynamicModelConnection::class,
+            //RemoveWorldTemplateNameFromRouteParameters::class //todo
+        ])
         ->group(function () {
             Route::get('dialogs', [DialogController::class, 'index']);
             Route::get('dialogs/{dialog}', [DialogController::class, 'show']);

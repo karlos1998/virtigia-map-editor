@@ -30,6 +30,8 @@ class LoginController extends Controller
 
         Auth::login($user);
 
+        Auth::getSession()->put("world", "retro");
+
         return to_route('dashboard');
     }
 
