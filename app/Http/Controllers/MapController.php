@@ -2,14 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\MapResource;
+use App\Http\Resources\NpcResource;
 use App\Models\Map;
 use App\Services\MapService;
+use App\Services\NpcService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class MapController extends Controller
 {
-    public function __construct(private MapService $mapService)
+    public function __construct(
+        private MapService $mapService,
+        private NpcService $npcService
+    )
     {
     }
 
@@ -22,9 +28,9 @@ class MapController extends Controller
 
     public function show(Map $map)
     {
-        dd($map);
         return Inertia::render('Map/Show', [
-
+            'map' => MapResource::make($map),
+            'npcs' => NpcResource::collection($map->npcs),
         ]);
     }
 

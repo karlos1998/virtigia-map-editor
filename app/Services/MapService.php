@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Http\Resources\MapResource;
 use App\Models\Map;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
+use Karlos3098\LaravelPrimevueTableService\Services\TableService;
 
 final class MapService extends BaseService
 {
@@ -12,11 +13,17 @@ final class MapService extends BaseService
     {
     }
 
-    public function getAll()
+    /**
+     * @throws \Exception
+     */
+    public function getAll(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
         return $this->fetchData(
             MapResource::class,
-            $this->mapModel
+            $this->mapModel,
+            new TableService(
+                globalFilterColumns: ['name']
+            )
         );
     }
 

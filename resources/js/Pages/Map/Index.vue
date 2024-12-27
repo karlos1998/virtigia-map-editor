@@ -18,6 +18,24 @@ type Data = {
             <AdvanceTable
                 prop-name="maps"
             >
+
+                <template #header="{ globalFilterValue, globalFilterUpdated }">
+
+                    <div class="flex flex-wrap gap-2 items-center justify-between">
+                        <h4 class="m-0">Lista Map</h4>
+                        <IconField>
+                            <InputIcon>
+                                <i class="pi pi-search" />
+                            </InputIcon>
+                            <InputText
+                                :value="globalFilterValue"
+                                @update:model-value="globalFilterUpdated"
+                                placeholder="Szukaj"
+                            />
+                        </IconField>
+                    </div>
+                </template>
+
                 <AdvanceColumn field="id" header="ID" style="width: 5%" />
 
                 <AdvanceColumn field="name" header="Name" style="width: 25%">

@@ -16,9 +16,9 @@ use Illuminate\Support\Facades\Route;
 //    $maps = $mapModel->newQuery()->get();
 //    dd($maps);
 //});
-
 Route::get('/', function () {
-    dd('widok glowny w budowie');
+//    dd('widok glowny w budowie');
+    return to_route('dashboard');
 })->name('home');
 
 Route::get('login', [LoginController::class, 'show'])->name('login');
