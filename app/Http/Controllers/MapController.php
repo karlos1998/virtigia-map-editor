@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\DoorResource;
 use App\Http\Resources\MapResource;
 use App\Http\Resources\NpcResource;
 use App\Models\Map;
@@ -31,6 +32,7 @@ class MapController extends Controller
         return Inertia::render('Map/Show', [
             'map' => MapResource::make($map),
             'npcs' => NpcResource::collection($map->npcs),
+            'doors' => DoorResource::collection($map->doors),
         ]);
     }
 

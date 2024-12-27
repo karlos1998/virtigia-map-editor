@@ -5,10 +5,12 @@ import { ref } from "vue";
 import { Link } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
 import { NpcResource } from "@/Resources/Npc.resource";
+import {DoorResource} from "@/Resources/Door.resource";
 
 defineProps<{
     map: MapResource;
     npcs: NpcResource[];
+    doors: DoorResource[];
 }>();
 
 const scale = ref(1);
@@ -45,6 +47,7 @@ const adjustNpcOffset = (id: string, element: HTMLImageElement) => {
                 <Button label="-" icon="pi pi-search-minus" @click="zoomOut" />
             </div>
         </div>
+
         <div class="card overflow-auto m-2">
             <div
                 class="map-container relative"

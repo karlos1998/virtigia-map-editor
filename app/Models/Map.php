@@ -9,4 +9,8 @@ class Map extends DynamicModel
     public function npcs() {
         return $this->hasMany(Npc::class);
     }
+
+    public function doors() {
+        return $this->hasMany(Door::class);
+    }
 }
