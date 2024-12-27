@@ -5,6 +5,7 @@ import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
+import UserAvatar from "@advance-table/Components/UserAvatar.vue";
 
 const { isHorizontal, onMenuToggle, showConfigSidebar, showSidebar } = useLayout();
 
@@ -46,9 +47,7 @@ const user = computed(() => usePage().props.auth.user);
 
                 <li class="topbar-item">
                     <a v-styleclass="{ selector: '@next', enterFromClass: '!hidden', enterActiveClass: 'animate-scalein', leaveToClass: '!hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: 'true' }" class="cursor-pointer">
-                        <div class="avatar rounded-xl" :style="{
-                            'background-image': `url(${user.src})`
-                        }" />
+                        <UserAvatar />
                     </a>
                     <ul :class="'topbar-menu active-topbar-menu !p-6 w-60 z-50 !hidden'">
                         <li role="menuitem" class="!m-0 !mb-4">
@@ -95,11 +94,3 @@ const user = computed(() => usePage().props.auth.user);
         </div>
     </div>
 </template>
-
-<style scoped>
-.avatar {
-    width: 32px;
-    height:32px;
-    background-repeat: no-repeat;
-}
-</style>

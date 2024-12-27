@@ -14,4 +14,9 @@ class DashboardController extends Controller
         return Inertia::render('Dashboard', [
         ]);
     }
+
+    public function locked()
+    {
+        return Inertia::render('Locked', []);
+    }
 }
