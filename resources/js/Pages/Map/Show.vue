@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import AppLayout from "@/layout/AppLayout.vue";
-import { MapResource } from "@/Resources/Map.resource";
-import { ref } from "vue";
-import { Link } from "@inertiajs/vue3";
-import { route } from "ziggy-js";
-import { NpcResource } from "@/Resources/Npc.resource";
-import {DoorResource} from "@/Resources/Door.resource";
-import {useConfirm} from "primevue";
+import AppLayout from '@/layout/AppLayout.vue';
+import { MapResource } from '@/Resources/Map.resource';
+import { ref } from 'vue';
+import { Link } from '@inertiajs/vue3';
+import { route } from 'ziggy-js';
+import { NpcResource } from '@/Resources/Npc.resource';
+import { DoorResource } from '@/Resources/Door.resource';
+import { useConfirm } from 'primevue';
 
 defineProps<{
     map: MapResource;
@@ -15,7 +15,6 @@ defineProps<{
 }>();
 
 const scale = ref(1);
-const npcOffsets = ref<Record<string, number>>({});
 
 const zoomIn = () => {
     scale.value = Math.min(scale.value + 0.1, 2);
@@ -25,12 +24,12 @@ const zoomOut = () => {
     scale.value = Math.max(scale.value - 0.1, 0.5);
 };
 
+
+const npcWidths = ref<Record<string, number>>({});
+const npcHeights = ref<Record<string, number>>({});
 const adjustNpcOffset = (id: string, element: HTMLImageElement) => {
-    const npcHeight = element.clientHeight;
-    npcOffsets.value = {
-        ...npcOffsets.value,
-        [id]: npcHeight,
-    };
+    npcWidths.value[id] = element.width;
+    npcHeights.value[id] = element.height;
 };
 
 const confirm = useConfirm();
@@ -58,7 +57,7 @@ const showNpcConfirmDialog = (event: MouseEvent, npc: NpcResource) => {
             // toast.add({severity:'error', summary:'Rejected', detail:'You have rejected', life: 3000});
         }
     });
-}
+};
 </script>
 
 <template>
@@ -66,13 +65,14 @@ const showNpcConfirmDialog = (event: MouseEvent, npc: NpcResource) => {
 
         <ConfirmPopup group="npc">
             <template #container="{ message, acceptCallback, rejectCallback }">
-                <div class="flex flex-col items-center w-full gap-4 border-b border-surface-200 dark:border-surface-700 p-4 mb-4 pb-0">
-<!--                    <i :class="slotProps.message.icon" class="text-6xl text-primary-500"></i>-->
-                    <p>{{ message.npc.name}}</p>
+                <div
+                    class="flex flex-col items-center w-full gap-4 border-b border-surface-200 dark:border-surface-700 p-4 mb-4 pb-0">
+                    <!--                    <i :class="slotProps.message.icon" class="text-6xl text-primary-500"></i>-->
+                    <p>{{ message.npc.name }}</p>
                 </div>
 
-                <div class="flex items-center gap-2 mt-4">
-<!--                    <Button label="Save" @click="acceptCallback" size="small"></Button>-->
+                <div class="flex justify-center items-center gap-2 mt-4">
+                    <!--                    <Button label="Save" @click="acceptCallback" size="small"></Button>-->
                     <Button label="Zamknij" severity="contrast" @click="rejectCallback" size="small" />
                     <Button label="Kopiuj" severity="help" @click="rejectCallback" size="small" />
                     <Button label="Pokaż szczegóły" @click="rejectCallback" size="small" />
@@ -113,9 +113,9 @@ const showNpcConfirmDialog = (event: MouseEvent, npc: NpcResource) => {
                     v-tooltip="npc.name"
                     @click="showNpcConfirmDialog($event, npc)"
                     :style="{
-                        width: `${32 * scale}px`,
-                        height: `${32 * scale}px`,
-                        top: `${npc.y * 32 * scale - ((npcOffsets[npc.id] || 0) - 32 * scale)}px`,
+                        width: `${(npcWidths[npc.id] ?? 32) * scale}px`,
+                        height: `${(npcHeights[npc.id] ?? 32) * scale}px`,
+                        top: `${(npc.y * 32 - ((npcHeights[npc.id] ?? 32) - 32)) * scale}px`,
                         left: `${npc.x * 32 * scale}px`,
                     }"
                 >
@@ -125,13 +125,19 @@ const showNpcConfirmDialog = (event: MouseEvent, npc: NpcResource) => {
                         :style="{
                             width: `${32 * scale}px`,
                             height: `${32 * scale}px`,
-                            bottom: `-${((npcOffsets[npc.id] || 0) - 32) * scale}px`,
+                            bottom: 0,
                         }"
                     />
                     <!-- Obrazek NPC -->
                     <img
                         :src="`https://virtigia-assets.letscode.it/img/npc/${npc.src}`"
-                        :style="{ transform: `scale(${scale})`, transformOrigin: 'top left' }"
+                        :style="{
+                            position: 'relative',
+                            width: `${npcWidths[npc.id] * scale}px`,
+                            bottom: 0,
+                            zIndex: 1,
+                            left: (32 - npcWidths[npc.id]) * scale / 2,
+                        }"
                         @load="adjustNpcOffset(npc.id, $event.target)"
                     />
                 </div>
