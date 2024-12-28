@@ -6,6 +6,7 @@ import { Link } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
 import { NpcResource } from "@/Resources/Npc.resource";
 import {DoorResource} from "@/Resources/Door.resource";
+import {useConfirm} from "primevue";
 
 defineProps<{
     map: MapResource;
@@ -31,10 +32,57 @@ const adjustNpcOffset = (id: string, element: HTMLImageElement) => {
         [id]: npcHeight,
     };
 };
+
+const confirm = useConfirm();
+
+const showNpcConfirmDialog = (event: MouseEvent, npc: NpcResource) => {
+    confirm.require({
+        target: event.currentTarget as HTMLElement,
+        group: 'npc',
+        message: 'Please confirm to proceed moving forward.',
+        icon: 'pi pi-exclamation-circle',
+        npc,
+        rejectProps: {
+            icon: 'pi pi-times',
+            label: 'Cancel',
+            outlined: true
+        },
+        acceptProps: {
+            icon: 'pi pi-check',
+            label: 'Confirm'
+        },
+        accept: () => {
+            // toast.add({severity:'info', summary:'Confirmed', detail:'You have accepted', life: 3000});
+        },
+        reject: () => {
+            // toast.add({severity:'error', summary:'Rejected', detail:'You have rejected', life: 3000});
+        }
+    });
+}
 </script>
 
 <template>
     <AppLayout>
+
+        <ConfirmPopup group="npc">
+            <template #container="{ message, acceptCallback, rejectCallback }">
+                <div class="flex flex-col items-center w-full gap-4 border-b border-surface-200 dark:border-surface-700 p-4 mb-4 pb-0">
+<!--                    <i :class="slotProps.message.icon" class="text-6xl text-primary-500"></i>-->
+                    <p>{{ message.npc.name}}</p>
+                </div>
+
+                <div class="flex items-center gap-2 mt-4">
+<!--                    <Button label="Save" @click="acceptCallback" size="small"></Button>-->
+                    <Button label="Zamknij" severity="contrast" @click="rejectCallback" size="small" />
+                    <Button label="Kopiuj" severity="help" @click="rejectCallback" size="small" />
+                    <Button label="Pokaż szczegóły" @click="rejectCallback" size="small" />
+                    <Button label="Usuń" @click="rejectCallback" severity="danger" size="small" />
+                </div>
+
+            </template>
+
+        </ConfirmPopup>
+
         <div class="card">
             <Link :href="route('maps.index')">
                 <Button label="Powrót" severity="info" />
@@ -62,6 +110,8 @@ const adjustNpcOffset = (id: string, element: HTMLImageElement) => {
                     v-for="npc in npcs"
                     :key="npc.id"
                     class="absolute npc"
+                    v-tooltip="npc.name"
+                    @click="showNpcConfirmDialog($event, npc)"
                     :style="{
                         width: `${32 * scale}px`,
                         height: `${32 * scale}px`,
