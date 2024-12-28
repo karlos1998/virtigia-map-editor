@@ -3,8 +3,6 @@ import { reactive, ref, watch } from 'vue';
 import { ConnectionLookup, Handle, NodeProps, Position, useVueFlow } from '@vue-flow/core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { useDialog } from 'primevue/usedialog';
-import EditOption from '@/Pages/Dialog/Modals/EditOption.vue';
-import { DynamicDialogCloseOptions } from 'primevue/dynamicdialogoptions';
 import EditDialog from '@/Pages/Dialog/Modals/EditDialog.vue';
 
 const primeDialog = useDialog();
@@ -79,7 +77,7 @@ export default {
             <Button severity="info" size="small" class="align-self-end" @click="editNode()">
                 <FontAwesomeIcon icon="edit" />
             </Button>
-            <Button severity="danger" size="small" class="align-self-end" @click="removeNodes(props.id)">
+            <Button severity="danger" size="small" class="align-self-end" @click="removeNodes(props.id, true)">
                 <FontAwesomeIcon icon="trash" />
             </Button>
         </div>

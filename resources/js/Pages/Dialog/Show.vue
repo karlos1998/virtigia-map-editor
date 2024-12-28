@@ -2,21 +2,18 @@
 import AppLayout from '../../layout/AppLayout.vue';
 
 import { MiniMap } from '@vue-flow/minimap';
-import { ConnectionMode, NodeProps, useVueFlow, VueFlow } from '@vue-flow/core';
+import { ConnectionMode, NodeProps, SmoothStepEdge, useVueFlow, VueFlow } from '@vue-flow/core';
 
 import SpecialNode from '@/Pages/Dialog/SpecialNode.vue';
 import { Controls } from '@vue-flow/controls';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import StartNode from '@/Pages/Dialog/StartNode.vue';
 import ShopNode from '@/Pages/Dialog/ShopNode.vue';
-import { DialogGroupResource } from '@/Resources/DialogGroup.resource';
 import { DialogResource } from '@/Resources/Dialog.resource';
 // import { DialogConnectionResource } from '@/Resources/DialogConnection.resource';
-import { DialogOptionResource } from '@/Resources/DialogOption.resource';
-import {computed, ref} from "vue";
-import axios from "axios";
-import {route} from "ziggy-js";
-import TeleporationNode from "@/Pages/Dialog/TeleporationNode.vue";
+import { computed, ref } from 'vue';
+import axios from 'axios';
+import { route } from 'ziggy-js';
+import TeleporationNode from '@/Pages/Dialog/TeleporationNode.vue';
 
 const props = defineProps<{
     dialog: DialogResource,
@@ -24,7 +21,18 @@ const props = defineProps<{
     edges: any[],
 }>();
 
-const { nodes, onConnect, findNode, addEdges, addNodes, viewport, edges, onNodeDragStop, onEdgesChange, applyEdgeChanges, onNodesChange, applyNodeChanges } = useVueFlow();
+const {
+    nodes,
+    onConnect,
+    addEdges,
+    addNodes,
+    viewport,
+    onNodeDragStop,
+    onEdgesChange,
+    applyEdgeChanges,
+    onNodesChange,
+    applyNodeChanges
+} = useVueFlow();
 
 onConnect(({ source, target, sourceHandle, targetHandle }) => {
     addEdges([
@@ -42,56 +50,64 @@ function nodeStroke(n: NodeProps) {
     switch (n.type) {
         case 'special':
             return '#213e5e';
+        case 'start':
+            return '#6bc965';
+        case 'shop':
+            return '#7a1a10';
         default:
-            return '#eee';
+            return '#999';
     }
 }
 
 function nodeColor(n: NodeProps) {
-    if (n.type === 'special') {
-        return '#112e4e';
+    switch (n.type) {
+        case 'special':
+            return '#112e4e';
+        case 'start':
+            return '#6bc965';
+        case 'shop':
+            return '#7a1a10';
+        default:
+            return '#888';
     }
-
-    return '#fff';
 }
 
 const addNode = (type?: string) => {
-    axios.post(route('dialogs.nodes.store', {dialog: props.dialog.id}), {
+    axios.post(route('dialogs.nodes.store', { dialog: props.dialog.id }), {
         position: {
             x: -viewport.value.x,
             y: -viewport.value.y
         },
-        type,
-    }).then(({data: {node}}) => {
-        console.log('add node ->', node)
+        type
+    }).then(({ data: { node } }) => {
+        console.log('add node ->', node);
         addNodes([node]);
     });
 };
 
-onNodeDragStop(({node}) => {
+onNodeDragStop(({ node }) => {
     axios.post(route('dialogs.nodes.move', {
         dialog: props.dialog.id,
-        dialogNode: node.id,
+        dialogNode: node.id
     }), {
-        position: node.position,
+        position: node.position
     }).catch((error) => {
         //todo - toast ze nie udalo sie przeniesc
     });
-})
+});
 
 const startNodes = computed(() => props.nodes);
 const startEdges = computed(() => props.edges);
 
 
-
 onNodesChange(async (changes) => {
-    const nextChanges = []
+    const nextChanges = [];
 
     console.log('onNodesChange', changes);
 
     for (const change of changes) {
         if (change.type === 'remove') {
-            if(nodes.value.find((node) => node.id.toString() === change.id && node.type === 'input')) {
+            if (nodes.value.find((node) => node.id.toString() === change.id && node.type === 'input')) {
                 //...
             } else {
                 // confirmDeleteNode(change);
@@ -99,28 +115,28 @@ onNodesChange(async (changes) => {
         } else if (change.type === 'select' && change.selected) {
             // console.log('selected node: ' + change.id)
         } else {
-            nextChanges.push(change)
+            nextChanges.push(change);
         }
     }
 
-    applyNodeChanges(nextChanges)
-})
+    applyNodeChanges(nextChanges);
+});
 
 onEdgesChange(async (changes) => {
-    const nextChanges = []
+    const nextChanges = [];
 
     console.log('onEdgesChange', changes);
 
     for (const change of changes) {
         if (change.type === 'add') {
             axios.post(route('dialogs.edges.store', {
-                dialog: props.dialog.id,
+                dialog: props.dialog.id
             }), {
                 sourceNodeIsInput: change.item.sourceNode.type == 'start',
                 sourceNodeId: change.item.sourceNode.id,
-                sourceOptionId: change.item.sourceNode.type != 'start' ?  change.item.sourceHandle.substring(7) : null,
-                targetNodeId: change.item.targetNode.id,
-            }).then(({data: {edge}}) => {
+                sourceOptionId: change.item.sourceNode.type != 'start' ? change.item.sourceHandle.substring(7) : null,
+                targetNodeId: change.item.targetNode.id
+            }).then(({ data: { edge } }) => {
 
             }).catch((error) => {
                 applyEdgeChanges([{
@@ -129,19 +145,19 @@ onEdgesChange(async (changes) => {
                     source: change.item.source,
                     sourceHandle: change.item.sourceHandle,
                     target: change.item.target,
-                    targetHandle: change.item.targetHandle,
-                }])
-            })
-            nextChanges.push(change)
+                    targetHandle: change.item.targetHandle
+                }]);
+            });
+            nextChanges.push(change);
         } else if (change.type === 'remove') {
             //todo ....
         } else {
-            nextChanges.push(change)
+            nextChanges.push(change);
         }
     }
 
-    applyEdgeChanges(nextChanges)
-})
+    applyEdgeChanges(nextChanges);
+});
 
 // import { DialogRuleResource } from '@/Resources/DialogRule.resource';
 
@@ -166,9 +182,8 @@ const items = ref([
         command: () => {
             addNode('teleportation');
         }
-    },
-])
-
+    }
+]);
 </script>
 
 <template>
@@ -198,7 +213,22 @@ const items = ref([
                     <ShopNode v-bind="shopNodeProps" />
                 </template>
                 <template #node-teleporatation="teleportationNodeProps">
+                    <!--suppress RequiredAttributes -->
                     <TeleporationNode v-bind="teleportationNodeProps" />
+                </template>
+
+                <template #edge-default="customEdgeProps">
+                    <SmoothStepEdge
+                        :id="customEdgeProps.id"
+                        :source-x="customEdgeProps.sourceX"
+                        :source-y="customEdgeProps.sourceY"
+                        :target-x="customEdgeProps.targetX"
+                        :target-y="customEdgeProps.targetY"
+                        :source-position="customEdgeProps.sourcePosition"
+                        :target-position="customEdgeProps.targetPosition"
+                        :data="customEdgeProps.data"
+                        :marker-end="customEdgeProps.markerEnd"
+                    />
                 </template>
 
                 <Controls>
