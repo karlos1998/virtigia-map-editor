@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Http\Resources\MapResource;
 use App\Models\Map;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
+use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableTextColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\TableService;
 
 final class MapService extends BaseService
@@ -22,6 +23,12 @@ final class MapService extends BaseService
             MapResource::class,
             $this->mapModel,
             new TableService(
+                columns: [
+                  'id' => new TableTextColumn(
+                      placeholder: 'Wpisz szukane id',
+                      sortable: true,
+                  )
+                ],
                 globalFilterColumns: ['name']
             )
         );
