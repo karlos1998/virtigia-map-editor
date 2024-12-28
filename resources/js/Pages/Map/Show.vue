@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import AppLayout from '@/layout/AppLayout.vue';
 import { MapResource } from '@/Resources/Map.resource';
-import { ref } from 'vue';
+import {computed, ref} from 'vue';
 import {Link, router} from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
-import { NpcResource } from '@/Resources/Npc.resource';
+import {NpcResource, NpcWithLocationResource} from '@/Resources/Npc.resource';
 import { DoorResource } from '@/Resources/Door.resource';
 import { useConfirm } from 'primevue';
 
-defineProps<{
+const props = defineProps<{
     map: MapResource;
-    npcs: NpcResource[];
+    npcs: NpcWithLocationResource[];
     doors: DoorResource[];
 }>();
 
@@ -78,6 +78,26 @@ const addNewObject = (event: MouseEvent) => {
 const throughTheDoor = (door: DoorResource) => {
     router.get(route('maps.show', door.go_map_id));
 }
+
+interface NpcWithLocation {
+    id: number
+    name: string
+    src: string
+    x: number
+    y: number
+}
+
+// const allNpcs = computed<NpcWithLocation[]>(() => {
+//     return props.npcs.flatMap(npc =>
+//         npc.locations.map(location => ({
+//             id: npc.id,
+//             name: npc.name,
+//             src: npc.src,
+//             x: location.x,
+//             y: location.y,
+//         }))
+//     )
+// })
 </script>
 
 <template>
@@ -107,6 +127,8 @@ const throughTheDoor = (door: DoorResource) => {
             <Link :href="route('maps.index')">
                 <Button label="Powrót" severity="info" />
             </Link>
+
+            <pre>{{npcs}}</pre>
         </div>
 
         <div class="card">
@@ -134,6 +156,7 @@ const throughTheDoor = (door: DoorResource) => {
                     top: trackerPosition.y * 32 * scale,
                     left: trackerPosition.x * 32 * scale,
                 }" />
+
                 <div
                     v-for="npc in npcs"
                     :key="npc.id"
@@ -143,8 +166,8 @@ const throughTheDoor = (door: DoorResource) => {
                     :style="{
                         width: `${(npcWidths[npc.id] ?? 32) * scale}px`,
                         height: `${(npcHeights[npc.id] ?? 32) * scale}px`,
-                        top: `${(npc.y * 32 - ((npcHeights[npc.id] ?? 32) - 32)) * scale}px`,
-                        left: `${npc.x * 32 * scale}px`,
+                        top: `${(npc.location.y * 32 - ((npcHeights[npc.id] ?? 32) - 32)) * scale}px`,
+                        left: `${npc.location.x * 32 * scale}px`,
                     }"
                 >
                     <!-- Czerwony kwadrat u podstawy -->

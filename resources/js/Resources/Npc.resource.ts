@@ -2,7 +2,12 @@ export interface NpcResource {
     id: number
     name: string
     src: string
-    x: number
-    y: number
     //...
+}
+
+export type NpcWithLocationResource = NpcResource & {
+    location: {
+        x: number
+        y: number
+    }
 }
