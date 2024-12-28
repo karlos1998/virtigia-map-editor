@@ -127,8 +127,6 @@ interface NpcWithLocation {
             <Link :href="route('maps.index')">
                 <Button label="Powrót" severity="info" />
             </Link>
-
-            <pre>{{npcs}}</pre>
         </div>
 
         <div class="card">
