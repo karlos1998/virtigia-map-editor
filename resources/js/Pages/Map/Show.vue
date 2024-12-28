@@ -58,6 +58,22 @@ const showNpcConfirmDialog = (event: MouseEvent, npc: NpcResource) => {
         }
     });
 };
+
+const trackerPosition = ref({ x: 0, y: 0 });
+const setTrackerPosition = (event: MouseEvent) => {
+    if (event.target !== event.currentTarget) {
+        trackerPosition.value = { x: -32, y: -32 };
+        return;
+    }
+    trackerPosition.value = {
+        x: (event.offsetX / scale.value / 32) | 0,
+        y: (event.offsetY / scale.value / 32) | 0
+    };
+};
+
+const addNewObject = (event: MouseEvent) => {
+    console.log('addNewObject', event, trackerPosition.value);
+};
 </script>
 
 <template>
@@ -105,7 +121,15 @@ const showNpcConfirmDialog = (event: MouseEvent, npc: NpcResource) => {
                     height: `${map.y * 32 * scale}px`,
                     transformOrigin: 'top left',
                 }"
+                @mousemove.stop="setTrackerPosition($event)"
+                @click.self="addNewObject"
             >
+                <div class="mouse-tracker absolute bg-yellow-500/70 pointer-events-none" :style="{
+                    width: `${32 * scale}px`,
+                    height: `${32 * scale}px`,
+                    top: trackerPosition.y * 32 * scale,
+                    left: trackerPosition.x * 32 * scale,
+                }" />
                 <div
                     v-for="npc in npcs"
                     :key="npc.id"
@@ -138,8 +162,8 @@ const showNpcConfirmDialog = (event: MouseEvent, npc: NpcResource) => {
                             zIndex: 1,
                             left: (32 - npcWidths[npc.id]) * scale / 2,
                         }"
-                        @load="adjustNpcOffset(npc.id, $event.target)"
-                    />
+                        @load="adjustNpcOffset(npc.id, $event.target as HTMLImageElement)"
+                        alt="npc" />
                 </div>
             </div>
         </div>
