@@ -18,6 +18,8 @@ class DoorResource extends JsonResource
             ...parent::toArray($request),
 
             'name' => $this->resource->targetMap->name,
+
+            'double_sided' => $this->resource->doubleSided(),
         ];
     }
 }

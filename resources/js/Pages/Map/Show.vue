@@ -174,7 +174,7 @@ const throughTheDoor = (door: DoorResource) => {
                 <div
                     class="door"
                     v-for="door in doors"
-                    v-tooltip="'Przejście do: ' + door.name + ' (' + door.go_x + ',' + door.go_y + ')'"
+                    v-tooltip="'Przejście do: ' + door.name + ' (' + door.go_x + ',' + door.go_y + '), \nPowrót: ' + (door.double_sided ? 'Tak' : 'Nie' )"
                     @click="throughTheDoor(door)"
                     :style="{
                         width: `${32 * scale}px`,
@@ -182,6 +182,7 @@ const throughTheDoor = (door: DoorResource) => {
                         top: `${door.y * 32 * scale}px`,
                         left: `${door.x * 32 * scale}px`,
                     }"
+                    :class="{'double-sided': door.double_sided}"
                 />
 
             </div>
@@ -211,6 +212,11 @@ const throughTheDoor = (door: DoorResource) => {
     width: 32px;
     height: 32px;
     position:absolute;
-    background-color: black;
+    background-color: #353030;
+}
+
+.double-sided {
+    background-color: #000000 !important;
+    /* border: 6px black solid; */
 }
 </style>

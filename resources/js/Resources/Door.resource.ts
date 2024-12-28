@@ -6,5 +6,7 @@ export interface DoorResource {
     go_map_id: number
     go_x: number
     go_y: number
+
     name: string
+    double_sided: boolean
 }
