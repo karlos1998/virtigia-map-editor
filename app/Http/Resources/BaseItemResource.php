@@ -20,7 +20,7 @@ class BaseItemResource extends JsonResource
     {
         return [
             ...parent::toArray($request),
-            $this->mergeWhen($this->resource->pivot?->position >= 0, fn() => [
+            $this->mergeWhen($this->resource->pivot?->position !== null, fn() => [
                 'position' => $this->resource->pivot->position,
             ])
         ];
