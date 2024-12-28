@@ -2,7 +2,7 @@
 import AppLayout from '@/layout/AppLayout.vue';
 import { MapResource } from '@/Resources/Map.resource';
 import { ref } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import {Link, router} from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import { NpcResource } from '@/Resources/Npc.resource';
 import { DoorResource } from '@/Resources/Door.resource';
@@ -74,6 +74,10 @@ const setTrackerPosition = (event: MouseEvent) => {
 const addNewObject = (event: MouseEvent) => {
     console.log('addNewObject', event, trackerPosition.value);
 };
+
+const throughTheDoor = (door: DoorResource) => {
+    router.get(route('maps.show', door.go_map_id));
+}
 </script>
 
 <template>
@@ -165,6 +169,21 @@ const addNewObject = (event: MouseEvent) => {
                         @load="adjustNpcOffset(npc.id, $event.target as HTMLImageElement)"
                         alt="npc" />
                 </div>
+
+
+                <div
+                    class="door"
+                    v-for="door in doors"
+                    v-tooltip="'Przejście do: ' + door.name + ' (' + door.go_x + ',' + door.go_y + ')'"
+                    @click="throughTheDoor(door)"
+                    :style="{
+                        width: `${32 * scale}px`,
+                        height: `${32 * scale}px`,
+                        top: `${door.y * 32 * scale}px`,
+                        left: `${door.x * 32 * scale}px`,
+                    }"
+                />
+
             </div>
         </div>
     </AppLayout>
@@ -185,5 +204,13 @@ const addNewObject = (event: MouseEvent) => {
 .npc-footer {
     position: absolute;
     background-color: red;
+}
+
+
+.door {
+    width: 32px;
+    height: 32px;
+    position:absolute;
+    background-color: black;
 }
 </style>
