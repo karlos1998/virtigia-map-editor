@@ -1,8 +1,8 @@
 <?php
 
+
 namespace App\Http\Requests;
 
-use App\Models\DynamicModel;
 use Illuminate\Foundation\Http\FormRequest;
 
 class AddBaseItemToShopRequest extends FormRequest
@@ -24,7 +24,16 @@ class AddBaseItemToShopRequest extends FormRequest
     {
         return [
             'baseItemId' => ['required', 'integer', 'exists:retro.base_items,id'],
-            'position' => ['required', 'integer', 'between:0,79'],
+            'position' => [
+                'required',
+                'integer',
+                'between:0,79',
+                function ($attribute, $value, $fail) {
+                    if ($this->shop->items()->wherePivot('position', $value)->exists()) {
+                        $fail('The position is already occupied.');
+                    }
+                },
+            ],
         ];
     }
 }

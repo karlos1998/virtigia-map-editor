@@ -9,11 +9,14 @@ import {ShopResource} from "@/Resources/Shop.resource";
 import {BaseItemResource, BaseItemWithPosition} from "@/Resources/BaseItem.resource";
 import Item from "@advance-table/Components/Item.vue";
 import ItemHeader from "@/Components/ItemHeader.vue";
+import {useToast} from "primevue";
 
 const props = defineProps<{
     shop: ShopResource
     items: BaseItemWithPosition
 }>()
+
+const toast = useToast();
 
 const primeDialog = useDialog();
 
@@ -40,6 +43,15 @@ const addItem = (event: MouseEvent) => {
                 }), {
                     baseItemId,
                     position,
+                }, {
+                    onError: (errors) =>  {
+                        toast.add({
+                            severity: 'error',
+                            summary: 'Wystąpił bład',
+                            detail: Object.values(errors)[0],
+                            life: 5000,
+                        })
+                    }
                 })
             }
         }

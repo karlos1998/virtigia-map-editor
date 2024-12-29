@@ -46,15 +46,22 @@ const filterItems = async ({ query }: { query: string }) => {
             fluid
         >
             <template #option="slotProps">
-                <div class="name-item flex align-items-center justify-content-between">
-                    <div class="flex align-items-center">
-                        <div class="flex justify-content-between">
-                            <div class="flex-column align-items-center">
-                                [{{slotProps.option.id }}] {{slotProps.option.name }}
-                            </div>
+                <div class="name-item flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <img
+                            class="h-12 w-12 object-cover"
+                            v-tooltip="slotProps.option.src"
+                            :src="'https://virtigia-assets.letscode.it/img/' + slotProps.option.src"
+                            alt="Option Image"
+                        />
+                        <div class="text-center">
+                            <span class="font-semibold text-gray-800">
+                                [{{ slotProps.option.id }}] {{ slotProps.option.name }}
+                            </span>
                         </div>
                     </div>
                 </div>
+
             </template>
         </AutoComplete>
 
