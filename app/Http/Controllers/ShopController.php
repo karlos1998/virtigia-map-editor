@@ -81,4 +81,9 @@ class ShopController extends Controller
     {
         $this->shopService->addItem($shop, $request->post('baseItemId'), $request->post('position'));
     }
+
+    public function destroyItem(Shop $shop, int $position): void
+    {
+        $this->shopService->deleteItem($shop, $position);
+    }
 }

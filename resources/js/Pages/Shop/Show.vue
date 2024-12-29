@@ -9,7 +9,7 @@ import {ShopResource} from "@/Resources/Shop.resource";
 import {BaseItemResource, BaseItemWithPosition} from "@/Resources/BaseItem.resource";
 import Item from "@advance-table/Components/Item.vue";
 import ItemHeader from "@/Components/ItemHeader.vue";
-import {useToast} from "primevue";
+import {useConfirm, useToast} from "primevue";
 
 const props = defineProps<{
     shop: ShopResource
@@ -21,6 +21,10 @@ const toast = useToast();
 const primeDialog = useDialog();
 
 const addItem = (event: MouseEvent) => {
+
+    if ((event.target as HTMLElement).closest('.item')) {
+        return;
+    }
 
     const rect = (event.target as HTMLElement).getBoundingClientRect();
     const offsetX = event.clientX - rect.left;
@@ -58,10 +62,54 @@ const addItem = (event: MouseEvent) => {
     });
 };
 
+
+
+const confirm = useConfirm();
+const deleteItem = (event, position: number) => {
+    confirm.require({
+        target: event.currentTarget,
+        message: 'Usunąć ten przedmiot ze sklepu?',
+        icon: 'pi pi-info-circle',
+        rejectProps: {
+            label: 'Anuluj',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Usuń',
+            severity: 'danger'
+        },
+        accept: () => {
+
+            router.delete(route('shops.items.destroy', {
+                shop: props.shop.id,
+                position,
+            }), {
+                onError: (errors) =>  {
+                    toast.add({
+                        severity: 'error',
+                        summary: 'Wystąpił bład',
+                        detail: Object.values(errors)[0],
+                        life: 5000,
+                    })
+                },
+                onSuccess: () => {
+                    toast.add({ severity: 'info', summary: 'Sukces', detail: 'Przedmiot usunięty ze sklepu', life: 3000 });
+                }
+            })
+        },
+        reject: () => {
+            // toast.add({ severity: 'error', summary: 'Błąd', detail: 'Unknown error', life: 3000 });
+        }
+    });
+};
+
 </script>
 <template>
 
     <AppLayout>
+
+        <ConfirmPopup />
 
         <ItemHeader
             :route-back="route('shops.index')"
@@ -74,7 +122,7 @@ const addItem = (event: MouseEvent) => {
         <div class="card">
             <div class="shop">
                 <div class="items-area" @click="addItem">
-                    <Item v-for="item in items" :item />
+                    <Item v-tooltip="item.name" @click="deleteItem($event, item.position)" v-for="item in items" :item />
                 </div>
             </div>
         </div>

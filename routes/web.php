@@ -63,6 +63,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('shops', [ShopController::class, 'index'])->name('shops.index');
                 Route::get('shops/{shop}', [ShopController::class, 'show'])->name('shops.show');
                 Route::post('shops/{shop}/items', [ShopController::class, 'addItem'])->name('shops.items.store');
+                Route::delete('shops/{shop}/items/{position}', [ShopController::class, 'destroyItem'])->name('shops.items.destroy');
 
                 Route::get('base-npcs', [BaseNpcController::class, 'index'])->name('base-npcs.index');
                 Route::get('base-npcs/{baseNpc}', [BaseNpcController::class, 'show'])->name('base-npcs.show');

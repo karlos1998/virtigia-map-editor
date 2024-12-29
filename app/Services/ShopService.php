@@ -30,4 +30,9 @@ final class ShopService extends BaseService
             'position' => $position,
         ]);
     }
+
+    public function deleteItem(Shop $shop, int $position)
+    {
+        $shop->items()->wherePivot('position', $position)->detach();
+    }
 }
