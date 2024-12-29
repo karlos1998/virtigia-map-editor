@@ -19,7 +19,7 @@ class NpcService extends BaseService
     {
         return $this->fetchData(
             NpcResource::class,
-            $this->npcModel->with('locations'),
+            $this->npcModel->with(['locations']),
             new TableService(
 //                globalFilterColumns: ['base.name'], //todo - brak szukania po relacji ;c
             )

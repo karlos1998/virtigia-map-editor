@@ -60,6 +60,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('npcs', [NpcController::class, 'index'])->name('npcs.index');
                 Route::get('npcs/{npc}', [NpcController::class, 'show'])->name('npcs.show');
 
+                Route::get('shops', [ShopController::class, 'index'])->name('shops.index');
                 Route::get('shops/{shop}', [ShopController::class, 'show'])->name('shops.show');
                 Route::post('shops/{shop}/items', [ShopController::class, 'addItem'])->name('shops.items.store');
 

@@ -23,7 +23,9 @@ class DialogController extends Controller
 
     public function index()
     {
-
+        return Inertia::render('Dialog/Index', [
+            'dialogs' => $this->dialogService->getAll(),
+        ]);
     }
 
     public function show(Dialog $dialog): \Inertia\Response

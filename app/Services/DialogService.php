@@ -2,14 +2,24 @@
 
 namespace App\Services;
 
+use App\Http\Resources\DialogResource;
 use App\Models\Dialog;
 use App\Models\DialogNode;
+use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 
-class DialogService
+class DialogService extends BaseService
 {
+
+    public function __construct(private readonly Dialog $dialogModel)
+    {
+    }
+
     public function getAll()
     {
-
+        return $this->fetchData(
+            DialogResource::class,
+            $this->dialogModel->with(['npcs', 'npcs.locations']),
+        );
     }
 
     public function addNode(Dialog $dialog, array $data)

@@ -22,20 +22,30 @@ const model = ref([
         // hidden: !hasRole('system-admin'),
         items: [
             {
-                label: 'Map',
-                icon: 'pi pi-compass',
+                label: 'Mapy',
+                icon: 'pi pi-map',
                 route: 'maps.index',
             },
-            // {
-            //     label: 'Horizon',
-            //     icon: 'pi pi-compass',
-            //     url: route('horizon.index'),
-            // },
-            // {
-            //     label: 'Pulse',
-            //     icon: 'pi pi-compass',
-            //     url: route('pulse'),
-            // },
+            {
+                label: 'Bazowe Npc',
+                icon: 'pi pi-user',
+                route: 'base-npcs.index',
+            },
+            {
+                label: 'Rozmieszczone Npc',
+                icon: 'pi pi-users',
+                route: 'npcs.index',
+            },
+            {
+                label: 'Dialogi Npc',
+                icon: 'pi pi-sitemap',
+                route: 'dialogs.index',
+            },
+            {
+                label: 'Sklepy',
+                icon: 'pi pi-shop',
+                route: 'shops.index',
+            },
         ],
     },
 ]);
