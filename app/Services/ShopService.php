@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Http\Resources\ShopResource;
 use App\Models\Shop;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
+use Karlos3098\LaravelPrimevueTableService\Services\TableService;
 
 final class ShopService extends BaseService
 {
@@ -16,7 +17,10 @@ final class ShopService extends BaseService
     {
         return $this->fetchData(
             ShopResource::class,
-            $this->shopModel->with('dialogs.npcs.locations')
+            $this->shopModel->with('dialogs.npcs.locations'),
+            new TableService(
+                globalFilterColumns: ['name'],
+            )
         );
     }
 
