@@ -61,6 +61,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('npcs/{npc}', [NpcController::class, 'show'])->name('npcs.show');
 
                 Route::post('npcs', [NpcController::class, 'store'])->name('npcs.store');
+                Route::delete('npcs/{npc}', [NpcController::class, 'destroy'])->name('npcs.destroy');
 
                 Route::get('shops', [ShopController::class, 'index'])->name('shops.index');
                 Route::get('shops/{shop}', [ShopController::class, 'show'])->name('shops.show');

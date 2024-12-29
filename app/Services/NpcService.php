@@ -42,4 +42,9 @@ class NpcService extends BaseService
             'y' => $data['location']['y'],
         ])->save();
     }
+
+    public function destroy(Npc $npc)
+    {
+        $npc->delete();
+    }
 }

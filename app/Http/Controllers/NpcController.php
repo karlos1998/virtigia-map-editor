@@ -35,4 +35,9 @@ class NpcController extends Controller
     {
         $this->npcService->store($request->validated());
     }
+
+    public function destroy(Npc $npc)
+    {
+        $this->npcService->destroy($npc);
+    }
 }

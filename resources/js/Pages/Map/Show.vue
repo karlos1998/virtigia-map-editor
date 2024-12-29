@@ -91,6 +91,15 @@ const addNewObject = (event: MouseEvent) => {
 const throughTheDoor = (door: DoorResource) => {
     router.get(route('maps.show', door.go_map_id));
 }
+
+const removeNpc = (npc: NpcResource) => {
+    console.log('test', npc)
+    router.delete(route('npcs.destroy', npc.id), {
+        onSuccess: () => {
+            confirm.close();
+        }
+    });
+}
 </script>
 
 <template>
@@ -115,7 +124,7 @@ const throughTheDoor = (door: DoorResource) => {
                         <Button label="Pokaż szczegóły" @click="rejectCallback" size="small" />
                     </Link>
 
-                    <Button label="Usuń" @click="rejectCallback" severity="danger" size="small" />
+                    <Button label="Usuń" @click="removeNpc(message.npc)" severity="danger" size="small" />
                 </div>
 
             </template>
