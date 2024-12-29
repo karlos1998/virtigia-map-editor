@@ -4,16 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreBaseNpcRequest;
 use App\Http\Requests\UpdateBaseNpcRequest;
+use App\Http\Resources\BaseNpcResource;
+use App\Http\Resources\NpcLocationResource;
+use App\Http\Resources\PureNpcWithOnlyLocationsResource;
 use App\Models\BaseNpc;
+use App\Services\BaseNpcService;
+use Inertia\Inertia;
 
 class BaseNpcController extends Controller
 {
+    public function __construct(private readonly BaseNpcService $baseNpcService)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        //
+        return Inertia::render('BaseNpc/Index', [
+            'baseNpcs' => $this->baseNpcService->getAll(),
+        ]);
     }
 
     /**
@@ -34,10 +45,14 @@ class BaseNpcController extends Controller
 
     /**
      * Display the specified resource.
+     * @throws \Exception
      */
     public function show(BaseNpc $baseNpc)
     {
-        //
+        return Inertia::render('BaseNpc/Show', [
+            'baseNpc' => BaseNpcResource::make($baseNpc),
+            'locations' => $this->baseNpcService->getLocations($baseNpc),
+        ]);
     }
 
     /**

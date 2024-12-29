@@ -3,12 +3,13 @@
 import AppLayout from "@/layout/AppLayout.vue";
 import AdvanceTable from "@advance-table/Components/AdvanceTable.vue";
 import AdvanceColumn from "@advance-table/Components/AdvanceColumn.vue";
-import {MapResource} from "@/Resources/Map.resource";
+import {BaseNpcResource} from "@/Resources/BaseNpc.resource";
 
 import { Link } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
+
 type Data = {
-    data: MapResource
+    data: BaseNpcResource
 }
 </script>
 
@@ -16,13 +17,13 @@ type Data = {
     <AppLayout>
         <div class="card">
             <AdvanceTable
-                prop-name="maps"
+                prop-name="baseNpcs"
             >
 
                 <template #header="{ globalFilterValue, globalFilterUpdated }">
 
                     <div class="flex flex-wrap gap-2 items-center justify-between">
-                        <h4 class="m-0">Lista Map</h4>
+                        <h4 class="m-0">Lista Bazowych Npc</h4>
                         <IconField>
                             <InputIcon>
                                 <i class="pi pi-search" />
@@ -38,6 +39,11 @@ type Data = {
 
                 <AdvanceColumn field="id" header="ID" style="width: 5%" />
 
+                <AdvanceColumn field="src" header="Grafika" style="width: 25%">
+                    <template #body="{ data }: Data">
+                        <img v-tooltip="data.src" :src="'https://virtigia-assets.letscode.it/img/npc/' + data.src" />
+                    </template>
+                </AdvanceColumn>
 
                 <AdvanceColumn field="name" header="Name" style="width: 25%">
                     <template #body="{ data }: Data">
@@ -49,9 +55,23 @@ type Data = {
                     </template>
                 </AdvanceColumn>
 
-                <AdvanceColumn field="activity" header="Rozmiar" style="width: 25%">
+                <AdvanceColumn field="lvl" header="Lvl" style="width: 25%">
                     <template #body="{ data }: Data">
-                        ({{data.x}},{{data.y}})
+                        <Badge style="background: #31c1d0" class="w-full">
+                            <span class="text-lg">
+                                {{ data.lvl }}
+                            </span>
+                        </Badge>
+                    </template>
+                </AdvanceColumn>
+
+                <AdvanceColumn field="location_count" header="Lokalizacje" style="width: 25%">
+                    <template #body="{ data }: Data">
+                        <Badge style="background: #31c1d0" class="w-full">
+                            <span class="text-lg">
+                                {{ data.location_count }}
+                            </span>
+                        </Badge>
                     </template>
                 </AdvanceColumn>
 
@@ -60,8 +80,8 @@ type Data = {
                         <div style="white-space: nowrap">
                             <span class="p-buttonset">
                                 <Link
-                                    :href="route('maps.show', {map: data.id})"
-                                    >
+                                    :href="route('base-npcs.show', {baseNpc: data.id})"
+                                >
                                     <Button
                                         class="px-2"
                                         icon="pi pi-eye"

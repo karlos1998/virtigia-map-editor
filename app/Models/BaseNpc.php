@@ -17,4 +17,15 @@ class BaseNpc extends DynamicModel
         'type',
         'wt',
     ];
+
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * Lokalizacja dla np "Królika"
+     * Nie są to respy jednego moba, tylko np kilkadziesiąt miejsc na mapie gdzie taki sam bazowy mob wystepuje
+     */
+    public function locations()
+    {
+        return $this->hasMany(Npc::class);
+    }
 }

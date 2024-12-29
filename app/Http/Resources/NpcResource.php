@@ -26,9 +26,6 @@ class NpcResource extends JsonResource
             'src' => $this->resource->base->src,
             'lvl' => $this->resource->base->lvl,
 
-            'x' => $this->resource->base->x,
-            'y' => $this->resource->base->y,
-
             $this->mergeWhen($this->resource->pivot?->x !== null && $this->resource->pivot?->y !== null, fn() => [
                 'location' => [
                     'x' => $this->resource->pivot->x,

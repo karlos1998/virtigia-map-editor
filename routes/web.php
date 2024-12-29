@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BaseItemController;
+use App\Http\Controllers\BaseNpcController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DialogController;
 use App\Http\Controllers\LoginController;
@@ -60,6 +61,9 @@ Route::middleware(['auth'])->group(function () {
 
                 Route::get('shops/{shop}', [ShopController::class, 'show'])->name('shops.show');
                 Route::post('shops/{shop}/items', [ShopController::class, 'addItem'])->name('shops.items.store');
+
+                Route::get('base-npcs', [BaseNpcController::class, 'index'])->name('base-npcs.index');
+                Route::get('base-npcs/{baseNpc}', [BaseNpcController::class, 'show'])->name('base-npcs.show');
             });
     });
 
