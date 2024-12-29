@@ -15,4 +15,11 @@ class Shop extends DynamicModel
         return $this->belongsToMany(BaseItem::class, ShopItem::class, 'shop_id', 'item_id')
             ->withPivot('position');
     }
+
+    public function dialogs()
+    {
+        return $this
+            ->belongsToMany(Dialog::class, DialogNode::class, 'source_dialog_id', 'shop_id')
+            ->distinct(); // unikalny dialog, bo sklep moze byc wywolany przez wiele DialogNode
+    }
 }

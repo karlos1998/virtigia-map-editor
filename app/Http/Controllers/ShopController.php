@@ -21,7 +21,9 @@ class ShopController extends Controller
      */
     public function index()
     {
-        //
+        return Inertia::render('Shop/Index', [
+            'shops' => $this->shopService->getAll()
+        ]);
     }
 
     /**

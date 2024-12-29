@@ -9,18 +9,19 @@ import {route} from "ziggy-js";
 import {DialogResource, DialogWithNpcsResource} from "@/Resources/Dialog.resource";
 import {ref} from "vue";
 import NpcLocationsColumnTemplate from "@/Components/TableColumnTemplates/NpcLocationsColumnTemplate.vue";
+import {ShopResource} from "@/Resources/Shop.resource";
 import NpcExpansionColumnTemplate from "@/Components/TableColumnTemplates/NpcExpansionColumnTemplate.vue";
 
 
 type Data = {
-    data: DialogWithNpcsResource
+    data: ShopResource
 }
 
 const expandedRows = ref();
 </script>
 <template>
     <AdvanceTable
-        prop-name="dialogs"
+        prop-name="shops"
         v-model:expandedRows="expandedRows"
     >
 
@@ -53,18 +54,33 @@ const expandedRows = ref();
         <!--                    </template>-->
         <!--                </AdvanceColumn>-->
 
-        <AdvanceColumn field="info" header="Informacje" >
+        <AdvanceColumn field="name" header="Nazwa" />
+
+        <AdvanceColumn field="info" header="Ilość przedmiotów" >
             <template #body="{ data }: Data">
-                <Tag v-if="data.npcs_count > 0" :value="`W użyciu przez ${data.npcs_count} npc `" />
-                <Tag v-else severity="warn" value="Ten dialog nie jest używany" />
+                <Tag v-if="data.items_count > 0" :value="data.items_count" v-tooltip="`W sklepie jest ${data.items_count} przedmiotów `" />
+                <Tag v-else severity="warn" value="Brak" />
             </template>
         </AdvanceColumn>
 
+        <AdvanceColumn field="info" header="Połączonych dialogów" >
+            <template #body="{ data }: Data">
+                <Tag v-if="data.dialogs_count > 0" :value="data.dialogs_count" v-tooltip="`W użyciu przez ${data.dialogs_count} dialogów `" />
+                <Tag v-else severity="warn" value="Nie używany" />
+            </template>
+        </AdvanceColumn>
 
-        <Column header="Action">
+        <AdvanceColumn field="info" header="Połączonych Npc" >
+            <template #body="{ data }: Data">
+                <Tag v-if="data.npcs.length > 0" :value="data.npcs.length" v-tooltip="`W użyciu przez ${data.dialogs_count} npc `" />
+                <Tag v-else severity="warn" value="Nie używany" />
+            </template>
+        </AdvanceColumn>
+
+        <Column field="src" header="Akcje">
             <template #body="{data}">
                 <Link
-                    :href="route('dialogs.show', data.id)"
+                    :href="route('shops.show', data.id)"
                 >
                     <Button
                         class="px-2"
@@ -74,7 +90,6 @@ const expandedRows = ref();
                 </Link>
             </template>
         </Column>
-
 
         <template #expansion="{data}: Data">
             <NpcExpansionColumnTemplate :npcs="data.npcs" />
