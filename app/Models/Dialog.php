@@ -19,4 +19,9 @@ class Dialog extends DynamicModel
     {
         return $this->hasMany(DialogNode::class, 'source_dialog_id');
     }
+
+    public function npcs()
+    {
+        return $this->hasMany(Npc::class);
+    }
 }

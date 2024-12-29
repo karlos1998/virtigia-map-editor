@@ -7,6 +7,7 @@ use App\Http\Resources\NpcResource;
 use App\Models\Map;
 use App\Models\Npc;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
+use Karlos3098\LaravelPrimevueTableService\Services\TableService;
 
 class NpcService extends BaseService
 {
@@ -18,7 +19,10 @@ class NpcService extends BaseService
     {
         return $this->fetchData(
             NpcResource::class,
-            $this->npcModel
+            $this->npcModel->with('locations'),
+            new TableService(
+//                globalFilterColumns: ['base.name'], //todo - brak szukania po relacji ;c
+            )
         );
     }
 }

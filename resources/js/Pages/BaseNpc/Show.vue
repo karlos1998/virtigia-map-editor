@@ -4,6 +4,8 @@ import AppLayout from "@/layout/AppLayout.vue";
 import {BaseNpcResource} from "@/Resources/BaseNpc.resource";
 import {NpcLocationResource} from "@/Resources/NpcLocation.resource";
 import BaseNpcLocationsTable from "@/Pages/BaseNpc/Partials/BaseNpcLocationsTable.vue";
+import {route} from "ziggy-js";
+import ItemHeader from "@/Components/ItemHeader.vue";
 
 defineProps<{
     baseNpc: BaseNpcResource
@@ -14,14 +16,14 @@ defineProps<{
 <template>
     <AppLayout>
 
-        <div
-            class="card"
+        <ItemHeader
+            :route-back="route('base-npcs.index')"
         >
-            <div>
-                <img v-tooltip="baseNpc.src" :src="'https://virtigia-assets.letscode.it/img/npc/' + baseNpc.src" />
-                <div class="font-bold">{{ baseNpc.name }}</div>
-            </div>
-        </div>
+            <template #header>
+                <img v-tooltip="baseNpc.src" :src="'https://virtigia-assets.letscode.it/img/npc/' + baseNpc.src"  alt=""/>
+                #{{ baseNpc.id }} - {{ baseNpc.name }}
+            </template>
+        </ItemHeader>
 
         <div
             class="card"

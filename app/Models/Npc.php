@@ -9,6 +9,8 @@ class Npc extends DynamicModel
 
     protected $fillable = ['grp'];
 
+    protected $casts = ['grp' => 'boolean'];
+
     public function base()
     {
         return $this->belongsTo(BaseNpc::class, 'base_npc_id');
@@ -17,5 +19,10 @@ class Npc extends DynamicModel
     public function locations()
     {
         return $this->hasMany(NpcLocation::class);
+    }
+
+    public function dialog()
+    {
+        return $this->belongsTo(Dialog::class);
     }
 }

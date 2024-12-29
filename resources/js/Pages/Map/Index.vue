@@ -14,6 +14,7 @@ type Data = {
 
 <template>
     <AppLayout>
+        
         <div class="card">
             <AdvanceTable
                 prop-name="maps"
@@ -41,17 +42,13 @@ type Data = {
 
                 <AdvanceColumn field="name" header="Name" style="width: 25%">
                     <template #body="{ data }: Data">
-                        <Badge style="background: #31c1d0" class="w-full">
-                            <span class="text-lg">
-                                {{ data.name }}
-                            </span>
-                        </Badge>
+                        {{ data.name }}
                     </template>
                 </AdvanceColumn>
 
                 <AdvanceColumn field="activity" header="Rozmiar" style="width: 25%">
                     <template #body="{ data }: Data">
-                        ({{data.x}},{{data.y}})
+                        ({{data.x}}x{{data.y}})
                     </template>
                 </AdvanceColumn>
 

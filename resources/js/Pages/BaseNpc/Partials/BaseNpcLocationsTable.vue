@@ -4,6 +4,8 @@ import {route} from "ziggy-js";
 import AdvanceTable from "@advance-table/Components/AdvanceTable.vue";
 import AdvanceColumn from "@advance-table/Components/AdvanceColumn.vue";
 import {PureNpcWithOnlyLocationsResource} from "@/Resources/Npc.resource";
+import {Link} from "@inertiajs/vue3";
+import NpcLocationsColumnTemplate from "@/Components/TableColumnTemplates/NpcLocationsColumnTemplate.vue";
 
 type Data = {
     data: PureNpcWithOnlyLocationsResource
@@ -40,23 +42,23 @@ type Data = {
 
         <AdvanceColumn field="name" header="Lokalizacja" style="width: 25%">
             <template #body="{ data }: Data">
-                <span class="text-lg" v-if="data.locations.length > 0">
-                    <span>{{ data.locations[0].map_name }}
-                        ({{data.locations[0].x}},{{data.locations[0].y}})</span>
-                    <Tag
-                        v-if="data.locations.length > 1"
-                        :value="'+ ' + (data.locations.length - 1) + ' dodatkowych'"
-                        severity="info"
-                        v-tooltip="'Dodatkowe respy tego konkretnego moba. Po jego zabiciu może pojawić się w kilku lokalizacjach.'"
-                    />
-                </span>
-                <Tag
-                    v-else
-                    value="Wykryto problem! Ten mob nie ma respów!"
-                    severity="danger"
-                />
+                <NpcLocationsColumnTemplate :npc="data" />
             </template>
         </AdvanceColumn>
+
+        <Column header="Action" style="width: 20%">
+            <template #body="{data}">
+                <Link
+                    :href="route('npcs.show', {npc: data.id})"
+                >
+                    <Button
+                        class="px-2"
+                        icon="pi pi-eye"
+                        label="Podgląd"
+                    />
+                </Link>
+            </template>
+        </Column>
 
     </AdvanceTable>
 </template>

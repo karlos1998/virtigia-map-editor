@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Npc;
+use App\Models\NpcLocation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -18,20 +19,25 @@ class NpcResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-
         return [
             'id' => $this->resource->id,
 
             'name' => $this->resource->base->name,
             'src' => $this->resource->base->src,
             'lvl' => $this->resource->base->lvl,
+            'type' => $this->resource->base->type,
+            'grp' => $this->resource->grp,
 
             $this->mergeWhen($this->resource->pivot?->x !== null && $this->resource->pivot?->y !== null, fn() => [
                 'location' => [
                     'x' => $this->resource->pivot->x,
                     'y' => $this->resource->pivot->y,
                 ],
-            ])
+            ]),
+
+            'locations' => $this->whenLoaded('locations', fn() => NpcLocationResource::collection($this->resource->locations)),
+
+            'dialog' => $this->whenLoaded('dialog', fn() => DialogResource::make($this->resource->dialog)),
         ];
     }
 }

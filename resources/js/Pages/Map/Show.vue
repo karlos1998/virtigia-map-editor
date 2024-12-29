@@ -7,6 +7,7 @@ import { route } from 'ziggy-js';
 import {NpcResource, NpcWithLocationResource} from '@/Resources/Npc.resource';
 import { DoorResource } from '@/Resources/Door.resource';
 import { useConfirm } from 'primevue';
+import ItemHeader from "@/Components/ItemHeader.vue";
 
 const props = defineProps<{
     map: MapResource;
@@ -123,11 +124,15 @@ interface NpcWithLocation {
 
         </ConfirmPopup>
 
-        <div class="card">
-            <Link :href="route('maps.index')">
-                <Button label="Powrót" severity="info" />
-            </Link>
-        </div>
+
+        <ItemHeader
+            :route-back="route('maps.index')"
+        >
+            <template #header>
+                #{{ map.id }} - {{ map.name }}
+            </template>
+        </ItemHeader>
+
 
         <div class="card">
             <div class="flex gap-2">

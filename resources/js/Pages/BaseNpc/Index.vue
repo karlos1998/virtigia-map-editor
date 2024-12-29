@@ -47,30 +47,22 @@ type Data = {
 
                 <AdvanceColumn field="name" header="Name" style="width: 25%">
                     <template #body="{ data }: Data">
+                        {{ data.name }}
+                    </template>
+                </AdvanceColumn>
+
+                <AdvanceColumn field="lvl" header="Lvl">
+                    <template #body="{ data }: Data">
                         <Badge style="background: #31c1d0" class="w-full">
-                            <span class="text-lg">
-                                {{ data.name }}
-                            </span>
+                            {{ data.lvl }}
                         </Badge>
                     </template>
                 </AdvanceColumn>
 
-                <AdvanceColumn field="lvl" header="Lvl" style="width: 25%">
+                <AdvanceColumn field="location_count" header="Ilość Wystąpień">
                     <template #body="{ data }: Data">
                         <Badge style="background: #31c1d0" class="w-full">
-                            <span class="text-lg">
-                                {{ data.lvl }}
-                            </span>
-                        </Badge>
-                    </template>
-                </AdvanceColumn>
-
-                <AdvanceColumn field="location_count" header="Lokalizacje" style="width: 25%">
-                    <template #body="{ data }: Data">
-                        <Badge style="background: #31c1d0" class="w-full">
-                            <span class="text-lg">
-                                {{ data.location_count }}
-                            </span>
+                            {{ data.location_count }}
                         </Badge>
                     </template>
                 </AdvanceColumn>

@@ -43,8 +43,8 @@ Route::middleware(['auth'])->group(function () {
                 //RemoveWorldTemplateNameFromRouteParameters::class //todo
             ])
             ->group(function () {
-                Route::get('dialogs', [DialogController::class, 'index']);
-                Route::get('dialogs/{dialog}', [DialogController::class, 'show']);
+                Route::get('dialogs', [DialogController::class, 'index'])->name('dialogs.index');
+                Route::get('dialogs/{dialog}', [DialogController::class, 'show'])->name('dialogs.show');
                 Route::post('dialogs/{dialog}/nodes', [DialogController::class, 'addNode'])->name('dialogs.nodes.store');
                 Route::post('dialogs/{dialog}/nodes/{dialogNode}', [DialogController::class, 'moveNode'])->name('dialogs.nodes.move');
                 Route::post('dialogs/{dialog}/edges', [DialogController::class, 'addEdge'])->name('dialogs.edges.store');
@@ -58,6 +58,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('base-items/search', [BaseItemController::class, 'search'])->name('base-items.search');
 
                 Route::get('npcs', [NpcController::class, 'index'])->name('npcs.index');
+                Route::get('npcs/{npc}', [NpcController::class, 'show'])->name('npcs.show');
 
                 Route::get('shops/{shop}', [ShopController::class, 'show'])->name('shops.show');
                 Route::post('shops/{shop}/items', [ShopController::class, 'addItem'])->name('shops.items.store');
