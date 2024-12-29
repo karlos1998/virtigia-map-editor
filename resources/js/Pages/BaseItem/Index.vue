@@ -18,17 +18,32 @@ type Data = {
             >
                 <AdvanceColumn field="id" header="ID" style="width: 5%" />
 
-                <AdvanceColumn field="name" header="Name" style="width: 25%">
+                <template #header="{ globalFilterValue, globalFilterUpdated }">
+
+                    <div class="flex flex-wrap gap-2 items-center justify-between">
+                        <h4 class="m-0">Lista Bazowych Przedmiotów</h4>
+                        <IconField>
+                            <InputIcon>
+                                <i class="pi pi-search" />
+                            </InputIcon>
+                            <InputText
+                                :value="globalFilterValue"
+                                @update:model-value="globalFilterUpdated"
+                                placeholder="Szukaj"
+                            />
+                        </IconField>
+                    </div>
+                </template>
+
+                <AdvanceColumn field="src" header="Grafika">
                     <template #body="{ data }: Data">
-                        <Badge style="background: #31c1d0" class="w-full">
-                            <span class="text-lg">
-                                {{ data.name }}
-                            </span>
-                        </Badge>
+                        <img alt="" :src="`https://virtigia-assets.letscode.it/img/${data.src}`" />
                     </template>
                 </AdvanceColumn>
 
-                <Column header="Action" style="width: 20%">
+                <AdvanceColumn field="name" header="Name" />
+
+                <Column header="Action" >
                     <template #body="slotProps">
                         <div style="white-space: nowrap">
                             <span class="p-buttonset">

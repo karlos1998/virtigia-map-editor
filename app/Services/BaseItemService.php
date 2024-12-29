@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Http\Resources\BaseItemResource;
 use App\Models\BaseItem;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
+use Karlos3098\LaravelPrimevueTableService\Services\TableService;
 
 final class BaseItemService extends BaseService
 {
@@ -19,7 +20,10 @@ final class BaseItemService extends BaseService
     {
         return $this->fetchData(
             BaseItemResource::class,
-            $this->baseItemModel
+            $this->baseItemModel,
+            new TableService(
+                globalFilterColumns: ['name'],
+            )
         );
     }
 
