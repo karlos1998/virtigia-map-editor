@@ -69,8 +69,9 @@ defineProps<{
             >
                 <template #label>
                     <Link :href="route('maps.show', location.map_id)">
-                        {{location.map_name}}
+                        <Button label="Pokaż mapę" size="small" />
                     </Link>
+                    <span class="ml-4 font-bold">{{location.map_name}}</span>
                 </template>
             </DetailsCardListItem>
         </DetailsCardList>

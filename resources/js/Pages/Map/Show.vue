@@ -116,7 +116,13 @@ interface NpcWithLocation {
                     <!--                    <Button label="Save" @click="acceptCallback" size="small"></Button>-->
                     <Button label="Zamknij" severity="contrast" @click="rejectCallback" size="small" />
                     <Button label="Kopiuj" severity="help" @click="rejectCallback" size="small" />
-                    <Button label="Pokaż szczegóły" @click="rejectCallback" size="small" />
+
+                    <Link
+                        :href="route('npcs.show', message.npc.id)"
+                    >
+                        <Button label="Pokaż szczegóły" @click="rejectCallback" size="small" />
+                    </Link>
+
                     <Button label="Usuń" @click="rejectCallback" severity="danger" size="small" />
                 </div>
 
