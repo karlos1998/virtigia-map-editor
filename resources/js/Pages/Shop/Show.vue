@@ -10,6 +10,7 @@ import {BaseItemResource, BaseItemWithPosition} from "@/Resources/BaseItem.resou
 import Item from "@advance-table/Components/Item.vue";
 import ItemHeader from "@/Components/ItemHeader.vue";
 import {useConfirm, useToast} from "primevue";
+import {ref} from "vue";
 
 const props = defineProps<{
     shop: ShopResource
@@ -19,7 +20,7 @@ const props = defineProps<{
 const toast = useToast();
 
 const primeDialog = useDialog();
-
+const addItemDialogInstance = ref();
 const addItem = (event: MouseEvent) => {
 
     if ((event.target as HTMLElement).closest('.item')) {
@@ -34,7 +35,11 @@ const addItem = (event: MouseEvent) => {
     const relativeY = Math.floor(offsetY / 32);
     const position = relativeX + relativeY * 8;
 
-    primeDialog.open(AddShopItemDialog, {
+    if(addItemDialogInstance.value?.visible) {
+        return;
+    }
+
+    addItemDialogInstance.value = primeDialog.open(AddShopItemDialog, {
         props: {
             header: 'Dodaj przedmiot do sklepu'
         },
