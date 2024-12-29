@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Npc extends DynamicModel
 {
+
+    protected $fillable = ['grp'];
+
     public function base()
     {
         return $this->belongsTo(BaseNpc::class, 'base_npc_id');
