@@ -46,6 +46,11 @@ const model = ref([
                 icon: 'pi pi-shop',
                 route: 'shops.index',
             },
+            {
+                label: 'Bazowe Przedmioty',
+                icon: 'pi pi-shopping-bag',
+                route: 'base-items.index',
+            },
         ],
     },
 ]);
