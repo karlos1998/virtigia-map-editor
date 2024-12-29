@@ -35,6 +35,7 @@ const confirm = () => {
             }
         })
         .post(route('npcs.store'), {
+            preserveScroll: true,
             onSuccess: () => {
                 dialogRef.value.close({
                     remove: true,

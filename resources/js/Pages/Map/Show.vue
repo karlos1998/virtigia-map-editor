@@ -95,6 +95,7 @@ const throughTheDoor = (door: DoorResource) => {
 const removeNpc = (npc: NpcResource) => {
     console.log('test', npc)
     router.delete(route('npcs.destroy', npc.id), {
+        preserveScroll: true,
         onSuccess: () => {
             confirm.close();
         }
