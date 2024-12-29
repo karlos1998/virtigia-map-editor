@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreNpcRequest;
 use App\Http\Resources\BaseNpcResource;
 use App\Http\Resources\NpcResource;
 use App\Models\Npc;
@@ -28,5 +29,10 @@ class NpcController extends Controller
             'baseNpc' => BaseNpcResource::make($npc->base),
             'npc' => NpcResource::make($npc->load(['locations', 'dialog'])),
         ]);
+    }
+
+    public function store(StoreNpcRequest $request)
+    {
+        $this->npcService->store($request->validated());
     }
 }

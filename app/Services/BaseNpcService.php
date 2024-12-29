@@ -40,4 +40,9 @@ final class BaseNpcService extends BaseService
             )
         );
     }
+
+    public function search(string $search)
+    {
+        return BaseNpcResource::collection($this->baseNpcModel->where('name', 'like', '%' . $search . '%')->limit(25)->get());
+    }
 }

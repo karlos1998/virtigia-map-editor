@@ -9,6 +9,7 @@ use App\Http\Resources\NpcLocationResource;
 use App\Http\Resources\PureNpcWithOnlyLocationsResource;
 use App\Models\BaseNpc;
 use App\Services\BaseNpcService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class BaseNpcController extends Controller
@@ -77,5 +78,10 @@ class BaseNpcController extends Controller
     public function destroy(BaseNpc $baseNpc)
     {
         //
+    }
+
+    public function search(Request $request)
+    {
+        return response()->json($this->baseNpcService->search($request->get('query', '')));
     }
 }

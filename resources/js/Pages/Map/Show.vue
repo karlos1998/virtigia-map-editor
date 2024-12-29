@@ -8,6 +8,10 @@ import {NpcResource, NpcWithLocationResource} from '@/Resources/Npc.resource';
 import { DoorResource } from '@/Resources/Door.resource';
 import { useConfirm } from 'primevue';
 import ItemHeader from "@/Components/ItemHeader.vue";
+import EditOption from "@/Pages/Dialog/Modals/EditOption.vue";
+import {DynamicDialogCloseOptions, DynamicDialogInstance} from "primevue/dynamicdialogoptions";
+import {useDialog} from "primevue/usedialog";
+import AddNpcToMap from "@/Pages/Map/Modals/AddNpcToMap.vue";
 
 const props = defineProps<{
     map: MapResource;
@@ -42,21 +46,6 @@ const showNpcConfirmDialog = (event: MouseEvent, npc: NpcResource) => {
         message: 'Please confirm to proceed moving forward.',
         icon: 'pi pi-exclamation-circle',
         npc,
-        rejectProps: {
-            icon: 'pi pi-times',
-            label: 'Cancel',
-            outlined: true
-        },
-        acceptProps: {
-            icon: 'pi pi-check',
-            label: 'Confirm'
-        },
-        accept: () => {
-            // toast.add({severity:'info', summary:'Confirmed', detail:'You have accepted', life: 3000});
-        },
-        reject: () => {
-            // toast.add({severity:'error', summary:'Rejected', detail:'You have rejected', life: 3000});
-        }
     });
 };
 
@@ -72,33 +61,36 @@ const setTrackerPosition = (event: MouseEvent) => {
     };
 };
 
+
+const primeDialog = useDialog();
+const addNpcToMapDialogInstance = ref<DynamicDialogInstance>();
+const lastSelectedNpc = ref<NpcResource>();
 const addNewObject = (event: MouseEvent) => {
     console.log('addNewObject', event, trackerPosition.value);
+
+    if(addNpcToMapDialogInstance.value) {
+        console.log(addNpcToMapDialogInstance.value);
+    }
+
+    addNpcToMapDialogInstance.value = primeDialog.open(AddNpcToMap, {
+        props: {
+            header: 'Dodawanie NPC do mapy'
+        },
+        data: {
+            x: trackerPosition.value.x,
+            y: trackerPosition.value.y,
+            map: props.map,
+            lastSelectedNpc: lastSelectedNpc.value,
+        },
+        onClose(closeOptions: DynamicDialogCloseOptions & { data: { npc?: NpcResource } }) {
+            lastSelectedNpc.value = closeOptions.data.npc;
+        }
+    });
 };
 
 const throughTheDoor = (door: DoorResource) => {
     router.get(route('maps.show', door.go_map_id));
 }
-
-interface NpcWithLocation {
-    id: number
-    name: string
-    src: string
-    x: number
-    y: number
-}
-
-// const allNpcs = computed<NpcWithLocation[]>(() => {
-//     return props.npcs.flatMap(npc =>
-//         npc.locations.map(location => ({
-//             id: npc.id,
-//             name: npc.name,
-//             src: npc.src,
-//             x: location.x,
-//             y: location.y,
-//         }))
-//     )
-// })
 </script>
 
 <template>
@@ -129,6 +121,7 @@ interface NpcWithLocation {
             </template>
 
         </ConfirmPopup>
+
 
 
         <ItemHeader

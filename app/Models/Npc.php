@@ -11,6 +11,10 @@ class Npc extends DynamicModel
 
     protected $casts = ['grp' => 'boolean'];
 
+    protected $attributes = [
+        'grp' => false
+    ];
+
     public function base()
     {
         return $this->belongsTo(BaseNpc::class, 'base_npc_id');
