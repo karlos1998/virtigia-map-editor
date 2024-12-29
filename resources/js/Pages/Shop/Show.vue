@@ -8,6 +8,7 @@ import {router} from "@inertiajs/vue3";
 import {ShopResource} from "@/Resources/Shop.resource";
 import {BaseItemResource, BaseItemWithPosition} from "@/Resources/BaseItem.resource";
 import Item from "@advance-table/Components/Item.vue";
+import ItemHeader from "@/Components/ItemHeader.vue";
 
 const props = defineProps<{
     shop: ShopResource
@@ -49,7 +50,15 @@ const addItem = (event: MouseEvent) => {
 <template>
 
     <AppLayout>
-        <div class="card">{{ shop.name }}</div>
+
+        <ItemHeader
+            :route-back="route('shops.index')"
+        >
+            <template #header>
+                #{{ shop.id }} - {{ shop.name }}
+            </template>
+        </ItemHeader>
+
         <div class="card">
             <div class="shop">
                 <div class="items-area" @click="addItem">
