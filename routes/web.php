@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\BaseItemController;
 use App\Http\Controllers\BaseNpcController;
@@ -79,6 +80,8 @@ Route::middleware(['auth'])->group(function () {
 
                 Route::get('assets/base-npcs/search', [AssetController::class, 'searchNpcs'])->name('assets.base-npcs.search');
             });
+
+        Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
     });
 
 
