@@ -20,7 +20,7 @@ defineProps<{
             :route-back="route('base-npcs.index')"
         >
             <template #header>
-                <img v-tooltip="baseNpc.src" :src="'https://virtigia-assets.letscode.it/img/npc/' + baseNpc.src"  alt=""/>
+                <img v-tooltip="baseNpc.src" :src="'https://s3.letscode.it/virtigia-assets/img/npc/' + baseNpc.src"  alt=""/>
                 #{{ baseNpc.id }} - {{ baseNpc.name }}
             </template>
         </ItemHeader>

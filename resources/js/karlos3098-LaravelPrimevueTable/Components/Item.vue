@@ -6,7 +6,7 @@ defineProps<{
     item: BaseItemWithPosition
 }>()
 
-const fullUrl = (itemImage: string) => `https://virtigia-assets.letscode.it/img/${itemImage}`
+const fullUrl = (itemImage: string) => `https://s3.letscode.it/virtigia-assets/img/${itemImage}`
 // const fullUrl = (itemImage: string) => `${Variables.assetsUrl}/img/${itemImage}`
 
 const width = ref(8); // ilosc w lini

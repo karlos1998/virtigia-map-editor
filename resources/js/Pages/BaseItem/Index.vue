@@ -37,7 +37,7 @@ type Data = {
 
                 <AdvanceColumn field="src" header="Grafika">
                     <template #body="{ data }: Data">
-                        <img alt="" :src="`https://virtigia-assets.letscode.it/img/${data.src}`" />
+                        <img alt="" :src="`https://s3.letscode.it/virtigia-assets/img/${data.src}`" />
                     </template>
                 </AdvanceColumn>
 

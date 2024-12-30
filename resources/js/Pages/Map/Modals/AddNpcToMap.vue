@@ -85,7 +85,7 @@ const filterNpcs = async ({ query }: { query: string }) => {
                         <img
                             class="w-12 object-cover"
                             v-tooltip="slotProps.option.src"
-                            :src="'https://virtigia-assets.letscode.it/img/npc/' + slotProps.option.src"
+                            :src="'https://s3.letscode.it/virtigia-assets/img/npc/' + slotProps.option.src"
                             alt="Option Image"
                         />
                         <div class="text-center">
@@ -107,7 +107,7 @@ const filterNpcs = async ({ query }: { query: string }) => {
         <div v-if="form.npc && typeof form.npc == 'object'">
             <img
                 class="w-12 object-cover"
-                :src="'https://virtigia-assets.letscode.it/img/npc/' + form.npc.src"
+                :src="'https://s3.letscode.it/virtigia-assets/img/npc/' + form.npc.src"
                 alt="Option Image"
             />
             <div class="font-bold">{{ form.npc.name }}</div>

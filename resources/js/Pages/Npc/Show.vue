@@ -23,14 +23,14 @@ defineProps<{
             :route-back="route('npcs.index')"
         >
             <template #header>
-                <img v-tooltip="baseNpc.src" :src="'https://virtigia-assets.letscode.it/img/npc/' + baseNpc.src"  alt=""/>
+                <img v-tooltip="baseNpc.src" :src="'https://s3.letscode.it/virtigia-assets/img/npc/' + baseNpc.src"  alt=""/>
                 #{{ npc.id }} - {{ npc.name }}
             </template>
         </ItemHeader>
 
         <DetailsCardList title="Informacje Podstawowe" >
             <DetailsCardListItem label="Nazwa" :value="npc.name" />
-            <DetailsCardListItem label="Link do grafiki" :value="'https://virtigia-assets.letscode.it/img/npc/' + baseNpc.src" />
+            <DetailsCardListItem label="Link do grafiki" :value="'https://s3.letscode.it/virtigia-assets/img/npc/' + baseNpc.src" />
             <DetailsCardListItem label="Lvl" :value="npc.lvl" />
             <DetailsCardListItem label="Type" :value="npc.type" />
             <DetailsCardListItem label="W Grupie" :value="npc.grp" />

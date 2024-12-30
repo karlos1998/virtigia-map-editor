@@ -69,6 +69,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::delete('shops/{shop}/items/{position}', [ShopController::class, 'destroyItem'])->name('shops.items.destroy');
 
                 Route::get('base-npcs', [BaseNpcController::class, 'index'])->name('base-npcs.index');
+                Route::get('base-npcs/create', [BaseNpcController::class, 'create'])->name('base-npcs.create');
                 Route::get('base-npcs/search', [BaseNpcController::class, 'search'])->name('base-npcs.search');
                 Route::get('base-npcs/{baseNpc}', [BaseNpcController::class, 'show'])->name('base-npcs.show');
             });

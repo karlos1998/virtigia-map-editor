@@ -37,7 +37,7 @@ class ImportNpcsFromJson extends Command
 
         foreach($json as $jsonItem) {
 
-            $response = Http::get('https://virtigia-assets.letscode.it/img/npc/retro/' . $jsonItem->src);
+            $response = Http::get('https://s3.letscode.it/virtigia-assets/img/npc/retro/' . $jsonItem->src);
             if(!$response->successful()) {
                 dd('error:', $jsonItem);
             }

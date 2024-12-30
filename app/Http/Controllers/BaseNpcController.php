@@ -10,6 +10,7 @@ use App\Http\Resources\PureNpcWithOnlyLocationsResource;
 use App\Models\BaseNpc;
 use App\Services\BaseNpcService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class BaseNpcController extends Controller
@@ -33,7 +34,9 @@ class BaseNpcController extends Controller
      */
     public function create()
     {
-        //
+
+        dd(count(Storage::disk('s3')->files('img')));
+        return Inertia::render('BaseNpc/Create');
     }
 
     /**

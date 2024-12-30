@@ -154,7 +154,7 @@ const removeNpc = (npc: NpcResource) => {
             <div
                 class="map-container relative"
                 :style="{
-                    backgroundImage: `url(https://virtigia-assets.letscode.it/img/locations/${map.src})`,
+                    backgroundImage: `url(https://s3.letscode.it/virtigia-assets/img/locations/${map.src})`,
                     width: `${map.x * 32 * scale}px`,
                     height: `${map.y * 32 * scale}px`,
                     transformOrigin: 'top left',
@@ -193,7 +193,7 @@ const removeNpc = (npc: NpcResource) => {
                     />
                     <!-- Obrazek NPC -->
                     <img
-                        :src="`https://virtigia-assets.letscode.it/img/npc/${npc.src}`"
+                        :src="`https://s3.letscode.it/virtigia-assets/img/npc/${npc.src}`"
                         :style="{
                             position: 'relative',
                             width: `${npcWidths[npc.id] * scale}px`,

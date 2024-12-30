@@ -51,7 +51,7 @@ const filterItems = async ({ query }: { query: string }) => {
                         <img
                             class="h-12 w-12 object-cover"
                             v-tooltip="slotProps.option.src"
-                            :src="'https://virtigia-assets.letscode.it/img/' + slotProps.option.src"
+                            :src="'https://s3.letscode.it/virtigia-assets/img/' + slotProps.option.src"
                             alt="Option Image"
                         />
                         <div class="text-center">
