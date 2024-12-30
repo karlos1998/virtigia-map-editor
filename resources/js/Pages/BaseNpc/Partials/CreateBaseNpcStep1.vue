@@ -9,8 +9,6 @@ const src = defineModel<string>('src')
 
 const onNodeExpand = (node) => {
 
-    console.log('onNodeExpand2', node)
-
     if(node.children) {
         return;
     }
@@ -36,8 +34,9 @@ type Item = {
 }
 
 const load = async (path) => {
-    const { data } = await axios.get<Item[]>(route('assets.search', {
-        path: path
+    const { data } = await axios.get<Item[]>(route('assets.base-npcs.search', {
+        path: path,
+        only_unused: onlyUnused.value,
     }));
 
     return data.map((item) => {
@@ -58,10 +57,23 @@ onMounted(() => {
     init();
 });
 
+const rebuild = () => {
+    nodes.value = null;
+    init();
+}
+
 const emit = defineEmits(['selected']);
+
+const onlyUnused = ref(true);
 
 </script>
 <template>
+
+    <div class="flex items-center gap-2">
+        <Checkbox v-model="onlyUnused" inputId="onlyUnused" name="onlyUnused" binary @change="rebuild" />
+        <label for="onlyUnused">Pokaż tylko nieużwane grafiki</label>
+    </div>
+
     <Tree :value="nodes" @node-expand="onNodeExpand" loadingMode="icon">
         <template #default="{ node }">
             <div class="flex items-center justify-center">
