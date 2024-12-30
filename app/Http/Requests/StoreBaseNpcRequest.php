@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Storage;
 
 class StoreBaseNpcRequest extends FormRequest
 {
@@ -11,7 +12,7 @@ class StoreBaseNpcRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +23,22 @@ class StoreBaseNpcRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'src' => [
+                'required', 'string',
+                function ($attribute, $value, $fail) {
+                    if (Storage::disk('s3')->get("img/npc/{$value}") == null) { //exists cos nie chcialo dzialac...
+                        $fail("The {$attribute} path does not exist in S3 storage.");
+                    }
+                },
+            ],
+
+            'name' => [
+                'required',
+                'min:2',
+                'string'
+            ],
+            'lvl' => ['required', 'integer'],
+            'type' => ['required', 'integer'],
         ];
     }
 }

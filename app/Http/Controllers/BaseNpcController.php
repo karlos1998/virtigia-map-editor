@@ -29,13 +29,18 @@ class BaseNpcController extends Controller
         ]);
     }
 
+    public function indexJson()
+    {
+        return response()->json(
+            $this->baseNpcService->getAll()->jsonSerialize(),
+        );
+    }
+
     /**
      * Show the form for creating a new resource.
      */
     public function create()
     {
-
-        dd(count(Storage::disk('s3')->files('img')));
         return Inertia::render('BaseNpc/Create');
     }
 
@@ -44,7 +49,9 @@ class BaseNpcController extends Controller
      */
     public function store(StoreBaseNpcRequest $request)
     {
-        //
+        $model = $this->baseNpcService->store($request->validated());
+        return to_route('base-npcs.show', $model->id);
+
     }
 
     /**

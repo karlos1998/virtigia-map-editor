@@ -49,4 +49,12 @@ const world = computed(() => usePage().props.auth.world);
     <DynamicDialog/>
 </template>
 
-<style lang="scss"></style>
+<style lang="scss">
+
+/**
+primevue Message = TODO . nie wiadomo czemu height ustawil sie na 100%.
+ */
+.p-message-content {
+    height: auto !important;
+}
+</style>

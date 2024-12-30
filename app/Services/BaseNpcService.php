@@ -5,6 +5,7 @@ use App\Http\Resources\BaseNpcResource;
 use App\Http\Resources\PureNpcWithOnlyLocationsResource;
 use App\Models\BaseNpc;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
+use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableTextColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\TableService;
 
 final class BaseNpcService extends BaseService
@@ -22,6 +23,11 @@ final class BaseNpcService extends BaseService
             BaseNpcResource::class,
             $this->baseNpcModel,
             new TableService(
+                columns: [
+                  'name' => new TableTextColumn(sortable: true),
+                  'src' => new TableTextColumn(sortable: true),
+                  'lvl' => new TableTextColumn(sortable: true),
+                ],
                 globalFilterColumns: ['name'],
             )
         );
@@ -44,5 +50,10 @@ final class BaseNpcService extends BaseService
     public function search(string $search)
     {
         return BaseNpcResource::collection($this->baseNpcModel->where('name', 'like', '%' . $search . '%')->limit(25)->get());
+    }
+
+    public function store(array $validated): BaseNpc
+    {
+        return BaseNpc::create($validated);
     }
 }

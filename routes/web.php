@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AssetController;
 use App\Http\Controllers\BaseItemController;
 use App\Http\Controllers\BaseNpcController;
 use App\Http\Controllers\DashboardController;
@@ -72,7 +73,11 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('base-npcs/create', [BaseNpcController::class, 'create'])->name('base-npcs.create');
                 Route::get('base-npcs/search', [BaseNpcController::class, 'search'])->name('base-npcs.search');
                 Route::get('base-npcs/{baseNpc}', [BaseNpcController::class, 'show'])->name('base-npcs.show');
+                Route::get('web-api/base-npcs', [BaseNpcController::class, 'indexJson'])->name('web-api.base-npcs.index');
+                Route::post('base-npcs', [BaseNpcController::class, 'store'])->name('base-npcs.store');
             });
+
+        Route::get('assets/search', [AssetController::class, 'search'])->name('assets.search');
     });
 
 
