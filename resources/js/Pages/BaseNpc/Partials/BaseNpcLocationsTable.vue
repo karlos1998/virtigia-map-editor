@@ -18,6 +18,9 @@ type Data = {
         prop-name="locations"
     >
 
+        <template #empty>
+            <Message>Ten NPC nie występuje jeszcze na żadnej mapie</Message>
+        </template>
 
         <!-- TODO Szukanie po lokalizacji z relacji, ale libka musi najpierw to obsluzyc -->
 <!--        <template #header="{ globalFilterValue, globalFilterUpdated }">-->
