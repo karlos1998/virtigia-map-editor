@@ -74,7 +74,7 @@ const onlyUnused = ref(true);
         <label for="onlyUnused">Pokaż tylko nieużwane grafiki</label>
     </div>
 
-    <Tree :value="nodes" @node-expand="onNodeExpand" loadingMode="icon">
+    <Tree v-if="nodes" :value="nodes" @node-expand="onNodeExpand" loadingMode="icon">
         <template #default="{ node }">
             <div class="flex items-center justify-center">
                 <div v-if="node.leaf" class="flex items-center p-4  space-x-4 border border-gray-300 rounded-lg shadow-md bg-white">
