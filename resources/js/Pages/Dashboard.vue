@@ -7,10 +7,15 @@ import {MapResource} from "@/Resources/Map.resource";
 
 <template>
     <AppLayout>
-        Dashboard :)
-        TODO:
+        <Message severity="success">
+            <div>Witaj w Edytorze Map, przybyszu ! :D</div>
+            <div>Bardzo się cieszę, że tu jesteś by pomoć nam odbudowywać świat Margatronu :)</div>
+            <div>Skorzystaj z bocznego menu by przejść do konkretnych funkcjonalności</div>
+        </Message>
 
-        Wejdz w /maps albo /base-items
+        <Message severity="error">
+            Uwaga! Nie dotykaj dialogów! Nie są jeszcze gotowe!
+        </Message>
     </AppLayout>
 
 </template>
