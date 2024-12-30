@@ -87,7 +87,8 @@ class BaseNpcController extends Controller
      */
     public function destroy(BaseNpc $baseNpc)
     {
-        //
+        $this->baseNpcService->destroy($baseNpc);
+        return to_route('base-npcs.index');
     }
 
     public function search(Request $request)

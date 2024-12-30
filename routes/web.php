@@ -75,6 +75,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('base-npcs/{baseNpc}', [BaseNpcController::class, 'show'])->name('base-npcs.show');
                 Route::get('web-api/base-npcs', [BaseNpcController::class, 'indexJson'])->name('web-api.base-npcs.index');
                 Route::post('base-npcs', [BaseNpcController::class, 'store'])->name('base-npcs.store');
+                Route::delete('base-npcs/{baseNpc}', [BaseNpcController::class, 'destroy'])->name('base-npcs.destroy');
             });
 
         Route::get('assets/search', [AssetController::class, 'search'])->name('assets.search');

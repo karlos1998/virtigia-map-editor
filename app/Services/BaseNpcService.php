@@ -56,4 +56,9 @@ final class BaseNpcService extends BaseService
     {
         return BaseNpc::create($validated);
     }
+
+    public function destroy(BaseNpc $baseNpc)
+    {
+        $baseNpc->delete();
+    }
 }
