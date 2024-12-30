@@ -53,6 +53,17 @@ const model = ref([
             },
         ],
     },
+    {
+        label: 'Zaasansowane',
+        icon: 'pi pi-home',
+        items: [
+            {
+                label: 'Logi zmian',
+                icon: 'pi pi-fw pi-home',
+                route: 'activity-logs.index',
+            },
+        ],
+    },
 ]);
 </script>
 
