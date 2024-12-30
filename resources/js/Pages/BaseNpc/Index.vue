@@ -4,7 +4,6 @@ import AppLayout from "@/layout/AppLayout.vue";
 import AdvanceTable from "@advance-table/Components/AdvanceTable.vue";
 import AdvanceColumn from "@advance-table/Components/AdvanceColumn.vue";
 import {BaseNpcResource} from "@/Resources/BaseNpc.resource";
-
 import { Link } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
 
@@ -15,7 +14,15 @@ type Data = {
 
 <template>
     <AppLayout>
+
         <div class="card">
+            <Link :href="route('base-npcs.create')">
+                <Button label="Dodaj bazowego NPC" />
+            </Link>
+        </div>
+
+        <div class="card">
+
             <AdvanceTable
                 prop-name="baseNpcs"
             >
