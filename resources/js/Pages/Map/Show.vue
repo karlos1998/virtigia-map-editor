@@ -142,6 +142,10 @@ const removeNpc = (npc: NpcResource) => {
             </template>
         </ItemHeader>
 
+        <Message class="my-6">
+            Protip: Klikając na przejścia (czarne kwadraciki) przeniesie nas na konkretną mapkę bez potrzeby jej wyszukiwania.
+        </Message>
+
 
         <div class="card">
             <div class="flex gap-2">
