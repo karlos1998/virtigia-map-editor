@@ -9,7 +9,8 @@ use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownOptions
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableTextColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\TableService;
 use Spatie\Activitylog\Models\Activity;
-
+use Illuminate\Support\Facades\File;
+use ReflectionClass;
 final class ActivityLogService extends BaseService
 {
     public function __construct(private readonly Activity $activityModel)
@@ -25,6 +26,21 @@ final class ActivityLogService extends BaseService
             return new TableDropdownOption($user->name, fn($query) => $query->where('causer_id', $user->id));
         });
 
+        $models = collect(File::allFiles(app_path('Models')))
+            ->map(function ($file) {
+                $class = 'App\\Models\\' . $file->getFilenameWithoutExtension();
+
+                if (class_exists($class)) {
+                    $reflection = new ReflectionClass($class);
+                    if($reflection->isSubclassOf(\App\Models\DynamicModel::class)) {
+                        return new TableDropdownOption($file->getFilenameWithoutExtension(), fn($query) => $query->where('subject_type', $class));
+                    }
+                }
+
+                return null;
+            })
+            ->filter()->values();
+
         return $this->fetchData(
             ActivityLogResource::class,
             $this->activityModel,
@@ -34,7 +50,11 @@ final class ActivityLogService extends BaseService
                     'causer_name' => new TableDropdownColumn(
                         placeholder: 'Wybierz gracza',
                         options: $causers->toArray(),
-                    )
+                    ),
+                    'subject_type' => new TableDropdownColumn(
+                        placeholder: 'Wybierz typ',
+                        options: $models->toArray(),
+                    ),
                 ],
                 globalFilterColumns: ['properties']
             )
