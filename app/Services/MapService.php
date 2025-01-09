@@ -34,7 +34,7 @@ final class MapService extends BaseService
                       sortable: true,
                   )
                 ],
-                globalFilterColumns: ['name']
+                globalFilterColumns: ['name', 'src']
             )
         );
     }

@@ -46,17 +46,15 @@ type Data = {
                 <AdvanceColumn field="id" header="ID" style="width: 5%" />
 
 
-                <AdvanceColumn field="name" header="Name" style="width: 25%">
-                    <template #body="{ data }: Data">
-                        {{ data.name }}
-                    </template>
-                </AdvanceColumn>
+                <AdvanceColumn field="name" header="Name" />
 
-                <AdvanceColumn field="activity" header="Rozmiar" style="width: 25%">
+                <AdvanceColumn field="activity" header="Rozmiar" >
                     <template #body="{ data }: Data">
                         ({{data.x}}x{{data.y}})
                     </template>
                 </AdvanceColumn>
+
+                <AdvanceColumn field="src" header="Ścieżka" >/</AdvanceColumn>
 
                 <Column header="Action" style="width: 20%">
                     <template #body="{data}">
