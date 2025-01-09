@@ -321,10 +321,14 @@ const saveCols = () => {
                     v-for="(pos, index) in collisionPositions"
                     :key="index"
                     class="col"
+                    :class="{
+                        'col-opacity': !editColsOn
+                    }"
                     :style="{
                         top: `${pos.y * scale}px`,
                         left: `${pos.x * scale}px`,
                     }"
+                    @click.stop
                 />
 
             </div>
@@ -362,6 +366,7 @@ const saveCols = () => {
     height: 32px;
     position:absolute;
     background-color: #ba5208;
+    pointer-events: none;
 }
 
 .col-opacity {
