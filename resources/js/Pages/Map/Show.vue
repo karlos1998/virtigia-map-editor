@@ -83,7 +83,9 @@ const addNewObject = (event: MouseEvent) => {
             lastSelectedNpc: lastSelectedNpc.value,
         },
         onClose(closeOptions: DynamicDialogCloseOptions & { data: { npc?: NpcResource } }) {
-            lastSelectedNpc.value = closeOptions.data.npc;
+            if(closeOptions.data && closeOptions.data.npc) {
+                lastSelectedNpc.value = closeOptions.data.npc;
+            }
         }
     });
 };
@@ -101,6 +103,45 @@ const removeNpc = (npc: NpcResource) => {
         }
     });
 }
+
+
+
+const isPanning = ref(false);
+const panStart = ref({ x: 0, y: 0 });
+const mapOffset = ref({ x: 0, y: 0 });
+
+const handleMouseMove = (event: MouseEvent) => {
+    if (isPanning.value) {
+        mapOffset.value = {
+            x: event.clientX - panStart.value.x,
+            y: event.clientY - panStart.value.y,
+        };
+    } else {
+        setTrackerPosition(event);
+    }
+};
+
+const startPanning = (event: MouseEvent) => {
+    if (event.button === 2) { // Sprawdza, czy prawy przycisk myszy jest wciśnięty
+        isPanning.value = true;
+        panStart.value = { x: event.clientX - mapOffset.value.x, y: event.clientY - mapOffset.value.y };
+        event.preventDefault();
+    }
+};
+
+const panMap = (event: MouseEvent) => {
+    if (isPanning.value) {
+        mapOffset.value = {
+            x: event.clientX - panStart.value.x,
+            y: event.clientY - panStart.value.y,
+        };
+    }
+};
+
+const stopPanning = () => {
+    isPanning.value = false;
+};
+
 </script>
 
 <template>
@@ -158,12 +199,17 @@ const removeNpc = (npc: NpcResource) => {
             <div
                 class="map-container relative"
                 :style="{
-                    backgroundImage: `url(https://s3.letscode.it/virtigia-assets/img/locations/${map.src})`,
-                    width: `${map.x * 32 * scale}px`,
-                    height: `${map.y * 32 * scale}px`,
-                    transformOrigin: 'top left',
-                }"
-                @mousemove.stop="setTrackerPosition($event)"
+        backgroundImage: `url(https://s3.letscode.it/virtigia-assets/img/locations/${map.src})`,
+        width: `${map.x * 32 * scale}px`,
+        height: `${map.y * 32 * scale}px`,
+        transformOrigin: 'top left',
+        transform: `translate(${mapOffset.x}px, ${mapOffset.y}px)`,
+    }"
+                @mousemove="handleMouseMove"
+                @mousedown="startPanning"
+                @mouseup="stopPanning"
+                @mouseleave="stopPanning"
+                @contextmenu.prevent
                 @click.self="addNewObject"
             >
                 <div class="mouse-tracker absolute bg-yellow-500/70 pointer-events-none" :style="{
