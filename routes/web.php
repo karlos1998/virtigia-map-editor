@@ -58,6 +58,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('maps/search', [MapController::class, 'search'])->name('maps.search');
                 Route::get('maps', [MapController::class, 'index'])->name('maps.index');
                 Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');
+                Route::patch('maps/{map}/cols', [MapController::class, 'updateCol'])->name('maps.update.col');
 
                 Route::get('base-items', [BaseItemController::class, 'index'])->name('base-items.index');
                 Route::get('base-items/search', [BaseItemController::class, 'search'])->name('base-items.search');

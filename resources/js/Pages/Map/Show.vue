@@ -65,8 +65,23 @@ const setTrackerPosition = (event: MouseEvent) => {
 const primeDialog = useDialog();
 const addNpcToMapDialogInstance = ref<DynamicDialogInstance>();
 const lastSelectedNpc = ref<NpcResource>();
+
+
+const toggleCollision = (x: number, y: number) => {
+    const index = y * props.map.x + x;
+    const colArray = props.map.col.split('');
+    colArray[index] = colArray[index] === '0' ? '1' : '0';
+    props.map.col = colArray.join('');
+};
+
 const addNewObject = (event: MouseEvent) => {
     console.log('addNewObject', event, trackerPosition.value);
+
+
+    if(editColsOn.value) {
+        toggleCollision(trackerPosition.value.x, trackerPosition.value.y)
+        return;
+    }
 
     if(addNpcToMapDialogInstance.value) {
         console.log(addNpcToMapDialogInstance.value);
@@ -142,6 +157,31 @@ const stopPanning = () => {
     isPanning.value = false;
 };
 
+
+
+
+const collisionPositions = computed(() => {
+    const positions = [];
+    const colArray = props.map.col.split('');
+    colArray.forEach((val, index) => {
+        if (val === '1') {
+            const x = (index % props.map.x) * 32;
+            const y = Math.floor(index / props.map.x) * 32;
+            positions.push({ x, y });
+        }
+    });
+    return positions;
+});
+
+const editColsOn = ref(false)
+
+const saveCols = () => {
+    router.patch(route('maps.update.col', {
+        map: props.map.id,
+    }), {
+        col: props.map.col
+    });
+}
 </script>
 
 <template>
@@ -193,7 +233,14 @@ const stopPanning = () => {
                 <Button label="+" icon="pi pi-search-plus" @click="zoomIn" />
                 <Button label="-" icon="pi pi-search-minus" @click="zoomOut" />
             </div>
+
+            <div class="flex gap-2 justify-end items-center">
+                <label for="editColsCheckbox">Edytuj kolizje</label>
+                <Checkbox id="editColsCheckbox" v-model="editColsOn" binary />
+                <Button v-if="editColsOn" @click="saveCols" label="Zapisz kolizje" />
+            </div>
         </div>
+
 
         <div class="card overflow-auto m-2">
             <div
@@ -270,6 +317,16 @@ const stopPanning = () => {
                     :class="{'double-sided': door.double_sided}"
                 />
 
+                <div
+                    v-for="(pos, index) in collisionPositions"
+                    :key="index"
+                    class="col"
+                    :style="{
+                        top: `${pos.y * scale}px`,
+                        left: `${pos.x * scale}px`,
+                    }"
+                />
+
             </div>
         </div>
     </AppLayout>
@@ -298,6 +355,17 @@ const stopPanning = () => {
     height: 32px;
     position:absolute;
     background-color: #353030;
+}
+
+.col {
+    width: 32px;
+    height: 32px;
+    position:absolute;
+    background-color: #ba5208;
+}
+
+.col-opacity {
+    opacity: 0.7;
 }
 
 .double-sided {

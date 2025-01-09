@@ -65,5 +65,10 @@ final class MapService extends BaseService
         ]);
     }
 
+    public function updateCol(Map $map, string $col)
+    {
+        $map->update(['col' => $col]);
+    }
+
 
 }

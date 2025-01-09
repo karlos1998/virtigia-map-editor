@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreMapRequest;
+use App\Http\Requests\UpdateMapColsRequest;
 use App\Http\Resources\DoorResource;
 use App\Http\Resources\MapResource;
 use App\Http\Resources\NpcResource;
@@ -53,5 +54,10 @@ class MapController extends Controller
     public function search(Request $request)
     {
         $this->mapService->search($request->get('search', ''));
+    }
+
+    public function updateCol(Map $map, UpdateMapColsRequest $request): void
+    {
+        $this->mapService->updateCol($map, $request->post('col'));
     }
 }
