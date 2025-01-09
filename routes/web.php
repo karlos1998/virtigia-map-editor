@@ -52,6 +52,9 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('dialogs/{dialog}/edges', [DialogController::class, 'addEdge'])->name('dialogs.edges.store');
                 Route::post('dialogs/{dialog}/nodes/{dialogNode}/options', [DialogController::class, 'addOption'])->name('dialogs.nodes.options.store');
 
+                Route::get('maps/create', [MapController::class, 'create'])->name('maps.create');
+                Route::post('maps', [MapController::class, 'store'])->name('maps.store');
+
                 Route::get('maps/search', [MapController::class, 'search'])->name('maps.search');
                 Route::get('maps', [MapController::class, 'index'])->name('maps.index');
                 Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');

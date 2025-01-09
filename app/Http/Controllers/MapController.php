@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreMapRequest;
 use App\Http\Resources\DoorResource;
 use App\Http\Resources\MapResource;
 use App\Http\Resources\NpcResource;
@@ -18,6 +19,19 @@ class MapController extends Controller
         private NpcService $npcService
     )
     {
+    }
+
+    public function create()
+    {
+        return Inertia::render('Map/Create', [
+
+        ]);
+    }
+
+    public function store(StoreMapRequest $request)
+    {
+        $map = $this->mapService->store($request->img, $request->fileName, $request->name);
+        return to_route('maps.show', $map->id);
     }
 
     public function index()

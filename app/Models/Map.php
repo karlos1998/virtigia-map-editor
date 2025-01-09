@@ -6,6 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Map extends DynamicModel
 {
+    protected $fillable = [
+        'name',
+        'src',
+        'x',
+        'y',
+        'col',
+        'battleground',
+        'water',
+        'pvp',
+    ];
+
     public function npcs() {
         return $this->belongsToMany(Npc::class, NpcLocation::class)->withPivot(['x', 'y']);
     }

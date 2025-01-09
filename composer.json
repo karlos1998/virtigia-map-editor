@@ -18,7 +18,9 @@
         "league/flysystem-aws-s3-v3": "^3.29",
         "socialiteproviders/laravelpassport": "^4.3",
         "spatie/laravel-activitylog": "^4.9",
-        "tightenco/ziggy": "^2.4"
+        "tightenco/ziggy": "^2.4",
+        "ext-gd": "*",
+        "ext-fileinfo": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

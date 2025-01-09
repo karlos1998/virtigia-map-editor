@@ -14,7 +14,13 @@ type Data = {
 
 <template>
     <AppLayout>
-        
+
+        <div class="card">
+            <Link :href="route('maps.create')">
+                <Button label="Dodaj nową mapę" />
+            </Link>
+        </div>
+
         <div class="card">
             <AdvanceTable
                 prop-name="maps"
