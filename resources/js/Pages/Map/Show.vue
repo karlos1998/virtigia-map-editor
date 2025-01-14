@@ -182,6 +182,15 @@ const saveCols = () => {
         col: props.map.col
     });
 }
+
+const npcScale = ref(true);
+
+const isMapVisible = ref(true);
+const forceUpdate = () => {
+    //i tak nie dziala :X
+    isMapVisible.value = false;
+    setTimeout(() => isMapVisible.value = true, 100)
+}
 </script>
 
 <template>
@@ -243,10 +252,17 @@ const saveCols = () => {
                 <Checkbox id="editColsCheckbox" v-model="editColsOn" binary />
                 <Button v-if="editColsOn" @click="saveCols" label="Zapisz kolizje" />
             </div>
+
+            <!-- I tak nie dziala -->
+<!--            <div class="mt-4 flex gap-2 justify-end items-center">-->
+<!--                <label for="npcScale">Skalowanie NPC</label>-->
+<!--                {{npcScale}}-->
+<!--                <Checkbox id="npcScale" @change="forceUpdate" v-model="npcScale" binary />-->
+<!--            </div>-->
         </div>
 
 
-        <div class="card overflow-auto m-2">
+        <div class="card overflow-auto m-2" v-if="isMapVisible">
             <div
                 class="map-container relative"
                 :style="{
@@ -273,15 +289,15 @@ const saveCols = () => {
 
                 <div
                     v-for="npc in npcs"
-                    :key="npc.id"
+                    :key="`npc-${npc.id}-${npcScale}`"
                     class="absolute npc"
                     v-tooltip="npc.name"
                     @click="showNpcConfirmDialog($event, npc)"
                     :style="{
-                        width: `${(npcWidths[npc.id] ?? 32) * scale}px`,
-                        height: `${(npcHeights[npc.id] ?? 32) * scale}px`,
                         top: `${(npc.location.y * 32 - ((npcHeights[npc.id] ?? 32) - 32)) * scale}px`,
                         left: `${npc.location.x * 32 * scale}px`,
+                        width: npcScale ? `${(npcWidths[npc.id] ?? 32) * scale}px` : undefined,
+                        height: npcScale ? `${(npcHeights[npc.id] ?? 32) * scale}px` : undefined,
                     }"
                 >
                     <!-- Czerwony kwadrat u podstawy -->
