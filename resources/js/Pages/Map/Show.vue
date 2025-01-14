@@ -228,6 +228,10 @@ const saveCols = () => {
         </Message>
 
 
+        <div class="coordinates-card">
+            <p>X: {{trackerPosition.x}}, Y: {{trackerPosition.y}}</p>
+        </div>
+
         <div class="card">
             <div class="flex gap-2">
                 <Button label="+" icon="pi pi-search-plus" @click="zoomIn" />
@@ -259,7 +263,8 @@ const saveCols = () => {
                 @contextmenu.prevent
                 @click.self="addNewObject"
             >
-                <div class="mouse-tracker absolute bg-yellow-500/70 pointer-events-none" :style="{
+                <div
+                    class="mouse-tracker absolute bg-yellow-500/70 pointer-events-none" :style="{
                     width: `${32 * scale}px`,
                     height: `${32 * scale}px`,
                     top: trackerPosition.y * 32 * scale,
@@ -376,5 +381,18 @@ const saveCols = () => {
 .double-sided {
     background-color: #000000 !important;
     /* border: 6px black solid; */
+}
+
+
+.coordinates-card {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    z-index: 1000;
+    width: 150px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 </style>
