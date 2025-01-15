@@ -12,6 +12,7 @@ use App\Http\Controllers\NpcController;
 use App\Http\Controllers\ShopController;
 use App\Http\Middleware\RemoveWorldTemplateNameFromRouteParameters;
 use App\Http\Middleware\SetDynamicModelConnection;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 
 //Route::get('/test', function () {
@@ -89,5 +90,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
     });
 
+});
 
+Route::get('debug-stats', fn() => \Inertia\Inertia::render('DebugStats'));
+Route::get('debug-stats/api/characters', function() {
+    $request = Http::get('https://virtigia-engine.letscode.it/debug-stats/characters?profession=' . request()->get('profession'));
+    return $request->json();
 });
