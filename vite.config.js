@@ -4,6 +4,8 @@ import vue from '@vitejs/plugin-vue';
 import Components from 'unplugin-vue-components/vite';
 import { fileURLToPath, URL } from 'node:url';
 import { PrimeVueResolver } from '@primevue/auto-import-resolver';
+import vueDevTools from 'vite-plugin-vue-devtools';
+
 export default defineConfig({
     plugins: [
         laravel({
@@ -11,6 +13,9 @@ export default defineConfig({
             refresh: true,
         }),
         vue(),
+        vueDevTools({
+            appendTo: 'body'
+        }),
         Components({
             resolvers: [
                 PrimeVueResolver(),

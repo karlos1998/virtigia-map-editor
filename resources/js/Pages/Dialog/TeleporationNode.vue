@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue';
-import { ConnectionLookup, Handle, NodeProps, Position, useVueFlow } from '@vue-flow/core';
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { Handle, NodeProps, Position } from '@vue-flow/core';
 import { useDialog } from 'primevue/usedialog';
-import EditOption from '@/Pages/Dialog/Modals/EditOption.vue';
-import { DynamicDialogCloseOptions } from 'primevue/dynamicdialogoptions';
-import EditDialog from '@/Pages/Dialog/Modals/EditDialog.vue';
+import axios from 'axios';
+import { route } from 'ziggy-js';
+import { debounce } from 'chart.js/helpers';
+import { ref } from 'vue';
 
 const primeDialog = useDialog();
 
@@ -17,8 +16,21 @@ interface Option {
 const props = defineProps<NodeProps<{
     label: string,
     content: string,
-    options: Array<Option>
+    options: Array<Option>,
+    action_data: any
 }>>();
+
+const selectedOption = ref<Option | null>(null);
+const dropdownOptions = ref<Option[]>([]);
+
+const searchOptions = debounce((event) => {
+    axios.get(route('maps.search', { search: event.query }))
+        .then(response => {
+            dropdownOptions.value = response.data;
+        });
+}, 100);
+
+console.log('props', props);
 </script>
 
 <script lang="ts">
@@ -30,20 +42,30 @@ export default {
 <template>
     <div class="vue-flow__node-default">
         <Handle class="dialog-input" type="target" :position="Position.Left" />
-        <div class="font-bold text-lg flex flex-row gap-1">
-            test
+        <div class="font-bold text-lg flex flex-row gap-1 w-full">
+            <Dropdown v-model="selectedOption" :options="dropdownOptions" filter optionLabel="name"
+                      placeholder="Szukaj lokacji" class="w-full" @filter="searchOptions">
+                <template #value="slotProps">
+                    <div v-if="slotProps.value" class="flex align-items-center">
+                        <div>{{ slotProps.value.name }}</div>
+                    </div>
+                    <span v-else>
+                        {{ slotProps.placeholder }}
+                    </span>
+                </template>
+                <template #option="slotProps">
+                    <div class="flex align-items-center">
+                        <div>{{ slotProps.option.name }}</div>
+                    </div>
+                </template>
+            </Dropdown>
         </div>
     </div>
 </template>
 
 <style scoped lang="scss">
 .vue-flow__node-default {
-    @apply text-white text-left;
-
-    width:269px;
-    height:435px;
-
-    background-image: url(@/assets/images/shop-main.png);
+    @apply text-white text-left flex flex-row gap-1 p-2;
 }
 
 .dialog-input {
