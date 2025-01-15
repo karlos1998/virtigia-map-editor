@@ -1,22 +1,18 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import {BaseNpcRankEnum} from "@/Enums/BaseNpcRank.enum";
+import {usePage} from "@inertiajs/vue3";
+import {DropdownListType} from "@/Resources/DropdownList.type";
 
-const npcTypes = [
-    { label: "Zwykły", value: 0 },
-    { label: "Elita", value: 1 },
-    { label: "Elita II", value: 2 },
-    { label: "Elita III", value: 3 },
-    { label: "Heros", value: 4 },
-    { label: "Tytan", value: 5 }
-];
+const availableRanks = usePage<{availableRanks: DropdownListType }>().props.availableRanks
 
-const type = defineModel<number>('type');
+const type = defineModel<BaseNpcRankEnum>('rank');
 const name = defineModel<string>('name');
 const lvl = defineModel<number>('lvl');
 
 defineProps<{
     errors: {
-        type: string
+        rank: string
         name: string
         lvl: string
     }
@@ -29,17 +25,18 @@ defineProps<{
         <Fieldset legend="Typ Npc">
             <RadioButtonGroup v-model="type" name="schema" class="flex flex-wrap gap-4">
                 <div
-                    v-for="npcType in npcTypes"
-                    :key="npcType.value"
+                    v-for="rank in availableRanks"
+                    :key="rank.value"
                     class="flex items-center gap-2">
                     <RadioButton
-                        :inputId="npcType.value.toString()"
-                        :value="npcType.value" />
-                    <label :for="npcType.value.toString()">{{ npcType.label }}</label>
+                        :inputId="rank.value"
+                        :value="rank.value"
+                    />
+                    <label :for="rank.value">{{ rank.label }}</label>
                 </div>
             </RadioButtonGroup>
         </Fieldset>
-        <Message severity="error" size="small" variant="simple">{{errors.type}}</Message>
+        <Message severity="error" size="small" variant="simple">{{errors.rank}}</Message>
 
         <div class="flex flex-col gap-1">
             <label for="name">Nazwa</label>

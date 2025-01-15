@@ -14,12 +14,13 @@ defineProps<{
             </div>
             <div class="flex self-start">
                 <button
-                    class="px-4 py-2 text-white bg-blue-500 hover:bg-blue-600 rounded shadow"
+                    class="px-4 py-2 text-white bg-blue-500 hover:bg-blue-600 rounded shadow mr-2"
                     @click="router.get(routeBack)"
                 >
                     <i class="pi pi-arrow-left mr-2"></i>
                     Lista
                 </button>
+                <slot name="right-buttons" />
             </div>
         </div>
     </div>

@@ -61,4 +61,9 @@ final class BaseNpcService extends BaseService
     {
         $baseNpc->delete();
     }
+
+    public function update(BaseNpc $baseNpc, mixed $validated)
+    {
+        $baseNpc->update($validated);
+    }
 }

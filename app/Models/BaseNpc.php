@@ -16,6 +16,8 @@ class BaseNpc extends DynamicModel
         'lvl',
         'type',
         'wt',
+        'rank',
+        'category',
     ];
 
 

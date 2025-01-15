@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\BaseNpcCategory;
+use App\Enums\BaseNpcRank;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Enum;
 
 class UpdateBaseNpcRequest extends FormRequest
 {
@@ -11,7 +14,7 @@ class UpdateBaseNpcRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +25,25 @@ class UpdateBaseNpcRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => [
+                'required',
+                'min:3',
+                'max:50',
+            ],
+            'lvl' => [
+                'required',
+                'integer',
+                'min:0',
+                'max:1000',
+            ],
+            'rank' => [
+                'required',
+                new Enum(BaseNpcRank::class),
+            ],
+            'category' => [
+                'required',
+                new Enum(BaseNpcCategory::class),
+            ]
         ];
     }
 }

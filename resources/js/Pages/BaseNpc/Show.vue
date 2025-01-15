@@ -10,15 +10,20 @@ import RemoveBaseNpc from "@/Pages/BaseNpc/Partials/RemoveBaseNpc.vue";
 import DetailsCardList from "@/Components/DetailsCardList.vue";
 import DetailsCardListItem from "@/Components/DetailsCardListItem.vue";
 import {Link} from "@inertiajs/vue3";
+import EditBaseNpcDialog from "@/Pages/BaseNpc/Components/EditBaseNpcDialog.vue";
+import {ref} from "vue";
 
 defineProps<{
     baseNpc: BaseNpcResource
     locations: NpcLocationResource[]
 }>()
 
+const isEditBaseNpcDialogVisible = ref(false );
 </script>
 <template>
     <AppLayout>
+
+        <EditBaseNpcDialog :baseNpc v-model:visible="isEditBaseNpcDialogVisible" />
 
         <ItemHeader
             :route-back="route('base-npcs.index')"
@@ -26,6 +31,9 @@ defineProps<{
             <template #header>
                 <img v-tooltip="baseNpc.src" :src="'https://s3.letscode.it/virtigia-assets/img/npc/' + baseNpc.src"  alt=""/>
                 #{{ baseNpc.id }} - {{ baseNpc.name }}
+            </template>
+            <template #right-buttons>
+                <Button @click="isEditBaseNpcDialogVisible = true" label="Edytuj" />
             </template>
         </ItemHeader>
 
@@ -37,7 +45,17 @@ defineProps<{
             <DetailsCardListItem label="Nazwa" :value="baseNpc.name" />
             <DetailsCardListItem label="Link do grafiki" :value="'https://s3.letscode.it/virtigia-assets/img/npc/' + baseNpc.src" />
             <DetailsCardListItem label="Lvl" :value="baseNpc.lvl" />
-            <DetailsCardListItem label="Type" :value="baseNpc.type" />
+            <DetailsCardListItem label="Ranga">
+                <template #value>
+                    <Tag v-if="baseNpc.rank == 'NORMAL'" severity="info" value="Zwykły" />
+                    <Tag v-else-if="baseNpc.rank == 'ELITE'" severity="success" value="Elita" />
+                    <Tag v-else-if="baseNpc.rank == 'ELITE_II'" severity="warn" value="Elita II" />
+                    <Tag v-else-if="baseNpc.rank == 'ELITE_III'" severity="warn" value="Elita III" />
+                    <Tag v-else-if="baseNpc.rank == 'HERO'" severity="danger" value="Heros" />
+                    <Tag v-else-if="baseNpc.rank == 'TITAN'" severity="contrast" value="Heros" />
+                </template>
+            </DetailsCardListItem>
+<!--            <DetailsCardListItem label="Type" :value="baseNpc.type" />-->
             <DetailsCardListItem label="Kategoria">
                 <template #value>
                     <Tag v-if="baseNpc.category == 'MOB'" severity="info" value="MOB" />

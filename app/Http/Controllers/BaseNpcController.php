@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\BaseNpcCategory;
+use App\Enums\BaseNpcRank;
 use App\Http\Requests\StoreBaseNpcRequest;
 use App\Http\Requests\UpdateBaseNpcRequest;
 use App\Http\Resources\BaseNpcResource;
@@ -41,7 +43,9 @@ class BaseNpcController extends Controller
      */
     public function create()
     {
-        return Inertia::render('BaseNpc/Create');
+        return Inertia::render('BaseNpc/Create', [
+            'availableRanks' => BaseNpcRank::toDropdownList(),
+        ]);
     }
 
     /**
@@ -63,6 +67,9 @@ class BaseNpcController extends Controller
         return Inertia::render('BaseNpc/Show', [
             'baseNpc' => BaseNpcResource::make($baseNpc),
             'locations' => $this->baseNpcService->getLocations($baseNpc),
+
+            'availableRanks' => BaseNpcRank::toDropdownList(),
+            'availableCategories' => BaseNpcCategory::toDropdownList(),
         ]);
     }
 
@@ -79,7 +86,7 @@ class BaseNpcController extends Controller
      */
     public function update(UpdateBaseNpcRequest $request, BaseNpc $baseNpc)
     {
-        //
+        $this->baseNpcService->update($baseNpc, $request->validated());
     }
 
     /**

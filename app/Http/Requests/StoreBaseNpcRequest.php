@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\BaseNpcRank;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rules\Enum;
 
 class StoreBaseNpcRequest extends FormRequest
 {
@@ -38,7 +40,7 @@ class StoreBaseNpcRequest extends FormRequest
                 'string'
             ],
             'lvl' => ['required', 'integer'],
-            'type' => ['required', 'integer'],
+            'rank' => ['required', new Enum(BaseNpcRank::class)],
         ];
     }
 }

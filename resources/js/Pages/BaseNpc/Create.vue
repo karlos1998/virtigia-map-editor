@@ -10,7 +10,7 @@ import { BaseNpcResource } from "@/Resources/BaseNpc.resource";
 
 const form = useForm({
     src: '',
-    type: 0,
+    rank: 'NORMAL',
     name: '',
     lvl: 0,
 });
@@ -161,7 +161,7 @@ const create = () => {
                     <Step>Podstawowe dane</Step>
                     <StepPanel v-slot="{ activateCallback }">
                         <CreateBaseNpcStep2
-                            v-model:type="form.type"
+                            v-model:rank="form.rank"
                             v-model:name="form.name"
                             v-model:lvl="form.lvl"
                             v-bind="{errors: form.errors}"
