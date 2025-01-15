@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Map;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -26,7 +27,25 @@ class DialogNodeResource extends JsonResource
                     'options' => DialogNodeOptionResource::collection($this->resource->options),
                     'action_data' => $this->resource->action_data,
                 ]
-            ])
+            ]),
+
+            $this->mergeWhen($this->resource->type == 'teleportation', function(){
+                $teleportation = $this->resource->action_data['teleportation'] ?? null;
+
+                if($teleportation){
+                    $teleportation['mapName'] = Map::find($teleportation['mapId'])->name;
+                } else {
+//                    dd($this->resource);
+                }
+
+                return [
+                    'data' => [
+                        'action_data' => [
+                            'teleportation' => $teleportation,
+                        ],
+                    ]
+                ];
+            })
         ];
     }
 }
