@@ -212,7 +212,7 @@ const items = ref([
                     <!--suppress RequiredAttributes -->
                     <ShopNode v-bind="shopNodeProps" />
                 </template>
-                <template #node-teleporatation="teleportationNodeProps">
+                <template #node-teleportation="teleportationNodeProps">
                     <!--suppress RequiredAttributes -->
                     <TeleporationNode v-bind="teleportationNodeProps" />
                 </template>
