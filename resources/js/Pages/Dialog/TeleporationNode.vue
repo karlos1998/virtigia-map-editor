@@ -1,42 +1,69 @@
 <script setup lang="ts">
-import { Handle, NodeProps, Position } from '@vue-flow/core';
+import {Handle, NodeProps, Position, useVueFlow} from '@vue-flow/core';
 import { useDialog } from 'primevue/usedialog';
-import axios from 'axios';
-import { route } from 'ziggy-js';
-import { debounce } from 'chart.js/helpers';
 import { ref } from 'vue';
 import {DialogNodeTeleportationDataResource} from "../../Resources/DialogNodeTeleportationData.resource";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import TeleportationSelectModal from "../../Components/TeleportationSelectModal.vue";
+import {DynamicDialogCloseOptions} from "primevue/dynamicdialogoptions";
+import {router} from "@inertiajs/vue3";
+import {route} from "ziggy-js";
+import axios from "axios";
 
-const primeDialog = useDialog();
+const { updateNodeData, edges, removeEdges, removeNodes, connectionLookup } = useVueFlow();
 
 const props = defineProps<{
+    id: number
     data: {
-        action_data?: DialogNodeTeleportationDataResource
+        dialog_id: number
+        action_data?: {
+            teleportation: DialogNodeTeleportationDataResource,
+        }
     }
 }>();
 
 console.log('props', props);
-</script>
-
-<script lang="ts">
-import {ref} from "vue";
-
-export default {
-    inheritAttrs: true
-};
-
 
 const isTeleportationSelectModalVisible = ref(false);
+const primeDialog = useDialog();
 const editNode = () => {
     isTeleportationSelectModalVisible.value = true;
+
+    primeDialog.open(TeleportationSelectModal, {
+        props: {
+            header: 'Edycja miejsca teleportacji',
+            modal: true,
+            breakpoints:{
+                '960px': '75vw',
+                '640px': '90vw'
+            },
+        },
+        data: {
+            teleportation: props.data.action_data.teleportation
+        },
+        onClose(closeOptions: DynamicDialogCloseOptions & { data: { teleportation: DialogNodeTeleportationDataResource } }) {
+            if(closeOptions.data?.teleportation) {
+                axios.patch(route('dialogs.nodes.action.update', {
+                    dialog: props.data.dialog_id,
+                    dialogNode: props.id
+                }), {
+                    teleportation: closeOptions.data.teleportation,
+                })
+                    .then(({data}) => {
+                        const dialogNode = data.dialogNode;
+                        console.log('new dialog node', dialogNode);
+                        updateNodeData(dialogNode.id.toString(), dialogNode.data);
+                    })
+            }
+        }
+    });
 }
 </script>
 
 <template>
 
-    <TeleportationSelectModal v-model:visible="isTeleportationSelectModalVisible" v-bind="data.action_data" />
+
+<!--    <TeleportationSelectModal v-model:visible="isTeleportationSelectModalVisible" v-bind="data.action_data" />-->
 
     <div class="vue-flow__node-default">
         <Handle class="dialog-input" type="target" :position="Position.Left" />

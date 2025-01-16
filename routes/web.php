@@ -52,6 +52,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('dialogs/{dialog}/nodes/{dialogNode}', [DialogController::class, 'moveNode'])->name('dialogs.nodes.move');
                 Route::post('dialogs/{dialog}/edges', [DialogController::class, 'addEdge'])->name('dialogs.edges.store');
                 Route::post('dialogs/{dialog}/nodes/{dialogNode}/options', [DialogController::class, 'addOption'])->name('dialogs.nodes.options.store');
+                Route::patch('dialog/{dialog}/nodes/{dialogNode}/action', [DialogController::class, 'updateAction'])->name('dialogs.nodes.action.update');
 
                 Route::get('maps/create', [MapController::class, 'create'])->name('maps.create');
                 Route::post('maps', [MapController::class, 'store'])->name('maps.store');

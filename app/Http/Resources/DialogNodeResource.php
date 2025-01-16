@@ -40,6 +40,7 @@ class DialogNodeResource extends JsonResource
 
                 return [
                     'data' => [
+                        'dialog_id' => $this->resource->source_dialog_id,
                         'action_data' => [
                             'teleportation' => $teleportation,
                         ],

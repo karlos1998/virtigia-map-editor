@@ -57,4 +57,13 @@ class DialogService extends BaseService
             'label' => 'Treść odpowiedzi',
         ]);
     }
+
+    public function updateAction(Dialog $dialog, DialogNode $dialogNode, array $data): DialogNode
+    {
+        $dialogNode->update([
+            'action_data' => $data,
+        ]);
+
+        return $dialogNode;
+    }
 }

@@ -6,6 +6,7 @@ use App\Http\Requests\MoveDialogNodeRequest;
 use App\Http\Requests\StoreDialogEdgeRequest;
 use App\Http\Requests\StoreDialogNodeOptionRequest;
 use App\Http\Requests\StoreDialogNodeRequest;
+use App\Http\Requests\UpdateDialogNodeActionDataRequest;
 use App\Http\Resources\DialogEdgeResource;
 use App\Http\Resources\DialogNodeOptionResource;
 use App\Http\Resources\DialogNodeResource;
@@ -62,6 +63,15 @@ class DialogController extends Controller
     {
         return response()->json([
             'option' => DialogNodeOptionResource::make($this->dialogService->addOption($dialogNode)),
+        ]);
+    }
+
+    public function updateAction(Dialog $dialog, DialogNode $dialogNode, UpdateDialogNodeActionDataRequest $request)
+    {
+        return response()->json([
+            'dialogNode' => DialogNodeResource::make(
+                $this->dialogService->updateAction($dialog, $dialogNode, $request->validated())
+            ),
         ]);
     }
 }
