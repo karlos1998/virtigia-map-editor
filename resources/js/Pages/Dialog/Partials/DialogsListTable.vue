@@ -2,13 +2,11 @@
 
 import AdvanceTable from "@advance-table/Components/AdvanceTable.vue";
 import AdvanceColumn from "@advance-table/Components/AdvanceColumn.vue";
-import {MapResource} from "@/Resources/Map.resource";
 
 import { Link } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
 import {DialogResource, DialogWithNpcsResource} from "@/Resources/Dialog.resource";
 import {ref} from "vue";
-import NpcLocationsColumnTemplate from "@/Components/TableColumnTemplates/NpcLocationsColumnTemplate.vue";
 import NpcExpansionColumnTemplate from "@/Components/TableColumnTemplates/NpcExpansionColumnTemplate.vue";
 
 

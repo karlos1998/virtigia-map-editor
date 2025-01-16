@@ -6,6 +6,7 @@ use App\Http\Requests\MoveDialogNodeRequest;
 use App\Http\Requests\StoreDialogEdgeRequest;
 use App\Http\Requests\StoreDialogNodeOptionRequest;
 use App\Http\Requests\StoreDialogNodeRequest;
+use App\Http\Requests\StoreDialogRequest;
 use App\Http\Requests\UpdateDialogNodeActionDataRequest;
 use App\Http\Resources\DialogEdgeResource;
 use App\Http\Resources\DialogNodeOptionResource;
@@ -27,6 +28,13 @@ class DialogController extends Controller
         return Inertia::render('Dialog/Index', [
             'dialogs' => $this->dialogService->getAll(),
         ]);
+    }
+
+    public function store(StoreDialogRequest $request)
+    {
+        $dialog = $this->dialogService->store($request->validated());
+
+        return to_route('dialogs.show', $dialog->id);
     }
 
     public function show(Dialog $dialog): \Inertia\Response

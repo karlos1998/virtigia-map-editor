@@ -66,4 +66,35 @@ class DialogService extends BaseService
 
         return $dialogNode;
     }
+
+    public function store(array $validated)
+    {
+        $dialog = Dialog::create([
+            'name' => $validated['name'],
+        ]);
+
+        $defaultNode = $dialog->nodes()->create([
+            'type' => 'start',
+            'position' => [
+                'x' => 0,
+                'y' => 0,
+            ]
+        ]);
+
+        $node = $dialog->nodes()->create([
+            'position' => [
+                'x' => 200,
+                'y' => 100,
+            ],
+            'content' => 'Oto przykładowa kwestia dialogowa'
+        ]);
+        $node->options()->create(['label' => 'Zakończ rozmowę']);
+
+        $dialog
+            ->edges()->make()
+            ->targetNode()->associate($node)
+            ->save();
+
+        return $dialog;
+    }
 }

@@ -16,7 +16,11 @@ class DialogEdgeResource extends JsonResource
     public function toArray(Request $request): array
     {
         $sourceOptionExists = $this->resource->sourceOption()->exists();
-        $sourceId = $sourceOptionExists ? $this->resource->sourceOption->node->id : $this->resource->sourceDialog->id;
+
+        $sourceId = $sourceOptionExists ?
+            $this->resource->sourceOption->node->id :
+            $this->resource->sourceDialog->nodes()->where('type', 'start')->limit(1)->first()->id;
+
         return [
             'id' => "{$sourceId}->{$this->resource->targetNode->id}",
             'type' => 'default',

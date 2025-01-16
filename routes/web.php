@@ -47,6 +47,7 @@ Route::middleware(['auth'])->group(function () {
             ])
             ->group(function () {
                 Route::get('dialogs', [DialogController::class, 'index'])->name('dialogs.index');
+                Route::post('dialogs', [DialogController::class, 'store'])->name('dialogs.store');
                 Route::get('dialogs/{dialog}', [DialogController::class, 'show'])->name('dialogs.show');
                 Route::post('dialogs/{dialog}/nodes', [DialogController::class, 'addNode'])->name('dialogs.nodes.store');
                 Route::post('dialogs/{dialog}/nodes/{dialogNode}', [DialogController::class, 'moveNode'])->name('dialogs.nodes.move');

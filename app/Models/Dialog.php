@@ -10,6 +10,10 @@ class Dialog extends DynamicModel
 {
     use HasFactory;
 
+    protected $fillable = [
+        'name',
+    ];
+
     public function edges(): HasMany
     {
         return $this->hasMany(DialogEdge::class, 'source_dialog_id');
