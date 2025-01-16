@@ -190,7 +190,9 @@ const items = ref([
     <AppLayout>
 <!--        <pre v-text="startEdges" />-->
 <!--        <pre v-text="edges" />-->
-        <div class="w-full h-full max-h-[85vh]">
+        <div class="">
+
+
             <VueFlow
                 :nodes="startNodes"
                 :edges="startEdges"
@@ -218,6 +220,7 @@ const items = ref([
                 </template>
 
                 <template #edge-default="customEdgeProps">
+
                     <SmoothStepEdge
                         :id="customEdgeProps.id"
                         :source-x="customEdgeProps.sourceX"
@@ -231,16 +234,16 @@ const items = ref([
                     />
                 </template>
 
-                <Controls>
-<!--                    <Button @click="addNode">-->
-<!--                        <FontAwesomeIcon icon="plus" />-->
-<!--                    </Button>-->
+                <Controls position="top-left">
+                    <!--                    <Button @click="addNode">-->
+                    <!--                        <FontAwesomeIcon icon="plus" />-->
+                    <!--                    </Button>-->
 
                     <SpeedDial :model="items" direction="up" />
 
-<!--                    <Button @click="saveDialog">-->
-<!--                        <FontAwesomeIcon icon="save" />-->
-<!--                    </Button>-->
+                    <!--                    <Button @click="saveDialog">-->
+                    <!--                        <FontAwesomeIcon icon="save" />-->
+                    <!--                    </Button>-->
                 </Controls>
 
                 <MiniMap :node-stroke-color="nodeStroke" :node-color="nodeColor" />

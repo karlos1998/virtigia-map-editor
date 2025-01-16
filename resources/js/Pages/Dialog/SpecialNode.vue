@@ -36,11 +36,13 @@ const editOption = (option: Option) => {
     // noinspection JSUnusedGlobalSymbols
     primeDialog.open(EditOption, {
         props: {
-          header: 'Edit option'
+          header: 'Edycja opcji',
+            modal: true,
         },
         data: {
             parent: props.id,
-          option
+            option,
+            dialog_id: props.data.dialog_id,
         },
         onClose(closeOptions: DynamicDialogCloseOptions & { data: { remove?: boolean, label?: string } }) {
             if (closeOptions.data.remove) {
@@ -56,7 +58,7 @@ const editOption = (option: Option) => {
             options: [...options.value]
           });
           console.log(options.value);
-        }
+        },
     });
 };
 

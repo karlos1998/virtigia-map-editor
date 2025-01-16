@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Http\Resources\DialogResource;
 use App\Models\Dialog;
 use App\Models\DialogNode;
+use App\Models\DialogNodeOption;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 
 class DialogService extends BaseService
@@ -96,5 +97,23 @@ class DialogService extends BaseService
             ->save();
 
         return $dialog;
+    }
+
+    public function updateNode(Dialog $dialog, DialogNode $dialogNode, array $validated)
+    {
+        $dialogNode->update([
+//            'content' =>
+        ]);
+    }
+
+    public function updateOption(Dialog $dialog, DialogNode $dialogNode, DialogNodeOption $dialogNodeOption, mixed $validated): DialogNodeOption
+    {
+        $dialogNodeOption->update($validated);
+        return $dialogNodeOption;
+    }
+
+    public function destroyOption(Dialog $dialog, DialogNode $dialogNode, DialogNodeOption $dialogNodeOption)
+    {
+        $dialogNodeOption->delete();
     }
 }

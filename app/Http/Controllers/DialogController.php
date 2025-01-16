@@ -8,11 +8,14 @@ use App\Http\Requests\StoreDialogNodeOptionRequest;
 use App\Http\Requests\StoreDialogNodeRequest;
 use App\Http\Requests\StoreDialogRequest;
 use App\Http\Requests\UpdateDialogNodeActionDataRequest;
+use App\Http\Requests\UpdateDialogNodeOptionRequest;
+use App\Http\Requests\UpdateDialogNodeRequest;
 use App\Http\Resources\DialogEdgeResource;
 use App\Http\Resources\DialogNodeOptionResource;
 use App\Http\Resources\DialogNodeResource;
 use App\Models\Dialog;
 use App\Models\DialogNode;
+use App\Models\DialogNodeOption;
 use App\Services\DialogService;
 use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
@@ -81,5 +84,23 @@ class DialogController extends Controller
                 $this->dialogService->updateAction($dialog, $dialogNode, $request->validated())
             ),
         ]);
+    }
+
+    public function updateNode(Dialog $dialog, DialogNode $dialogNode, UpdateDialogNodeRequest $request)
+    {
+        $this->dialogService->updateNode($dialog, $dialogNode, $request->validated());
+    }
+
+    public function updateOption(Dialog $dialog, DialogNode $dialogNode, DialogNodeOption $dialogNodeOption, UpdateDialogNodeOptionRequest $request): JsonResponse
+    {
+        return response()->json([
+            'dialogNodeOption' => DialogNodeOptionResource::make($this->dialogService->updateOption($dialog, $dialogNode, $dialogNodeOption, $request->validated())),
+        ]);
+    }
+
+    public function destroyOption(Dialog $dialog, DialogNode $dialogNode, DialogNodeOption $dialogNodeOption): \Illuminate\Http\Response
+    {
+        $this->dialogService->destroyOption($dialog, $dialogNode, $dialogNodeOption);
+        return response()->noContent();
     }
 }

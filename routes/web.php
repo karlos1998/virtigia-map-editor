@@ -50,9 +50,12 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('dialogs', [DialogController::class, 'store'])->name('dialogs.store');
                 Route::get('dialogs/{dialog}', [DialogController::class, 'show'])->name('dialogs.show');
                 Route::post('dialogs/{dialog}/nodes', [DialogController::class, 'addNode'])->name('dialogs.nodes.store');
+                Route::patch('dialogs/{dialog}/nodes', [DialogController::class, 'updateNode'])->name('dialogs.nodes.update');
                 Route::post('dialogs/{dialog}/nodes/{dialogNode}', [DialogController::class, 'moveNode'])->name('dialogs.nodes.move');
                 Route::post('dialogs/{dialog}/edges', [DialogController::class, 'addEdge'])->name('dialogs.edges.store');
                 Route::post('dialogs/{dialog}/nodes/{dialogNode}/options', [DialogController::class, 'addOption'])->name('dialogs.nodes.options.store');
+                Route::patch('dialogs/{dialog}/nodes/{dialogNode}/options/{dialogNodeOption}', [DialogController::class, 'updateOption'])->name('dialogs.nodes.options.update');
+                Route::delete('dialogs/{dialog}/nodes/{dialogNode}/options/{dialogNodeOption}', [DialogController::class, 'destroyOption'])->name('dialogs.nodes.options.destroy');
                 Route::patch('dialog/{dialog}/nodes/{dialogNode}/action', [DialogController::class, 'updateAction'])->name('dialogs.nodes.action.update');
 
                 Route::get('maps/create', [MapController::class, 'create'])->name('maps.create');
