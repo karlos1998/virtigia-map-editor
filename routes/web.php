@@ -51,6 +51,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('dialogs/{dialog}', [DialogController::class, 'show'])->name('dialogs.show');
                 Route::post('dialogs/{dialog}/nodes', [DialogController::class, 'addNode'])->name('dialogs.nodes.store');
                 Route::patch('dialogs/{dialog}/nodes', [DialogController::class, 'updateNode'])->name('dialogs.nodes.update');
+                Route::delete('dialogs/{dialog}/nodes/{dialogNode}', [DialogController::class, 'destroyNode'])->name('dialogs.nodes.destroy');
                 Route::post('dialogs/{dialog}/nodes/{dialogNode}', [DialogController::class, 'moveNode'])->name('dialogs.nodes.move');
                 Route::post('dialogs/{dialog}/edges', [DialogController::class, 'addEdge'])->name('dialogs.edges.store');
                 Route::post('dialogs/{dialog}/nodes/{dialogNode}/options', [DialogController::class, 'addOption'])->name('dialogs.nodes.options.store');

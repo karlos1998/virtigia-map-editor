@@ -103,4 +103,9 @@ class DialogController extends Controller
         $this->dialogService->destroyOption($dialog, $dialogNode, $dialogNodeOption);
         return response()->noContent();
     }
+
+    public function destroyNode(Dialog $dialog, DialogNode $dialogNode)
+    {
+        $this->dialogService->destroyNode($dialog, $dialogNode);
+    }
 }

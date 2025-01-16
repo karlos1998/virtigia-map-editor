@@ -90,49 +90,49 @@ const cancel = () => {
 
 </script>
 <template>
-    <div v-if="teleportation">
-        <span class="text-surface-500 dark:text-surface-400 block mb-8">Aktualna teleportacja: [{{teleportation.mapId}}] {{teleportation.mapName}} ({{teleportation.x}}, {{teleportation.y}})</span>
-        <div v-if="changed" class="flex justify-end gap-2">
-                <Button type="button" label="Anuluj" severity="secondary" @click="cancel" />
-                <Button type="button" label="Koryguj" severity="info" @click="reset" />
-                <Button type="button" label="Zapisz" @click="save" />
-        </div>
-        <div v-else>
-            <div class="font-bold text-lg flex flex-row gap-1 w-full">
-                <AutoComplete v-model="selectedMap" :suggestions="dropdownMaps" optionLabel="name"
-                          placeholder="Szukaj lokacji" class="w-full" @complete="searchOptions"
-                >
-                    <template #option="slotProps">
-                        <div class="flex align-items-center">
-                            <div>{{ slotProps.option.name }}</div>
-                        </div>
-                    </template>
-                </AutoComplete>
-            </div>
-            <div
-                v-if="selectedMap && selectedMap.id > 0"
+    <span v-if="teleportation" class="text-surface-500 dark:text-surface-400 block mb-8">Aktualna teleportacja: [{{teleportation.mapId}}] {{teleportation.mapName}} ({{teleportation.x}}, {{teleportation.y}})</span>
+    <span v-else class="text-surface-500 dark:text-surface-400 block mb-8">Brak ustawionej teleportacji</span>
 
+    <div v-if="changed" class="flex justify-end gap-2">
+            <Button type="button" label="Anuluj" severity="secondary" @click="cancel" />
+            <Button type="button" label="Koryguj" severity="info" @click="reset" />
+            <Button type="button" label="Zapisz" @click="save" />
+    </div>
+    <div v-else>
+        <div class="font-bold text-lg flex flex-row gap-1 w-full">
+            <AutoComplete v-model="selectedMap" :suggestions="dropdownMaps" optionLabel="name"
+                      placeholder="Szukaj lokacji" class="w-full" @complete="searchOptions"
+            >
+                <template #option="slotProps">
+                    <div class="flex align-items-center">
+                        <div>{{ slotProps.option.name }}</div>
+                    </div>
+                </template>
+            </AutoComplete>
+        </div>
+        <div
+            v-if="selectedMap && selectedMap.id > 0"
+
+        >
+            <div
+                class="map-container relative"
+                @mousemove="handleMouseMove"
+                :style="{
+                    backgroundImage: `url(https://s3.letscode.it/virtigia-assets/img/locations/${selectedMap.src})`,
+                    width: `${selectedMap.x * 32 * scale}px`,
+                    height: `${selectedMap.y * 32 * scale}px`,
+                    transformOrigin: 'top left',
+                    transform: `translate(${selectedMap.x}px, ${selectedMap.y}px)`,
+                }"
+                @click.self="handleClick"
             >
                 <div
-                    class="map-container relative"
-                    @mousemove="handleMouseMove"
-                    :style="{
-                        backgroundImage: `url(https://s3.letscode.it/virtigia-assets/img/locations/${selectedMap.src})`,
-                        width: `${selectedMap.x * 32 * scale}px`,
-                        height: `${selectedMap.y * 32 * scale}px`,
-                        transformOrigin: 'top left',
-                        transform: `translate(${selectedMap.x}px, ${selectedMap.y}px)`,
-                    }"
-                    @click.self="handleClick"
-                >
-                    <div
-                        class="mouse-tracker absolute bg-yellow-500/70 pointer-events-none" :style="{
-                        width: `${32 * scale}px`,
-                        height: `${32 * scale}px`,
-                        top: trackerPosition.y * 32 * scale,
-                        left: trackerPosition.x * 32 * scale,
-                    }" />
-                </div>
+                    class="mouse-tracker absolute bg-yellow-500/70 pointer-events-none" :style="{
+                    width: `${32 * scale}px`,
+                    height: `${32 * scale}px`,
+                    top: trackerPosition.y * 32 * scale,
+                    left: trackerPosition.x * 32 * scale,
+                }" />
             </div>
         </div>
     </div>

@@ -116,4 +116,16 @@ class DialogService extends BaseService
     {
         $dialogNodeOption->delete();
     }
+
+    public function destroyNode(Dialog $dialog, DialogNode $dialogNode)
+    {
+        if($dialog->nodes()->where('type', 'special')->count() <= 1) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'message' => 'Nie możesz usunąć jedynej kwesti dialogowej',
+            ]);
+        }
+
+        $dialogNode->options()->delete();
+        $dialogNode->delete();
+    }
 }
