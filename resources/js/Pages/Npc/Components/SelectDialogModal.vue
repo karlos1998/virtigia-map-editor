@@ -6,12 +6,12 @@ import {route} from "ziggy-js";
 import {DynamicDialogInstance} from "primevue/dynamicdialogoptions";
 import {DialogResource} from "../../../Resources/Dialog.resource";
 import {useForm} from "@inertiajs/vue3";
-import {NpcResource} from "../../../Resources/Npc.resource";
+import {NpcResource, NpcWithDetails} from "../../../Resources/Npc.resource";
 
 const visible = defineModel<boolean>('visible');
 
 const { npc } = defineProps<{
-    npc: NpcResource
+    npc: NpcWithDetails
 }>()
 
 const dropdownDialogs = ref<DialogResource[]>([]);
@@ -26,7 +26,7 @@ const searchOptions = debounce((event) => {
 const form = useForm<{
     dialog?: DialogResource,
 }>({
-    dialog: null,
+    dialog: npc.dialog,
 })
 
 const save = (remove: boolean) => {
