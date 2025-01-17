@@ -467,9 +467,9 @@ const mouseTrackerEl = ref<HTMLElement | null>(null)
                 <div
                     v-for="(pos, index) in collisionPositions"
                     :key="index"
-                    class="col"
+                    class="col col-opacity"
                     :class="{
-                        'col-opacity': !editColsOn
+                        'edit-cols': editColsOn
                     }"
                     :style="{
                         top: `${pos.y * scale}px`,
@@ -516,6 +516,10 @@ const mouseTrackerEl = ref<HTMLElement | null>(null)
     position:absolute;
     background-color: #ba5208;
     pointer-events: none;
+}
+
+.edit-cols {
+    background-color: pink;
 }
 
 .col-opacity {
