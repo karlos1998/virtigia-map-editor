@@ -25,7 +25,13 @@ class DialogService extends BaseService
 
     public function addNode(Dialog $dialog, array $data)
     {
-        return $dialog->nodes()->create($data)->fresh();
+        $node = $dialog->nodes()->create($data);
+
+        $node->options()->create([
+            'label' => 'Zakończ.',
+        ]);
+
+        return $node->fresh();
     }
 
     public function moveNode(DialogNode $dialogNode, array $data)
@@ -141,6 +147,18 @@ class DialogService extends BaseService
 
     public function destroyOption(Dialog $dialog, DialogNode $dialogNode, DialogNodeOption $dialogNodeOption)
     {
+        if(!$dialogNodeOption->node()->is($dialogNode)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'message' => 'Błąd niespodzianka :)',
+            ]);
+        }
+
+        if($dialogNode->options()->count() <= 1) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'message' => 'Nie możesz usunąć jedynej opcji dialogowej',
+            ]);
+        }
+
         $dialogNodeOption->delete();
     }
 

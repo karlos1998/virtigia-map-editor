@@ -74,8 +74,8 @@ const remove = () => {
                 remove: true,
             });
         })
-        .catch(() => {
-            toast.add({ severity: 'error', summary: 'Błąd', detail: 'Wystąpił problem podczas usuwania opcji dialogowej', life: 3000 });
+        .catch(({response}) => {
+            toast.add({ severity: 'error', summary: 'Błąd', detail: response.data.message, life: 6000 });
         })
         .finally(() => {
             processing.value = false;
