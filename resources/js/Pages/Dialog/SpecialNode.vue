@@ -87,10 +87,13 @@ const addOption = async () => {
 const editNode = () => {
     primeDialog.open(EditDialog, {
         props: {
-          header: 'Edit dialog'
+            header: 'Edytuj dialog',
+            modal: true,
         },
         data: {
-          content: state.value.content
+            content: state.value.content,
+            dialog_id: props.data.dialog_id,
+            node_id: props.id,
         },
         onClose(options) {
 

@@ -107,7 +107,7 @@ onNodesChange(async (changes) => {
 
     for (const change of changes) {
         if (change.type === 'remove') {
-            if (nodes.value.find((node) => node.id.toString() === change.id && node.type === 'input')) {
+            if (nodes.value.find((node) => node.id.toString() === change.id && node.type === 'start')) {
                 //...
             } else {
                 // confirmDeleteNode(change);

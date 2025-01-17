@@ -11,7 +11,7 @@ class UpdateDialogNodeRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,11 +22,11 @@ class UpdateDialogNodeRequest extends FormRequest
     public function rules(): array
     {
         return [
-//            'label' => [
-//                'required',
-//                'min:3',
-//                'max:255',
-//            ]
+            'content' => [
+                'required',
+                'min:3',
+                'max:255',
+            ]
         ];
     }
 }

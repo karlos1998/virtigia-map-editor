@@ -101,9 +101,7 @@ class DialogService extends BaseService
 
     public function updateNode(Dialog $dialog, DialogNode $dialogNode, array $validated)
     {
-        $dialogNode->update([
-//            'content' =>
-        ]);
+        $dialogNode->update($validated);
     }
 
     public function updateOption(Dialog $dialog, DialogNode $dialogNode, DialogNodeOption $dialogNodeOption, mixed $validated): DialogNodeOption
