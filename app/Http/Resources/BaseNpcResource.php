@@ -18,6 +18,8 @@ class BaseNpcResource extends JsonResource
             ...parent::toArray($request),
 
             'location_count' => $this->resource->locations()->count(),
+
+            'profession_name' => $this->resource->profession->description(),
         ];
     }
 }

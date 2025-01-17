@@ -13,9 +13,6 @@ import {MapResource} from "@/Resources/Map.resource";
             <div>Skorzystaj z bocznego menu by przejść do konkretnych funkcjonalności</div>
         </Message>
 
-        <Message severity="error">
-            Uwaga! Nie dotykaj dialogów! Nie są jeszcze gotowe!
-        </Message>
     </AppLayout>
 
 </template>

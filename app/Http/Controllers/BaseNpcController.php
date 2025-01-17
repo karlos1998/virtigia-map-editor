@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\BaseNpcCategory;
 use App\Enums\BaseNpcRank;
+use App\Enums\Profession;
 use App\Http\Requests\StoreBaseNpcRequest;
 use App\Http\Requests\UpdateBaseNpcRequest;
 use App\Http\Resources\BaseNpcResource;
@@ -70,6 +71,7 @@ class BaseNpcController extends Controller
 
             'availableRanks' => BaseNpcRank::toDropdownList(),
             'availableCategories' => BaseNpcCategory::toDropdownList(),
+            'availableProfessions' => Profession::toDropdownList(),
         ]);
     }
 

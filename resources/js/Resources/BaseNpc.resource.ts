@@ -1,5 +1,6 @@
 import {BaseNpcCategoryEnum} from "../Enums/BaseNpcCategory.enum";
 import {BaseNpcRankEnum} from "../Enums/BaseNpcRank.enum";
+import {ProfessionEnum} from "../Enums/Profession.enum";
 
 export interface BaseNpcResource {
     id: number
@@ -9,4 +10,6 @@ export interface BaseNpcResource {
     location_count: number
     category: BaseNpcCategoryEnum
     rank: BaseNpcRankEnum
+    profession: ProfessionEnum
+    profession_name: string
 }

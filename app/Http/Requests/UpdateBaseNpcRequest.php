@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\BaseNpcCategory;
 use App\Enums\BaseNpcRank;
+use App\Enums\Profession;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 
@@ -43,6 +44,10 @@ class UpdateBaseNpcRequest extends FormRequest
             'category' => [
                 'required',
                 new Enum(BaseNpcCategory::class),
+            ],
+            'profession' => [
+                'required',
+                new Enum(Profession::class),
             ]
         ];
     }

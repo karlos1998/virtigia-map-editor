@@ -16,6 +16,7 @@ const form = useForm({
     lvl: baseNpc.lvl,
     rank: baseNpc.rank,
     category: baseNpc.category,
+    profession: baseNpc.profession,
 })
 
 const cancel = () => {
@@ -31,8 +32,8 @@ const confirm = () => {
 }
 
 const availableRanks = usePage<{availableRanks: DropdownListType }>().props.availableRanks
-
-const availableCategories = usePage<{availableRanks: DropdownListType }>().props.availableCategories
+const availableCategories = usePage<{availableCategories: DropdownListType }>().props.availableCategories
+const availableProfessions = usePage<{availableProfessions: DropdownListType }>().props.availableProfessions
 
 </script>
 <template>
@@ -70,6 +71,19 @@ const availableCategories = usePage<{availableRanks: DropdownListType }>().props
                 name="category"
                 v-model="form.category"
                 :options="availableCategories"
+                option-value="value"
+                option-label="label"
+            />
+        </div>
+        <Message severity="error" size="small" variant="simple">{{ form.errors.category }}</Message>
+
+        <div class="flex items-center gap-4 mb-8">
+            <label for="category" class="font-semibold w-24">Profesja</label>
+            <Select
+                class="flex-auto"
+                name="category"
+                v-model="form.profession"
+                :options="availableProfessions"
                 option-value="value"
                 option-label="label"
             />
