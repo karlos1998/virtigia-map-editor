@@ -52,7 +52,7 @@ const isEditBaseNpcDialogVisible = ref(false );
                     <Tag v-else-if="baseNpc.rank == 'ELITE_II'" severity="warn" value="Elita II" />
                     <Tag v-else-if="baseNpc.rank == 'ELITE_III'" severity="warn" value="Elita III" />
                     <Tag v-else-if="baseNpc.rank == 'HERO'" severity="danger" value="Heros" />
-                    <Tag v-else-if="baseNpc.rank == 'TITAN'" severity="contrast" value="Heros" />
+                    <Tag v-else-if="baseNpc.rank == 'TITAN'" severity="contrast" value="Tytan" />
                 </template>§
             </DetailsCardListItem>
 <!--            <DetailsCardListItem label="Type" :value="baseNpc.type" />-->
