@@ -12,4 +12,9 @@ class NpcLocation extends DynamicModel
     {
         return $this->belongsTo(Map::class);
     }
+
+    public function npc()
+    {
+        return $this->belongsTo(Npc::class);
+    }
 }

@@ -85,20 +85,22 @@ const toggleCollision = (x: number, y: number) => {
 
 const addNewObject = (event: MouseEvent) => {
 
-    console.log('addNewObject', event, trackerPosition.value);
+    const x = trackerPosition.value.x;
+    const y = trackerPosition.value.y;
 
+    if(moveNpcLocationData.value) {
+        updateMoveNpcLocation(x, y)
+        return;
+    }
 
     if(editColsOn.value) {
-        toggleCollision(trackerPosition.value.x, trackerPosition.value.y)
+        toggleCollision(x, y)
         return;
     }
 
     if(addNpcToMapDialogInstance.value) {
         console.log(addNpcToMapDialogInstance.value);
     }
-
-    const x = trackerPosition.value.x;
-    const y = trackerPosition.value.y;
 
     addNpcToMapDialogInstance.value = primeDialog.open(AddNpcToMap, {
         props: {
@@ -288,6 +290,28 @@ const removeDoor = (door: DoorResource) => {
 
 
 const mouseTrackerEl = ref<HTMLElement | null>(null)
+
+
+const moveNpcLocationData = ref<NpcWithLocationResource>(null);
+const moveNpc = (npc: NpcWithLocationResource) => {
+    moveNpcLocationData.value = npc;
+}
+
+const updateMoveNpcLocation = (x: number, y: number) => {
+    router.patch(route('npcs.update.location', {
+        npc: moveNpcLocationData.value.id,
+        npcLocation: moveNpcLocationData.value.location.id,
+    }), {
+        map_id: moveNpcLocationData.value.location.map_id,
+        x,
+        y,
+    }, {
+        preserveScroll: true,
+        preserveState: true,
+    })
+    moveNpcLocationData.value = null;
+}
+
 </script>
 
 <template>
@@ -315,6 +339,8 @@ const mouseTrackerEl = ref<HTMLElement | null>(null)
                     </Link>
 
                     <Button label="Usuń" @click="removeNpc(message.npc)" severity="danger" size="small" />
+
+                    <Button label="Przenieś" @click="moveNpc(message.npc); rejectCallback()" severity="warn" size="small" />
                 </div>
 
             </template>

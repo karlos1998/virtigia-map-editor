@@ -30,6 +30,8 @@ class NpcResource extends JsonResource
 
             $this->mergeWhen($this->resource->pivot?->x !== null && $this->resource->pivot?->y !== null, fn() => [
                 'location' => [
+                    'id' => $this->resource->pivot->id,
+                    'map_id' => $this->resource->pivot->map_id,
                     'x' => $this->resource->pivot->x,
                     'y' => $this->resource->pivot->y,
                 ],

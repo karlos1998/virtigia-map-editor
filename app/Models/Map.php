@@ -18,7 +18,7 @@ class Map extends DynamicModel
     ];
 
     public function npcs() {
-        return $this->belongsToMany(Npc::class, NpcLocation::class)->withPivot(['x', 'y']);
+        return $this->belongsToMany(Npc::class, NpcLocation::class)->withPivot(['id', 'x', 'y']);
     }
 
     public function doors() {

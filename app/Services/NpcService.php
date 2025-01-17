@@ -7,6 +7,8 @@ use App\Http\Resources\NpcResource;
 use App\Models\BaseNpc;
 use App\Models\Map;
 use App\Models\Npc;
+use App\Models\NpcLocation;
+use Illuminate\Validation\ValidationException;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 use Karlos3098\LaravelPrimevueTableService\Services\TableService;
 
@@ -53,5 +55,17 @@ class NpcService extends BaseService
         $npc->fill($validated);
         $npc->dialog()->associate($validated['dialog']);
         $npc->save();
+    }
+
+    public function updateLocation(Npc $npc, NpcLocation $npcLocation, mixed $validated)
+    {
+        if(!$npcLocation->npc()->is($npc))
+        {
+            throw ValidationException::withMessages([
+                'message' => 'Ta lokalizacja nie jest powiązana z tym npc',
+            ]);
+        }
+
+        $npcLocation->update($validated);
     }
 }
