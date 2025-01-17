@@ -14,4 +14,9 @@ final class DoorService
     {
         $this->doorModel->create($validated);
     }
+
+    public function destroy(Door $door)
+    {
+        $door->delete();
+    }
 }

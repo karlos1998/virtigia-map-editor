@@ -103,6 +103,7 @@ Route::middleware(['auth'])->group(function () {
 
 
                 Route::post('doors', [DoorController::class, 'store'])->name('doors.store');
+                Route::delete('doors/{door}', [DoorController::class, 'destroy'])->name('doors.destroy');
             });
 
         Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');

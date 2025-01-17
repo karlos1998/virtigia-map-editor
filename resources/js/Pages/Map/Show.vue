@@ -238,7 +238,9 @@ const forceUpdate = () => {
 }
 
 const removeDoor = (door: DoorResource) => {
-
+    router.delete(route('doors.destroy', {
+        door
+    }))
 }
 
 
@@ -291,7 +293,7 @@ const mouseTrackerEl = ref<HTMLElement | null>(null)
                         <Button label="Przejdź" @click="rejectCallback" size="small" />
                     </Link>
 
-                    <Button label="Usuń" @click="removeDoor(message.door)" severity="danger" size="small" />
+                    <Button label="Usuń" @click="removeDoor(message.door); rejectCallback()" severity="danger" size="small" />
                 </div>
 
             </template>
