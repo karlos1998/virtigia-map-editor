@@ -14,6 +14,7 @@ use App\Http\Resources\DialogEdgeResource;
 use App\Http\Resources\DialogNodeOptionResource;
 use App\Http\Resources\DialogNodeResource;
 use App\Models\Dialog;
+use App\Models\DialogEdge;
 use App\Models\DialogNode;
 use App\Models\DialogNodeOption;
 use App\Services\DialogService;
@@ -68,6 +69,11 @@ class DialogController extends Controller
         return response()->json([
             'edge' => DialogEdgeResource::make($edge),
         ]);
+    }
+
+    public function destroyEdge(Dialog $dialog, DialogEdge $dialogEdge)
+    {
+        $this->dialogService->destroyEdge($dialog, $dialogEdge);
     }
 
     public function addOption(Dialog $dialog, DialogNode $dialogNode, StoreDialogNodeOptionRequest $request)

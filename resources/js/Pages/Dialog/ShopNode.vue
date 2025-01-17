@@ -10,6 +10,11 @@ const primeDialog = useDialog();
 
 const props = defineProps<NodeProps<{
     dialog_id: number
+    shop?: {
+        id: number
+        name: string
+        items_count: number
+    }
 }>>();
 
 const { updateNodeData, edges, removeEdges, removeNodes, connectionLookup } = useVueFlow();
@@ -40,22 +45,23 @@ export default {
 </script>
 
 <template>
-    <div class="vue-flow__node-default">
+    <div class="vue-flow__node-default flex flex-col h-full">
         <Handle class="dialog-input" type="target" :position="Position.Left" />
+
         <div class="font-bold text-lg flex flex-row gap-1">
-<!--            <span class="grow">{{ state.label }}</span>-->
             <Button severity="info" size="small" class="align-self-end" @click="editNode()">
                 <FontAwesomeIcon icon="edit" />
             </Button>
-
             <RemoveNodeButton :dialog-node-id="id" :dialog-id="data.dialog_id" />
-
         </div>
-        <div>
-<!--            {{ state.content }}-->
+
+        <div class="mt-auto mb-16" v-if="data.shop">
+            <div>Nazwa sklepu: {{ data.shop.name }}</div>
+            <div>Ilość przedmiotów: {{ data.shop.items_count }}</div>
         </div>
     </div>
 </template>
+
 
 <style scoped lang="scss">
 .vue-flow__node-default {

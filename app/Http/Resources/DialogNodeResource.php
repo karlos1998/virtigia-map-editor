@@ -32,7 +32,11 @@ class DialogNodeResource extends JsonResource
             $this->mergeWhen($this->resource->type == 'shop', fn() => [
                 'data' => [
                     'dialog_id' => $this->resource->source_dialog_id,
-                    'shop' => $this->resource->shop,
+                    'shop' => $this->when($this->resource->shop()->exists(), fn() => [
+                        'id' => $this->resource->shop->id,
+                        'name' => $this->resource->shop->name,
+                        'items_count' => $this->resource->shop->items()->count(),
+                    ]),
                 ]
             ]),
 

@@ -2,7 +2,7 @@
 import AppLayout from '../../layout/AppLayout.vue';
 
 import { MiniMap } from '@vue-flow/minimap';
-import { ConnectionMode, NodeProps, SmoothStepEdge, useVueFlow, VueFlow } from '@vue-flow/core';
+import {ConnectionMode, EdgeRemoveChange, NodeProps, SmoothStepEdge, useVueFlow, VueFlow} from '@vue-flow/core';
 
 import SpecialNode from '@/Pages/Dialog/SpecialNode.vue';
 import { Controls } from '@vue-flow/controls';
@@ -14,6 +14,7 @@ import { computed, ref } from 'vue';
 import axios from 'axios';
 import { route } from 'ziggy-js';
 import TeleporationNode from '@/Pages/Dialog/TeleporationNode.vue';
+import {useToast} from "primevue";
 
 const props = defineProps<{
     dialog: DialogResource,
@@ -31,7 +32,8 @@ const {
     onEdgesChange,
     applyEdgeChanges,
     onNodesChange,
-    applyNodeChanges
+    applyNodeChanges,
+    removeEdges,
 } = useVueFlow();
 
 onConnect(({ source, target, sourceHandle, targetHandle }) => {
@@ -80,9 +82,11 @@ const addNode = (type?: string) => {
         },
         type
     }).then(({ data: { node } }) => {
-        console.log('add node ->', node);
         addNodes([node]);
-    });
+    })
+        .catch(({response}) => {
+            toast.add({ severity: 'error', summary: 'Błąd', detail: response.data.message, life: 6000 });
+        });
 };
 
 onNodeDragStop(({ node }) => {
@@ -137,20 +141,27 @@ onEdgesChange(async (changes) => {
                 sourceOptionId: change.item.sourceNode.type != 'start' ? change.item.sourceHandle.substring(7) : null,
                 targetNodeId: change.item.targetNode.id
             }).then(({ data: { edge } }) => {
-
-            }).catch((error) => {
-                applyEdgeChanges([{
-                    type: 'remove',
-                    id: change.item.id,
-                    source: change.item.source,
-                    sourceHandle: change.item.sourceHandle,
-                    target: change.item.target,
-                    targetHandle: change.item.targetHandle
-                }]);
-            });
-            nextChanges.push(change);
+                console.log(' add edge from backend ---<', edge)
+                let edgeTmp = change;
+                edgeTmp.item.id = edge.id;
+                applyEdgeChanges([edgeTmp]);
+            })
+                // .catch((error) => {
+                // applyEdgeChanges([{
+                //     type: 'remove',
+                //     id: change.item.id,
+                //     source: change.item.source,
+                //     sourceHandle: change.item.sourceHandle,
+                //     target: change.item.target,
+                //     targetHandle: change.item.targetHandle
+                // }]);
+            // });
+                .catch(({response}) => {
+                    toast.add({ severity: 'error', summary: 'Błąd', detail: response.data.message, life: 6000 });
+                })
         } else if (change.type === 'remove') {
-            //todo ....
+
+            removeEdge(change);
         } else {
             nextChanges.push(change);
         }
@@ -158,6 +169,22 @@ onEdgesChange(async (changes) => {
 
     applyEdgeChanges(nextChanges);
 });
+
+const toast = useToast();
+const removeEdge = (edgeChange: EdgeRemoveChange) => {
+
+    axios.delete(route('dialogs.edges.destroy', {
+        dialog: props.dialog.id,
+        dialogEdge: edgeChange.id,
+    }))
+        .then(() => {
+            applyEdgeChanges([edgeChange]);
+        })
+        .catch(({response}) => {
+            toast.add({ severity: 'error', summary: 'Błąd', detail: response.data.message, life: 6000 });
+        })
+}
+
 
 // import { DialogRuleResource } from '@/Resources/DialogRule.resource';
 

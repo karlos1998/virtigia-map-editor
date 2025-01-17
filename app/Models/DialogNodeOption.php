@@ -24,4 +24,9 @@ class DialogNodeOption extends DynamicModel
     {
         return $this->belongsTo(DialogNode::class, 'node_id');
     }
+
+    public function edges()
+    {
+        return $this->hasMany(DialogEdge::class, 'source_option_id');
+    }
 }

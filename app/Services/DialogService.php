@@ -43,9 +43,38 @@ class DialogService extends BaseService
             ->targetNode()->associate($targetNode);
 
         if(!$data['sourceNodeIsInput']) {
+            /**
+             * @var DialogNode $sourceNode
+             */
             $sourceNode = $dialog->nodes()->find($data['sourceNodeId']);
+
+            /**
+             * @var DialogNodeOption $sourceOption
+             */
             $sourceOption = $sourceNode->options()->find($data['sourceOptionId']);
+
+            if ($sourceOption->edges()->count() >= 1)
+            {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'message' => 'Opcja może mieć NA TEN MOMENT tylko jedno połączenie',
+                ]);
+            }
+
             $edge->sourceOption()->associate($sourceOption);
+        } else {
+            if ($dialog->edges()->whereNull('source_option_id')->count() >= 1)
+            {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'message' => 'Node wejściowy może mieć NA TEN MOMENT tylko jedno połączenie',
+                ]);
+            }
+
+            if($targetNode->type != 'special')
+            {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'message' => 'Node wejściowy może być połączony tylko z normalnymi dialogami (nie sklepami czy teleportacją)',
+                ]);
+            }
         }
 
         $edge->save();
@@ -131,5 +160,22 @@ class DialogService extends BaseService
 
         $dialogNode->options()->delete();
         $dialogNode->delete();
+    }
+
+    public function destroyEdge(Dialog $dialog, \App\Models\DialogEdge $dialogEdge)
+    {
+        if(!$dialogEdge->sourceDialog()->is($dialog)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'message' => 'Błąd niespodzianka :)',
+            ]);
+        }
+
+        if($dialogEdge->source_option_id === null && $dialog->edges()->whereNull('source_option_id')->count() <= 1) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'message' => 'Nie możesz usunąć jedynego połączenia ze startowym dialogiem',
+            ]);
+        }
+
+        $dialogEdge->delete();
     }
 }

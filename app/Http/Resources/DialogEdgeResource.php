@@ -22,7 +22,8 @@ class DialogEdgeResource extends JsonResource
             $this->resource->sourceDialog->nodes()->where('type', 'start')->limit(1)->first()->id;
 
         return [
-            'id' => "{$sourceId}->{$this->resource->targetNode->id}",
+//            'id' => "{$sourceId}->{$this->resource->targetNode->id}",
+            'id' => "{$this->resource->id}",
             'type' => 'default',
             'source' => "{$sourceId}",
             'target' => "{$this->resource->targetNode->id}",
