@@ -25,6 +25,10 @@ class DialogNode extends DynamicModel
 
     public function dialog(): HasOne
     {
-        return $this->hasOne(Dialog::class, 'id', 'dialog_id');
+        return $this->hasOne(Dialog::class, 'id', 'source_dialog_id');
+    }
+
+    public function shop() {
+        return $this->hasOne(Shop::class, 'id', 'shop_id');
     }
 }

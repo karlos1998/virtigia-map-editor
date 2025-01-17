@@ -9,11 +9,12 @@ import {DynamicDialogCloseOptions} from "primevue/dynamicdialogoptions";
 import {router} from "@inertiajs/vue3";
 import {route} from "ziggy-js";
 import axios from "axios";
+import RemoveNodeButton from "./Componnts/RemoveNodeButton.vue";
 
 const { updateNodeData, edges, removeEdges, removeNodes, connectionLookup } = useVueFlow();
 
 const props = defineProps<{
-    id: number
+    id: string
     data: {
         dialog_id: number
         action_data?: {
@@ -71,6 +72,8 @@ const editNode = () => {
         <Button severity="info" size="small" class="align-self-end" @click="editNode">
             <FontAwesomeIcon icon="edit" />
         </Button>
+
+        <RemoveNodeButton :dialog-node-id="id" :dialog-id="data.dialog_id" />
 
         <div v-if="data.action_data.teleportation">
             [{{data.action_data.teleportation.mapId}}] {{data.action_data.teleportation.mapName}} ({{data.action_data.teleportation.x}}, {{data.action_data.teleportation.y}})

@@ -117,7 +117,13 @@ class DialogService extends BaseService
 
     public function destroyNode(Dialog $dialog, DialogNode $dialogNode)
     {
-        if($dialog->nodes()->where('type', 'special')->count() <= 1) {
+        if(!$dialogNode->dialog()->is($dialog)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'message' => 'Błąd niespodzianka :)',
+            ]);
+        }
+
+        if($dialogNode->type == 'special' && $dialog->nodes()->where('type', 'special')->count() <= 1) {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'message' => 'Nie możesz usunąć jedynej kwesti dialogowej',
             ]);

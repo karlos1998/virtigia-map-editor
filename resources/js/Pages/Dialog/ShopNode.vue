@@ -4,35 +4,15 @@ import { ConnectionLookup, Handle, NodeProps, Position, useVueFlow } from '@vue-
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { useDialog } from 'primevue/usedialog';
 import EditDialog from '@/Pages/Dialog/Modals/EditDialog.vue';
+import RemoveNodeButton from "./Componnts/RemoveNodeButton.vue";
 
 const primeDialog = useDialog();
 
-interface Option {
-    id: string,
-    label: string,
-}
-
 const props = defineProps<NodeProps<{
-    label: string,
-    content: string,
-    options: Array<Option>
+    dialog_id: number
 }>>();
 
 const { updateNodeData, edges, removeEdges, removeNodes, connectionLookup } = useVueFlow();
-
-const state = ref({
-    label: props.data.label ?? '',
-    content: props.data.content ?? ''
-});
-const options = ref(props.data.options);
-
-
-const removeSourceConnections = (option: { label: string, id: string }) => {
-    const foundEdges = edges.value.filter((edge) => edge.source === props.id)
-        .filter((edge) => edge.sourceHandle === `source-${option.id}`);
-    console.log('removeSourceConnections', foundEdges);
-    removeEdges(foundEdges);
-};
 
 const editNode = () => {
     primeDialog.open(EditDialog, {
@@ -40,27 +20,17 @@ const editNode = () => {
             header: 'Edit dialog'
         },
         data: {
-            content: state.value.content
+            // content: state.value.content
         },
         onClose(options) {
 
             if (options.data.content) {
-                state.value.content = options.data.content;
+                // state.value.content = options.data.content;
             }
         }
     });
 };
 
-const handleHasConnections = reactive<Record<string, boolean>>({});
-
-watch(connectionLookup, (value: ConnectionLookup) => {
-    for (const i in options.value) {
-        // find `${props.id}-source-source-${i}` in value.entries()
-        const optionConnections = value.get(`${props.id}-source-source-${options.value[i].id}`);
-        handleHasConnections[`source-${options.value[i].id}`] = optionConnections?.size > 0;
-    }
-    console.log('handleHasConnections', value, handleHasConnections);
-}, { deep: true, immediate: true, flush: 'post' });
 </script>
 
 <script lang="ts">
@@ -73,16 +43,16 @@ export default {
     <div class="vue-flow__node-default">
         <Handle class="dialog-input" type="target" :position="Position.Left" />
         <div class="font-bold text-lg flex flex-row gap-1">
-            <span class="grow">{{ state.label }}</span>
+<!--            <span class="grow">{{ state.label }}</span>-->
             <Button severity="info" size="small" class="align-self-end" @click="editNode()">
                 <FontAwesomeIcon icon="edit" />
             </Button>
-            <Button severity="danger" size="small" class="align-self-end" @click="removeNodes(props.id, true)">
-                <FontAwesomeIcon icon="trash" />
-            </Button>
+
+            <RemoveNodeButton :dialog-node-id="id" :dialog-id="data.dialog_id" />
+
         </div>
         <div>
-            {{ state.content }}
+<!--            {{ state.content }}-->
         </div>
     </div>
 </template>

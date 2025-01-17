@@ -10,6 +10,7 @@ import axios from "axios";
 import {route} from "ziggy-js";
 import {DialogOptionResource} from "@/Resources/DialogOption.resource";
 import {useConfirm, useToast} from "primevue";
+import RemoveNodeButton from "./Componnts/RemoveNodeButton.vue";
 
 const primeDialog = useDialog();
 
@@ -115,45 +116,6 @@ watch(connectionLookup, (value: ConnectionLookup) => {
     console.log('handleHasConnections', value, handleHasConnections);
 }, { deep: true, immediate: true, flush: 'post' });
 
-const confirm = useConfirm();
-const toast = useToast();
-
-const remove = (event, node) => {
-
-    console.log('node id-> ', node)
-
-    confirm.require({
-        target: event.currentTarget,
-        message: 'Usunąć tą kwestię dialogową?',
-        icon: 'pi pi-info-circle',
-        rejectProps: {
-            label: 'Cancel',
-            severity: 'secondary',
-            outlined: true
-        },
-        acceptProps: {
-            label: 'Delete',
-            severity: 'danger'
-        },
-        accept: () => {
-
-            axios.delete(route('dialogs.nodes.destroy', {
-                dialog: props.data.dialog_id,
-                dialogNode: props.id,
-            }))
-                .then(() => {
-                    removeNodes(node.id); //todo - nie dziala !
-                    alert('TODO - odswiez strone, bo samo nie znika jeszcze...');
-                    toast.add({ severity: 'info', summary: 'Udało się', detail: 'Usunięto', life: 3000 });
-                })
-                .catch(({response}) => {
-                    console.log('data', response.data)
-                    toast.add({ severity: 'error', summary: 'Błąd', detail: response.data.message, life: 6000 });
-                })
-
-        },
-    });
-}
 
 </script>
 
@@ -174,9 +136,9 @@ export default {
             <Button severity="info" size="small" class="align-self-end" @click="editNode()">
               <FontAwesomeIcon icon="edit" />
             </Button>
-            <Button severity="danger" size="small" class="align-self-end" @click="remove($event, props)">
-              <FontAwesomeIcon icon="trash" />
-            </Button>
+
+            <RemoveNodeButton :dialog-node-id="id" :dialog-id="data.dialog_id" />
+
         </div>
         <div>
             {{ state.content }}

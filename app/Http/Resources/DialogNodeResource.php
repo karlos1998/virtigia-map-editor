@@ -29,13 +29,18 @@ class DialogNodeResource extends JsonResource
                 ]
             ]),
 
+            $this->mergeWhen($this->resource->type == 'shop', fn() => [
+                'data' => [
+                    'dialog_id' => $this->resource->source_dialog_id,
+                    'shop' => $this->resource->shop,
+                ]
+            ]),
+
             $this->mergeWhen($this->resource->type == 'teleportation', function(){
                 $teleportation = $this->resource->action_data['teleportation'] ?? null;
 
                 if($teleportation){
                     $teleportation['mapName'] = Map::find($teleportation['mapId'])->name;
-                } else {
-//                    dd($this->resource);
                 }
 
                 return [
