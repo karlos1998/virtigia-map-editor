@@ -196,4 +196,18 @@ class DialogService extends BaseService
 
         $dialogEdge->delete();
     }
+
+    public function assignShop(Dialog $dialog, DialogNode $dialogNode, int $shopId)
+    {
+        if($dialogNode->type != 'shop') {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'message' => 'Sklep może zostac podpięty wyłącznie do kwesti dialogowej typu "sklep"',
+            ]);
+        }
+
+        $dialogNode->shop_id = $shopId;
+        $dialogNode->save();
+
+        return $dialogNode;
+    }
 }

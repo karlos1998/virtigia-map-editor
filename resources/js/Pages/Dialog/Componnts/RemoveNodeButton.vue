@@ -13,7 +13,7 @@ const {
     dialogNodeId: string
 }>()
 
-const { updateNodeData, edges, removeEdges, removeNodes, connectionLookup } = useVueFlow();
+const { updateNodeData, edges, removeEdges, removeNodes, connectionLookup, applyNodeChanges } = useVueFlow();
 
 const confirm = useConfirm();
 const toast = useToast();
@@ -40,8 +40,10 @@ const remove = (event) => {
                 dialogNode: dialogNodeId,
             }))
                 .then(() => {
-                    removeNodes(dialogNodeId); //todo - nie dziala !
-                    alert('TODO - odswiez strone, bo samo nie znika jeszcze...');
+                    applyNodeChanges([{
+                        type: 'remove',
+                        id: dialogNodeId,
+                    }]);
                     toast.add({ severity: 'info', summary: 'Udało się', detail: 'Usunięto', life: 3000 });
                 })
                 .catch(({response}) => {

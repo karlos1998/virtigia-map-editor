@@ -5,6 +5,10 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { useDialog } from 'primevue/usedialog';
 import EditDialog from '@/Pages/Dialog/Modals/EditDialog.vue';
 import RemoveNodeButton from "./Componnts/RemoveNodeButton.vue";
+import EditShopNodeDialog from "./Modals/EditShopNodeDialog.vue";
+import axios from "axios";
+import {route} from "ziggy-js";
+import {useToast} from "primevue";
 
 const primeDialog = useDialog();
 
@@ -17,20 +21,34 @@ const props = defineProps<NodeProps<{
     }
 }>>();
 
-const { updateNodeData, edges, removeEdges, removeNodes, connectionLookup } = useVueFlow();
+const { updateNodeData, edges, removeEdges, removeNodes, connectionLookup, } = useVueFlow();
+
+const toast = useToast();
 
 const editNode = () => {
-    primeDialog.open(EditDialog, {
+    primeDialog.open(EditShopNodeDialog, {
         props: {
-            header: 'Edit dialog'
+            header: 'Wybierz sklep z listy'
         },
         data: {
             // content: state.value.content
         },
         onClose(options) {
 
-            if (options.data.content) {
-                // state.value.content = options.data.content;
+            if (options.data?.shop) {
+                axios.put(route('dialogs.nodes.shop.assign', {
+                    dialog: props.data.dialog_id,
+                    dialogNode: props.id,
+                }), {
+                    shop_id: options.data.shop.id,
+                })
+                    .then(({data}) => {
+                        updateNodeData(props.id, data.dialogNode.data);
+                        toast.add({ severity: 'success', summary: 'Operacja powiodła się', detail: 'Pomyślnie przypisano sklep', life: 6000 });
+                    })
+                    .catch(({response}) => {
+                        toast.add({ severity: 'error', summary: 'Błąd', detail: response.data.message, life: 6000 });
+                    })
             }
         }
     });
@@ -58,6 +76,9 @@ export default {
         <div class="mt-auto mb-16" v-if="data.shop">
             <div>Nazwa sklepu: {{ data.shop.name }}</div>
             <div>Ilość przedmiotów: {{ data.shop.items_count }}</div>
+        </div>
+        <div v-else class="mt-auto mb-16 text-red-500">
+            Nie wybrano sklepu
         </div>
     </div>
 </template>

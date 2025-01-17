@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateShopRequest;
 use App\Http\Resources\BaseItemResource;
 use App\Models\Shop;
 use App\Services\ShopService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class ShopController extends Controller
@@ -85,5 +86,10 @@ class ShopController extends Controller
     public function destroyItem(Shop $shop, int $position): void
     {
         $this->shopService->deleteItem($shop, $position);
+    }
+
+    public function search(Request $request)
+    {
+        return response()->json($this->shopService->search($request->get('query', '')));
     }
 }

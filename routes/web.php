@@ -59,6 +59,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::patch('dialogs/{dialog}/nodes/{dialogNode}/options/{dialogNodeOption}', [DialogController::class, 'updateOption'])->name('dialogs.nodes.options.update');
                 Route::delete('dialogs/{dialog}/nodes/{dialogNode}/options/{dialogNodeOption}', [DialogController::class, 'destroyOption'])->name('dialogs.nodes.options.destroy');
                 Route::patch('dialog/{dialog}/nodes/{dialogNode}/action', [DialogController::class, 'updateAction'])->name('dialogs.nodes.action.update');
+                Route::put('dialog/{dialog}/nodes/{dialogNode}/shop', [DialogController::class, 'assignShop'])->name('dialogs.nodes.shop.assign');
 
                 Route::get('maps/create', [MapController::class, 'create'])->name('maps.create');
                 Route::post('maps', [MapController::class, 'store'])->name('maps.store');
@@ -78,6 +79,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::delete('npcs/{npc}', [NpcController::class, 'destroy'])->name('npcs.destroy');
 
                 Route::get('shops', [ShopController::class, 'index'])->name('shops.index');
+                Route::get('shops/search', [ShopController::class, 'search'])->name('shops.search');
                 Route::get('shops/{shop}', [ShopController::class, 'show'])->name('shops.show');
                 Route::post('shops/{shop}/items', [ShopController::class, 'addItem'])->name('shops.items.store');
                 Route::delete('shops/{shop}/items/{position}', [ShopController::class, 'destroyItem'])->name('shops.items.destroy');

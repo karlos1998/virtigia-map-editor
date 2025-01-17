@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AssignShopToDialogNodeRequest;
 use App\Http\Requests\MoveDialogNodeRequest;
 use App\Http\Requests\StoreDialogEdgeRequest;
 use App\Http\Requests\StoreDialogNodeOptionRequest;
@@ -19,6 +20,7 @@ use App\Models\DialogNode;
 use App\Models\DialogNodeOption;
 use App\Services\DialogService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class DialogController extends Controller
@@ -113,5 +115,16 @@ class DialogController extends Controller
     public function destroyNode(Dialog $dialog, DialogNode $dialogNode)
     {
         $this->dialogService->destroyNode($dialog, $dialogNode);
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    public function assignShop(Dialog $dialog, DialogNode $dialogNode, AssignShopToDialogNodeRequest $request)
+    {
+        $node = $this->dialogService->assignShop($dialog, $dialogNode, $request->get('shop_id'));
+        return response()->json([
+            'dialogNode' => DialogNodeResource::make($node),
+        ]);
     }
 }
