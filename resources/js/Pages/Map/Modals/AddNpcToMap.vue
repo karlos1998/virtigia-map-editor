@@ -53,7 +53,6 @@ const form = useForm<{
     location: undefined,
 })
 
-
 const filteredNpcs = ref<BaseNpcResource[]>([]);
 
 const search = async  (query: string) => {
@@ -64,6 +63,12 @@ const search = async  (query: string) => {
 const filterNpcs = async ({ query }: { query: string }) => {
     filteredNpcs.value = await search(query);
 };
+
+const addDoor = () => {
+    dialogRef.value.close({
+        addDoor: true,
+    });
+}
 </script>
 
 <template>
@@ -116,8 +121,10 @@ const filterNpcs = async ({ query }: { query: string }) => {
         <div class="text-red-500 font-bold">{{ form.errors.npc }}</div>
         <div class="text-red-500 font-bold">{{ form.errors.location }}</div>
 
-        <div class="flex gap-1">
+        <div class="gap-1">
             <Button :loading="form.processing" fluid @click="confirm">Dodaj</Button>
+
+            <Button @click="addDoor" class="mt-2" severity="info" fluid>Lub dodaj Przejście</Button>
         </div>
     </div>
 </template>

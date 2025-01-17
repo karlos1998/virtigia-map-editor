@@ -25,10 +25,9 @@ const props = defineProps<{
 
 console.log('props', props);
 
-const isTeleportationSelectModalVisible = ref(false);
+
 const primeDialog = useDialog();
 const editNode = () => {
-    isTeleportationSelectModalVisible.value = true;
 
     primeDialog.open(TeleportationSelectModal, {
         props: {

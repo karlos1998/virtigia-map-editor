@@ -12,6 +12,9 @@ import EditOption from "@/Pages/Dialog/Modals/EditOption.vue";
 import {DynamicDialogCloseOptions, DynamicDialogInstance} from "primevue/dynamicdialogoptions";
 import {useDialog} from "primevue/usedialog";
 import AddNpcToMap from "@/Pages/Map/Modals/AddNpcToMap.vue";
+import TeleportationSelectModal from "../../Components/TeleportationSelectModal.vue";
+import {DialogNodeTeleportationDataResource} from "../../Resources/DialogNodeTeleportationData.resource";
+import axios from "axios";
 
 const props = defineProps<{
     map: MapResource;
@@ -43,9 +46,15 @@ const showNpcConfirmDialog = (event: MouseEvent, npc: NpcResource) => {
     confirm.require({
         target: event.currentTarget as HTMLElement,
         group: 'npc',
-        message: 'Please confirm to proceed moving forward.',
-        icon: 'pi pi-exclamation-circle',
         npc,
+    });
+};
+
+const showDoorConfirmDialog = (event: MouseEvent, door: DoorResource) => {
+    confirm.require({
+        target: event.currentTarget as HTMLElement,
+        group: 'door',
+        door,
     });
 };
 
@@ -75,6 +84,7 @@ const toggleCollision = (x: number, y: number) => {
 };
 
 const addNewObject = (event: MouseEvent) => {
+
     console.log('addNewObject', event, trackerPosition.value);
 
 
@@ -87,23 +97,58 @@ const addNewObject = (event: MouseEvent) => {
         console.log(addNpcToMapDialogInstance.value);
     }
 
+    const x = trackerPosition.value.x;
+    const y = trackerPosition.value.y;
+
     addNpcToMapDialogInstance.value = primeDialog.open(AddNpcToMap, {
         props: {
-            header: 'Dodawanie NPC do mapy'
+            header: 'Dodawanie NPC do mapy',
+            modal: true,
         },
         data: {
-            x: trackerPosition.value.x,
-            y: trackerPosition.value.y,
+            x,
+            y,
             map: props.map,
             lastSelectedNpc: lastSelectedNpc.value,
         },
         onClose(closeOptions: DynamicDialogCloseOptions & { data: { npc?: NpcResource } }) {
             if(closeOptions.data && closeOptions.data.npc) {
                 lastSelectedNpc.value = closeOptions.data.npc;
+            } else if(closeOptions.data?.addDoor ) {
+                addDoorTo(x, y);
             }
         }
     });
 };
+
+const addDoorTo = (x: number, y: number) => {
+    primeDialog.open(TeleportationSelectModal, {
+        props: {
+            header: 'Edycja miejsca teleportacji',
+            modal: true,
+            breakpoints:{
+                '960px': '75vw',
+                '640px': '90vw'
+            },
+        },
+        data: {
+
+        },
+        onClose(closeOptions: DynamicDialogCloseOptions & { data: { teleportation: DialogNodeTeleportationDataResource } }) {
+            if(closeOptions.data?.teleportation) {
+                console.log('new teleportation data', closeOptions.data.teleportation)
+                router.post(route('doors.store'), {
+                    map_id: props.map.id,
+                    x,
+                    y,
+                    go_map_id: closeOptions.data.teleportation.mapId,
+                    go_x:  closeOptions.data.teleportation.x,
+                    go_y:  closeOptions.data.teleportation.y,
+                })
+            }
+        }
+    });
+}
 
 const throughTheDoor = (door: DoorResource) => {
     router.get(route('maps.show', door.go_map_id));
@@ -191,6 +236,13 @@ const forceUpdate = () => {
     isMapVisible.value = false;
     setTimeout(() => isMapVisible.value = true, 100)
 }
+
+const removeDoor = (door: DoorResource) => {
+
+}
+
+
+const mouseTrackerEl = ref<HTMLElement | null>(null)
 </script>
 
 <template>
@@ -222,7 +274,29 @@ const forceUpdate = () => {
 
         </ConfirmPopup>
 
+        <ConfirmPopup group="door">
+            <template #container="{ message, acceptCallback, rejectCallback }">
+                <div
+                    class="flex flex-col items-center w-full gap-4 border-b border-surface-200 dark:border-surface-700 p-4 mb-4 pb-0">
+                    <!--                    <i :class="slotProps.message.icon" class="text-6xl text-primary-500"></i>-->
+                    <p>{{ message.door.name }}</p>
+                </div>
 
+                <div class="flex justify-center items-center gap-2 mt-4">
+                    <Button label="Zamknij" severity="contrast" @click="rejectCallback" size="small" />
+
+                    <Link
+                        :href="route('maps.show', message.door.go_map_id)"
+                    >
+                        <Button label="Przejdź" @click="rejectCallback" size="small" />
+                    </Link>
+
+                    <Button label="Usuń" @click="removeDoor(message.door)" severity="danger" size="small" />
+                </div>
+
+            </template>
+
+        </ConfirmPopup>
 
         <ItemHeader
             :route-back="route('maps.index')"
@@ -277,10 +351,15 @@ const forceUpdate = () => {
                 @mouseup="stopPanning"
                 @mouseleave="stopPanning"
                 @contextmenu.prevent
-                @click.self="addNewObject"
+                @click.self="addNewObject($event)"
             >
                 <div
-                    class="mouse-tracker absolute bg-yellow-500/70 pointer-events-none" :style="{
+                    :class="{
+                        'pointer-events-none' : true, //todo
+                        'pointer-events-auto': false
+                    }"
+                    ref="mouseTrackerEl"
+                    class="mouse-tracker absolute bg-yellow-500/70" :style="{
                     width: `${32 * scale}px`,
                     height: `${32 * scale}px`,
                     top: trackerPosition.y * 32 * scale,
@@ -328,7 +407,6 @@ const forceUpdate = () => {
                     class="door"
                     v-for="door in doors"
                     v-tooltip="'Przejście do: ' + door.name + ' (' + door.go_x + ',' + door.go_y + '), \nPowrót: ' + (door.double_sided ? 'Tak' : 'Nie' )"
-                    @click="throughTheDoor(door)"
                     :style="{
                         width: `${32 * scale}px`,
                         height: `${32 * scale}px`,
@@ -336,6 +414,7 @@ const forceUpdate = () => {
                         left: `${door.x * 32 * scale}px`,
                     }"
                     :class="{'double-sided': door.double_sided}"
+                    @click="showDoorConfirmDialog($event, door)"
                 />
 
                 <div

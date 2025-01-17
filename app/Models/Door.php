@@ -6,6 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Door extends DynamicModel
 {
+
+    protected $fillable = [
+        'map_id',
+        'x',
+        'y',
+
+        'go_map_id',
+        'go_x',
+        'go_y',
+    ];
+
     public function targetMap() {
         return $this->hasOne(Map::class, 'id', 'go_map_id');
     }

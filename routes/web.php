@@ -6,6 +6,7 @@ use App\Http\Controllers\BaseItemController;
 use App\Http\Controllers\BaseNpcController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DialogController;
+use App\Http\Controllers\DoorController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\NpcController;
@@ -99,6 +100,9 @@ Route::middleware(['auth'])->group(function () {
                 Route::patch('base-npcs/{baseNpc}', [BaseNpcController::class, 'update'])->name('base-npcs.update');
 
                 Route::get('assets/base-npcs/search', [AssetController::class, 'searchNpcs'])->name('assets.base-npcs.search');
+
+
+                Route::post('doors', [DoorController::class, 'store'])->name('doors.store');
             });
 
         Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
