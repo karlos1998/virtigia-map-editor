@@ -348,6 +348,8 @@ const forceUpdate = () => {
                     :style="{
                         top: `${pos.y * scale}px`,
                         left: `${pos.x * scale}px`,
+                        width: `${32 * scale}px`,
+                        height: `${32 * scale}px`
                     }"
                     @click.stop
                 />
