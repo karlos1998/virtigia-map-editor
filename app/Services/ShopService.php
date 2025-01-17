@@ -40,4 +40,9 @@ final class ShopService extends BaseService
     {
         return $this->shopModel->where('name', 'like', '%' . $search . '%')->limit(10)->get();
     }
+
+    public function store(mixed $validated)
+    {
+        return $this->shopModel->create($validated);
+    }
 }

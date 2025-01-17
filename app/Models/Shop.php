@@ -10,6 +10,8 @@ class Shop extends DynamicModel
     /** @use HasFactory<\Database\Factories\ShopFactory> */
     use HasFactory;
 
+    protected $fillable = ['name'];
+
     public function items()
     {
         return $this->belongsToMany(BaseItem::class, ShopItem::class, 'shop_id', 'item_id')

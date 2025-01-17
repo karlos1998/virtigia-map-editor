@@ -79,6 +79,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::delete('npcs/{npc}', [NpcController::class, 'destroy'])->name('npcs.destroy');
 
                 Route::get('shops', [ShopController::class, 'index'])->name('shops.index');
+                Route::post('shops', [ShopController::class, 'store'])->name('shops.store');
                 Route::get('shops/search', [ShopController::class, 'search'])->name('shops.search');
                 Route::get('shops/{shop}', [ShopController::class, 'show'])->name('shops.show');
                 Route::post('shops/{shop}/items', [ShopController::class, 'addItem'])->name('shops.items.store');

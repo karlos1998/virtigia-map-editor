@@ -40,7 +40,8 @@ class ShopController extends Controller
      */
     public function store(StoreShopRequest $request)
     {
-        //
+        $shop = $this->shopService->store($request->validated());
+        return to_route('shops.show', $shop->id);
     }
 
     /**
