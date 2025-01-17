@@ -48,7 +48,7 @@ defineProps<{
             </DetailsCardListItem>
         </DetailsCardList>
 
-        <NpcAdvanceCard :npc />
+        <NpcAdvanceCard :npc :baseNpc />
 
         <DetailsCardList title="Miejsce/a wystąpienia" >
             <DetailsCardListItem

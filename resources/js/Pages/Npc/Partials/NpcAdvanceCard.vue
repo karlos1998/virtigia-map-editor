@@ -6,10 +6,12 @@ import {NpcResource, NpcWithDetails} from "../../../Resources/Npc.resource";
 import { Link } from '@inertiajs/vue3';
 import {ref} from "vue";
 import SelectDialogModal from "../Components/SelectDialogModal.vue";
+import {BaseNpcResource} from "../../../Resources/BaseNpc.resource";
 
 
 defineProps<{
     npc: NpcWithDetails
+    baseNpc: BaseNpcResource
 }>()
 
 const isSelectDialogModalVisible = ref(false);
@@ -48,6 +50,7 @@ const isSelectDialogModalVisible = ref(false);
                 <div v-else>
                     <Button label="Edytuj" size="small" severity="warn" @click="isSelectDialogModalVisible = true" />
                 </div>
+                <Message v-if="baseNpc.category != 'NPC'" class="mt-1" severity="error">Uwaga! Dialog nigdy nie zostanie uruchomiony, ponieważ bazowy Npc nie jest zwykłym NPC. </Message>
             </template>
         </DetailsCardListItem>
     </DetailsCardList>
