@@ -6,7 +6,7 @@ import {Link, router} from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import {NpcResource, NpcWithLocationResource} from '@/Resources/Npc.resource';
 import { DoorResource } from '@/Resources/Door.resource';
-import { useConfirm } from 'primevue';
+import {useConfirm, useToast} from 'primevue';
 import ItemHeader from "@/Components/ItemHeader.vue";
 import EditOption from "@/Pages/Dialog/Modals/EditOption.vue";
 import {DynamicDialogCloseOptions, DynamicDialogInstance} from "primevue/dynamicdialogoptions";
@@ -121,7 +121,9 @@ const addNewObject = (event: MouseEvent) => {
     });
 };
 
+const toast = useToast()
 const addDoorTo = (x: number, y: number) => {
+
     primeDialog.open(TeleportationSelectModal, {
         props: {
             header: 'Edycja miejsca teleportacji',
@@ -144,6 +146,47 @@ const addDoorTo = (x: number, y: number) => {
                     go_map_id: closeOptions.data.teleportation.mapId,
                     go_x:  closeOptions.data.teleportation.x,
                     go_y:  closeOptions.data.teleportation.y,
+                }, {
+                    onSuccess: () => {
+                        toast.add({ severity: 'success', summary: 'Udało się', detail: 'Utworzono nowe przejście', life: 4000 });
+
+                        confirm.require({
+                            message: 'Czy chcesz na docelowej mapie również umieścić przejście powrotne?',
+                            header: 'Przejscie powrotne',
+                            icon: 'pi pi-info-circle',
+                            rejectProps: {
+                                label: 'Odrzuć',
+                                severity: 'secondary',
+                                outlined: true
+                            },
+                            acceptProps: {
+                                label: 'Potwierdzam',
+                            },
+                            accept: () => {
+                                router.post(route('doors.store'), {
+                                    map_id: closeOptions.data.teleportation.mapId,
+                                    x:  closeOptions.data.teleportation.x,
+                                    y:  closeOptions.data.teleportation.y,
+
+                                    go_map_id: props.map.id,
+                                    go_x: x,
+                                    go_y: y,
+                                }, {
+                                    onSuccess: () => {
+                                        toast.add({ severity: 'success', summary: 'Udało się', detail: 'Utworzono przejście powrotne', life: 4000 });
+
+                                    },
+                                    onError: () => {
+                                        toast.add({ severity: 'error', summary: 'Błąd', detail: 'Nie udało się umieścić przejścia powrotnego', life: 6000 });
+                                    }
+                                })
+                            }
+                        });
+
+                    },
+                    onError: () => {
+                        toast.add({ severity: 'error', summary: 'Błąd', detail: 'Nie udało się umieścić przejścia', life: 6000 });
+                    }
                 })
             }
         }
@@ -249,6 +292,8 @@ const mouseTrackerEl = ref<HTMLElement | null>(null)
 
 <template>
     <AppLayout>
+
+        <ConfirmDialog />
 
         <ConfirmPopup group="npc">
             <template #container="{ message, acceptCallback, rejectCallback }">
