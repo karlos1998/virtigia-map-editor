@@ -44,11 +44,11 @@ const expandedRows = ref();
         <Column expander style="width: 5rem" />
 
 
-        <!--                <AdvanceColumn field="name" header="Name" style="width: 25%">-->
-        <!--                    <template #body="{ data }: Data">-->
-        <!--                        {{ data.name }}-->
-        <!--                    </template>-->
-        <!--                </AdvanceColumn>-->
+        <AdvanceColumn field="name" header="Name">
+            <template #body="{ data }: Data">
+                {{ data.name }}
+            </template>
+        </AdvanceColumn>
 
         <AdvanceColumn field="info" header="Informacje" >
             <template #body="{ data }: Data">

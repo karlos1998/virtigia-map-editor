@@ -2,7 +2,7 @@ import {NpcResource} from "./Npc.resource";
 
 export interface DialogResource {
     id: number
-    // name: string
+    name: string
     npcs_count: number
 }
 
