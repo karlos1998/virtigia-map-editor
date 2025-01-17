@@ -9,6 +9,7 @@ import ItemHeader from "@/Components/ItemHeader.vue";
 import DetailsCardList from "@/Components/DetailsCardList.vue";
 import DetailsCardListItem from "@/Components/DetailsCardListItem.vue";
 import { Link } from '@inertiajs/vue3';
+import NpcAdvanceCard from "./Partials/NpcAdvanceCard.vue";
 
 defineProps<{
     baseNpc: BaseNpcResource
@@ -34,9 +35,9 @@ defineProps<{
 
         <DetailsCardList title="Informacje Podstawowe" >
             <DetailsCardListItem label="Nazwa" :value="npc.name" />
-            <DetailsCardListItem label="Link do grafiki" :value="'https://s3.letscode.it/virtigia-assets/img/npc/' + baseNpc.src" />
+<!--            <DetailsCardListItem label="Link do grafiki" :value="'https://s3.letscode.it/virtigia-assets/img/npc/' + baseNpc.src" />-->
             <DetailsCardListItem label="Lvl" :value="npc.lvl" />
-            <DetailsCardListItem label="Type" :value="npc.type" />
+<!--            <DetailsCardListItem label="Type" :value="npc.type" />-->
             <DetailsCardListItem label="W Grupie" :value="npc.grp" />
             <DetailsCardListItem label="Bazowy NPC">
                 <template #value>
@@ -47,31 +48,7 @@ defineProps<{
             </DetailsCardListItem>
         </DetailsCardList>
 
-        <DetailsCardList title="Opcje zaawansowane" >
-            <DetailsCardListItem label="Dialog">
-                <template v-if="npc.dialog" #value>
-                    <div class="flex items-center ">
-                        <div class="w-1/2 md:w-1/3">
-                            <Tag value="Posiada" />
-                            <Tag
-                                v-if="npc.dialog.npcs_count > 1"
-                                class="ml-2"
-                                :value="npc.dialog.npcs_count - 1"
-                                v-tooltip="`Z tego dialogu korzysta jeszcze ${npc.dialog.npcs_count - 1} npc. `"
-                                severity="info"
-                            />
-                        </div>
-                        <div class="flex-grow">
-                            <Link
-                                :href="route('dialogs.show', npc.dialog.id)"
-                                >
-                                <Button label="Podgląd" size="small" />
-                            </Link>
-                        </div>
-                    </div>
-                </template>
-            </DetailsCardListItem>
-        </DetailsCardList>
+        <NpcAdvanceCard :npc />
 
         <DetailsCardList title="Miejsce/a wystąpienia" >
             <DetailsCardListItem

@@ -210,4 +210,9 @@ class DialogService extends BaseService
 
         return $dialogNode;
     }
+
+    public function search(string $search = '')
+    {
+        return $this->dialogModel->where('name', 'like', '%' . $search . '%')->limit(10)->get();
+    }
 }

@@ -20,6 +20,7 @@ use App\Models\DialogNode;
 use App\Models\DialogNodeOption;
 use App\Services\DialogService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -126,5 +127,10 @@ class DialogController extends Controller
         return response()->json([
             'dialogNode' => DialogNodeResource::make($node),
         ]);
+    }
+
+    public function search(Request $request)
+    {
+        return response()->json($this->dialogService->search($request->get('query', '')));
     }
 }

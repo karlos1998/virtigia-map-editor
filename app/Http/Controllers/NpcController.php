@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreNpcRequest;
+use App\Http\Requests\UpdateNpcRequest;
 use App\Http\Resources\BaseNpcResource;
 use App\Http\Resources\NpcResource;
 use App\Models\Npc;
@@ -39,5 +40,10 @@ class NpcController extends Controller
     public function destroy(Npc $npc)
     {
         $this->npcService->destroy($npc);
+    }
+
+    public function update(Npc $npc, UpdateNpcRequest $request): void
+    {
+        $this->npcService->update($npc, $request->validated());
     }
 }

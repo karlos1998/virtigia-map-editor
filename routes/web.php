@@ -46,8 +46,11 @@ Route::middleware(['auth'])->group(function () {
                 //RemoveWorldTemplateNameFromRouteParameters::class //todo
             ])
             ->group(function () {
+
+                //todo - trzbea to pogrupowac...
                 Route::get('dialogs', [DialogController::class, 'index'])->name('dialogs.index');
                 Route::post('dialogs', [DialogController::class, 'store'])->name('dialogs.store');
+                Route::get('dialogs/search', [DialogController::class, 'search'])->name('dialogs.search');
                 Route::get('dialogs/{dialog}', [DialogController::class, 'show'])->name('dialogs.show');
                 Route::post('dialogs/{dialog}/nodes', [DialogController::class, 'addNode'])->name('dialogs.nodes.store');
                 Route::patch('dialogs/{dialog}/nodes/{dialogNode}', [DialogController::class, 'updateNode'])->name('dialogs.nodes.update');
@@ -74,6 +77,7 @@ Route::middleware(['auth'])->group(function () {
 
                 Route::get('npcs', [NpcController::class, 'index'])->name('npcs.index');
                 Route::get('npcs/{npc}', [NpcController::class, 'show'])->name('npcs.show');
+                Route::patch('npcs/{npc}', [NpcController::class, 'update'])->name('npcs.update');
 
                 Route::post('npcs', [NpcController::class, 'store'])->name('npcs.store');
                 Route::delete('npcs/{npc}', [NpcController::class, 'destroy'])->name('npcs.destroy');

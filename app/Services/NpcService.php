@@ -47,4 +47,11 @@ class NpcService extends BaseService
     {
         $npc->delete();
     }
+
+    public function update(Npc $npc, array $validated)
+    {
+        $npc->fill($validated);
+        $npc->dialog()->associate($validated['dialog']);
+        $npc->save();
+    }
 }
