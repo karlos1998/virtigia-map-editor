@@ -140,7 +140,7 @@ export default {
             <RemoveNodeButton :dialog-node-id="id" :dialog-id="data.dialog_id" />
 
         </div>
-        <div>
+        <div class="whitespace-pre-wrap">
             {{ state.content }}
         </div>
 
