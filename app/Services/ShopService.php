@@ -36,9 +36,9 @@ final class ShopService extends BaseService
         $shop->items()->wherePivot('position', $position)->detach();
     }
 
-    public function search(string $search = '')
+    public function search(string $query = '')
     {
-        return $this->shopModel->where('name', 'like', '%' . $search . '%')->limit(10)->get();
+        return $this->shopModel->where('name', 'like', '%' . $query . '%')->limit(10)->get();
     }
 
     public function store(mixed $validated)

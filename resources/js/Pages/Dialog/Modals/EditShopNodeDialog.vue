@@ -17,7 +17,7 @@ const selectedShop = ref<ShopResource | null>(null);
 const dropdownShops = ref<ShopResource[]>([]);
 
 const searchOptions = debounce((event) => {
-    axios.get(route('shops.search', { search: event[0].query }))
+    axios.get(route('shops.search', { query: event[0].query }))
         .then(response => {
             dropdownShops.value = response.data;
         });
