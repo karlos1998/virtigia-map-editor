@@ -6,6 +6,7 @@ import {route} from "ziggy-js";
 import AddShopItemDialog from "../../Shop/Components/AddShopItemDialog.vue";
 import {useDialog} from "primevue/usedialog";
 import {useToast} from "primevue";
+import {BaseItemResource} from "../../../Resources/BaseItem.resource";
 
 const { baseNpc } = defineProps<{
     baseNpc: BaseNpcWithLoots
@@ -13,7 +14,7 @@ const { baseNpc } = defineProps<{
 
 const primeDialog = useDialog();
 const toast = useToast();
-const showAddItemModal = () => {
+const showAttachItemModal = () => {
     primeDialog.open(AddShopItemDialog, {
         props: {
             header: 'Dodaj przedmiot do zdobycia',
@@ -23,7 +24,7 @@ const showAddItemModal = () => {
 
             if (options.data?.item) {
                 const baseItemId = options.data.item.id;
-                router.post(route('base-npcs.loots.store', {
+                router.post(route('base-npcs.loots.attach', {
                     baseNpc: baseNpc.id
                 }), {
                     baseItemId,
@@ -41,10 +42,101 @@ const showAddItemModal = () => {
         }
     })
 }
+
+const detachItem = (item: BaseItemResource) => {
+    router.delete(route('base-npcs.loots.detach', {
+        baseNpc: baseNpc.id,
+        loot: item.id,
+    }));
+}
 </script>
 <template>
-        <Button label="Dodaj przedmiot" @click="showAddItemModal" />
-    {{baseNpc.loots}}
+    <Button label="Dodaj przedmiot" @click="showAttachItemModal" />
+
+
+    <DataView data-key="id" :value="baseNpc.loots">
+        <template #list="slotProps: {items: BaseItemResource[]}">
+            <div class="flex flex-col">
+                <div v-for="(item, index) in slotProps.items" :key="index">
+                    <div class="flex flex-col sm:flex-row sm:items-center p-6 gap-4" :class="{ 'border-t border-surface-200 dark:border-surface-700': index !== 0 }">
+                        <div class="md:w-40 relative">
+                            <img class="block xl:block mx-auto rounded" :src="'https://s3.letscode.it/virtigia-assets/img/' + item.src" :alt="item.name" />
+                            <div class="absolute bg-black/70 rounded-border" style="left: 4px; top: 4px">
+<!--                                <Tag :value="item.inventoryStatus" :severity="getSeverity(item)"></Tag>-->
+                            </div>
+                        </div>
+                        <div class="flex flex-col md:flex-row justify-between md:items-center flex-1 gap-6">
+                            <div class="flex flex-row md:flex-col justify-between items-start gap-2">
+                                <div>
+<!--                                    <span class="font-medium text-surface-500 dark:text-surface-400 text-sm">{{ item.category }}</span>-->
+                                    <div class="text-lg font-medium mt-2">{{ item.name }}</div>
+                                </div>
+<!--                                <div class="bg-surface-100 p-1" style="border-radius: 30px">-->
+<!--                                    <div class="bg-surface-0 flex items-center gap-2 justify-center py-1 px-2" style="border-radius: 30px; box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.04), 0px 1px 2px 0px rgba(0, 0, 0, 0.06)">-->
+<!--&lt;!&ndash;                                        <span class="text-surface-900 font-medium text-sm">{{ item.rating }}</span>&ndash;&gt;-->
+<!--                                        <i class="pi pi-star-fill text-yellow-500"></i>-->
+<!--                                    </div>-->
+<!--                                </div>-->
+                            </div>
+                            <div class="flex flex-col md:items-end gap-8">
+<!--                                <span class="text-xl font-semibold">${{ item.price }}</span>-->
+                                <div class="flex flex-row-reverse md:flex-row gap-2">
+                                    <Button severity="danger" icon="pi pi-times" outlined @click="detachItem(item)" />
+<!--                                    <Button icon="pi pi-shopping-cart" label="Buy Now" :disabled="item.inventoryStatus === 'OUTOFSTOCK'" class="flex-auto md:flex-initial whitespace-nowrap"></Button>-->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </DataView>
+
+    <Table
+        prop-name="items"
+    >
+        <AdvanceColumn field="id" header="ID" style="width: 5%" />
+
+        <template #header="{ globalFilterValue, globalFilterUpdated }">
+
+            <div class="flex flex-wrap gap-2 items-center justify-between">
+                <h4 class="m-0">Lista Bazowych Przedmiotów</h4>
+                <IconField>
+                    <InputIcon>
+                        <i class="pi pi-search" />
+                    </InputIcon>
+                    <InputText
+                        :value="globalFilterValue"
+                        @update:model-value="globalFilterUpdated"
+                        placeholder="Szukaj"
+                    />
+                </IconField>
+            </div>
+        </template>
+
+        <AdvanceColumn field="src" header="Grafika">
+            <template #body="{ data }: Data">
+                <img alt="" :src="`https://s3.letscode.it/virtigia-assets/img/${data.src}`" />
+            </template>
+        </AdvanceColumn>
+
+        <AdvanceColumn field="name" header="Name" />
+
+        <Column header="Action" >
+            <template #body="slotProps">
+                <div style="white-space: nowrap">
+                            <span class="p-buttonset">
+                                <Button
+                                    class="px-2"
+                                    icon="pi pi-eye"
+                                    label="Podgląd"
+                                />
+                            </span>
+                </div>
+            </template>
+        </Column>
+    </Table>
+
 </template>
 <style scoped>
 

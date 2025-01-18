@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\BaseNpcCategory;
 use App\Enums\BaseNpcRank;
 use App\Enums\Profession;
-use App\Http\Requests\StoreBaseNpcLootRequest;
+use App\Http\Requests\AttachBaseNpcLootRequest;
 use App\Http\Requests\StoreBaseNpcRequest;
 use App\Http\Requests\UpdateBaseNpcRequest;
 use App\Http\Resources\BaseNpcResource;
@@ -106,8 +106,13 @@ class BaseNpcController extends Controller
         return response()->json($this->baseNpcService->search($request->get('query', '')));
     }
 
-    public function storeLoot(BaseNpc $baseNpc, StoreBaseNpcLootRequest $request)
+    public function attachLoot(BaseNpc $baseNpc, AttachBaseNpcLootRequest $request)
     {
-        $this->baseNpcService->storeLoots($baseNpc, $request->get('baseItemId'));
+        $this->baseNpcService->attachLoot($baseNpc, $request->get('baseItemId'));
+    }
+
+    public function detachLoot(BaseNpc $baseNpc, int $loot)
+    {
+        $this->baseNpcService->detachLoot($baseNpc, $loot);
     }
 }
