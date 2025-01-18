@@ -20,6 +20,9 @@ class BaseNpcResource extends JsonResource
             'location_count' => $this->resource->locations()->count(),
 
             'profession_name' => $this->resource->profession->description(),
+
+            'loots' => $this->whenLoaded('loots', fn() => BaseItemResource::collection($this->resource->loots)),
+//            'loots' => BaseItemResource::collection($this->resource->loots),
         ];
     }
 }

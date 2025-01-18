@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\BaseNpcCategory;
 use App\Enums\BaseNpcRank;
 use App\Enums\Profession;
+use App\Http\Requests\StoreBaseNpcLootRequest;
 use App\Http\Requests\StoreBaseNpcRequest;
 use App\Http\Requests\UpdateBaseNpcRequest;
 use App\Http\Resources\BaseNpcResource;
@@ -66,7 +67,7 @@ class BaseNpcController extends Controller
     public function show(BaseNpc $baseNpc)
     {
         return Inertia::render('BaseNpc/Show', [
-            'baseNpc' => BaseNpcResource::make($baseNpc),
+            'baseNpc' => BaseNpcResource::make($baseNpc->load('loots')),
             'locations' => $this->baseNpcService->getLocations($baseNpc),
 
             'availableRanks' => BaseNpcRank::toDropdownList(),
@@ -103,5 +104,10 @@ class BaseNpcController extends Controller
     public function search(Request $request)
     {
         return response()->json($this->baseNpcService->search($request->get('query', '')));
+    }
+
+    public function storeLoot(BaseNpc $baseNpc, StoreBaseNpcLootRequest $request)
+    {
+        $this->baseNpcService->storeLoots($baseNpc, $request->get('baseItemId'));
     }
 }

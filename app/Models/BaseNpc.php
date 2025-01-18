@@ -36,4 +36,9 @@ class BaseNpc extends DynamicModel
     {
         return $this->hasMany(Npc::class);
     }
+
+    public function loots()
+    {
+        return $this->belongsToMany(BaseItem::class, 'base_npc_loots');
+    }
 }

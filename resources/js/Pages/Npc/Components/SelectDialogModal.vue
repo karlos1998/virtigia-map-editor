@@ -31,8 +31,6 @@ const form = useForm<{
 
 const save = (remove: boolean) => {
 
-    console.log('')
-
     form
         .transform((data) => ({
             dialog: remove ? null : data.dialog?.id

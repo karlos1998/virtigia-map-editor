@@ -95,6 +95,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('base-npcs/create', [BaseNpcController::class, 'create'])->name('base-npcs.create');
                 Route::get('base-npcs/search', [BaseNpcController::class, 'search'])->name('base-npcs.search');
                 Route::get('base-npcs/{baseNpc}', [BaseNpcController::class, 'show'])->name('base-npcs.show');
+                Route::post('base-npcs/{baseNpc}/loots', [BaseNpcController::class, 'storeLoot'])->name('base-npcs.loots.store');
                 Route::get('web-api/base-npcs', [BaseNpcController::class, 'indexJson'])->name('web-api.base-npcs.index');
                 Route::post('base-npcs', [BaseNpcController::class, 'store'])->name('base-npcs.store');
                 Route::delete('base-npcs/{baseNpc}', [BaseNpcController::class, 'destroy'])->name('base-npcs.destroy');

@@ -66,4 +66,9 @@ final class BaseNpcService extends BaseService
     {
         $baseNpc->update($validated);
     }
+
+    public function storeLoots(BaseNpc $baseNpc, int $baseItemId)
+    {
+        $baseNpc->loots()->attach($baseItemId);
+    }
 }

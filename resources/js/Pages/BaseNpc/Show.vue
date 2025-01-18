@@ -12,9 +12,11 @@ import DetailsCardListItem from "@/Components/DetailsCardListItem.vue";
 import {Link} from "@inertiajs/vue3";
 import EditBaseNpcDialog from "@/Pages/BaseNpc/Components/EditBaseNpcDialog.vue";
 import {ref} from "vue";
+import {BaseNpcWithLoots} from "../../Resources/BaseNpc.resource";
+import BaseNpcLootsTable from "./Partials/BaseNpcLootsTable.vue";
 
 defineProps<{
-    baseNpc: BaseNpcResource
+    baseNpc: BaseNpcWithLoots
     locations: NpcLocationResource[]
 }>()
 
@@ -65,6 +67,10 @@ const isEditBaseNpcDialogVisible = ref(false );
             </DetailsCardListItem>
             <DetailsCardListItem label="Profesja" :value="baseNpc.profession_name" />
         </DetailsCardList>
+
+        <div class="card">
+            <BaseNpcLootsTable  :base-npc/>
+        </div>
 
         <div class="card">
             <BaseNpcLocationsTable />
