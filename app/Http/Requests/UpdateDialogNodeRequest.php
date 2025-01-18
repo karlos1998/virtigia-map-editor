@@ -25,7 +25,7 @@ class UpdateDialogNodeRequest extends FormRequest
             'content' => [
                 'required',
                 'min:3',
-                'max:255',
+                'max:2000',
             ]
         ];
     }
