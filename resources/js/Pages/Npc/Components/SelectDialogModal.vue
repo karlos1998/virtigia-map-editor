@@ -17,7 +17,7 @@ const { npc } = defineProps<{
 const dropdownDialogs = ref<DialogResource[]>([]);
 
 const searchOptions = debounce((event) => {
-    axios.get(route('dialogs.search', { search: event[0].query }))
+    axios.get(route('dialogs.search', { query: event[0].query }))
         .then(response => {
             dropdownDialogs.value = response.data;
         });
