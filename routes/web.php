@@ -74,6 +74,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::patch('maps/{map}/cols', [MapController::class, 'updateCol'])->name('maps.update.col');
 
                 Route::get('base-items', [BaseItemController::class, 'index'])->name('base-items.index');
+                Route::get('base-items/{baseItem}', [BaseItemController::class, 'show'])->name('base-items.show');
                 Route::get('base-items/search', [BaseItemController::class, 'search'])->name('base-items.search');
 
                 Route::get('npcs', [NpcController::class, 'index'])->name('npcs.index');

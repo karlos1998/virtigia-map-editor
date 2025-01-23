@@ -11,4 +11,6 @@ class BaseItem extends DynamicModel
         'cl',
         'pr',
     ];
+
+    protected $casts = ['attributes' => 'json'];
 }

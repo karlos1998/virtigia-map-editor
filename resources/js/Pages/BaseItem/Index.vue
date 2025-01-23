@@ -4,6 +4,8 @@ import AppLayout from "@/layout/AppLayout.vue";
 import AdvanceTable from "@advance-table/Components/AdvanceTable.vue";
 import AdvanceColumn from "@advance-table/Components/AdvanceColumn.vue";
 import {BaseItemResource} from "@/Resources/BaseItem.resource";
+import { Link } from '@inertiajs/vue3';
+import {route} from "ziggy-js";
 
 type Data = {
     data: BaseItemResource
@@ -47,11 +49,13 @@ type Data = {
                     <template #body="slotProps">
                         <div style="white-space: nowrap">
                             <span class="p-buttonset">
-                                <Button
-                                    class="px-2"
-                                    icon="pi pi-eye"
-                                    label="Podgląd"
-                                />
+                                <Link :href="route('base-items.show', slotProps.data.id)">
+                                    <Button
+                                        class="px-2"
+                                        icon="pi pi-eye"
+                                        label="Podgląd"
+                                    />
+                                </Link>
                             </span>
                         </div>
                     </template>
