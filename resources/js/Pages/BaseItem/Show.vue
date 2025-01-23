@@ -34,7 +34,7 @@ const { baseItem } = defineProps<{
             <div class="mb-4"><b>Oryginalne statystyki przedmiotu z margonem:</b></div>
             <div v-html="itemTip({ ...baseItem, stat: baseItem.stats })" />
 
-            <div class="mt-4">Grafika: `https://s3.letscode.it/virtigia-assets/img/${baseItem.src}`</div>
+            <div class="mt-4">Grafika: {{ `https://s3.letscode.it/virtigia-assets/img/${baseItem.src}` }}</div>
         </div>
 
 <!--        <div class="card">-->
