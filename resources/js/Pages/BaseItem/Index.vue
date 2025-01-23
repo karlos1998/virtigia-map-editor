@@ -60,6 +60,14 @@ type Data = {
                         </div>
                     </template>
                 </Column>
+
+
+                <AdvanceColumn field="src" header="Link do grafiki">
+                    <template #body="{ data }: Data">
+                        {{`https://s3.letscode.it/virtigia-assets/img/${data.src}`}}
+                    </template>
+                </AdvanceColumn>
+
             </AdvanceTable>
         </div>
     </AppLayout>

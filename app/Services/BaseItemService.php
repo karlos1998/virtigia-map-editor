@@ -22,7 +22,7 @@ final class BaseItemService extends BaseService
             BaseItemResource::class,
             $this->baseItemModel,
             new TableService(
-                globalFilterColumns: ['name'],
+                globalFilterColumns: ['name', 'src'],
             )
         );
     }
