@@ -21,7 +21,7 @@ class Shop extends DynamicModel
     public function dialogs()
     {
         return $this
-            ->belongsToMany(Dialog::class, DialogNode::class, 'source_dialog_id', 'shop_id')
+            ->belongsToMany(Dialog::class, DialogNode::class, 'shop_id', 'source_dialog_id')
             ->distinct(); // unikalny dialog, bo sklep moze byc wywolany przez wiele DialogNode
     }
 }

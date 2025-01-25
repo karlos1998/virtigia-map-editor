@@ -49,6 +49,7 @@ class ShopController extends Controller
      */
     public function show(Shop $shop)
     {
+        dd($shop->dialogs);
         return Inertia::render('Shop/Show', [
             'shop' => $shop->only('id', 'name'),
             'items' => BaseItemResource::collection($shop->items),
