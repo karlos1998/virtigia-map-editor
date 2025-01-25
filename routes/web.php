@@ -13,6 +13,8 @@ use App\Http\Controllers\NpcController;
 use App\Http\Controllers\ShopController;
 use App\Http\Middleware\RemoveWorldTemplateNameFromRouteParameters;
 use App\Http\Middleware\SetDynamicModelConnection;
+use App\Jobs\FindNearestRespForMap;
+use App\Models\DynamicModel;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 
@@ -120,3 +122,17 @@ Route::get('debug-stats/api/characters', function() {
     $request = Http::get('https://virtigia-engine.letscode.it/debug-stats/characters?profession=' . request()->get('profession'));
     return $request->json();
 });
+
+
+//Route::get('debug-api/maps', function() {
+//    \App\Models\Map::setGlobalConnection('retro');
+//    return response()->json(\App\Models\Map::get(['id', 'name']));
+//});
+//
+//Route::get('debug/path', function() {
+//    DynamicModel::setGlobalConnection('retro');
+//    foreach(\App\Models\Map::whereNull('respawn_point_id')->get() as $map) {
+//        dispatch(new FindNearestRespForMap($map));
+//    }
+////    dispatch_sync(new FindNearestRespForMap(\App\Models\Map::find(10)));
+//});
