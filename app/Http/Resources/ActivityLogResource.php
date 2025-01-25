@@ -20,7 +20,7 @@ class ActivityLogResource extends JsonResource
     {
         return [
             ...parent::toArray($request),
-            'causer_name' => $this->resource->causer->name,
+            'causer_name' => $this->resource->causer?->name,
         ];
     }
 }
