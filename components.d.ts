@@ -20,7 +20,6 @@ declare module 'vue' {
     Dialog: typeof import('primevue/dialog')['default']
     Drawer: typeof import('primevue/drawer')['default']
     Dropdown: typeof import('primevue/dropdown')['default']
-    DynamicDialog: typeof import('primevue/dynamicdialog')['default']
     Fieldset: typeof import('primevue/fieldset')['default']
     FileUpload: typeof import('primevue/fileupload')['default']
     IconField: typeof import('primevue/iconfield')['default']

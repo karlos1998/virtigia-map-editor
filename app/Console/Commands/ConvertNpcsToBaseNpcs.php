@@ -28,7 +28,7 @@ class ConvertNpcsToBaseNpcs extends Command
      */
     public function handle()
     {
-        DynamicModel::setGlobalConnection('retro');
+        DynamicModel::setGlobalConnection('classic');
 
         Npc::chunk(100, function($chunk){
             foreach($chunk as $npc){

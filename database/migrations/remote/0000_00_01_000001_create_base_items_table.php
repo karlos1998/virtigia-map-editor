@@ -11,8 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('doors', function (Blueprint $table) {
+        Schema::create('base_items', function (Blueprint $table) {
+            $table->id();
             $table->timestamps();
+
+            $table->string('name');
+
+            $table->string('src');
+            $table->text('stats');
+            $table->integer('cl')->default(0);
+            $table->integer('pr')->default(0);
         });
     }
 
@@ -21,8 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('doors', function (Blueprint $table) {
-            $table->dropTimestamps();
-        });
+        Schema::dropIfExists('base_items');
     }
 };

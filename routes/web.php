@@ -117,9 +117,14 @@ Route::middleware(['auth'])->group(function () {
 
 });
 
-Route::get('debug-stats', fn() => \Inertia\Inertia::render('DebugStats'));
+Route::get('debug-stats/characters', fn() => \Inertia\Inertia::render('DebugStats/Characters'));
+Route::get('debug-stats/base-npcs', fn() => \Inertia\Inertia::render('DebugStats/BaseNpcs'));
 Route::get('debug-stats/api/characters', function() {
     $request = Http::get('https://virtigia-engine.letscode.it/debug-stats/characters?profession=' . request()->get('profession'));
+    return $request->json();
+});
+Route::get('debug-stats/api/base-npcs', function() {
+    $request = Http::get('https://mbp-karol-java.letscode.it/debug-stats/base-npcs?rank=' . request()->get('rank'));
     return $request->json();
 });
 
