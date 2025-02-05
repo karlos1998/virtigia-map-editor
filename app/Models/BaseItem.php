@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\BaseItemCategory;
+
 class BaseItem extends DynamicModel
 {
     protected $fillable = [
@@ -12,5 +14,8 @@ class BaseItem extends DynamicModel
         'pr',
     ];
 
-    protected $casts = ['attributes' => 'json'];
+    protected $casts = [
+        'attributes' => 'json',
+        'category' => BaseItemCategory::class,
+    ];
 }

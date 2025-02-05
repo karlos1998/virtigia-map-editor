@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\Profession;
 use App\Models\BaseItem;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -23,7 +24,11 @@ class BaseItemResource extends JsonResource
             'src' => $this->resource->src . '?' . $this->resource->updated_at->timestamp,
             $this->mergeWhen($this->resource->pivot?->position !== null, fn() => [
                 'position' => $this->resource->pivot->position,
-            ])
+            ]),
+
+            'category_name' => $this->resource->category?->description(),
+            'need_professions' => array_map(fn($code) => Profession::tryFrom($code)?->description(), $this->resource->attributes['needProfessions'] ?? []),
+            'need_level' => $this->resource->attributes['needLevel'] ?? null,
         ];
     }
 }

@@ -11,6 +11,7 @@ import Item from "@advance-table/Components/Item.vue";
 import ItemHeader from "@/Components/ItemHeader.vue";
 import {useConfirm, useToast} from "primevue";
 import {ref} from "vue";
+import RockAdapter from "../../RockTip/components/rockAdapter.vue";
 
 const props = defineProps<{
     shop: ShopResource
@@ -127,7 +128,27 @@ const deleteItem = (event, position: number) => {
         <div class="card">
             <div class="shop">
                 <div class="items-area" @click="addItem">
-                    <Item v-tooltip="item.name" @click="deleteItem($event, item.position)" v-for="item in items" :item />
+                    <Item :title="`[${item.id}] ${item.name}`" @click="deleteItem($event, item.position)" v-for="item in items" :item />
+
+<!--                    <rockAdapter-->
+<!--                        v-for="item in items"-->
+<!--                        :item-payload="{-->
+<!--                schema: {-->
+<!--                    position: {-->
+<!--                        x: (item.position % 8) * (32 + 5),-->
+<!--                        y: Math.floor((item.position) / 8) * (32 + 5),-->
+<!--                    },-->
+<!--                    inner: {-->
+<!--                        ...item,-->
+<!--                        src: `https://s3.letscode.it/virtigia-assets/img/${item.src}` + item.src,-->
+<!--                    },-->
+<!--                    hero: {-->
+<!--                        profession: 'w',-->
+<!--                        level: 100,-->
+<!--                    }-->
+<!--                }-->
+<!--            }" direction="bottom"/>-->
+
                 </div>
             </div>
         </div>

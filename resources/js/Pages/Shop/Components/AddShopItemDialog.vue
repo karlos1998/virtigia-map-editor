@@ -8,6 +8,7 @@ import {DynamicDialogInstance} from "primevue/dynamicdialogoptions";
 import axios from "axios";
 import {route} from "ziggy-js";
 import {BaseItemResource} from "@/Resources/BaseItem.resource";
+import RockAdapter from "../../../RockTip/components/rockAdapter.vue";
 
 const dialogRef = inject<Ref<DynamicDialogInstance> | null>('dialogRef');
 
@@ -47,6 +48,7 @@ const filterItems = async ({ query }: { query: string }) => {
         >
             <template #option="slotProps">
                 <div class="name-item flex items-center justify-between">
+
                     <div class="flex items-center space-x-4">
                         <img
                             class="h-12 w-12 object-cover"

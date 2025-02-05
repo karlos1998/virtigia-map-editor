@@ -6,6 +6,7 @@ import AdvanceColumn from "@advance-table/Components/AdvanceColumn.vue";
 import {BaseItemResource} from "@/Resources/BaseItem.resource";
 import { Link } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
+import RockAdapter from "../../RockTip/components/rockAdapter.vue";
 
 type Data = {
     data: BaseItemResource
@@ -37,13 +38,52 @@ type Data = {
                     </div>
                 </template>
 
-                <AdvanceColumn field="src" header="Grafika">
+                <AdvanceColumn header="Podgląd">
                     <template #body="{ data }: Data">
-                        <img alt="" :src="`https://s3.letscode.it/virtigia-assets/img/${data.src}`" />
+                        <rockAdapter :item-payload="{
+                            schema: {
+                                position: {
+                                    x: 0,
+                                    y: 0,
+                                },
+                                inner: {
+                                    ...data,
+                                    src: `https://s3.letscode.it/virtigia-assets/img/${data.src}` + data.src,
+                                },
+                                hero: {
+                                    profession: 'w',
+                                    level: 100,
+                                }
+                            }
+                        }" direction="bottom"/>
                     </template>
                 </AdvanceColumn>
 
+<!--                <AdvanceColumn field="src" header="Grafika">-->
+<!--                    <template #body="{ data }: Data">-->
+<!--                        <img alt="" :src="`https://s3.letscode.it/virtigia-assets/img/${data.src}`" />-->
+<!--                    </template>-->
+<!--                </AdvanceColumn>-->
+
                 <AdvanceColumn field="name" header="Name" />
+
+                <AdvanceColumn field="category_name" header="Kategoria">
+                    <template #body="{ data }: Data">
+                        {{data.category_name }}
+                    </template>
+                </AdvanceColumn>
+
+                <AdvanceColumn field="need_professions" header="Wymagana profesja">
+                    <template #body="{ data }: Data">
+                        {{data.need_professions.join(', ') || 'Dowolna' }}
+                    </template>
+                </AdvanceColumn>
+
+                <AdvanceColumn field="need_level" header="Wymagany poziom">
+                    <template #body="{ data }: Data">
+                        {{data.need_level || '-' }}
+                    </template>
+                </AdvanceColumn>
 
                 <Column header="Action" >
                     <template #body="slotProps">
