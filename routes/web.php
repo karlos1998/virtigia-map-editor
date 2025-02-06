@@ -124,7 +124,7 @@ Route::get('debug-stats/api/characters', function() {
     return $request->json();
 });
 Route::get('debug-stats/api/base-npcs', function() {
-    $request = Http::get('https://mbp-karol-java.letscode.it/debug-stats/base-npcs?rank=' . request()->get('rank'));
+    $request = Http::get('https://mbp-karol-java.letscode.it/debug-stats/base-npcs?rank=' . request()->get('rank') . '&profession=' . request()->get('profession'));
     return $request->json();
 });
 

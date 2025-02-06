@@ -17,12 +17,13 @@ const chartFullHp = ref()
 const chartAttack = ref()
 const chartArmor = ref()
 onMounted(async () => {
-    // const professions = ['w', 'm', 'b', 'p', 'h', 't']
-    const ranks = ["NORMAL", "ELITE", "HERO"]
-    const requests = ranks.map(rank => axios.get(`/debug-stats/api/base-npcs?rank=${rank}`))
+    const professions = ['w', 'm', 'b', 'p', 'h', 't']
+    // const ranks = ["NORMAL", "ELITE", "HERO"]
+    const rank = 'NORMAL';
+    const requests = professions.map(profession => axios.get(`/debug-stats/api/base-npcs?rank=${rank}&profession=${profession}`))
     const responses = await Promise.all(requests)
     const dataMap = {}
-    ranks.forEach((prof, i) => {
+    professions.forEach((prof, i) => {
         dataMap[prof] = responses[i].data
     })
 
@@ -31,7 +32,7 @@ onMounted(async () => {
         instance.setOption({
             title: { text: title },
             tooltip: { trigger: 'axis' },
-            legend: { data: ranks },
+            legend: { data: professions },
             xAxis: {
                 name: 'Poziom',
                 type: 'value',
@@ -44,11 +45,11 @@ onMounted(async () => {
                 minorTick: { show: true },
                 splitLine: { show: true }
             },
-            series: ranks.map(rank => ({
-                name: rank,
+            series: professions.map(profession => ({
+                name: profession,
                 type: 'line',
                 symbolSize: 8,
-                data: dataMap[rank].map(item => [item.lvl, item[dataField]])
+                data: dataMap[profession].map(item => [item.lvl, item[dataField]])
             }))
         })
     }
@@ -57,5 +58,6 @@ onMounted(async () => {
     initChart(chartFullHp.value, 'Punkty życia', 'fullHp', 'Punkty życia')
     initChart(chartAttack.value, 'Atak', 'attack', 'Atak')
     initChart(chartArmor.value, 'Pancerz', 'armor', 'Pancerz')
+    initChart(chartArmor.value, 'Zręczność', 'dexterity', 'Zręczność')
 })
 </script>
