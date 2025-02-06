@@ -1,15 +1,15 @@
 /*
 Copyright (c) [hrabia_kamien](https://github.com/git-kamien). All rights reserved.
 
-The author hereby grants the recipient ("Licensee") a non-exclusive, non-transferable,  
-royalty-free license to use, modify, and incorporate this software into private and  
-commercial projects. The Licensee is permitted to make modifications solely for  
-adaptation, optimization, or enhancement, provided that such modifications do not  
+The author hereby grants the recipient ("Licensee") a non-exclusive, non-transferable,
+royalty-free license to use, modify, and incorporate this software into private and
+commercial projects. The Licensee is permitted to make modifications solely for
+adaptation, optimization, or enhancement, provided that such modifications do not
 infringe upon the original author's rights.
 
-This license applies exclusively to the entity that has lawfully obtained the source  
-code directly from the rightful author. Redistribution, sublicensing, or transfer  
-of this software, whether in its original or modified form, is strictly prohibited  
+This license applies exclusively to the entity that has lawfully obtained the source
+code directly from the rightful author. Redistribution, sublicensing, or transfer
+of this software, whether in its original or modified form, is strictly prohibited
 without the explicit written consent of the author.
 
 The above copyright notice and this permission notice shall be included in
@@ -113,7 +113,7 @@ export namespace Translations {
         "keys": "Klucze",
         "bags": "Torby",
     };
-    
+
     const attrPositive = (value: string | number) => `+${attrNumber(value)}`;
     const attrPercent = (value: string | number) => `${value}%`;
     const attrSigner = (value: string | number) => Math.sign(attrNumber(value)) === 1 ? attrPositive(value) : `${attrNumber(value)}`;
@@ -125,18 +125,18 @@ export namespace Translations {
             return `Wymagane profesje: ${professionList.map((professionLetter: keyof typeof professions) => professions[professionLetter]).join(", ")}`;
         },
         "needIntellect": (requirementData: string) => {
-            return `Wymagany intelekt: ${attrNumber(requirementData)}`; 
+            return `Wymagany intelekt: ${attrNumber(requirementData)}`;
         },
         "needStrength": (requirementData: string) => {
-            return `Wymagana siła: ${attrNumber(requirementData)}`; 
+            return `Wymagana siła: ${attrNumber(requirementData)}`;
         },
         "needAgility": (requirementData: string) => {
-            return `Wymagana zręczność: ${attrNumber(requirementData)}`; 
+            return `Wymagana zręczność: ${attrNumber(requirementData)}`;
         },
         "needLevel": (requirementData: string) => {
             return `Wymagany poziom: ${attrNumber(requirementData)}`;
         },
-    
+
         /* Bonuses */
         "criticalReductionDuringDefending": (percentData: string) => {
             return `Podczas obrony szansa na krytyk przeciwnika jest mniejsza o ${attrBox(attrPercent(percentData))}`;
@@ -144,7 +144,7 @@ export namespace Translations {
         "manaEnergyDestroyReduction": (pointsData: string) => {
             const manaPoints = Number(pointsData);
             const energyPoints = Math.max(1, Math.round(0.444 * manaPoints));
-    
+
             return `Obniżanie niszczenia many o ${attrBox(attrNumber(manaPoints))} punktów oraz energii o ${attrBox(attrNumber(energyPoints))}`;
         },
         "magicalResistanceReduction": (percentData: string) => {
@@ -329,7 +329,7 @@ export namespace Translations {
         },
         "lootedWith": (lootData: string) => {
             const [looterName, __looterSex__, groupInfo, lootTs, npcName] = lootData.split(",");
-            
+
             const lootDate = new Date(+lootTs * 1000);
             const lootHumanDate = `${lootDate.getDate()}/${lootDate.getMonth() + 1}/${lootDate.getFullYear()}`;
             return `W dniu ${lootHumanDate} został(a) pokonany(a) ${npcName} przez ${looterName} ${attrNumber(groupInfo) > 1 ? "wraz z drużyną" : ""}`;
@@ -351,7 +351,7 @@ export namespace Translations {
                 const seconds = Math.floor(count % 60).toString().padStart(2,'0');
                 return `${hours}:${minutes}:${seconds}`;
             };
-    
+
             (function countdownLogic(tryCount: number = 0) {
                 const rootElement = document.querySelector(`span[role='${timelimitId}']`);
                 if(!rootElement) {
@@ -370,7 +370,7 @@ export namespace Translations {
                     return requestAnimationFrame(() => countdownLogic(0));
                 };
             })();
-    
+
             return `<span role="${timelimitId}">${timelimitNodes.join('<br>')}</span>`;
         },
         "expiresAt": (timestampData: string) => {
@@ -403,7 +403,7 @@ export namespace Translations {
         "mana": (pointsData: string) => {
             return `Mana ${attrBox(attrPositive(attrNumber(pointsData)))}`;
         },
-    
+
         /* Tags */
         "isNonStoreableInClanDeposit": () => {
             return "Przedmiotu nie można przechowywać w depozycie klanowym";
@@ -430,12 +430,13 @@ export namespace Translations {
             return "Przedmiot odzyskany, obniżona wartość";
         },
     };
-    
+
     export const rarities = {
         "legendary": "legendarny",
         "artefact": "artefakt",
         "heroic": "heroiczny",
         "unique": "unikatowy",
-        "common": "pospolity"
+        "common": "pospolity",
+        "upgraded": "ulepszony",
     };
 };

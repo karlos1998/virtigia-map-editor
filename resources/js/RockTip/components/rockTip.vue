@@ -8,7 +8,7 @@ const selfProperties = defineProps<{
     otherPayload?: OtherPayload,
     itemPayload?: ItemPayload,
     htmlPayload?: HtmlPayload,
-    npcPayload?: NpcPayload,
+    npcPayload?: NpPayload,
 }>();
 
 const itemOrders = {
@@ -69,7 +69,11 @@ if(selfProperties.itemPayload) {
                     <div class="name">
                         <span>{{ selfProperties.itemPayload.schema.inner.name }}</span>
                     </div>
-                    <div class="rarity" :type="selfProperties.itemPayload.schema.inner.rarity">
+                    <div
+                        v-if="selfProperties.itemPayload.schema.inner.rarity && selfProperties.itemPayload.schema.inner.rarity != 'common'"
+                        class="rarity"
+                        :type="selfProperties.itemPayload.schema.inner.rarity"
+                    >
                         <span>* </span>
                         <span class="inner">
                             {{  `${Translations.rarities[selfProperties.itemPayload.schema.inner.rarity]}` }}
@@ -79,7 +83,8 @@ if(selfProperties.itemPayload) {
                 </div>
                 <div class="struct">
                     <div class="category">
-                        <span>{{ `Typ: ${Translations.categories[selfProperties.itemPayload.schema.inner.category]}` }}</span>
+                        <span v-if="selfProperties.itemPayload.schema.inner.category && Translations.categories[selfProperties.itemPayload.schema.inner.category]">{{ `Typ: ${Translations.categories[selfProperties.itemPayload.schema.inner.category]}` }}</span>
+                        <b v-else>{{ `Nieznany typ: ${selfProperties.itemPayload.schema.inner.category || '-'}` }}</b>
                     </div>
                     <div class="bonuses">
                         <slot v-if="itemOrders.value.tags.isUnidentified">
@@ -96,7 +101,11 @@ if(selfProperties.itemPayload) {
                     <div class="tags">
                         <slot v-for="currentStat of itemOrders.value.tags">
                             <div class="attribute" :stat="currentStat">
-                                <span v-html="Translations.attributes[currentStat].apply(null, [selfProperties.itemPayload.schema.inner.attributes[currentStat]])" />
+                                <span
+                                    v-if="Translations.attributes[currentStat]"
+                                    v-html="Translations.attributes[currentStat].apply(null, [selfProperties.itemPayload.schema.inner.attributes[currentStat]])"
+                                />
+                                <div v-else><b>Nieznany tag: {{currentStat}}</b></div>
                             </div>
                         </slot>
                     </div>
