@@ -290,8 +290,11 @@ export namespace Translations {
         "evadePoints": (pointsData: string) => {
             return `Unik ${attrBox(attrPositive(attrNumber(pointsData)))}`;
         },
-        "lightDamage": ([minimumDamage, maximumDamage]: string[]) => {
-            return `Obrażenia od błyskawic ${attrBox(minimumDamage)} - ${attrBox(maximumDamage)}`;
+        // "lightDamage": ([minimumDamage, maximumDamage]: string[]) => {
+        //     return `Obrażenia od błyskawic ${attrBox(minimumDamage)} - ${attrBox(maximumDamage)}`;
+        // },
+        "lightDamage": (maximumDamage: string) => {
+            return `Obrażenia od błyskawic 1 - ${attrBox(maximumDamage)}`;
         },
         "frostDamage": ([slowData, damageData]: string[]) => {
             return `Obrażenia od zimna ${attrBox(attrPositive(attrNumber(damageData)))}<br>Zmniejsza o ${attrBox(attrNumber(slowData) / 100)} szybkość ataku celu`;

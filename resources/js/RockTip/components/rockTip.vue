@@ -94,7 +94,11 @@ if(selfProperties.itemPayload) {
                         </slot>
                         <slot v-for="currentStat of itemOrders.value.bonuses">
                             <div class="attribute" :stat="currentStat">
-                                <span v-html="Translations.attributes[currentStat].apply(null, [selfProperties.itemPayload.schema.inner.attributes[currentStat]])" />
+                                <span
+                                    v-if="Translations.attributes[currentStat]"
+                                    v-html="Translations.attributes[currentStat].apply(null, [selfProperties.itemPayload.schema.inner.attributes[currentStat]])"
+                                />
+                                <div v-else><b>Nieznany stat: {{currentStat}}</b></div>
                             </div>
                         </slot>
                     </div>

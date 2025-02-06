@@ -16,11 +16,13 @@ const margin = ref(0);
     <div
         class="item"
         :style="{
-            'background-image': `url(${fullUrl(item.src)})`,
-            'top': `${Math.floor((item.position) / width) * (32 + margin)}px`,
-            'left': `${(item.position % width) * (32 + margin)}px`,
+            // 'background-image': `url(${fullUrl(item.src)})`,
+            // 'top': `${Math.floor((item.position) / width) * (32 + margin)}px`,
+            // 'left': `${(item.position % width) * (32 + margin)}px`,
         }"
-    />
+    >
+        <slot />
+    </div>
 </template>
 
 <style scoped>

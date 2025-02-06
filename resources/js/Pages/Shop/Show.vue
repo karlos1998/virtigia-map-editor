@@ -127,27 +127,41 @@ const deleteItem = (event, position: number) => {
 
         <div class="card">
             <div class="shop">
-                <div class="items-area" @click="addItem">
-                    <Item :title="`[${item.id}] ${item.name}`" @click="deleteItem($event, item.position)" v-for="item in items" :item />
+                <div
+                    class="items-area"
+                    @click="addItem"
+                >
+<!--                    <Item :title="`[${item.id}] ${item.name}`" @click="deleteItem($event, item.position)" v-for="item in items" :item />-->
 
-<!--                    <rockAdapter-->
-<!--                        v-for="item in items"-->
-<!--                        :item-payload="{-->
-<!--                schema: {-->
-<!--                    position: {-->
-<!--                        x: (item.position % 8) * (32 + 5),-->
-<!--                        y: Math.floor((item.position) / 8) * (32 + 5),-->
-<!--                    },-->
-<!--                    inner: {-->
-<!--                        ...item,-->
-<!--                        src: `https://s3.letscode.it/virtigia-assets/img/${item.src}` + item.src,-->
-<!--                    },-->
-<!--                    hero: {-->
-<!--                        profession: 'w',-->
-<!--                        level: 100,-->
-<!--                    }-->
-<!--                }-->
-<!--            }" direction="bottom"/>-->
+                    <div
+                        v-for="item in items"
+                        @click="deleteItem($event, item.position)"
+                        class="item-box"
+                        :style="{
+                            'top': `${Math.floor((item.position) / 8) * (32)}px`,
+                            'left': `${(item.position % 8) * (32)}px`,
+                        }"
+                    >
+                        <rockAdapter
+                            :item-payload="{
+                                schema: {
+                                    position: {
+                                        x: 2,
+                                        y: 2,
+                                    },
+                                    inner: {
+                                        ...item,
+                                        src: `https://s3.letscode.it/virtigia-assets/img/${item.src}`,
+                                    },
+                                    hero: {
+                                        profession: 'w',
+                                        level: 100,
+                                    }
+                                }
+                            }"
+                            direction="bottom"
+                        />
+                    </div>
 
                 </div>
             </div>
@@ -169,5 +183,17 @@ const deleteItem = (event, position: number) => {
     left:7px;
     top:7px;
     position: relative;
+}
+
+
+.item-box {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    background-size: cover;
+    transition: transform 0.2s ease-in-out;
+    box-shadow: none;
+    background-color: rgba(100, 237, 226, 0.3);
 }
 </style>
