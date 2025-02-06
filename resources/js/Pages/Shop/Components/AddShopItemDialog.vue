@@ -50,12 +50,33 @@ const filterItems = async ({ query }: { query: string }) => {
                 <div class="name-item flex items-center justify-between">
 
                     <div class="flex items-center space-x-4">
-                        <img
-                            class="h-12 w-12 object-cover"
-                            v-tooltip="slotProps.option.src"
-                            :src="'https://s3.letscode.it/virtigia-assets/img/' + slotProps.option.src"
-                            alt="Option Image"
-                        />
+                        <div style="width:32px; height: 32px;">
+                            <rockAdapter
+                                :item-payload="{
+                                    schema: {
+                                        position: {
+                                            x: 2,
+                                            y: 2,
+                                        },
+                                        inner: {
+                                            ...slotProps.option,
+                                            src: `https://s3.letscode.it/virtigia-assets/img/${slotProps.option.src}`,
+                                        },
+                                        hero: {
+                                            profession: 'w',
+                                            level: 100,
+                                        }
+                                    }
+                                }"
+                                direction="bottom"
+                            />
+                        </div>
+<!--                        <img-->
+<!--                            class="h-12 w-12 object-cover"-->
+<!--                            v-tooltip="slotProps.option.src"-->
+<!--                            :src="'https://s3.letscode.it/virtigia-assets/img/' + slotProps.option.src"-->
+<!--                            alt="Option Image"-->
+<!--                        />-->
                         <div class="text-center">
                             <span class="font-semibold text-gray-800">
                                 [{{ slotProps.option.id }}] {{ slotProps.option.name }}
@@ -63,7 +84,6 @@ const filterItems = async ({ query }: { query: string }) => {
                         </div>
                     </div>
                 </div>
-
             </template>
         </AutoComplete>
 
