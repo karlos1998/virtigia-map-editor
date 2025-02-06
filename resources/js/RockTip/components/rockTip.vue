@@ -66,6 +66,9 @@ if(selfProperties.itemPayload) {
         <slot v-if="selfProperties.itemPayload">
             <div class="inner text-sharpen">
                 <div class="header">
+                    <div v-if="selfProperties.itemPayload.schema.showId">
+                        <i>ID: {{selfProperties.itemPayload.schema.inner.id }}</i>
+                    </div>
                     <div class="name">
                         <span>{{ selfProperties.itemPayload.schema.inner.name }}</span>
                     </div>

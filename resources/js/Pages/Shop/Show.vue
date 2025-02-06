@@ -156,7 +156,8 @@ const deleteItem = (event, position: number) => {
                                     hero: {
                                         profession: 'w',
                                         level: 100,
-                                    }
+                                    },
+                                    showId: true,
                                 }
                             }"
                             direction="bottom"

@@ -95,7 +95,8 @@ export declare type ItemSchema = {
     hero: {
         profession: keyof typeof Translations.professions,
         level: number
-    }
+    },
+    showId: boolean,
 };
 export declare type OtherSchema = {
     inner: {
