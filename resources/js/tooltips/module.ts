@@ -3,8 +3,6 @@ import { HtmlPayload, ItemPayload, NpcPayload, OtherPayload } from '../RockTip/t
 import {bind} from "axios";
 import {useHeroStore} from "../stores/hero.stores";
 
-const heroStore = useHeroStore();
-
 interface ToolTipState {
     opened: boolean
     otherPayload: OtherPayload | false,
@@ -125,16 +123,40 @@ const getPos = (tipPosition: TipPosition) => {
 }
 
 const updateDataset = (el: HTMLElement, binding: DirectiveBinding) => {
+    const heroStore = useHeroStore();
     console.log('binding', heroStore.getLvl(), binding.modifiers, binding.value)
+    // if (binding.modifiers.npc) {
+    //     el.dataset.npc = JSON.stringify(binding.value)
+    // } else if (binding.modifiers.item) {
+    //     el.dataset.item = JSON.stringify(binding.value)
+    // } else if (binding.modifiers.other) {
+    //     el.dataset.other = JSON.stringify(binding.value)
+    // } else {
+    //     el.dataset.html = binding.value
+    // }
+
+    const data = {
+        schema: {
+            inner: binding.value,
+            hero: {
+                level: heroStore.getLvl(),
+                profession: heroStore.getProfession(),
+            },
+            showId: binding.modifiers['show-id'],
+        }
+    };
+
     if (binding.modifiers.npc) {
-        el.dataset.npc = JSON.stringify(binding.value)
+        el.dataset.npc = JSON.stringify(data)
     } else if (binding.modifiers.item) {
-        el.dataset.item = JSON.stringify(binding.value)
+        el.dataset.item = JSON.stringify(data)
     } else if (binding.modifiers.other) {
-        el.dataset.other = JSON.stringify(binding.value)
+        el.dataset.other = JSON.stringify(data)
     } else {
         el.dataset.html = binding.value
     }
+
+
 }
 
 const ToolTipDirective = {

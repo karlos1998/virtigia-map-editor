@@ -8,6 +8,7 @@ import ItemHeader from "../../Components/ItemHeader.vue";
 
 import { itemTip } from "../../old-createItemTip";
 import rockAdapter from "../../RockTip/components/rockAdapter.vue";
+import Item from "../../karlos3098-LaravelPrimevueTable/Components/Item.vue";
 
 const { baseItem } = defineProps<{
     baseItem: BaseItemResource,
@@ -36,28 +37,42 @@ const { baseItem } = defineProps<{
 
         <div class="card">
             <div class="mb-4"><b>Nowe statystyki przedmiotu:</b></div>
+
+            <img
+                class="h-12 w-12 object-cover"
+                :src="'https://s3.letscode.it/virtigia-assets/img/' + baseItem.src"
+                v-tip.item.top.show-id="baseItem"
+                alt=""
+            />
+
+<!--            <Item-->
+<!--                :item="baseItem"-->
+<!--                v-tip.item.top.show-id="baseItem"-->
+<!--            />-->
+
+
             <pre>{{baseItem}}</pre>
         </div>
 
         <div class="card" >
 
             <div style="width:32px; height: 32px;">
-                <rockAdapter :item-payload="{
-                schema: {
-                    position: {
-                        x: 0,
-                        y: 0,
-                    },
-                    inner: {
-                        ...baseItem,
-                        src: `https://s3.letscode.it/virtigia-assets/img/${baseItem.src}` + baseItem.src,
-                    },
-                    hero: {
-                        profession: 'w',
-                        level: 100,
-                    }
-                }
-            }" direction="bottom"/>
+<!--                <rockAdapter :item-payload="{-->
+<!--                schema: {-->
+<!--                    position: {-->
+<!--                        x: 0,-->
+<!--                        y: 0,-->
+<!--                    },-->
+<!--                    inner: {-->
+<!--                        ...baseItem,-->
+<!--                        src: `https://s3.letscode.it/virtigia-assets/img/${baseItem.src}` + baseItem.src,-->
+<!--                    },-->
+<!--                    hero: {-->
+<!--                        profession: 'w',-->
+<!--                        level: 100,-->
+<!--                    }-->
+<!--                }-->
+<!--            }" direction="bottom"/>-->
             </div>
 
 

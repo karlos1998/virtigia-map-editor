@@ -48,7 +48,11 @@ type Data = {
 
                 <AdvanceColumn field="src" header="Grafika" style="width: 25%">
                     <template #body="{ data }: Data">
-                        <img v-tooltip="data.src" :src="'https://s3.letscode.it/virtigia-assets/img/npc/' + data.src" />
+
+                        <img
+                            v-tip.npc="data"
+                            :src="'https://s3.letscode.it/virtigia-assets/img/npc/' + data.src"
+                        />
                     </template>
                 </AdvanceColumn>
 

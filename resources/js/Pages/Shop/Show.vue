@@ -121,8 +121,6 @@ const test = ref(false);
 
     <AppLayout>
 
-        <RockTip />
-
 
         <ConfirmPopup />
 
@@ -138,17 +136,10 @@ const test = ref(false);
 
             <b v-tip="'XD'">test</b>
 
-            <b v-tip.npc.top="{
-                schema: {
-                    inner: {
-                        level: 12,
-                        rank: 'ELITE',
-                        name: 'test',
-                    },
-                    hero: {
-                        level: 1,
-                    }
-                }
+            <b v-tip.npc.top.show-id="{
+                level: 12,
+                rank: 'ELITE',
+                name: 'test',
             }">NPC</b>
 
 <!--            <div class="mb-8">-->
@@ -200,23 +191,7 @@ const test = ref(false);
                         @click="deleteItem($event, item.position)"
                         v-for="item in items"
                         :item
-                        v-tip.item.top="{
-                            schema: {
-                                position: {
-                                    x: 0,
-                                    y: 0,
-                                },
-                                inner: {
-                                    ...item,
-                                    // src: `https://s3.letscode.it/virtigia-assets/img/${item.src}`
-                                },
-                                hero: {
-                                    level: 50,
-                                    profession: 'w',
-                                },
-                                showId: true,
-                            }
-                        }"
+                        v-tip.item.top.show-id="item"
                     />
 <!--                    <div-->
 <!--                        v-else-->

@@ -4,8 +4,8 @@ import { ref } from "vue";
 export const useHeroStore = defineStore({
     id: "heroStore",
     state: () => ({
-        lvl: 0,
-        profession: '',
+        lvl: 100,
+        profession: 'w',
 
     }),
     actions: {

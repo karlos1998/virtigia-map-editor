@@ -7,6 +7,7 @@ import AppRightMenu from './AppRightMenu.vue';
 import AppTopbar from './AppTopbar.vue';
 import DynamicDialog from 'primevue/dynamicdialog';
 import {usePage} from "@inertiajs/vue3";
+import RockTip from "../RockTip/components/rockTip.vue";
 
 const {watchSidebarActive, unbindOutsideClickListener, containerClass} = useLayout();
 
@@ -22,10 +23,13 @@ const world = computed(() => usePage().props.auth.world);
 </script>
 
 <template>
+
     <div class="layout-container" :class="containerClass">
         <AppTopbar></AppTopbar>
 
         <AppConfig></AppConfig>
+
+        <RockTip />
 
         <div class="layout-content-wrapper">
             <div class="layout-content">

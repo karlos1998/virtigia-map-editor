@@ -186,7 +186,7 @@ const itemOrders = computed(() => state.value.itemPayload ? { value: Attributes.
                             <slot v-if="selfProperties.npcPayload.schema.inner.rank === 'ELITE_III'">
                                 <i>elita III</i>
                             </slot>
-                            <slot v-if="selfProperties.npcPayload.schema.inner.rank === 'HEROS'">
+                            <slot v-if="selfProperties.npcPayload.schema.inner.rank === 'HERO'">
                                 <i>heros</i>
                             </slot>
                             <slot v-if="selfProperties.npcPayload.schema.inner.rank === 'TITAN'">
@@ -204,7 +204,7 @@ const itemOrders = computed(() => state.value.itemPayload ? { value: Attributes.
                     }
                     return 'equal';
                 })()">
-                        <span>{{ `${selfProperties.npcPayload.schema.inner.level} lvl` }}</span>
+                        <span>{{ `${selfProperties.npcPayload.schema.inner.lvl} lvl` }}</span>
                     </div>
                 </div>
             </slot>
@@ -230,6 +230,8 @@ const itemOrders = computed(() => state.value.itemPayload ? { value: Attributes.
     height: fit-content;
     width: fit-content;
     color: var(--rockTip-static--color-text);
+
+    z-index:99999999;
 }
 
 .rockTip > .tip-wrapper {
@@ -359,6 +361,7 @@ const itemOrders = computed(() => state.value.itemPayload ? { value: Attributes.
     --rockTip-item--rarity-heroic: hsl(200deg, 100%, 65%);
     --rockTip-item--rarity-unique: hsl(60deg, 100%, 45%);
     --rockTip-item--rarity-common: hsl(200deg, 5%, 70%);
+
 }
 
 .rockTip[type='item'] {
@@ -389,7 +392,7 @@ const itemOrders = computed(() => state.value.itemPayload ? { value: Attributes.
     color: var(--rockTip-item--color-headerName);
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner > .header > .rarity[type='legendary'] > .tip-wrapper > .inner {
+.rockTip[type='item'] > .tip-wrapper > .inner > .header > .rarity[type='legendary'] > .inner {
     background-image: var(--rockTip-item--legendary-effect);
 }
 

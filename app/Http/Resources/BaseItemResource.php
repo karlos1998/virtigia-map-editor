@@ -29,6 +29,8 @@ class BaseItemResource extends JsonResource
             'category_name' => $this->resource->category?->description(),
             'need_professions' => array_map(fn($code) => Profession::tryFrom($code)?->description(), $this->resource->attributes['needProfessions'] ?? []),
             'need_level' => $this->resource->attributes['needLevel'] ?? null,
+
+            'attributes' => $this->resource->attributes != null ? $this->resource->attributes : [],
         ];
     }
 }

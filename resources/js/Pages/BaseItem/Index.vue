@@ -40,22 +40,13 @@ type Data = {
 
                 <AdvanceColumn header="Podgląd">
                     <template #body="{ data }: Data">
-                        <rockAdapter :item-payload="{
-                            schema: {
-                                position: {
-                                    x: 0,
-                                    y: 0,
-                                },
-                                inner: {
-                                    ...data,
-                                    src: `https://s3.letscode.it/virtigia-assets/img/${data.src}` + data.src,
-                                },
-                                hero: {
-                                    profession: 'w',
-                                    level: 100,
-                                }
-                            }
-                        }" direction="bottom"/>
+                        <!-- todo ! tip nie dziala ;c -->
+                        <img
+                            class="h-12 w-12 object-cover"
+                            :src="'https://s3.letscode.it/virtigia-assets/img/' + data.src"
+                            v-tip.item.top.show-id="data"
+                            alt=""
+                        />
                     </template>
                 </AdvanceColumn>
 
