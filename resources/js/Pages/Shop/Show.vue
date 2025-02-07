@@ -110,6 +110,9 @@ const deleteItem = (event, position: number) => {
     });
 };
 
+
+const test = ref(false);
+
 </script>
 <template>
 
@@ -126,14 +129,44 @@ const deleteItem = (event, position: number) => {
         </ItemHeader>
 
         <div class="card">
+            <div class="mb-8">
+                <rockAdapter
+                    :html-payload="{
+                        schema: {
+                            inner: 'Test'
+                        }
+                    }"
+                    direction="bottom"
+                >
+                    <div>HTML</div>
+                </rockAdapter>
+
+                <rockAdapter
+                    :npc-payload="{
+                        schema: {
+                            inner: {
+                                level: 12,
+                                rank: 'ELITE',
+                                name: 'test',
+                            },
+                            hero: {
+                                level: 1
+                            },
+                        }
+                    }"
+                    direction="bottom"
+                >
+                    <div>NPC</div>
+                </rockAdapter>
+            </div>
             <div class="shop">
                 <div
                     class="items-area"
                     @click="addItem"
                 >
-<!--                    <Item :title="`[${item.id}] ${item.name}`" @click="deleteItem($event, item.position)" v-for="item in items" :item />-->
-
+                    <Item v-if="test" :title="`[${item.id}] ${item.name}`" @click="deleteItem($event, item.position)" v-for="item in items" :item />
                     <div
+                        v-else
                         v-for="item in items"
                         @click="deleteItem($event, item.position)"
                         class="item-box"
