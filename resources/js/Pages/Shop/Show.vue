@@ -12,7 +12,10 @@ import ItemHeader from "@/Components/ItemHeader.vue";
 import {useConfirm, useToast} from "primevue";
 import {ref} from "vue";
 import RockAdapter from "../../RockTip/components/rockAdapter.vue";
+import RockTip from "../../RockTip/components/rockTip.vue";
 
+// @ts-ignore
+import { itemTip } from "../../old-createItemTip";
 const props = defineProps<{
     shop: ShopResource
     items: BaseItemWithPosition
@@ -118,6 +121,9 @@ const test = ref(false);
 
     <AppLayout>
 
+        <RockTip />
+
+
         <ConfirmPopup />
 
         <ItemHeader
@@ -129,73 +135,120 @@ const test = ref(false);
         </ItemHeader>
 
         <div class="card">
-            <div class="mb-8">
-                <rockAdapter
-                    :html-payload="{
-                        schema: {
-                            inner: 'Test'
-                        }
-                    }"
-                    direction="bottom"
-                >
-                    <div>HTML</div>
-                </rockAdapter>
 
-                <rockAdapter
-                    :npc-payload="{
-                        schema: {
-                            inner: {
-                                level: 12,
-                                rank: 'ELITE',
-                                name: 'test',
-                            },
-                            hero: {
-                                level: 1
-                            },
-                        }
-                    }"
-                    direction="bottom"
-                >
-                    <div>NPC</div>
-                </rockAdapter>
-            </div>
+            <b v-tip="'XD'">test</b>
+
+            <b v-tip.npc.top="{
+                schema: {
+                    inner: {
+                        level: 12,
+                        rank: 'ELITE',
+                        name: 'test',
+                    },
+                    hero: {
+                        level: 1,
+                    }
+                }
+            }">NPC</b>
+
+<!--            <div class="mb-8">-->
+<!--                <rockAdapter-->
+<!--                    :html-payload="{-->
+<!--                        schema: {-->
+<!--                            inner: 'Test'-->
+<!--                        }-->
+<!--                    }"-->
+<!--                    direction="bottom"-->
+<!--                >-->
+<!--                    <div>HTML</div>-->
+<!--                </rockAdapter>-->
+
+<!--                <rockAdapter-->
+<!--                    :npc-payload="{-->
+<!--                        schema: {-->
+<!--                            inner: {-->
+<!--                                level: 12,-->
+<!--                                rank: 'ELITE',-->
+<!--                                name: 'test',-->
+<!--                            },-->
+<!--                            hero: {-->
+<!--                                level: 1-->
+<!--                            },-->
+<!--                        }-->
+<!--                    }"-->
+<!--                    direction="bottom"-->
+<!--                >-->
+<!--                    <div>NPC</div>-->
+<!--                </rockAdapter>-->
+<!--            </div>-->
             <div class="shop">
                 <div
                     class="items-area"
                     @click="addItem"
                 >
-                    <Item v-if="test" :title="`[${item.id}] ${item.name}`" @click="deleteItem($event, item.position)" v-for="item in items" :item />
-                    <div
-                        v-else
-                        v-for="item in items"
+                    <Item
+                        v-if="test"
+                        :title="`[${item.id}] ${item.name}`"
                         @click="deleteItem($event, item.position)"
-                        class="item-box"
-                        :style="{
-                            'top': `${Math.floor((item.position) / 8) * (32)}px`,
-                            'left': `${(item.position % 8) * (32)}px`,
+                        v-for="item in items"
+                        :item
+                        v-tip="itemTip({ ...item, stat: item.stats })"
+                    />
+                    <Item
+                        v-else
+                        :title="`[${item.id}] ${item.name}`"
+                        @click="deleteItem($event, item.position)"
+                        v-for="item in items"
+                        :item
+                        v-tip.item.top="{
+                            schema: {
+                                position: {
+                                    x: 0,
+                                    y: 0,
+                                },
+                                inner: {
+                                    ...item,
+                                    // src: `https://s3.letscode.it/virtigia-assets/img/${item.src}`
+                                },
+                                hero: {
+                                    level: 50,
+                                    profession: 'w',
+                                },
+                                showId: true,
+                            }
                         }"
-                    >
-                        <rockAdapter
-                            :item-payload="{
-                                schema: {
-                                    position: {
-                                        x: 2,
-                                        y: 2,
-                                    },
-                                    inner: {
-                                        ...item,
-                                        src: `https://s3.letscode.it/virtigia-assets/img/${item.src}`,
-                                    },
-                                    hero: {
-                                        profession: 'w',
-                                        level: 100,
-                                    },
-                                    showId: true,
-                                }
-                            }"
-                            direction="bottom"
-                        />
-                    </div>
+                    />
+<!--                    <div-->
+<!--                        v-else-->
+<!--                        v-for="item in items"-->
+<!--                        @click="deleteItem($event, item.position)"-->
+<!--                        class="item-box"-->
+<!--                        :style="{-->
+<!--                            'top': `${Math.floor((item.position) / 8) * (32)}px`,-->
+<!--                            'left': `${(item.position % 8) * (32)}px`,-->
+<!--                        }"-->
+<!--                    >-->
+<!--                        <rockAdapter-->
+<!--                            :item-payload="{-->
+<!--                                schema: {-->
+<!--                                    position: {-->
+<!--                                        x: 2,-->
+<!--                                        y: 2,-->
+<!--                                    },-->
+<!--                                    inner: {-->
+<!--                                        ...item,-->
+<!--                                        src: `https://s3.letscode.it/virtigia-assets/img/${item.src}`,-->
+<!--                                    },-->
+<!--                                    hero: {-->
+<!--                                        profession: 'w',-->
+<!--                                        level: 100,-->
+<!--                                    },-->
+<!--                                    showId: true,-->
+<!--                                }-->
+<!--                            }"-->
+<!--                            direction="bottom"-->
+<!--                        />-->
+<!--                    </div>-->
 
                 </div>
             </div>

@@ -279,13 +279,20 @@ export namespace Translations {
             return `Obrażenia od trucizny ${attrBox(attrPositive(attrNumber(damageData)))}<br>Spowalnia cel o ${attrBox((attrNumber(slowData) / 100).toFixed(2))} SA`;
         },
         "attackSpeed": (pointsData: string) => {
-            return `Szybkość ataku ${attrBox(attrPositive(attrNumber(+pointsData / 100).toFixed(2)))}`;
+            // return `Szybkość ataku ${attrBox(attrPositive(attrNumber(+pointsData / 100).toFixed(2)))}`;
+            return `Szybkość ataku ${attrBox(pointsData + "%")}`
         },
         "bagCapacity": (amountData: string) => {
             return `Mieści ${attrBox(amountData)} przedmioty`;
         },
         "description": (descriptionData: string) => {
-            return descriptionData;
+            //todo - czasowy drut
+            if(descriptionData == "null") {
+                return '';
+            }
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = descriptionData;
+            return textarea.value.replaceAll('[br]', '<br>');
         },
         "evadePoints": (pointsData: string) => {
             return `Unik ${attrBox(attrPositive(attrNumber(pointsData)))}`;
@@ -340,7 +347,7 @@ export namespace Translations {
         "teleportTo": ([__mapId__, posX, posY, mapName]: string[]) => {
             return `Teleportuje gracza na mape:<br>${mapName} (${posX},${posY})`
         },
-        "timelimit": ([resetSeconds, resetTimestamp]: string[]) => {
+        "cooldownTime": ([resetSeconds, resetTimestamp]: string[]) => {
             const timeSeed = new Date().getTime();
             const timelimitId = `tl-${timeSeed}`;
             const timelimitNodes = [

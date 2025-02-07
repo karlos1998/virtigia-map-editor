@@ -39,6 +39,8 @@ pinia.use(piniaPluginPersistedstate)
 //     dsn: import.meta.env.VITE_SENTRY_DSN_PUBLIC,
 // });
 
+import ToolTipDirective from '@/tooltips/module'
+
 createInertiaApp({
     progress: {
         // The delay after which the progress bar will appear, in milliseconds...
@@ -82,6 +84,8 @@ createInertiaApp({
             // .component('BlockViewer', BlockViewer)
 
             .use(pinia)
+
+            .directive('tip', ToolTipDirective)
 
             // .component('OwnDataTable', OwnDataTable)
 
