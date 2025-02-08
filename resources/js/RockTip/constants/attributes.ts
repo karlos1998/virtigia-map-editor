@@ -76,7 +76,7 @@ ShO9KukHxab7dzwZ2ngYldAZQrLCDLE1xTCXtrd1xkqiO1Y=
 -----END PGP PUBLIC KEY BLOCK-----
 */
 
-import type { ItemPayload } from "../typings/payloads";
+import type {ItemPayload} from "../typings/payloads";
 
 export namespace Attributes {
     export namespace Typings {
@@ -84,135 +84,143 @@ export namespace Attributes {
             priority: number,
             name: string
         };
-    };
+    }
+
 
     const orderDataset: Record<string, Attributes.Typings.OrderEntry[]> = {
         "actions": [
-            { "priority": 1, "name": "multiplyExperienceAfterNextKill" },
-            { "priority": 1, "name": "incrementEnchancementExp" },
-            { "priority": 1, "name": "incrementDraconite" },
-            { "priority": 1, "name": "incrementFatigue" },
-            { "priority": 1, "name": "incrementStamina" },
-            { "priority": 1, "name": "previewLootbox" },
-            { "priority": 1, "name": "combatSelfHeal" },
-            { "priority": 1, "name": "incrementGold" },
-            { "priority": 1, "name": "openDeposit" },
-            { "priority": 1, "name": "openAuction" },
-            { "priority": 1, "name": "teleportTo" },
-            { "priority": 1, "name": "combatFlee" },
-            { "priority": 1, "name": "useEmotion" },
-            { "priority": 1, "name": "useOutfit" },
-            { "priority": 1, "name": "npcLocate" },
-            { "priority": 1, "name": "playAudio" },
-            { "priority": 1, "name": "openBook" },
-            { "priority": 1, "name": "openMail" },
-            { "priority": 1, "name": "usePet" }
+            {"priority": 1, "name": "multiplyExperienceAfterNextKill"},
+            {"priority": 1, "name": "incrementEnchancementExp"},
+            {"priority": 1, "name": "incrementDraconite"},
+            {"priority": 1, "name": "incrementFatigue"},
+            {"priority": 1, "name": "incrementStamina"},
+            {"priority": 1, "name": "previewLootbox"},
+            {"priority": 1, "name": "combatSelfHeal"},
+            {"priority": 1, "name": "incrementGold"},
+            {"priority": 1, "name": "openDeposit"},
+            {"priority": 1, "name": "openAuction"},
+            {"priority": 1, "name": "teleportTo"},
+            {"priority": 1, "name": "combatFlee"},
+            {"priority": 1, "name": "useEmotion"},
+            {"priority": 1, "name": "useOutfit"},
+            {"priority": 1, "name": "npcLocate"},
+            {"priority": 1, "name": "playAudio"},
+            {"priority": 1, "name": "openBook"},
+            {"priority": 1, "name": "openMail"},
+            {"priority": 1, "name": "usePet"}
         ],
         "bonuses": [
-            { "priority": 12, "name": "maxQuantity" },
-            { "priority": 12, "name": "quantity" },
-            { "priority": 11, "name": "legendaryBon" },
-            { "priority": 11, "name": "lootedWith" },
-            { "priority": 11, "name": "description" },
-            { "priority": 10, "name": "teleportTo" },
-            { "priority": 10, "name": "attackSpeed" },
-            { "priority": 10, "name": "heal2TurnsReduction" },
-            { "priority": 10, "name": "enemyAttackSpeedReduction" },
-            { "priority": 10, "name": "deepWoundChance"},
-            { "priority": 9, "name": "destroyArmorReduction" },
-            { "priority": 9, "name": "chanceToBlockPuncture" },
-            { "priority": 9, "name": "healthPerStrength" },
-            { "priority": 9, "name": "armorPuncture" },
-            { "priority": 9, "name": "enemyManaReduction" },
-            { "priority": 8, "name": "criticalReductionDuringDefending" },
-            { "priority": 8, "name": "manaEnergyDestroyReduction" },
-            { "priority": 8, "name": "magicalResistanceReduction" },
-            { "priority": 8, "name": "combatHealthRestoration" },
-            { "priority": 8, "name": "combatHealthReduction" },
-            { "priority": 8, "name": "enemyEvasionReduction" },
-            { "priority": 8, "name": "critPowerReduction" },
-            { "priority": 7, "name": "evadePoints" },
-            { "priority": 7, "name": "health" },
-            { "priority": 7, "name": "energy" },
-            { "priority": 7, "name": "mana" },
-            { "priority": 6, "name": "energyDestroy" },
-            { "priority": 5, "name": "allBaseAttributes" },
-            { "priority": 5, "name": "intellect" },
-            { "priority": 5, "name": "strength" },
-            { "priority": 5, "name": "agility" },
-            { "priority": 4, "name": "block" },
-            { "priority": 3, "name": "physicalDamageAbsorption" },
-            { "priority": 3, "name": "magicalDamageAbsorption" },
-            { "priority": 3, "name": "physicalCritPower" },
-            { "priority": 3, "name": "magicalCritPower" },
-            { "priority": 2, "name": "poisonResistance" },
-            { "priority": 2, "name": "lightResistance" },
-            { "priority": 2, "name": "frostResistance" },
-            { "priority": 2, "name": "fireResistance" },
-            { "priority": 2, "name": "absorptionDestroy" },
-            { "priority": 2, "name": "chanceToCounter" },
-            { "priority": 2, "name": "defenseDestroy" },
-            { "priority": 2, "name": "criticalChance" },
-            { "priority": 1, "name": "healthRestorationPercent" },
-            { "priority": 1, "name": "fasterRevivalRecovery" },
-            { "priority": 1, "name": "healChanceAfterFight" },
-            { "priority": 1, "name": "restoreHealthPoints" },
-            { "priority": 1, "name": "arrowPhysicalDamage" },
-            { "priority": 1, "name": "physicalDamage" },
-            { "priority": 1, "name": "poisonDamage" },
-            { "priority": 1, "name": "lightDamage" },
-            { "priority": 1, "name": "frostDamage" },
-            { "priority": 1, "name": "fireDamage" },
-            { "priority": 1, "name": "keyDescription" },
-            { "priority": 1, "name": "shortenRevival" },
-            { "priority": 1, "name": "healRemaining" },
-            { "priority": 1, "name": "bagCapacity" },
-            { "priority": 1, "name": "timelimit" },
-            { "priority": 1, "name": "defense" },
+            {"priority": 12, "name": "maxQuantity"},
+            {"priority": 12, "name": "quantity"},
+            {"priority": 11, "name": "legendaryBon"},
+            {"priority": 11, "name": "lootedWith"},
+            {"priority": 11, "name": "description"},
+            {"priority": 10, "name": "teleportTo"},
+            {"priority": 10, "name": "attackSpeed"},
+            {"priority": 10, "name": "heal2TurnsReduction"},
+            {"priority": 10, "name": "enemyAttackSpeedReduction"},
+            {"priority": 10, "name": "deepWoundChance"},
+            {"priority": 9, "name": "destroyArmorReduction"},
+            {"priority": 9, "name": "chanceToBlockPuncture"},
+            {"priority": 9, "name": "healthPerStrength"},
+            {"priority": 9, "name": "armorPuncture"},
+            {"priority": 9, "name": "enemyManaReduction"},
+            {"priority": 8, "name": "criticalReductionDuringDefending"},
+            {"priority": 8, "name": "manaEnergyDestroyReduction"},
+            {"priority": 8, "name": "magicalResistanceReduction"},
+            {"priority": 8, "name": "combatHealthRestoration"},
+            {"priority": 8, "name": "combatHealthReduction"},
+            {"priority": 8, "name": "enemyEvasionReduction"},
+            {"priority": 8, "name": "critPowerReduction"},
+            {"priority": 7, "name": "evadePoints"},
+            {"priority": 7, "name": "health"},
+            {"priority": 7, "name": "energy"},
+            {"priority": 7, "name": "mana"},
+            {"priority": 6, "name": "energyDestroy"},
+            {"priority": 5, "name": "allBaseAttributes"},
+            {"priority": 5, "name": "intellect"},
+            {"priority": 5, "name": "strength"},
+            {"priority": 5, "name": "agility"},
+            {"priority": 4, "name": "block"},
+            {"priority": 3, "name": "physicalDamageAbsorption"},
+            {"priority": 3, "name": "magicalDamageAbsorption"},
+            {"priority": 3, "name": "physicalCritPower"},
+            {"priority": 3, "name": "magicalCritPower"},
+            {"priority": 2, "name": "poisonResistance"},
+            {"priority": 2, "name": "lightResistance"},
+            {"priority": 2, "name": "frostResistance"},
+            {"priority": 2, "name": "fireResistance"},
+            {"priority": 2, "name": "absorptionDestroy"},
+            {"priority": 2, "name": "chanceToCounter"},
+            {"priority": 2, "name": "defenseDestroy"},
+            {"priority": 2, "name": "criticalChance"},
+            {"priority": 1, "name": "healthRestorationPercent"},
+            {"priority": 1, "name": "fasterRevivalRecovery"},
+            {"priority": 1, "name": "healChanceAfterFight"},
+            {"priority": 1, "name": "restoreHealthPoints"},
+            {"priority": 1, "name": "arrowPhysicalDamage"},
+            {"priority": 1, "name": "physicalDamage"},
+            {"priority": 1, "name": "poisonDamage"},
+            {"priority": 1, "name": "lightDamage"},
+            {"priority": 1, "name": "frostDamage"},
+            {"priority": 1, "name": "fireDamage"},
+            {"priority": 1, "name": "keyDescription"},
+            {"priority": 1, "name": "shortenRevival"},
+            {"priority": 1, "name": "healRemaining"},
+            {"priority": 1, "name": "bagCapacity"},
+            {"priority": 1, "name": "timelimit"},
+            {"priority": 1, "name": "defense"},
             /* Ignored - not have a translation to be even prioritized */
-            { "priority": 0, "name": "upgradePercent" },
-            { "priority": 0, "name": "lootedAt" },
+            {"priority": 0, "name": "upgradePercent"},
+            {"priority": 0, "name": "lootedAt"},
         ],
         "limits": [
-            { "priority": 1, "name": "needProfessions" },
-            { "priority": 1, "name": "limitedToMaps" },
-            { "priority": 1, "name": "needIntellect" },
-            { "priority": 1, "name": "needStrength" },
-            { "priority": 1, "name": "cooldownTime" },
-            { "priority": 1, "name": "expirationAt" },
-            { "priority": 1, "name": "needInQuest" },
-            { "priority": 1, "name": "needAgility" },
-            { "priority": 1, "name": "needLevel" }
+            {"priority": 1, "name": "needProfessions"},
+            {"priority": 1, "name": "limitedToMaps"},
+            {"priority": 1, "name": "needIntellect"},
+            {"priority": 1, "name": "needStrength"},
+            {"priority": 1, "name": "cooldownTime"},
+            {"priority": 1, "name": "expirationAt"},
+            {"priority": 1, "name": "needInQuest"},
+            {"priority": 1, "name": "needAgility"},
+            {"priority": 1, "name": "needLevel"}
         ],
         "tags": [
-            { "priority": 2, "name": "isNonStoreableInClanDeposit" },
-            { "priority": 1, "name": "isBindPermamentlyAfterBuy" },
-            { "priority": 2, "name": "isNonStoreableInDeposit" },
-            { "priority": 1, "name": "isPermamentlyBounded" },
-            { "priority": 2, "name": "isLowerLevelScroll" },
-            { "priority": 1, "name": "isBindsAfterEquip" },
-            { "priority": 2, "name": "isUnbindingScroll" },
-            { "priority": 2, "name": "isNotAuctionable" },
-            { "priority": 2, "name": "isUnidentified" },
-            { "priority": 1, "name": "isBoundToOwner" },
-            { "priority": 2, "name": "isSummonScroll" },
-            { "priority": 2, "name": "isUnbindScroll" },
-            { "priority": 2, "name": "isUndoScroll" },
-            { "priority": 2, "name": "isRecovered" },
-            { "priority": 2, "name": "isCursed" }
+            {"priority": 2, "name": "isNonStoreableInClanDeposit"},
+            {"priority": 1, "name": "isBindPermamentlyAfterBuy"},
+            {"priority": 2, "name": "isNonStoreableInDeposit"},
+            {"priority": 1, "name": "isPermamentlyBounded"},
+            {"priority": 2, "name": "isLowerLevelScroll"},
+            {"priority": 1, "name": "isBindsAfterEquip"},
+            {"priority": 2, "name": "isUnbindingScroll"},
+            {"priority": 2, "name": "isNotAuctionable"},
+            {"priority": 2, "name": "isUnidentified"},
+            {"priority": 1, "name": "isBoundToOwner"},
+            {"priority": 2, "name": "isSummonScroll"},
+            {"priority": 2, "name": "isUnbindScroll"},
+            {"priority": 2, "name": "isUndoScroll"},
+            {"priority": 2, "name": "isRecovered"},
+            {"priority": 2, "name": "isCursed"}
         ]
     };
 
-    export function getOrdersList(itemData: ItemPayload) {
+    export function getOrdersList(itemData: ItemPayload): {
+        actions: Typings.OrderEntry[][];
+        bonuses: Typings.OrderEntry[][];
+        limits: Typings.OrderEntry[][];
+        tags: Typings.OrderEntry[][];
+    } {
         function getOrdersByCategory(target: keyof typeof orderDataset): Attributes.Typings.OrderEntry[][] {
             const resultList = [];
-            for(let orderIndex = 1; orderIndex !== Math.max(...orderDataset[target].map(entryData => entryData.priority)) + 1; orderIndex++) {
+            for (let orderIndex = 1; orderIndex !== Math.max(...orderDataset[target].map(entryData => entryData.priority)) + 1; orderIndex++) {
                 resultList.push(
                     Object.values(orderDataset[target]).filter(entryData => entryData.priority === orderIndex)
                 );
-            };
+            }
+
             return resultList;
-        };
+        }
+
         const orderList = {
             "result": {
                 "actions": getOrdersByCategory("actions"),
@@ -221,23 +229,28 @@ export namespace Attributes {
                 "tags": getOrdersByCategory("tags")
             }
         };
-        for(const [orderName, orderValue] of Object.entries(orderList.result)) {
-            for(let priorityOffset = 0; priorityOffset !== orderValue.length; priorityOffset++) {
+        for (const [orderName, orderValue] of Object.entries(orderList.result)) {
+            for (let priorityOffset = 0; priorityOffset !== orderValue.length; priorityOffset++) {
                 const currentOrder = orderValue[priorityOffset] as Attributes.Typings.OrderEntry[];
-                for(let attributeOffset = 0; attributeOffset !== currentOrder.length; attributeOffset++) {
+                for (let attributeOffset = 0; attributeOffset !== currentOrder.length; attributeOffset++) {
                     const currentAttributeName = currentOrder[attributeOffset];
-                    if(itemData.schema.inner.attributes[currentAttributeName.name]) {
+                    if (itemData.schema.inner.attributes[currentAttributeName.name]) {
                         continue;
-                    };
+                    }
+
                     delete orderList.result[orderName][priorityOffset][attributeOffset];
-                };
+                }
+
                 orderList.result[orderName][priorityOffset] = orderList.result[orderName][priorityOffset]
                     .filter((currentOrder: Attributes.Typings.OrderEntry) => currentOrder);
-            };
+            }
+
             orderList.result[orderName] = orderList.result[orderName]
                 .flatMap((currentOrder: Attributes.Typings.OrderEntry) => currentOrder)
                 .map((currentOrder: Attributes.Typings.OrderEntry) => currentOrder.name);
-        };
+        }
+
         return orderList.result;
-    };
-};
+    }
+}
+

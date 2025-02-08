@@ -22,7 +22,7 @@ onMounted(() => {
 
 const selfProperties = state;
 
-const itemOrders = computed(() => state.value.itemPayload ? { value: Attributes.getOrdersList(state.value.itemPayload) }: {value: null})
+const itemOrders = computed(() => state.value.itemPayload ? Attributes.getOrdersList(state.value.itemPayload) : null)
 
 </script>
 
@@ -30,7 +30,7 @@ const itemOrders = computed(() => state.value.itemPayload ? { value: Attributes.
     <div class="rockTip" :style="{
             left: position.x + 'px',
             top: position.y + 'px',
-        }" :type="(() => {
+        }" :data-type="(() => {
         if(selfProperties.otherPayload) {
             return 'other';
         }
@@ -50,34 +50,34 @@ const itemOrders = computed(() => state.value.itemPayload ? { value: Attributes.
                 <div class="leftTop" />
                 <div class="rightBottom" />
             </div>
-            <slot v-if="selfProperties.otherPayload">
+            <template v-if="selfProperties.otherPayload">
                 <div class="inner text-sharpen">
                     <div class="nickname">
                         <b>{{ selfProperties.otherPayload.schema.inner.name }}
                             {{ `(${selfProperties.otherPayload.schema.inner.level}${selfProperties.otherPayload.schema.inner.profession})`
                             }}</b>
                     </div>
-                    <slot v-if="selfProperties.otherPayload.schema.inner.bless">
+                    <template v-if="selfProperties.otherPayload.schema.inner.bless">
                         <div class="bless">
                             <b>Błogosławieństwo</b>
                         </div>
-                    </slot>
-                    <slot v-if="selfProperties.otherPayload.schema.inner.clan">
+                    </template>
+                    <template v-if="selfProperties.otherPayload.schema.inner.clan">
                         <div class="clan">
                             <span>{{ `[${selfProperties.otherPayload.schema.inner.clan}]` }}</span>
                         </div>
-                    </slot>
-                    <slot v-if="selfProperties.otherPayload.schema.inner.role">
+                    </template>
+                    <template v-if="selfProperties.otherPayload.schema.inner.role">
                         <div class="role">
                             <span>{{ selfProperties.otherPayload.schema.inner.role }}</span>
                         </div>
-                    </slot>
+                    </template>
                 </div>
-            </slot>
-            <slot v-if="selfProperties.htmlPayload">
+            </template>
+            <template v-if="selfProperties.htmlPayload">
                 <div class="inner text-sharpen" v-html="selfProperties.htmlPayload.schema.inner.content" />
-            </slot>
-            <slot v-if="selfProperties.itemPayload">
+            </template>
+            <template v-if="selfProperties.itemPayload">
                 <div class="inner text-sharpen">
                     <div class="header">
                         <div v-if="selfProperties.itemPayload.schema.showId">
@@ -89,7 +89,7 @@ const itemOrders = computed(() => state.value.itemPayload ? { value: Attributes.
                         <div
                             v-if="selfProperties.itemPayload.schema.inner.rarity && selfProperties.itemPayload.schema.inner.rarity != 'common'"
                             class="rarity"
-                            :type="selfProperties.itemPayload.schema.inner.rarity"
+                            :data-type="selfProperties.itemPayload.schema.inner.rarity"
                         >
                             <span>* </span>
                             <span class="inner">
@@ -107,41 +107,59 @@ const itemOrders = computed(() => state.value.itemPayload ? { value: Attributes.
                                 }}</b>
                         </div>
                         <div class="bonuses">
-                            <slot v-if="itemOrders.value.tags.isUnidentified">
-                                <div class="attribute text-center" :stat="'unidentified'">
+                            <template v-if="itemOrders?.tags.isUnidentified">
+                                <div class="attribute text-center" :data-stat="'unidentified'">
                                     Przedmiot niezidentyfikowany
                                 </div>
-                            </slot>
-                            <slot v-for="currentStat of itemOrders.value.bonuses">
-                                <div class="attribute" :stat="currentStat">
+                            </template>
+                            <template v-for="currentStat of itemOrders?.bonuses">
+                                <div class="attribute" :data-stat="currentStat">
                                 <span
                                     v-if="Translations.attributes[currentStat]"
                                     v-html="`${Translations.attributes[currentStat].apply(null, [selfProperties.itemPayload.schema.inner.attributes[currentStat]])}`"
                                 />
                                     <div v-else><b>Nieznany stat: {{ currentStat }}</b></div>
                                 </div>
-                            </slot>
+                            </template>
                         </div>
                         <div class="tags">
-                            <slot v-for="currentStat of itemOrders.value.tags">
-                                <div class="attribute" :stat="currentStat">
+                            <template v-for="currentStat of itemOrders?.tags">
+                                <div class="attribute" :data-stat="currentStat">
                                 <span
                                     v-if="Translations.attributes[currentStat]"
                                     v-html="Translations.attributes[currentStat].apply(null, [selfProperties.itemPayload.schema.inner.attributes[currentStat]])"
                                 />
                                     <div v-else><b>Nieznany tag: {{ currentStat }}</b></div>
                                 </div>
-                            </slot>
+                            </template>
                         </div>
                         <div class="requires">
-                            <slot v-for="currentStat of itemOrders.value.limits">
-                                <div class="attribute" :stat="currentStat" :fulfilling="(() => {
+                            <template v-for="currentStat of itemOrders?.limits">
+                                <div
+                                    v-if="(() => {
+                                      switch(currentStat) {
+                                        case 'needProfessions': {
+                                            return selfProperties.itemPayload.schema.inner.attributes.needProfessions.length != 6 && selfProperties.itemPayload.schema.inner.attributes.needProfessions.length != 0;
+                                        }
+                                        case 'needLevel': {
+                                            return selfProperties.itemPayload.schema.inner.attributes.needLevel > 1;
+                                        }
+                                        default: {
+                                            return true;
+                                        }
+                                      }
+                                    })()"
+                                    class="attribute" :data-stat="currentStat" :data-fulfilling="(() => {
                                 switch(currentStat) {
                                     case 'needLevel': {
                                         return selfProperties.itemPayload.schema.hero.level >= Number(selfProperties.itemPayload.schema.inner.attributes.needLevel);
                                     }
                                     case 'needProfessions': {
                                         return selfProperties.itemPayload.schema.inner.attributes.needProfessions.indexOf(selfProperties.itemPayload.schema.hero.profession) > -1;
+                                    }
+                                    case 'cooldownTime': {
+
+                                        return selfProperties.itemPayload.schema.inner.attributes.cooldownTime.length == 1 || selfProperties.itemPayload.schema.inner.attributes.cooldownTime[1] <= (new Date().getTime() / 1000);
                                     }
                                     default: {
                                         return false;
@@ -152,48 +170,48 @@ const itemOrders = computed(() => state.value.itemPayload ? { value: Attributes.
                                     v-if="Translations.attributes[currentStat]"
                                     v-html="Translations.attributes[currentStat].apply(null, [selfProperties.itemPayload.schema.inner.attributes[currentStat]])"
                                 />
-<!--                                    <span-->
-<!--                                        v-else-->
-<!--                                    >-->
-<!--                                        Problem z: {{Translations.attributes[currentStat]}}-->
-<!--                                    </span>-->
+                                    <!--                                    <span-->
+                                    <!--                                        v-else-->
+                                    <!--                                    >-->
+                                    <!--                                        Problem z: {{Translations.attributes[currentStat]}}-->
+                                    <!--                                    </span>-->
                                 </div>
-                            </slot>
+                            </template>
                         </div>
                     </div>
                     <div class="footer">
                         <div class="price">
                             <span>{{ `Wartość: ${priceFormatter(selfProperties.itemPayload.schema.inner.price)}`
                                 }}</span>
-                            <div :type="selfProperties.itemPayload.schema.inner.currency" />
+                            <div :data-type="selfProperties.itemPayload.schema.inner.currency" />
                         </div>
                     </div>
                 </div>
-            </slot>
-            <slot v-if="selfProperties.npcPayload">
+            </template>
+            <template v-if="selfProperties.npcPayload">
                 <div class="inner text-sharpen">
                     <div class="name">
                         <b>{{ selfProperties.npcPayload.schema.inner.name }}</b>
                     </div>
-                    <slot v-if="selfProperties.npcPayload.schema.inner.rank">
+                    <template v-if="selfProperties.npcPayload.schema.inner.rank">
                         <div class="rank">
-                            <slot v-if="selfProperties.npcPayload.schema.inner.rank === 'ELITE'">
+                            <template v-if="selfProperties.npcPayload.schema.inner.rank === 'ELITE'">
                                 <i>elita</i>
-                            </slot>
-                            <slot v-if="selfProperties.npcPayload.schema.inner.rank === 'ELITE_II'">
+                            </template>
+                            <template v-if="selfProperties.npcPayload.schema.inner.rank === 'ELITE_II'">
                                 <i>elita II</i>
-                            </slot>
-                            <slot v-if="selfProperties.npcPayload.schema.inner.rank === 'ELITE_III'">
+                            </template>
+                            <template v-if="selfProperties.npcPayload.schema.inner.rank === 'ELITE_III'">
                                 <i>elita III</i>
-                            </slot>
-                            <slot v-if="selfProperties.npcPayload.schema.inner.rank === 'HERO'">
+                            </template>
+                            <template v-if="selfProperties.npcPayload.schema.inner.rank === 'HERO'">
                                 <i>heros</i>
-                            </slot>
-                            <slot v-if="selfProperties.npcPayload.schema.inner.rank === 'TITAN'">
+                            </template>
+                            <template v-if="selfProperties.npcPayload.schema.inner.rank === 'TITAN'">
                                 <i>tytan</i>
-                            </slot>
+                            </template>
                         </div>
-                    </slot>
+                    </template>
                     <div class="level" :advantage="(() => {
                     const differenceLevel = selfProperties.npcPayload.schema.hero.level - selfProperties.npcPayload.schema.inner.level;
                     if(differenceLevel > 13) {
@@ -207,7 +225,7 @@ const itemOrders = computed(() => state.value.itemPayload ? { value: Attributes.
                         <span>{{ `${selfProperties.npcPayload.schema.inner.lvl} lvl` }}</span>
                     </div>
                 </div>
-            </slot>
+            </template>
         </div>
     </div>
 </template>
@@ -220,8 +238,7 @@ const itemOrders = computed(() => state.value.itemPayload ? { value: Attributes.
 }
 
 .rockTip {
-    @apply absolute z-50;
-
+    position: absolute;
     top: -9999px;
     left: -9999px;
     font-family: var(--rockTip-font);
@@ -235,12 +252,11 @@ const itemOrders = computed(() => state.value.itemPayload ? { value: Attributes.
 }
 
 .rockTip > .tip-wrapper {
-    @apply relative;
+    position: relative;
 }
 
 .rockTip .text-sharpen {
-    @apply p-1;
-
+    padding: 0.25rem;
     text-shadow: 1px 1px black;
 }
 
@@ -281,38 +297,38 @@ const itemOrders = computed(() => state.value.itemPayload ? { value: Attributes.
     --rockTip-other--color-role: hsl(150deg, 100%, 50%);
 }
 
-.rockTip[type='other'] {
+.rockTip[data-type='other'] {
     background-image: var(--rockTip-other--background-mask);
 }
 
-.rockTip[type='other'] > .tip-wrapper > .corners > .leftTop {
+.rockTip[data-type='other'] > .tip-wrapper > .corners > .leftTop {
     background-image: var(--rockTip-other--corner-left);
 }
 
-.rockTip[type='other'] > .tip-wrapper > .corners > .rightBottom {
+.rockTip[data-type='other'] > .tip-wrapper > .corners > .rightBottom {
     background-image: var(--rockTip-other--corner-right);
 }
 
-.rockTip[type='other'] > .tip-wrapper > .inner > .nickname,
-.rockTip[type='other'] > .tip-wrapper > .inner > .bless,
-.rockTip[type='other'] > .tip-wrapper > .inner > .clan,
-.rockTip[type='other'] > .tip-wrapper > .inner > .role {
+.rockTip[data-type='other'] > .tip-wrapper > .inner > .nickname,
+.rockTip[data-type='other'] > .tip-wrapper > .inner > .bless,
+.rockTip[data-type='other'] > .tip-wrapper > .inner > .clan,
+.rockTip[data-type='other'] > .tip-wrapper > .inner > .role {
     justify-content: center;
     display: flex;
     height: fit-content;
     width: 100%;
 }
 
-.rockTip[type='other'] > .tip-wrapper > .inner > .bless {
+.rockTip[data-type='other'] > .tip-wrapper > .inner > .bless {
     font-weight: bold;
     color: var(--rockTip-other--color-bless);
 }
 
-.rockTip[type='other'] > .tip-wrapper > .inner > .clan {
+.rockTip[data-type='other'] > .tip-wrapper > .inner > .clan {
     color: var(--rockTip-other--color-clan);
 }
 
-.rockTip[type='other'] > .tip-wrapper > .inner > .role {
+.rockTip[data-type='other'] > .tip-wrapper > .inner > .role {
     color: var(--rockTip-other--color-role);
 }
 </style>
@@ -324,15 +340,15 @@ const itemOrders = computed(() => state.value.itemPayload ? { value: Attributes.
     --rockTip-html--corner-left: url(data:image/png;base64,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);
 }
 
-.rockTip[type='html'] {
+.rockTip[data-type='html'] {
     background-image: var(--rockTip-html--background-mask);
 }
 
-.rockTip[type='html'] > .tip-wrapper > .corners > .leftTop {
+.rockTip[data-type='html'] > .tip-wrapper > .corners > .leftTop {
     background-image: var(--rockTip-html--corner-left);
 }
 
-.rockTip[type='html'] > .tip-wrapper > .corners > .rightBottom {
+.rockTip[data-type='html'] > .tip-wrapper > .corners > .rightBottom {
     background-image: var(--rockTip-html--corner-right);
 }
 </style>
@@ -364,92 +380,92 @@ const itemOrders = computed(() => state.value.itemPayload ? { value: Attributes.
 
 }
 
-.rockTip[type='item'] {
+.rockTip[data-type='item'] {
     background-image: var(--rockTip-item--background-mask);
     max-width: 300px;
 }
 
-.rockTip[type='item'] > .tip-wrapper > .corners > .leftTop {
+.rockTip[data-type='item'] > .tip-wrapper > .corners > .leftTop {
     background-image: var(--rockTip-item--corner-left);
 }
 
-.rockTip[type='item'] > .tip-wrapper > .corners > .rightBottom {
+.rockTip[data-type='item'] > .tip-wrapper > .corners > .rightBottom {
     background-image: var(--rockTip-item--corner-right);
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner > .header {
+.rockTip[data-type='item'] > .tip-wrapper > .inner > .header {
     flex-direction: column;
     align-items: center;
     position: relative;
     display: flex;
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner > .header > .name,
-.rockTip[type='item'] > .tip-wrapper > .inner > .header > .rarity {
+.rockTip[data-type='item'] > .tip-wrapper > .inner > .header > .name,
+.rockTip[data-type='item'] > .tip-wrapper > .inner > .header > .rarity {
     font-weight: bold;
     text-align: center;
     word-break: break-word;
     color: var(--rockTip-item--color-headerName);
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner > .header > .rarity[type='legendary'] > .inner {
+.rockTip[data-type='item'] > .tip-wrapper > .inner > .header > .rarity[data-type='legendary'] > .inner {
     background-image: var(--rockTip-item--legendary-effect);
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner > .header > .rarity[type='legendary'] {
+.rockTip[data-type='item'] > .tip-wrapper > .inner > .header > .rarity[data-type='legendary'] {
     color: var(--rockTip-item--rarity-legendary);
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner > .header > .rarity[type='artefact'] {
+.rockTip[data-type='item'] > .tip-wrapper > .inner > .header > .rarity[data-type='artefact'] {
     color: var(--rockTip-item--rarity-artefact);
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner > .header > .rarity[type='upgraded'] {
+.rockTip[data-type='item'] > .tip-wrapper > .inner > .header > .rarity[data-type='upgraded'] {
     color: var(--rockTip-item--rarity-upgraded);
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner > .header > .rarity[type='heroic'] {
+.rockTip[data-type='item'] > .tip-wrapper > .inner > .header > .rarity[data-type='heroic'] {
     color: var(--rockTip-item--rarity-heroic);
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner > .header > .rarity[type='unique'] {
+.rockTip[data-type='item'] > .tip-wrapper > .inner > .header > .rarity[data-type='unique'] {
     color: var(--rockTip-item--rarity-unique);
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner > .header > .rarity[type='common'] {
+.rockTip[data-type='item'] > .tip-wrapper > .inner > .header > .rarity[data-type='common'] {
     color: var(--rockTip-item--rarity-common);
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner > .struct .attribute [role='value'] {
+.rockTip[data-type='item'] > .tip-wrapper > .inner > .struct .attribute [data-role='value'] {
     color: var(--rockTip-item--color-statValue);
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner > .struct > .requires > .attribute {
+.rockTip[data-type='item'] > .tip-wrapper > .inner > .struct > .requires > .attribute {
     font-weight: bold;
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner > .struct > .requires > .attribute[fulfilling='true'] {
+.rockTip[data-type='item'] > .tip-wrapper > .inner > .struct > .requires > .attribute[data-fulfilling='true'] {
     color: var(--rockTip-item--color-fulfillOk);
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner > .struct > .requires > .attribute[fulfilling='false'] {
+.rockTip[data-type='item'] > .tip-wrapper > .inner > .struct > .requires > .attribute[data-fulfilling='false'] {
     color: var(--rockTip-item--color-fulfillErr)
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner > .footer > .price {
+.rockTip[data-type='item'] > .tip-wrapper > .inner > .footer > .price {
     align-items: center;
     display: flex;
     gap: 0.25rem;
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner > .footer > .price [type='draconite'] {
+.rockTip[data-type='item'] > .tip-wrapper > .inner > .footer > .price [data-type='draconite'] {
     background-image: var(--rockTip-item--currency-draconite);
     height: 1.875rem;
     width: 1.25rem;
     zoom: 0.65;
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner > .footer > .price [type='honor'] {
+.rockTip[data-type='item'] > .tip-wrapper > .inner > .footer > .price [data-type='honor'] {
     background-image: var(--rockTip-item--currency-honor);
     transform: translateY(2px);
     height: 2.063rem;
@@ -457,30 +473,30 @@ const itemOrders = computed(() => state.value.itemPayload ? { value: Attributes.
     zoom: 0.65;
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner > .footer > .price [type='gold'] {
+.rockTip[data-type='item'] > .tip-wrapper > .inner > .footer > .price [data-type='gold'] {
     background-image: var(--rockTip-item--currency-gold);
     height: 1.3rem;
     width: 1.5rem;
     zoom: 0.85;
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner .attribute[stat='legendaryBon'] [role='value'],
-.rockTip[type='item'] > .tip-wrapper > .inner .attribute[stat='legendaryBon'] {
+.rockTip[data-type='item'] > .tip-wrapper > .inner .attribute[data-stat='legendaryBon'] [data-role='value'],
+.rockTip[data-type='item'] > .tip-wrapper > .inner .attribute[data-stat='legendaryBon'] {
     color: var(--rockTip-item--rarity-legendary);
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner .attribute[stat='keyDescription'],
-.rockTip[type='item'] > .tip-wrapper > .inner .attribute[stat='unidentified'],
-.rockTip[type='item'] > .tip-wrapper > .inner .attribute[stat='description'],
-.rockTip[type='item'] > .tip-wrapper > .inner .attribute[stat='teleportTo'] {
+.rockTip[data-type='item'] > .tip-wrapper > .inner .attribute[data-stat='keyDescription'],
+.rockTip[data-type='item'] > .tip-wrapper > .inner .attribute[data-stat='unidentified'],
+.rockTip[data-type='item'] > .tip-wrapper > .inner .attribute[data-stat='description'],
+.rockTip[data-type='item'] > .tip-wrapper > .inner .attribute[data-stat='teleportTo'] {
     color: var(--rockTip-item--color-description);
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner .attribute[stat='unIdentified'] {
+.rockTip[data-type='item'] > .tip-wrapper > .inner .attribute[data-stat='unIdentified'] {
     font-style: italic;
 }
 
-.rockTip[type='item'] > .tip-wrapper > .inner .attribute[stat='lootedWith'] {
+.rockTip[data-type='item'] > .tip-wrapper > .inner .attribute[data-stat='lootedWith'] {
     color: var(--rockTip-item--color-lootLog);
 }
 </style>
@@ -497,40 +513,40 @@ const itemOrders = computed(() => state.value.itemPayload ? { value: Attributes.
     --rockTip-npc--color-rank: hsl(30deg, 100%, 50%);
 }
 
-.rockTip[type='npc'] {
+.rockTip[data-type='npc'] {
     background-image: var(--rockTip-npc--background-mask);
 }
 
-.rockTip[type='npc'] > .tip-wrapper > .corners > .leftTop {
+.rockTip[data-type='npc'] > .tip-wrapper > .corners > .leftTop {
     background-image: var(--rockTip-npc--corner-left);
 }
 
-.rockTip[type='npc'] > .tip-wrapper > .corners > .rightBottom {
+.rockTip[data-type='npc'] > .tip-wrapper > .corners > .rightBottom {
     background-image: var(--rockTip-npc--corner-right);
 }
 
-.rockTip[type='npc'] > .tip-wrapper > .inner > .name,
-.rockTip[type='npc'] > .tip-wrapper > .inner > .rank,
-.rockTip[type='npc'] > .tip-wrapper > .inner > .level {
+.rockTip[data-type='npc'] > .tip-wrapper > .inner > .name,
+.rockTip[data-type='npc'] > .tip-wrapper > .inner > .rank,
+.rockTip[data-type='npc'] > .tip-wrapper > .inner > .level {
     justify-content: center;
     display: flex;
     height: fit-content;
     width: 100%;
 }
 
-.rockTip[type='npc'] > .tip-wrapper > .inner > .rank {
+.rockTip[data-type='npc'] > .tip-wrapper > .inner > .rank {
     color: var(--rockTip-npc--color-rank);
 }
 
-.rockTip[type='npc'] > .tip-wrapper > .inner > .level {
+.rockTip[data-type='npc'] > .tip-wrapper > .inner > .level {
     color: var(--rockTip-npc--color-level);
 }
 
-.rockTip[type='npc'] > .tip-wrapper > .inner > .level[advantage='high'] {
+.rockTip[data-type='npc'] > .tip-wrapper > .inner > .level[advantage='high'] {
     color: var(--rockTip-npc--color-adventage-high);
 }
 
-.rockTip[type='npc'] > .tip-wrapper > .inner > .level[advantage='low'] {
+.rockTip[data-type='npc'] > .tip-wrapper > .inner > .level[advantage='low'] {
     color: var(--rockTip-npc--color-adventage-low);
 }
 </style>

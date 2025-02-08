@@ -1,7 +1,7 @@
 import { DirectiveBinding, nextTick, ref } from 'vue'
 import { HtmlPayload, ItemPayload, NpcPayload, OtherPayload } from '../RockTip/typings/payloads';
 import {bind} from "axios";
-import {useHeroStore} from "../stores/hero.stores";
+import {useHeroStore} from "../stores/hero.store";
 
 interface ToolTipState {
     opened: boolean

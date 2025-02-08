@@ -118,11 +118,11 @@ export namespace Translations {
     const attrPercent = (value: string | number) => `${value}%`;
     const attrSigner = (value: string | number) => Math.sign(attrNumber(value)) === 1 ? attrPositive(value) : `${attrNumber(value)}`;
     const attrNumber = (value: string | number | boolean | object) => Number(value);
-    const attrBox = (value: string | number) => `<span role="value">${value}</span>`;
+    const attrBox = (value: string | number) => `<span data-role="value">${value}</span>`;
     export const attributes = {
         /* Limits */
-        "needProfessions": (professionList: string[]) => {
-            return `Wymagane profesje: ${professionList.map((professionLetter: keyof typeof professions) => professions[professionLetter]).join(", ")}`;
+        "needProfessions": (professionList: (keyof typeof professions)[]) => {
+            return `Wymagana profesja: ${professionList.map((professionLetter: keyof typeof professions) => professions[professionLetter]).join(", ")}`;
         },
         "needIntellect": (requirementData: string) => {
             return `Wymagany intelekt: ${attrNumber(requirementData)}`;
@@ -354,6 +354,7 @@ export namespace Translations {
                 `<span role="renewTime">Można używać co ${attrBox(attrNumber(resetSeconds))} minut</span>`,
                 `<span role="usageStatus">Gotowy do użycia</span>`
             ];
+
             const getRemainingTime = () => resetTimestamp ? Math.floor(attrNumber(resetTimestamp) - new Date().getTime() / 1000) : 0;
             function secondsToTime(count: number) {
                 const hours = Math.floor(count / 3600).toString().padStart(2,'0');
@@ -412,6 +413,12 @@ export namespace Translations {
         },
         "mana": (pointsData: string) => {
             return `Mana ${attrBox(attrPositive(attrNumber(pointsData)))}`;
+        },
+        "physicalDamageAbsorption": (value: number) => {
+            return `Absorbuje do ${attrBox(value)} obrażeń fizycznych`
+        },
+        "magicalDamageAbsorption": (value: number) => {
+            return `Absorbuje do ${attrBox(value)} obrażeń magicznych`
         },
 
         /* Tags */
