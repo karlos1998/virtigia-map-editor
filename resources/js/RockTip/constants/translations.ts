@@ -337,12 +337,15 @@ export namespace Translations {
                 };
             };
         },
-        "lootedWith": (lootData: string) => {
-            const [looterName, __looterSex__, groupInfo, lootTs, npcName] = lootData.split(",");
+        // "lootedWith": ([looterName, __looterSex__, groupInfo, lootTs, npcName]: (string[]|string)[]) => {
+        "lootedWith": (data: {looterName: string, looterGender: string, groupInfo: string[], timestamp: number, npcName: string}) => {
+            // const [looterName, __looterSex__, groupInfo, lootTs, npcName] = lootData.split(",");
+            const { looterName, groupInfo, timestamp, npcName} = data;
+            console.log('lega test', ([looterName, groupInfo, timestamp, npcName]));
 
-            const lootDate = new Date(+lootTs * 1000);
+            const lootDate = new Date(+timestamp * 1000);
             const lootHumanDate = `${lootDate.getDate()}/${lootDate.getMonth() + 1}/${lootDate.getFullYear()}`;
-            return `W dniu ${lootHumanDate} został(a) pokonany(a) ${npcName} przez ${looterName} ${attrNumber(groupInfo) > 1 ? "wraz z drużyną" : ""}`;
+            return `W dniu ${lootHumanDate} został(a) pokonany(a) ${npcName} przez ${looterName} ${(typeof groupInfo == 'string' ? attrNumber(groupInfo) > 1 : groupInfo.length > 0) ? "wraz z drużyną" : ""}`;
         },
         "teleportTo": ([__mapId__, posX, posY, mapName]: string[]) => {
             return `Teleportuje gracza na mape:<br>${mapName} (${posX},${posY})`
