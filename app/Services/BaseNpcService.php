@@ -3,7 +3,9 @@ namespace App\Services;
 
 use App\Http\Resources\BaseNpcResource;
 use App\Http\Resources\PureNpcWithOnlyLocationsResource;
+use App\Models\BaseItem;
 use App\Models\BaseNpc;
+use Illuminate\Support\Facades\Auth;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableTextColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\TableService;
@@ -69,11 +71,41 @@ final class BaseNpcService extends BaseService
 
     public function attachLoot(BaseNpc $baseNpc, int $baseItemId)
     {
-        $baseNpc->loots()->attach($baseItemId);
+        $baseItem = BaseItem::findOrFail($baseItemId);
+        $baseNpc->loots()->attach($baseItem);
+
+        activity()
+            ->causedBy(Auth::user())
+            ->performedOn($baseItem)
+            ->event('attach-to-base-npc-loots')
+            ->withProperty('base_npc', $baseNpc)
+            ->log('attach-to-base-npc-loots');
+
+        activity()
+            ->causedBy(Auth::user())
+            ->performedOn($baseNpc)
+            ->event('attach-base-npc-loots')
+            ->withProperty('base_item', $baseItem)
+            ->log('attach-base-npc-loots');
     }
 
     public function detachLoot(BaseNpc $baseNpc, int $loot)
     {
+        $baseItem = $baseNpc->loots()->findOrFail($loot);
         $baseNpc->loots()->detach($loot);
+
+        activity()
+            ->causedBy(Auth::user())
+            ->performedOn($baseItem)
+            ->event('detach-from-base-npc-loots')
+            ->withProperty('base_npc', $baseNpc)
+            ->log('detach-from-base-npc-loots');
+
+        activity()
+            ->causedBy(Auth::user())
+            ->performedOn($baseNpc)
+            ->event('detach-base-npc-loots')
+            ->withProperty('base_item', $baseItem)
+            ->log('detach-base-npc-loots');
     }
 }
