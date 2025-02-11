@@ -60,7 +60,11 @@ const detachItem = (item: BaseItemResource) => {
                 <div v-for="(item, index) in slotProps.items" :key="index">
                     <div class="flex flex-col sm:flex-row sm:items-center p-6 gap-4" :class="{ 'border-t border-surface-200 dark:border-surface-700': index !== 0 }">
                         <div class="md:w-40 relative">
-                            <img class="block xl:block mx-auto rounded" :src="'https://s3.letscode.it/virtigia-assets/img/' + item.src" :alt="item.name" />
+                            <img
+                                class="block xl:block mx-auto rounded"
+                                :src="'https://s3.letscode.it/virtigia-assets/img/' + item.src" :alt="item.name"
+                                v-tip.item.top.show-id="item"
+                            />
                             <div class="absolute bg-black/70 rounded-border" style="left: 4px; top: 4px">
 <!--                                <Tag :value="item.inventoryStatus" :severity="getSeverity(item)"></Tag>-->
                             </div>
@@ -91,51 +95,6 @@ const detachItem = (item: BaseItemResource) => {
             </div>
         </template>
     </DataView>
-
-    <Table
-        prop-name="items"
-    >
-        <AdvanceColumn field="id" header="ID" style="width: 5%" />
-
-        <template #header="{ globalFilterValue, globalFilterUpdated }">
-
-            <div class="flex flex-wrap gap-2 items-center justify-between">
-                <h4 class="m-0">Lista Bazowych Przedmiotów</h4>
-                <IconField>
-                    <InputIcon>
-                        <i class="pi pi-search" />
-                    </InputIcon>
-                    <InputText
-                        :value="globalFilterValue"
-                        @update:model-value="globalFilterUpdated"
-                        placeholder="Szukaj"
-                    />
-                </IconField>
-            </div>
-        </template>
-
-        <AdvanceColumn field="src" header="Grafika">
-            <template #body="{ data }: Data">
-                <img alt="" :src="`https://s3.letscode.it/virtigia-assets/img/${data.src}`" />
-            </template>
-        </AdvanceColumn>
-
-        <AdvanceColumn field="name" header="Name" />
-
-        <Column header="Action" >
-            <template #body="slotProps">
-                <div style="white-space: nowrap">
-                            <span class="p-buttonset">
-                                <Button
-                                    class="px-2"
-                                    icon="pi pi-eye"
-                                    label="Podgląd"
-                                />
-                            </span>
-                </div>
-            </template>
-        </Column>
-    </Table>
 
 </template>
 <style scoped>
