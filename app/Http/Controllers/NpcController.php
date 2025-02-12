@@ -11,6 +11,7 @@ use App\Models\Npc;
 use App\Models\NpcLocation;
 use App\Services\NpcService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class NpcController extends Controller
@@ -19,14 +20,14 @@ class NpcController extends Controller
     {
     }
 
-    public function index()
+    public function index(): \Inertia\Response
     {
         return Inertia::render('Npc/Index', [
             'npcs' => $this->npcService->getAll(),
         ]);
     }
 
-    public function show(Npc $npc)
+    public function show(Npc $npc): \Inertia\Response
     {
         return Inertia::render('Npc/Show', [
             'baseNpc' => BaseNpcResource::make($npc->base),
@@ -34,14 +35,14 @@ class NpcController extends Controller
         ]);
     }
 
-    public function store(StoreNpcRequest $request)
+    public function store(StoreNpcRequest $request): void
     {
         $this->npcService->store($request->validated());
     }
 
-    public function destroy(Npc $npc)
+    public function destroyLocation(Npc $npc, NpcLocation $npcLocation): void
     {
-        $this->npcService->destroy($npc);
+        $this->npcService->destroyLocation($npc, $npcLocation);
     }
 
     public function update(Npc $npc, UpdateNpcRequest $request): void
@@ -49,6 +50,9 @@ class NpcController extends Controller
         $this->npcService->update($npc, $request->validated());
     }
 
+    /**
+     * @throws ValidationException
+     */
     public function updateLocation(Npc $npc, NpcLocation $npcLocation, UpdatENpcLocationRequest $request): void
     {
         $this->npcService->updateLocation($npc, $npcLocation, $request->validated());

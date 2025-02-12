@@ -85,7 +85,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::patch('npcs/{npc}/locations/{npcLocation}', [NpcController::class, 'updateLocation'])->name('npcs.update.location');
 
                 Route::post('npcs', [NpcController::class, 'store'])->name('npcs.store');
-                Route::delete('npcs/{npc}', [NpcController::class, 'destroy'])->name('npcs.destroy');
+                Route::delete('npcs/{npc}/locations/{npcLocation}', [NpcController::class, 'destroyLocation'])->name('npcs.locations.destroy');
 
                 Route::get('shops', [ShopController::class, 'index'])->name('shops.index');
                 Route::post('shops', [ShopController::class, 'store'])->name('shops.store');

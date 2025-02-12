@@ -18,7 +18,10 @@ class NpcService extends BaseService
     {
     }
 
-    public function getAll()
+    /**
+     * @throws \Exception
+     */
+    public function getAll(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
         return $this->fetchData(
             NpcResource::class,
@@ -29,7 +32,7 @@ class NpcService extends BaseService
         );
     }
 
-    public function store(array $data)
+    public function store(array $data): void
     {
         /**
          * @var Npc $npc
@@ -45,19 +48,33 @@ class NpcService extends BaseService
         ])->save();
     }
 
-    public function destroy(Npc $npc)
+    public function destroyLocation(Npc $npc, NpcLocation $npcLocation): void
     {
-        $npc->delete();
+        if(!$npcLocation->npc()->is($npc))
+        {
+            throw ValidationException::withMessages([
+                'message' => 'Ta lokalizacja nie jest powiązana z tym npc',
+            ]);
+        }
+
+        if($npc->locations()->count() > 0)
+        {
+            $npcLocation->delete();
+        }
+        else
+        {
+            $npc->delete();
+        }
     }
 
-    public function update(Npc $npc, array $validated)
+    public function update(Npc $npc, array $validated): void
     {
         $npc->fill($validated);
         $npc->dialog()->associate($validated['dialog']);
         $npc->save();
     }
 
-    public function updateLocation(Npc $npc, NpcLocation $npcLocation, mixed $validated)
+    public function updateLocation(Npc $npc, NpcLocation $npcLocation, mixed $validated): void
     {
         if(!$npcLocation->npc()->is($npc))
         {
