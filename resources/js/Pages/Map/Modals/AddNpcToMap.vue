@@ -89,9 +89,9 @@ const addDoor = () => {
                     <div class="flex items-center space-x-4">
                         <img
                             class="w-12 object-cover"
-                            v-tooltip="slotProps.option.src"
-                            :src="'https://s3.letscode.it/virtigia-assets/img/npc/' + slotProps.option.src"
+                            :src="slotProps.option.src"
                             alt="Option Image"
+                            v-tip.npc="slotProps.option"
                         />
                         <div class="text-center">
                             <span class="font-semibold text-gray-800">
@@ -112,7 +112,7 @@ const addDoor = () => {
         <div v-if="form.npc && typeof form.npc == 'object'">
             <img
                 class="w-12 object-cover"
-                :src="'https://s3.letscode.it/virtigia-assets/img/npc/' + form.npc.src"
+                :src="form.npc.src"
                 alt="Option Image"
             />
             <div class="font-bold">{{ form.npc.name }}</div>

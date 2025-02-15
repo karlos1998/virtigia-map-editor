@@ -23,6 +23,8 @@ class BaseNpcResource extends JsonResource
 
             'loots' => $this->whenLoaded('loots', fn() => BaseItemResource::collection($this->resource->loots)),
 //            'loots' => BaseItemResource::collection($this->resource->loots),
+
+            'src' => config('assets.url') . config('assets.dirs.npcs') . $this->resource->src
         ];
     }
 }

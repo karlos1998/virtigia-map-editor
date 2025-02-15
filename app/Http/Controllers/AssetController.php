@@ -42,12 +42,18 @@ class AssetController extends Controller
                     return true;
                 }
                 return !in_array(str_replace('img/npc/', '', $item['path']), $existingPaths);
-            });
+            })->map(fn($item) => [
+                ...$item,
+                'path' => config('assets.url') . config('assets.dirs.npcs') . str_replace('img/npc/', '', $item['path']),
+            ]);
 
             return response()->json($filteredItems->values());
         }
 
-        return response()->json($items);
+        return response()->json(collect($items)->map(fn($item) => [
+            ...$item,
+            'path' => config('assets.url') . config('assets.dirs.npcs') . str_replace('img/npc/', '', $item['path']),
+        ]));
     }
 
 

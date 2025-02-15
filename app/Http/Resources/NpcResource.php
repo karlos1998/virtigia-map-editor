@@ -23,7 +23,7 @@ class NpcResource extends JsonResource
             'id' => $this->resource->id,
 
             'name' => $this->resource->base->name,
-            'src' => $this->resource->base->src,
+            'src' => config('assets.url') . config('assets.dirs.npcs') . $this->resource->base->src,
             'lvl' => $this->resource->base->lvl,
             'type' => $this->resource->base->type,
             'grp' => $this->resource->grp,
@@ -40,6 +40,7 @@ class NpcResource extends JsonResource
             'locations' => $this->whenLoaded('locations', fn() => NpcLocationResource::collection($this->resource->locations)),
 
             'dialog' => $this->whenLoaded('dialog', fn() => DialogResource::make($this->resource->dialog)),
+
         ];
     }
 }

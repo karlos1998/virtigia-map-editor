@@ -62,7 +62,7 @@ const detachItem = (item: BaseItemResource) => {
                         <div class="md:w-40 relative">
                             <img
                                 class="block xl:block mx-auto rounded"
-                                :src="'https://s3.letscode.it/virtigia-assets/img/' + item.src" :alt="item.name"
+                                :src="item.src" :alt="item.name"
                                 v-tip.item.top.show-id="item"
                             />
                             <div class="absolute bg-black/70 rounded-border" style="left: 4px; top: 4px">

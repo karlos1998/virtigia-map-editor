@@ -35,7 +35,7 @@ type Item = {
 
 const load = async (path) => {
     const { data } = await axios.get<Item[]>(route('assets.base-npcs.search', {
-        path: path,
+        path: 'img/npc/' + path.split('img/npc/')[1],
         only_unused: onlyUnused.value,
     }));
 
@@ -79,18 +79,18 @@ const onlyUnused = ref(true);
             <div class="flex items-center justify-center">
                 <div v-if="node.leaf" class="flex items-center p-4  space-x-4 border border-gray-300 rounded-lg shadow-md bg-white">
                     <img
-                        :src="`https://s3.letscode.it/virtigia-assets/${node.label}`"
+                        :src="node.label"
                         alt="Grafika"
                         class="object-cover rounded-md"
                     />
                     <a
-                        :href="`https://s3.letscode.it/virtigia-assets/${node.label}`"
+                        :href="node.label"
                         target="_blank"
                         class="text-blue-500 underline text-center"
                     >
                         {{ node.label }}
                     </a>
-                    <Button label="Wybierz" @click="src = node.label.replace('img/npc/', ''); emit('selected')" />
+                    <Button label="Wybierz" @click="src = node.label.split('img/npc/')[1]; emit('selected')" />
                 </div>
                 <div v-else class="text-gray-700 text-lg font-medium">
                     {{ node.label }}

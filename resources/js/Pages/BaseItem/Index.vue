@@ -43,7 +43,7 @@ type Data = {
                         <!-- todo ! tip nie dziala ;c -->
                         <img
                             class="h-12 w-12 object-cover"
-                            :src="'https://s3.letscode.it/virtigia-assets/img/' + data.src"
+                            :src="data.src"
                             v-tip.item.top.show-id="data"
                             alt=""
                         />
@@ -95,7 +95,7 @@ type Data = {
 
                 <AdvanceColumn field="src" header="Link do grafiki">
                     <template #body="{ data }: Data">
-                        {{`https://s3.letscode.it/virtigia-assets/img/${data.src}`}}
+                        {{data.src}}
                     </template>
                 </AdvanceColumn>
 

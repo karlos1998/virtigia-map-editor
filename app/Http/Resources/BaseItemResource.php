@@ -21,7 +21,7 @@ class BaseItemResource extends JsonResource
     {
         return [
             ...parent::toArray($request),
-            'src' => $this->resource->src . '?' . $this->resource->updated_at->timestamp,
+            'src' => config('assets.url') . config('assets.dirs.items') . $this->resource->src . '?' . $this->resource->updated_at->timestamp,
             $this->mergeWhen($this->resource->pivot?->position !== null, fn() => [
                 'position' => $this->resource->pivot->position,
             ]),

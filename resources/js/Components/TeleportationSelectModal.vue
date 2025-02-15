@@ -118,7 +118,7 @@ const cancel = () => {
                 class="map-container relative"
                 @mousemove="handleMouseMove"
                 :style="{
-                    backgroundImage: `url(https://s3.letscode.it/virtigia-assets/img/locations/${selectedMap.src})`,
+                    backgroundImage: `url(${selectedMap.src})`,
                     width: `${selectedMap.x * 32 * scale}px`,
                     height: `${selectedMap.y * 32 * scale}px`,
                     transformOrigin: 'top left',

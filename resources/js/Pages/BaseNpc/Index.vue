@@ -51,7 +51,7 @@ type Data = {
 
                         <img
                             v-tip.npc="data"
-                            :src="'https://s3.letscode.it/virtigia-assets/img/npc/' + data.src"
+                            :src="data.src"
                         />
                     </template>
                 </AdvanceColumn>

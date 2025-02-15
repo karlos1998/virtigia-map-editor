@@ -16,19 +16,22 @@ class BaseItemController extends Controller
     {
     }
 
-    public function index()
+    /**
+     * @throws \Exception
+     */
+    public function index(): \Inertia\Response
     {
         return Inertia::render('BaseItem/Index', [
             'items' => $this->baseItemService->getAll(),
         ]);
     }
 
-    public function search(Request $request)
+    public function search(Request $request): \Illuminate\Http\JsonResponse
     {
-        return response()->json($this->baseItemService->search($request->get('query', '')));
+        return response()->json(BaseItemResource::collection($this->baseItemService->search($request->get('query', ''))));
     }
 
-    public function show(BaseItem $baseItem)
+    public function show(BaseItem $baseItem): \Inertia\Response
     {
         return Inertia::render('BaseItem/Show', [
             'baseItem' => BaseItemResource::make($baseItem),

@@ -16,7 +16,9 @@ use App\Http\Middleware\SetDynamicModelConnection;
 use App\Jobs\FindNearestRespForMap;
 use App\Models\DynamicModel;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 //Route::get('/test', function () {
 //    $mapModel = (new \App\Models\Map())->setConnectionName('retro');
@@ -110,9 +112,23 @@ Route::middleware(['auth'])->group(function () {
 
                 Route::post('doors', [DoorController::class, 'store'])->name('doors.store');
                 Route::delete('doors/{door}', [DoorController::class, 'destroy'])->name('doors.destroy');
+
+
             });
 
         Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+
+        Route::get('/s3/{path}', function ($path) {
+
+            if (!Storage::disk('s3')->exists($path)) {
+                abort(404);
+            }
+
+            $file = Storage::disk('s3')->get($path);
+            $mimeType = Storage::disk('s3')->mimeType($path);
+
+            return Response::make($file, 200, ['Content-Type' => $mimeType]);
+        })->where('path', '.*');
     });
 
 });

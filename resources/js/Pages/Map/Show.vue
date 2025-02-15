@@ -416,7 +416,7 @@ const updateMoveNpcLocation = (x: number, y: number) => {
             <div
                 class="map-container relative"
                 :style="{
-        backgroundImage: `url(https://s3.letscode.it/virtigia-assets/img/locations/${map.src})`,
+        backgroundImage: `url(${map.src})`,
         width: `${map.x * 32 * scale}px`,
         height: `${map.y * 32 * scale}px`,
         transformOrigin: 'top left',
@@ -466,7 +466,7 @@ const updateMoveNpcLocation = (x: number, y: number) => {
                     />
                     <!-- Obrazek NPC -->
                     <img
-                        :src="`https://s3.letscode.it/virtigia-assets/img/npc/${npc.src}`"
+                        :src="npc.src"
                         :style="{
                             position: 'relative',
                             width: `${npcWidths[npc.id] * scale}px`,

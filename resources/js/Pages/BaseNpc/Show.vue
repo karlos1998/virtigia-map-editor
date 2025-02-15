@@ -31,7 +31,7 @@ const isEditBaseNpcDialogVisible = ref(false );
             :route-back="route('base-npcs.index')"
         >
             <template #header>
-                <img v-tooltip="baseNpc.src" :src="'https://s3.letscode.it/virtigia-assets/img/npc/' + baseNpc.src"  alt=""/>
+                <img v-tooltip="baseNpc.src" :src="baseNpc.src"  alt=""/>
                 #{{ baseNpc.id }} - {{ baseNpc.name }}
             </template>
             <template #right-buttons>
@@ -45,7 +45,7 @@ const isEditBaseNpcDialogVisible = ref(false );
 
         <DetailsCardList title="Informacje Podstawowe" >
             <DetailsCardListItem label="Nazwa" :value="baseNpc.name" />
-            <DetailsCardListItem label="Link do grafiki" :value="'https://s3.letscode.it/virtigia-assets/img/npc/' + baseNpc.src" />
+            <DetailsCardListItem label="Link do grafiki" :value="baseNpc.src" />
             <DetailsCardListItem label="Lvl" :value="baseNpc.lvl" />
             <DetailsCardListItem label="Ranga">
                 <template #value>

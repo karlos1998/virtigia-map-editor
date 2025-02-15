@@ -201,7 +201,7 @@ const create = () => {
                                 <div v-if="loadingStates[key]" class="text-primary mt-2">Ładowanie...</div>
                                 <ul v-else-if="npcs.length > 0" class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                                     <li v-for="npc in npcs" :key="npc.id" class="p-4 border rounded shadow-sm flex items-center gap-4">
-                                        <img :src="`https://s3.letscode.it/virtigia-assets/img/npc/${npc.src}`" alt="NPC Image" class="w-16 h-16 object-cover rounded" />
+                                        <img :src="`${npc.src}`" alt="NPC Image" class="w-16 h-16 object-cover rounded" />
                                         <div>
                                             <p class="font-semibold">{{ npc.name }}</p>
                                             <p class="text-sm text-gray-500">{{ npc.lvl }} lvl</p>

@@ -14,6 +14,9 @@ class MapResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            ...parent::toArray($request),
+            'src' => config('assets.url') . config('assets.dirs.maps') . $this->resource->src
+        ];
     }
 }
