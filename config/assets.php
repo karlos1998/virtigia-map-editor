@@ -6,5 +6,6 @@ return [
         'npcs' => '/npc/',
         'maps' => '/locations/',
         'items' => '/',
+        'outfits' => '/outfits/',
     ]
 ];

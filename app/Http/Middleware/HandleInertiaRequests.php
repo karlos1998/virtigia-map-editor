@@ -37,7 +37,10 @@ class HandleInertiaRequests extends Middleware
     {
         return array_merge(parent::share($request), [
             'auth' => $request->user() ? [
-                'user' => $request->user()->only('id', 'name', 'email', 'src', 'forum_background_src'),
+                'user' => [
+                    ...$request->user()->only('id', 'name', 'email', 'src', 'forum_background_src'),
+                    'src' => str_replace('img/img', 'img', config('assets.url') . $request->user()->src), //todo - drut
+                ],
                 'roles' => $request->user()->roles,
                 'permissions' => $request->user()->permissions,
                 'world' => session("world"),

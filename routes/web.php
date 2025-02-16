@@ -15,6 +15,7 @@ use App\Http\Middleware\RemoveWorldTemplateNameFromRouteParameters;
 use App\Http\Middleware\SetDynamicModelConnection;
 use App\Jobs\FindNearestRespForMap;
 use App\Models\DynamicModel;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
@@ -144,6 +145,10 @@ Route::get('debug-stats/api/base-npcs', function() {
     return $request->json();
 });
 
+Route::get('go-to-test', function() {
+    Auth::getSession()->put("world", "test");
+    return response()->redirectTo('/');
+});
 
 //Route::get('debug-api/maps', function() {
 //    \App\Models\Map::setGlobalConnection('retro');
