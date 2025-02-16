@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
 use App\Models\Door;
 use App\Models\Map;
 use App\Models\NpcLocation;
@@ -9,6 +10,8 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateNpcLocationRequest extends FormRequest
 {
+    use LoadCurrentWorldTemplate;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -32,7 +35,7 @@ class UpdateNpcLocationRequest extends FormRequest
         return [
             'map_id' => [
                 'required',
-                'exists:retro.maps,id',
+                "exists:$this->selectedDatabase.maps,id",
                 function ($attribute, $value, $fail) {
                     if (
                         Door::where('map_id', $value)

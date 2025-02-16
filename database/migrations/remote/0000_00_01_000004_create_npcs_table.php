@@ -15,26 +15,27 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
 
-            $table->foreignId('map_id')->constrained('maps');
-
-            $table->string('name');
-
-            $table->integer('qm');
-
-            $table->string('src');
-
-            $table->integer('x');
-            $table->integer('y');
-
-            $table->integer('lvl')->default(0);
-
-
-            //todo - te 3 beda do wywalenia raczej
-            $table->integer('type')->default(0);
-
-            $table->integer('wt')->default(0);
+//            $table->foreignId('map_id')->constrained('maps');
+//
+//            $table->string('name');
+//
+//            $table->integer('qm');
+//
+//            $table->string('src');
+//
+//            $table->integer('x');
+//            $table->integer('y');
+//
+//            $table->integer('lvl')->default(0);
+//
+//
+//            //todo - te 3 beda do wywalenia raczej
+//            $table->integer('type')->default(0);
+//
+//            $table->integer('wt')->default(0);
 
             $table->integer('grp');
+
         });
     }
 

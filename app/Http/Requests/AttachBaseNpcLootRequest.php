@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
 use Illuminate\Foundation\Http\FormRequest;
 
 class AttachBaseNpcLootRequest extends FormRequest
 {
+    use LoadCurrentWorldTemplate;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -24,7 +27,7 @@ class AttachBaseNpcLootRequest extends FormRequest
         return [
             'baseItemId' => [
                 'required',
-                'exists:retro.base_items,id',
+                "exists:$this->selectedDatabase.base_items,id",
             ]
         ];
     }

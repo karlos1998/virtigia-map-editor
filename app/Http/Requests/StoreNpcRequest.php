@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Models\NpcLocation;
@@ -9,6 +10,9 @@ use App\Models\Map;
 
 class StoreNpcRequest extends FormRequest
 {
+
+    use LoadCurrentWorldTemplate;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -16,8 +20,6 @@ class StoreNpcRequest extends FormRequest
     {
         return true;
     }
-
-    protected string $selectedDatabase = 'retro'; // mocno todo
 
     /**
      * Get the validation rules that apply to the request.

@@ -3,10 +3,14 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
 use Illuminate\Foundation\Http\FormRequest;
 
 class AddBaseItemToShopRequest extends FormRequest
 {
+
+    use LoadCurrentWorldTemplate;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -23,7 +27,7 @@ class AddBaseItemToShopRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'baseItemId' => ['required', 'integer', 'exists:retro.base_items,id'],
+            'baseItemId' => ['required', 'integer', "exists:$this->selectedDatabase.base_items,id"],
             'position' => [
                 'required',
                 'integer',

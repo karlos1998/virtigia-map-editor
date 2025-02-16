@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
 use App\Models\Map;
 use App\Models\Door;
 use App\Models\NpcLocation;
@@ -9,6 +10,7 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreDoorRequest extends FormRequest
 {
+    use LoadCurrentWorldTemplate;
     public function authorize(): bool
     {
         return true;
@@ -22,7 +24,7 @@ class StoreDoorRequest extends FormRequest
         return [
             'map_id' => [
                 'required',
-                'exists:retro.maps,id',
+                "exists:$this->selectedDatabase.maps,id",
                 function ($attribute, $value, $fail) {
                     if (
                         Door::where('map_id', $value)
@@ -54,7 +56,7 @@ class StoreDoorRequest extends FormRequest
 
 
 
-            'go_map_id' => ['required', 'exists:retro.maps,id'],
+            'go_map_id' => ['required', "exists:$this->selectedDatabase.maps,id"],
             'go_x' => [
                 'required',
                 'integer',
