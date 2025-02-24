@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\DialogNodeOptionAdditionalAction;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Enum;
 
 class UpdateDialogNodeOptionRequest extends FormRequest
 {
@@ -27,6 +29,10 @@ class UpdateDialogNodeOptionRequest extends FormRequest
                 'min:3',
                 'max:100',
                 'string',
+            ],
+            'additional_action' => [
+                'nullable',
+                new Enum(DialogNodeOptionAdditionalAction::class)
             ]
         ];
     }

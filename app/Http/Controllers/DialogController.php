@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\DialogNodeOptionAdditionalAction;
 use App\Http\Requests\AssignShopToDialogNodeRequest;
 use App\Http\Requests\MoveDialogNodeRequest;
 use App\Http\Requests\StoreDialogEdgeRequest;
@@ -50,6 +51,7 @@ class DialogController extends Controller
             'dialog' => $dialog->only('id'),
             'nodes' => DialogNodeResource::collection($dialog->nodes),
             'edges' => DialogEdgeResource::collection($dialog->edges),
+            'dialogNodeOptionAdditionalActionsList' => DialogNodeOptionAdditionalAction::toDropdownList(),
         ]);
     }
 
@@ -102,9 +104,7 @@ class DialogController extends Controller
 
     public function updateOption(Dialog $dialog, DialogNode $dialogNode, DialogNodeOption $dialogNodeOption, UpdateDialogNodeOptionRequest $request): JsonResponse
     {
-        return response()->json([
-            'dialogNodeOption' => DialogNodeOptionResource::make($this->dialogService->updateOption($dialog, $dialogNode, $dialogNodeOption, $request->validated())),
-        ]);
+        return response()->json(DialogNodeOptionResource::make($this->dialogService->updateOption($dialog, $dialogNode, $dialogNodeOption, $request->validated())));
     }
 
     public function destroyOption(Dialog $dialog, DialogNode $dialogNode, DialogNodeOption $dialogNodeOption): \Illuminate\Http\Response

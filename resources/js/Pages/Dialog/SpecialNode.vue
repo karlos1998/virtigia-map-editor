@@ -14,16 +14,12 @@ import RemoveNodeButton from "./Componnts/RemoveNodeButton.vue";
 
 const primeDialog = useDialog();
 
-interface Option {
-    id: string,
-    label: string,
-}
 
 const props = defineProps<NodeProps<{
     dialog_id: number
     label: string,
     content: string,
-    options: Array<Option>
+    options: Array<DialogOptionResource>
 }>>();
 
 const { updateNodeData, edges, removeEdges, removeNodes, connectionLookup } = useVueFlow();
@@ -34,7 +30,7 @@ const state = ref({
 });
 const options = ref(props.data.options);
 
-const editOption = (option: Option) => {
+const editOption = (option: DialogOptionResource) => {
     // noinspection JSUnusedGlobalSymbols
     primeDialog.open(EditOption, {
         props: {
@@ -46,14 +42,16 @@ const editOption = (option: Option) => {
             option,
             dialog_id: props.data.dialog_id,
         },
-        onClose(closeOptions: DynamicDialogCloseOptions & { data: { remove?: boolean, label?: string } }) {
+        onClose(closeOptions: DynamicDialogCloseOptions & { data: { remove?: boolean, dialogOption?:DialogOptionResource } }) {
             if (closeOptions.data.remove) {
                 removeSourceConnections(option);
                 options.value = options.value.filter((o) => o.id !== option.id);
             }
 
-            if (closeOptions.data.label) {
-                option.label = closeOptions.data.label;
+            if (closeOptions.data.dialogOption) {
+                option.label = closeOptions.data.dialogOption.label;
+                option.additional_action = closeOptions.data.dialogOption.additional_action;
+                console.log('new option data ', option)
             }
 
           updateNodeData(props.id, {

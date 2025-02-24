@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DialogNodeOptionAdditionalAction;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,10 +10,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class DialogNodeOption extends DynamicModel
 {
     use HasFactory;
-    protected $fillable = ['label', 'rules'];
+    protected $fillable = ['label', 'rules', 'additional_action'];
 
     protected $casts = [
-        'rules' => 'json'
+        'rules' => 'json',
+        'additional_action' => DialogNodeOptionAdditionalAction::class
     ];
 
     public function dialog(): BelongsTo
