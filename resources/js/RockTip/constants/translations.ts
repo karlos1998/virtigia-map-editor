@@ -275,7 +275,7 @@ export namespace Translations {
         "healRemaining": (remainingData: string) => {
             return `Pełne leczenie, pozostało ${attrBox(attrNumber(remainingData))} punktów uleczania.`;
         },
-        "poisonDamage": ([damageData, slowData]: string[]) => {
+        "poisonDamage": ([slowData, damageData]: string[]) => {
             return `Obrażenia od trucizny ${attrBox(attrPositive(attrNumber(damageData)))}<br>Spowalnia cel o ${attrBox((attrNumber(slowData) / 100).toFixed(2))} SA`;
         },
         "attackSpeed": (pointsData: string) => {
