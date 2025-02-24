@@ -134,6 +134,7 @@ const addDoorTo = (x: number, y: number) => {
                 '960px': '75vw',
                 '640px': '90vw'
             },
+            style: 'max-width:90%'
         },
         data: {
 

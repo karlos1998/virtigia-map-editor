@@ -53,7 +53,7 @@ class MapController extends Controller
 
     public function search(Request $request)
     {
-        return $this->mapService->search($request->get('search', ''));
+        return MapResource::collection($this->mapService->search($request->get('search', '')));
     }
 
     public function updateCol(Map $map, UpdateMapColsRequest $request): void

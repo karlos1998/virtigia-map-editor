@@ -139,5 +139,7 @@ const cancel = () => {
 </template>
 
 <style scoped>
-
+.map-container {
+    
+}
 </style>

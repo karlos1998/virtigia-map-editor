@@ -37,6 +37,7 @@ const editNode = () => {
                 '960px': '75vw',
                 '640px': '90vw'
             },
+            style: 'max-width:90%',
         },
         data: {
             teleportation: props.data.action_data.teleportation

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Http\Resources\MapResource;
 use App\Models\Map;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
@@ -39,7 +40,7 @@ final class MapService extends BaseService
         );
     }
 
-    public function search(string $search = '')
+    public function search(string $search = ''): Collection
     {
         return $this->mapModel->where('name', 'like', '%' . $search . '%')->limit(10)->get();
     }
