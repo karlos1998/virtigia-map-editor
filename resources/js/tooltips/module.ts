@@ -1,7 +1,8 @@
-import { DirectiveBinding, nextTick, ref } from 'vue'
-import { HtmlPayload, ItemPayload, NpcPayload, OtherPayload } from '../RockTip/typings/payloads';
-import {bind} from "axios";
+import {DirectiveBinding, nextTick, ref} from 'vue'
+import {HtmlPayload, ItemPayload, NpcPayload, OtherPayload} from '../RockTip/typings/payloads';
 import {useHeroStore} from "../stores/hero.store";
+
+type TipDirection = 'top' | 'bottom' | 'left' | 'right'
 
 interface ToolTipState {
     opened: boolean
@@ -12,7 +13,8 @@ interface ToolTipState {
     positionX: number
     positionY: number
     element: HTMLElement | null
-    target: HTMLElement | null
+    target: HTMLElement | null,
+    direction: TipDirection
 }
 
 const state = ref<ToolTipState>({
@@ -24,26 +26,31 @@ const state = ref<ToolTipState>({
     positionX: -9999,
     positionY: -9999,
     element: null,
-    target: null
+    target: null,
+    direction: 'top',
 })
-type TipPosition = 'top' | 'bottom' | 'left' | 'right'
 
-const reposition = (tipPosition: TipPosition) => {
+const reposition = (tipDirection?: TipDirection) => {
     if (!state.value.element || !state.value.target) {
         return
     }
     const tip = state.value.element
 
-    let position = getPos(tipPosition)!
+    if (!tipDirection) {
+        tipDirection = state.value.direction
+    }
+
+    state.value.direction = tipDirection
+    let position = getTipPositionByDirection(tipDirection)!
     const height = tip.getBoundingClientRect().height
     const width = tip.getBoundingClientRect().width
     const windowHeight = window.innerHeight
     const windowWidth = window.innerWidth
 
-    switch (tipPosition) {
+    switch (tipDirection) {
         case 'top':
             if (position.top < 0) {
-                position = getPos('bottom')!
+                position = getTipPositionByDirection('bottom')!
             }
             if (position.left < 0) {
                 position.left = 0
@@ -54,7 +61,7 @@ const reposition = (tipPosition: TipPosition) => {
             break
         case 'bottom':
             if (position.top + height > windowHeight - 10) {
-                position = getPos('top')!
+                position = getTipPositionByDirection('top')!
             }
             if (position.left < 0) {
                 position.left = 0
@@ -65,7 +72,7 @@ const reposition = (tipPosition: TipPosition) => {
             break
         case 'left':
             if (position.left < 0) {
-                position = getPos('right')!
+                position = getTipPositionByDirection('right')!
             }
             if (position.top < 0) {
                 position.top = 0
@@ -76,7 +83,7 @@ const reposition = (tipPosition: TipPosition) => {
             break
         case 'right':
             if (position.left + width > windowWidth - 10) {
-                position = getPos('left')!
+                position = getTipPositionByDirection('left')!
             }
             if (position.top < 0) {
                 position.top = 0
@@ -89,38 +96,47 @@ const reposition = (tipPosition: TipPosition) => {
     state.value.positionY = position.top + window.scrollY
 }
 
-const getPos = (tipPosition: TipPosition) => {
+const getTipPositionByDirection = (direction: TipDirection) => {
     const target = state.value.target!
+    const targetRect = target.getBoundingClientRect()
+    const tipRect = state.value.element!.getBoundingClientRect()
+    let position = { left: targetRect.left, top: targetRect.top }
+    let targetWidth = targetRect.width
+    let targetHeight = targetRect.height
+    const tipWidth = tipRect.width
+    const tipHeight = tipRect.height
 
-    const targetOffset = target.getBoundingClientRect()
-    let { width, height } = targetOffset
-    const tipBounds = state.value.element!.getBoundingClientRect()
-    const tipWidth = tipBounds.width
-    const tipHeight = tipBounds.height
-
-    const position = {
-        left: targetOffset.x,
-        top: targetOffset.y,
+    if (target.dataset.targetBounds) {
+        const [x, y, w, h] = target.dataset.targetBounds.split(',').map(Number)
+        position = { left: x, top: y }
+        targetWidth = w
+        targetHeight = h
     }
-    switch (tipPosition) {
+
+    switch (direction) {
         case 'top':
-            position.top -= tipHeight + 2
-            position.left -= tipWidth / 2 - width / 2
-            break
+            return {
+                left: position.left - tipWidth / 2 + targetWidth / 2,
+                top: position.top - tipHeight - 2
+            }
         case 'bottom':
-            position.top += tipHeight + 2
-            position.left -= tipWidth / 2 - width / 2
-            break
+            return {
+                left: position.left - tipWidth / 2 + targetWidth / 2,
+                top: position.top + targetHeight + 2
+            }
         case 'left':
-            position.left -= 2 + width
-            position.top -= height / 2 - tipHeight / 2
-            break
+            return {
+                left: position.left - tipWidth - 2,
+                top: position.top - tipHeight / 2 + targetHeight / 2
+            }
         case 'right':
-            position.left += tipWidth + 2
-            position.top -= height / 2 - tipHeight / 2
+            return {
+                left: position.left + targetWidth + 2,
+                top: position.top - tipHeight / 2 + targetHeight / 2
+            }
     }
-    return position
 }
+
 
 const updateDataset = (el: HTMLElement, binding: DirectiveBinding) => {
     const heroStore = useHeroStore();
@@ -146,6 +162,11 @@ const updateDataset = (el: HTMLElement, binding: DirectiveBinding) => {
         }
     };
 
+    delete el.dataset.npc;
+    delete el.dataset.item;
+    delete el.dataset.other;
+    delete el.dataset.html;
+
     if (binding.modifiers.npc) {
         el.dataset.npc = JSON.stringify(data)
     } else if (binding.modifiers.item) {
@@ -155,8 +176,51 @@ const updateDataset = (el: HTMLElement, binding: DirectiveBinding) => {
     } else {
         el.dataset.html = binding.value
     }
+}
 
+const triggerEnter = async (el: HTMLElement, binding?: DirectiveBinding) => {
+    state.value.target = el
+    state.value.opened = true
 
+    state.value.npcPayload = el.dataset.npc ? JSON.parse(el.dataset.npc) : false
+    state.value.itemPayload = el.dataset.item ? JSON.parse(el.dataset.item) : false
+    state.value.otherPayload = el.dataset.other ? JSON.parse(el.dataset.other) : false
+    state.value.htmlPayload = el.dataset.html ? {
+        schema: {
+            inner: {
+                content: el.dataset.html
+            }
+        }
+    } : false
+    let tipDirection: TipDirection = state.value.direction
+    if (binding) {
+        if (binding.modifiers.bottom) {
+            tipDirection = 'bottom'
+        } else if (binding.modifiers.left) {
+            tipDirection = 'left'
+        } else if (binding.modifiers.right) {
+            tipDirection = 'right'
+        } else if (binding.modifiers.top) {
+            tipDirection = 'top'
+        }
+    }
+
+    await nextTick(() => {
+        reposition(tipDirection)
+    })
+}
+
+const triggerOut = (el: HTMLElement, event?: Event) => {
+    const mouseEvent = event as MouseEvent | undefined
+    /** @ts-ignore */
+    if (event && el.contains(mouseEvent.toElement)) {
+        return
+    }
+
+    state.value.opened = false
+    state.value.positionX = -9999
+    state.value.positionY = -9999
+    state.value.target = null
 }
 
 const ToolTipDirective = {
@@ -164,43 +228,10 @@ const ToolTipDirective = {
         updateDataset(el, binding)
 
         el.addEventListener('mouseenter', async (event: Event) => {
-            state.value.target = el
-            state.value.opened = true
-
-            state.value.npcPayload = el.dataset.npc ? JSON.parse(el.dataset.npc) : false
-            state.value.itemPayload = el.dataset.item ? JSON.parse(el.dataset.item) : false
-            state.value.otherPayload = el.dataset.other ? JSON.parse(el.dataset.other) : false
-            state.value.htmlPayload = el.dataset.html ? {
-                schema: {
-                    inner: {
-                        content: el.dataset.html
-                    }
-                }
-            } : false
-            let tipDirection: TipPosition = 'top';
-            if (binding.modifiers.bottom) {
-                tipDirection = 'bottom'
-            } else if (binding.modifiers.left) {
-                tipDirection = 'left'
-            } else if (binding.modifiers.right) {
-                tipDirection = 'right'
-            }
-
-            await nextTick(() => {
-                reposition(tipDirection)
-            })
-        })
+            await triggerEnter(el, binding)
+        }, {passive: true})
         el.addEventListener('mouseout', (event: Event) => {
-            const mouseEvent = event as MouseEvent
-            /** @ts-ignore */
-            if (el.contains(mouseEvent.toElement)) {
-                return
-            }
-
-            state.value.opened = false
-            state.value.positionX = -9999
-            state.value.positionY = -9999
-            state.value.target = null
+            triggerOut(el, event)
         })
     },
     updated(el: HTMLElement, binding: DirectiveBinding) {
@@ -217,5 +248,7 @@ export const useToolTip = () => {
     return {
         state,
         setToolTipElement,
+        triggerEnter,
+        triggerOut
     }
 }

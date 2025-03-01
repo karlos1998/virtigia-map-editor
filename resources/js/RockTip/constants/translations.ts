@@ -411,7 +411,7 @@ export namespace Translations {
         "energy": (pointsData: string) => {
             return `Energia ${attrBox(attrPositive(attrNumber(pointsData)))}`;
         },
-        "block": (pointsData: string) => {
+        "blockPoints": (pointsData: string) => {
             return `Blok ${attrBox(attrPositive(attrNumber(pointsData)))}`;
         },
         "mana": (pointsData: string) => {

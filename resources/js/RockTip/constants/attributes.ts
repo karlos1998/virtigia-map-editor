@@ -141,7 +141,7 @@ export namespace Attributes {
             {"priority": 5, "name": "intellect"},
             {"priority": 5, "name": "strength"},
             {"priority": 5, "name": "agility"},
-            {"priority": 4, "name": "block"},
+            {"priority": 4, "name": "blockPoints"},
             {"priority": 3, "name": "physicalDamageAbsorption"},
             {"priority": 3, "name": "magicalDamageAbsorption"},
             {"priority": 3, "name": "physicalCritPower"},
