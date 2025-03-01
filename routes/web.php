@@ -150,6 +150,11 @@ Route::get('go-to-test', function() {
     return response()->redirectTo('/');
 });
 
+Route::get('go-to-classic', function() {
+    Auth::getSession()->put("world", "classic");
+    return response()->redirectTo('/');
+});
+
 //Route::get('debug-api/maps', function() {
 //    \App\Models\Map::setGlobalConnection('retro');
 //    return response()->json(\App\Models\Map::get(['id', 'name']));
