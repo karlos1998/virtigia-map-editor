@@ -7,9 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class Npc extends DynamicModel
 {
 
-    protected $fillable = ['grp'];
+    protected $fillable = ['group_id'];
 
     protected $casts = ['grp' => 'boolean'];
+
+    //todo !!!! pole GRP do wywalenia
 
     protected $attributes = [
         'grp' => false

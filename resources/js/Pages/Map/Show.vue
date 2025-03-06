@@ -316,6 +316,14 @@ const updateMoveNpcLocation = (x: number, y: number) => {
     moveNpcLocationData.value = null;
 }
 
+const groupColors = [
+    '#00FFFF', '#FFFF00', '#FF00FF', '#FFD700', '#ADFF2F',
+    '#87CEFA', '#FF69B4', '#BA55D3', '#7FFFD4', '#FFA07A',
+    '#E0FFFF', '#F0E68C', '#D8BFD8', '#FFE4B5', '#B0E0E6',
+    '#FFB6C1', '#AFEEEE', '#F5DEB3', '#DDA0DD', '#F4A460'
+]
+const getGroupColor = (groupId) => groupColors[groupId % groupColors.length]
+
 </script>
 
 <template>
@@ -447,7 +455,7 @@ const updateMoveNpcLocation = (x: number, y: number) => {
                     v-for="npc in npcs"
                     :key="`npc-${npc.id}-${npcScale}`"
                     class="absolute npc"
-                    v-tooltip="npc.name"
+                    v-tip.npc="npc"
                     @click="showNpcConfirmDialog($event, npc)"
                     :style="{
                         top: `${(npc.location.y * 32 - ((npcHeights[npc.id] ?? 32) - 32)) * scale}px`,
@@ -474,6 +482,10 @@ const updateMoveNpcLocation = (x: number, y: number) => {
                             bottom: 0,
                             zIndex: 1,
                             left: (32 - npcWidths[npc.id]) * scale / 2,
+                            border: npc.group_id !== null ? `4px dashed ${getGroupColor(npc.group_id)}` : 'none',
+                              borderRadius: npc.group_id !== null ? '8px' : '',
+                              boxShadow: npc.group_id !== null ? `0 0 10px ${getGroupColor(npc.group_id)}` : ''
+
                         }"
                         @load="adjustNpcOffset(npc.id, $event.target as HTMLImageElement)"
                         alt="npc" />
@@ -512,6 +524,10 @@ const updateMoveNpcLocation = (x: number, y: number) => {
 
             </div>
         </div>
+
+        <div class="card">
+            <pre>{{npcs}}</pre>
+        </div>
     </AppLayout>
 </template>
 
@@ -525,6 +541,10 @@ const updateMoveNpcLocation = (x: number, y: number) => {
 
 .npc {
     position: absolute;
+}
+
+.group-border {
+    border: #777bf1 dashed 3px;
 }
 
 .npc-footer {

@@ -38,7 +38,7 @@ defineProps<{
 <!--            <DetailsCardListItem label="Link do grafiki" :value="'https://s3.letscode.it/virtigia-assets/img/npc/' + baseNpc.src" />-->
             <DetailsCardListItem label="Lvl" :value="npc.lvl" />
 <!--            <DetailsCardListItem label="Type" :value="npc.type" />-->
-            <DetailsCardListItem label="W Grupie" :value="npc.grp" />
+            <DetailsCardListItem label="W Grupie" :value="npc.in_group" />
             <DetailsCardListItem label="Bazowy NPC">
                 <template #value>
                     <Link :href="route('base-npcs.show', baseNpc.id)">

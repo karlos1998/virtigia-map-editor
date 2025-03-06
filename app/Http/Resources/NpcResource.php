@@ -26,7 +26,8 @@ class NpcResource extends JsonResource
             'src' => config('assets.url') . config('assets.dirs.npcs') . $this->resource->base->src,
             'lvl' => $this->resource->base->lvl,
             'type' => $this->resource->base->type,
-            'grp' => $this->resource->grp,
+            'group_id' => $this->resource->group_id,
+            'in_group' => $this->resource->group_id > 0,
 
             $this->mergeWhen($this->resource->pivot?->x !== null && $this->resource->pivot?->y !== null, fn() => [
                 'location' => [
@@ -40,7 +41,6 @@ class NpcResource extends JsonResource
             'locations' => $this->whenLoaded('locations', fn() => NpcLocationResource::collection($this->resource->locations)),
 
             'dialog' => $this->whenLoaded('dialog', fn() => DialogResource::make($this->resource->dialog)),
-
         ];
     }
 }
