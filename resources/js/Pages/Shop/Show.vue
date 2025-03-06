@@ -134,14 +134,6 @@ const test = ref(false);
 
         <div class="card">
 
-            <b v-tip="'XD'">test</b>
-
-            <b v-tip.npc.top.show-id="{
-                level: 12,
-                rank: 'ELITE',
-                name: 'test',
-            }">NPC</b>
-
 <!--            <div class="mb-8">-->
 <!--                <rockAdapter-->
 <!--                    :html-payload="{-->
