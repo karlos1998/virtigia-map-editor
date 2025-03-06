@@ -86,8 +86,6 @@ const remove = () => {
 
 <template>
     <div class="flex flex-col gap-2">
-        <pre>{{dialogRef.data?.option}}</pre>
-        <pre>{{dialogNodeOptionAdditionalActionsList}}</pre>
         <InputGroup>
             <Button icon="pi pi-times" severity="danger" aria-label="Cancel" @click="form.additional_action = null" />
             <Select v-model="form.additional_action" :options="dialogNodeOptionAdditionalActionsList" optionLabel="label" option-value="value" placeholder="Wybierz dodatkową akcje" class="w-full md:w-56" />
