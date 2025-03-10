@@ -26,6 +26,7 @@ final class BaseNpcService extends BaseService
             $this->baseNpcModel,
             new TableService(
                 columns: [
+                  'id' => new TableTextColumn(sortable: true),
                   'name' => new TableTextColumn(sortable: true),
                   'src' => new TableTextColumn(sortable: true),
                   'lvl' => new TableTextColumn(sortable: true),

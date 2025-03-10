@@ -21,4 +21,7 @@ enum DialogNodeOptionAdditionalAction: string
 
     #[Description('Dodaj poziomy')]
     case ADD_LEVELS = 'ADD_LEVELS';
+
+    #[Description('Cofa doświadczenie')]
+    case SUBTRACT_EXP = 'SUBTRACT_EXP';
 }
