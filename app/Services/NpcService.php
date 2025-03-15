@@ -57,7 +57,7 @@ class NpcService extends BaseService
             ]);
         }
 
-        if($npc->locations()->count() > 0)
+        if($npc->locations()->count() > 1)
         {
             $npcLocation->delete();
         }

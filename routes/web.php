@@ -15,6 +15,7 @@ use App\Http\Middleware\RemoveWorldTemplateNameFromRouteParameters;
 use App\Http\Middleware\SetDynamicModelConnection;
 use App\Jobs\FindNearestRespForMap;
 use App\Models\DynamicModel;
+use App\Models\Npc;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Response;
@@ -153,6 +154,13 @@ Route::get('go-to-test', function() {
 Route::get('go-to-classic', function() {
     Auth::getSession()->put("world", "classic");
     return response()->redirectTo('/');
+});
+
+Route::get('npcs-without-locations', function(){
+    Npc::setGlobalConnection('retro');
+   $output = Npc::doesntHave('locations')->get();
+   dd($output->map(fn($npc) => [$npc->id, $npc->base->name])->toArray());
+//    Npc::doesntHave('locations')->delete();
 });
 
 //Route::get('debug-api/maps', function() {
