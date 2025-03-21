@@ -109,6 +109,8 @@ Route::middleware(['auth'])->group(function () {
 
                 Route::get('base-npcs/{baseNpc}', [BaseNpcController::class, 'show'])->name('base-npcs.show');
 
+                Route::patch('base-npcs/{baseNpc}/image', [BaseNpcController::class, 'updateImage'])->name('base-npcs.image.update');
+
                 Route::post('base-npcs/{baseNpc}/loots', [BaseNpcController::class, 'attachLoot'])->name('base-npcs.loots.attach');
                 Route::delete('base-npcs/{baseNpc}/loots/{loot}', [BaseNpcController::class, 'detachLoot'])->name('base-npcs.loots.detach');
                 Route::get('web-api/base-npcs', [BaseNpcController::class, 'indexJson'])->name('web-api.base-npcs.index');

@@ -6,6 +6,9 @@ use App\Http\Resources\PureNpcWithOnlyLocationsResource;
 use App\Models\BaseItem;
 use App\Models\BaseNpc;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Support\Stringable;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableTextColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\TableService;
@@ -108,5 +111,32 @@ final class BaseNpcService extends BaseService
             ->event('detach-base-npc-loots')
             ->withProperty('base_item', $baseItem)
             ->log('detach-base-npc-loots');
+    }
+
+    public function updateImageFromBase64(BaseNpc $baseNpc, Stringable $base64, Stringable $name)
+    {
+        $currentSrc = ltrim($baseNpc->src, 'img/npc/');
+        $parts = explode('/', $currentSrc, 3);
+        $baseFolder = isset($parts[1]) ? "{$parts[0]}/{$parts[1]}" : 'retro/default';
+
+        preg_match('/^data:image\/(png|gif);base64,/', $base64, $matches);
+        $extension = $matches[1] ?? 'png';
+
+        $imageData = substr($base64, strpos($base64, ',') + 1);
+        $decodedImage = base64_decode($imageData);
+
+        $fileName = $name->isNotEmpty() ? Str::slug(pathinfo($name->value(), PATHINFO_FILENAME)) : Str::uuid();
+        $storagePath = "img/npc/{$baseFolder}/";
+        $filePath = "{$storagePath}{$fileName}.{$extension}";
+
+        if (Storage::disk('s3')->exists($filePath)) {
+            $fileName = Str::uuid() . "-{$fileName}";
+            $filePath = "{$storagePath}{$fileName}.{$extension}";
+        }
+
+        Storage::disk('s3')->put($filePath, $decodedImage);
+
+        $baseNpc->src = str_replace('img/npc/', '', $filePath);
+        $baseNpc->save();
     }
 }

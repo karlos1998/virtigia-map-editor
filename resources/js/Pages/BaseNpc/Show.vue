@@ -14,6 +14,7 @@ import EditBaseNpcDialog from "@/Pages/BaseNpc/Components/EditBaseNpcDialog.vue"
 import {ref} from "vue";
 import {BaseNpcWithLoots} from "../../Resources/BaseNpc.resource";
 import BaseNpcLootsTable from "./Partials/BaseNpcLootsTable.vue";
+import EditBaseNpcSrcDialog from "./Components/EditBaseNpcSrcDialog.vue";
 
 defineProps<{
     baseNpc: BaseNpcWithLoots
@@ -21,11 +22,14 @@ defineProps<{
 }>()
 
 const isEditBaseNpcDialogVisible = ref(false );
+const isEditSrcVisible = ref(false );
 </script>
 <template>
     <AppLayout>
 
         <EditBaseNpcDialog :baseNpc v-model:visible="isEditBaseNpcDialogVisible" />
+
+        <EditBaseNpcSrcDialog :baseNpc v-model:visible="isEditSrcVisible" />
 
         <ItemHeader
             :route-back="route('base-npcs.index')"
@@ -36,6 +40,7 @@ const isEditBaseNpcDialogVisible = ref(false );
             </template>
             <template #right-buttons>
                 <Button @click="isEditBaseNpcDialogVisible = true" label="Edytuj" />
+                <Button class="mx-2" @click="isEditSrcVisible = true" label="Zmień grafikę" />
             </template>
         </ItemHeader>
 
@@ -69,7 +74,7 @@ const isEditBaseNpcDialogVisible = ref(false );
         </DetailsCardList>
 
         <div class="card">
-            <BaseNpcLootsTable  :base-npc/>
+            <BaseNpcLootsTable  :base-npc />
         </div>
 
         <div class="card">

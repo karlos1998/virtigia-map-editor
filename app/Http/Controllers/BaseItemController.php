@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateBaseNpcImageRequest;
 use App\Http\Requests\UpdateItemAttributesRequest;
 use App\Http\Resources\BaseItemResource;
 use App\Models\BaseItem;
+use App\Models\BaseNpc;
 use App\Services\BaseItemService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

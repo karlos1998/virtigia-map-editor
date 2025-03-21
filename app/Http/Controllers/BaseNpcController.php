@@ -7,6 +7,7 @@ use App\Enums\BaseNpcRank;
 use App\Enums\Profession;
 use App\Http\Requests\AttachBaseNpcLootRequest;
 use App\Http\Requests\StoreBaseNpcRequest;
+use App\Http\Requests\UpdateBaseNpcImageRequest;
 use App\Http\Requests\UpdateBaseNpcRequest;
 use App\Http\Resources\BaseNpcResource;
 use App\Http\Resources\NpcLocationResource;
@@ -114,5 +115,10 @@ class BaseNpcController extends Controller
     public function detachLoot(BaseNpc $baseNpc, int $loot)
     {
         $this->baseNpcService->detachLoot($baseNpc, $loot);
+    }
+
+    public function updateImage(BaseNpc $baseNpc, UpdateBaseNpcImageRequest $request)
+    {
+        $this->baseNpcService->updateImageFromBase64($baseNpc, $request->string('image'), $request->string('name'));
     }
 }
