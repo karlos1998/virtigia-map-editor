@@ -31,6 +31,15 @@ class BaseItemResource extends JsonResource
             'need_level' => $this->resource->attributes['needLevel'] ?? null,
 
             'attributes' => $this->resource->attributes != null ? $this->resource->attributes : [],
+
+            'in_use' => $this->resource->isInUse(),
+
+            $this->mergeWhen($request->routeIs('base-items.index') || $request->routeIs('base-items.show'), function() {
+              return [
+                  'shops' => ShopResource::collection($this->resource->shops),
+                  'baseNpcs' => BaseNpcResource::collection($this->resource->baseNpcs),
+              ];
+            })
         ];
     }
 }

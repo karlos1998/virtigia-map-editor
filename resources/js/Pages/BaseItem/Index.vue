@@ -76,6 +76,21 @@ type Data = {
                     </template>
                 </AdvanceColumn>
 
+                <AdvanceColumn field="in_use" header="W użyciu">
+                    <template #body="{ data }: Data">
+                        <Tag
+                            v-if="data.in_use"
+                            value="W użuciu"
+                            severity="success"
+                        />
+                        <Tag
+                            v-else
+                            value="Nie używany"
+                            severity="info"
+                        />
+                    </template>
+                </AdvanceColumn>
+
                 <Column header="Action" >
                     <template #body="slotProps">
                         <div style="white-space: nowrap">

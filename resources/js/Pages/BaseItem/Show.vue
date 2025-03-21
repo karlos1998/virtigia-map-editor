@@ -1,7 +1,6 @@
 <script setup lang="ts">
 
-import {BaseItemResource} from "../../Resources/BaseItem.resource";
-import ItemParser from "./ItemParser.vue";
+import {BaseItemResource, BaseItemWithRelations} from "../../Resources/BaseItem.resource";
 import AppLayout from "../../layout/AppLayout.vue";
 import {route} from "ziggy-js";
 import ItemHeader from "../../Components/ItemHeader.vue";
@@ -9,9 +8,12 @@ import ItemHeader from "../../Components/ItemHeader.vue";
 import { itemTip } from "../../old-createItemTip";
 import rockAdapter from "../../RockTip/components/rockAdapter.vue";
 import Item from "../../karlos3098-LaravelPrimevueTable/Components/Item.vue";
+import BaseNpcsUsedItemTable from "./Partials/BaseNpcsUsedItemTable.vue";
+import ShopsUsedItemTable from "./Partials/ShopsUsedItemTable.vue";
+import {ref} from "vue";
 
 const { baseItem } = defineProps<{
-    baseItem: BaseItemResource,
+    baseItem: BaseItemWithRelations,
 }>();
 
 </script>
@@ -45,52 +47,17 @@ const { baseItem } = defineProps<{
                 alt=""
             />
 
-<!--            <Item-->
-<!--                :item="baseItem"-->
-<!--                v-tip.item.top.show-id="baseItem"-->
-<!--            />-->
+
+        </div>
 
 
-            <pre>{{baseItem}}</pre>
+        <div class="card" >
+            <Panel header="Debug JSON" toggleable collapsed>
+                <pre>{{baseItem}}</pre>
+            </Panel>
         </div>
 
         <div class="card" >
-
-            <div style="width:32px; height: 32px;">
-<!--                <rockAdapter :item-payload="{-->
-<!--                schema: {-->
-<!--                    position: {-->
-<!--                        x: 0,-->
-<!--                        y: 0,-->
-<!--                    },-->
-<!--                    inner: {-->
-<!--                        ...baseItem,-->
-<!--                        src: `https://s3.letscode.it/virtigia-assets/img/${baseItem.src}` + baseItem.src,-->
-<!--                    },-->
-<!--                    hero: {-->
-<!--                        profession: 'w',-->
-<!--                        level: 100,-->
-<!--                    }-->
-<!--                }-->
-<!--            }" direction="bottom"/>-->
-            </div>
-
-
-<!--            <rockAdapter-->
-<!--                :npcPayload="{-->
-<!--                                                schema: {-->
-<!--                                                    inner: {-->
-<!--                                                        level: 25,-->
-<!--                                                        rank: 'ELITE_III',-->
-<!--                                                        name: 'Mietek Żul',-->
-<!--                                                    },-->
-<!--                                                    hero: {-->
-<!--                                                        level: 25-->
-<!--                                                    }-->
-<!--                                                },-->
-<!--                                            }"-->
-<!--                direction="top"-->
-<!--            />-->
 
             <div class="mb-4"><b>Oryginalne statystyki przedmiotu z margonem:</b></div>
             <div v-html="itemTip({ ...baseItem, stat: baseItem.stats })" />
@@ -98,29 +65,15 @@ const { baseItem } = defineProps<{
             <div class="mt-4">Grafika: {{ `${baseItem.src}` }}</div>
         </div>
 
-<!--        <div class="card">-->
-<!--            <ItemParser-->
-<!--                :config="{-->
-<!--                    legendaryBonusThick: true,-->
-<!--                    separateDescription: true,-->
-<!--                    colorizeAttributes: true,-->
-<!--                    previewRightCorner: true,-->
-<!--                    previewUnderName: true,-->
-<!--                    previewShow: true-->
-<!--                }"-->
-<!--                :from-string="JSON.stringify({-->
-<!--                    inner: baseItem,-->
-<!--                    hero: {-->
-<!--                        lvl: 100,-->
-<!--                        profession: 'b',-->
-<!--                    }-->
-<!--                })"-->
-<!--            />-->
-<!--        </div>-->
 
-        <div class="card">
-            test
+        <div class="card" >
+            <BaseNpcsUsedItemTable :base-npcs="baseItem.baseNpcs" />
         </div>
+
+        <div class="card" >
+            <ShopsUsedItemTable :shops="baseItem.shops" />
+        </div>
+
     </AppLayout>
 
 </template>
