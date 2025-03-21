@@ -213,6 +213,16 @@ const removeNpc = (npc: NpcWithLocationResource) => {
     });
 }
 
+const removeFromGroup = (npc: NpcWithLocationResource) => {
+    router.delete(route('npcs.group.detach', {
+        npc: npc.id,
+    }), {
+        preserveScroll: true,
+        onSuccess: () => {
+            // ...
+        }
+    });
+}
 
 
 const isPanning = ref(false);
@@ -342,7 +352,8 @@ const getGroupColor = (groupId) => groupColors[groupId % groupColors.length]
                 <div class="flex justify-center items-center gap-2 mt-4">
                     <!--                    <Button label="Save" @click="acceptCallback" size="small"></Button>-->
                     <Button label="Zamknij" severity="contrast" @click="rejectCallback" size="small" />
-                    <Button label="Kopiuj" severity="help" @click="rejectCallback" size="small" />
+
+                    <Button label="Wyklucz z grupy" severity="help" @click="removeFromGroup(message.npc); rejectCallback()" size="small" />
 
                     <Link
                         :href="route('npcs.show', message.npc.id)"
@@ -353,6 +364,8 @@ const getGroupColor = (groupId) => groupColors[groupId % groupColors.length]
                     <Button label="Usuń" @click="removeNpc(message.npc)" severity="danger" size="small" />
 
                     <Button label="Przenieś" @click="moveNpc(message.npc); rejectCallback()" severity="warn" size="small" />
+
+
                 </div>
 
             </template>

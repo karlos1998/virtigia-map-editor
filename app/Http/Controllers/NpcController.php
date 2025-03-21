@@ -57,4 +57,9 @@ class NpcController extends Controller
     {
         $this->npcService->updateLocation($npc, $npcLocation, $request->validated());
     }
+
+    public function detachGroup(Npc $npc): void
+    {
+        $this->npcService->detachGroup($npc);
+    }
 }

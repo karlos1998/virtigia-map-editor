@@ -85,4 +85,18 @@ class NpcService extends BaseService
 
         $npcLocation->update($validated);
     }
+
+    public function detachGroup(Npc $npc)
+    {
+        $group = $npc->group;
+
+        if($group?->npcs()->count() > 2)
+        {
+            $npc->group()->disassociate()->save();
+        }
+        else
+        {
+            $group->delete();
+        }
+    }
 }

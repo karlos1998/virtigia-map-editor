@@ -91,6 +91,8 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('npcs', [NpcController::class, 'store'])->name('npcs.store');
                 Route::delete('npcs/{npc}/locations/{npcLocation}', [NpcController::class, 'destroyLocation'])->name('npcs.locations.destroy');
 
+                Route::delete('npcs/{npc}/group-detach', [NpcController::class, 'detachGroup'])->name('npcs.group.detach');
+
                 Route::get('shops', [ShopController::class, 'index'])->name('shops.index');
                 Route::post('shops', [ShopController::class, 'store'])->name('shops.store');
                 Route::get('shops/search', [ShopController::class, 'search'])->name('shops.search');

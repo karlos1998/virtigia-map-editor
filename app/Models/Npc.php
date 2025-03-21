@@ -31,4 +31,9 @@ class Npc extends DynamicModel
     {
         return $this->belongsTo(Dialog::class);
     }
+
+    public function group()
+    {
+        return $this->belongsTo(NpcGroup::class, 'group_id');
+    }
 }
