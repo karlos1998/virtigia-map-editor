@@ -51,4 +51,10 @@ class BaseItemController extends Controller
         $this->baseItemService->updateAttributes($baseItem, $request->input('attributes'));
         return to_route('base-items.show', $baseItem->id);
     }
+
+    public function delete(BaseItem $baseItem)
+    {
+        $this->baseItemService->delete($baseItem);
+        return to_route('base-items.index');
+    }
 }

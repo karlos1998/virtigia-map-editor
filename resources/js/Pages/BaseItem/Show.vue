@@ -11,17 +11,54 @@ import Item from "../../karlos3098-LaravelPrimevueTable/Components/Item.vue";
 import BaseNpcsUsedItemTable from "./Partials/BaseNpcsUsedItemTable.vue";
 import ShopsUsedItemTable from "./Partials/ShopsUsedItemTable.vue";
 import {ref} from "vue";
-import {Link} from "@inertiajs/vue3";
+import {Link, router} from "@inertiajs/vue3";
+import {useConfirm, useToast} from "primevue";
 
 const { baseItem } = defineProps<{
     baseItem: BaseItemWithRelations,
 }>();
+
+const confirm = useConfirm();
+const toast = useToast();
+
+const deleteConfirm = () => {
+    confirm.require({
+        message: 'Czy na pewno chcesz usunąc ten przedmiot?',
+        header: 'Uwaga',
+        icon: 'pi pi-info-circle',
+        position: 'top',
+        rejectProps: {
+            label: 'Anuluj',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Usuń',
+            severity: 'danger'
+        },
+        accept: () => {
+            router.delete(route('base-items.delete', {baseItem}), {
+                onError: () => {
+                    toast.add({ severity: 'error', summary: 'Błąd', detail: 'Nie udało się usunąć przedmiotu', life: 3000 });
+                },
+                onSuccess: () => {
+                    toast.add({ severity: 'info', summary: 'Usunieto', detail: 'Przedmiot został usunięty', life: 3000 });
+                }
+            })
+        },
+        reject: () => {
+
+        }
+    });
+};
 
 </script>
 
 <template>
 
     <AppLayout>
+
+        <ConfirmDialog/>
 
         <ItemHeader
             :route-back="route('base-items.index')"
@@ -31,12 +68,25 @@ const { baseItem } = defineProps<{
             </template>
 
             <template #right-buttons>
+                <button
+                    v-if="!baseItem.in_use"
+                    class="px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded shadow mr-2"
+                    @click="deleteConfirm"
+                >
+                    <i class="pi pi-trash mr-2"></i>
+                    Usuń
+                </button>
+
                 <Link :href="route('base-items.edit', {baseItem})" type="button" class="font-medium px-4 py-2 text-white bg-purple-500 hover:bg-purple-600 rounded shadow mr-2">
                     Edytuj statystyki
                 </Link>
             </template>
 
         </ItemHeader>
+
+        <Message class="mb-6" v-if="baseItem.in_use">
+            Przedmiot możesz usunąć jedynie gdy nie jest używany w grze.
+        </Message>
 
         <div class="card">
             <div class="mb-4"><b>Nowe statystyki przedmiotu:</b></div>

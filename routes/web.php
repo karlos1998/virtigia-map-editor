@@ -80,6 +80,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::patch('maps/{map}/cols', [MapController::class, 'updateCol'])->name('maps.update.col');
 
                 Route::get('base-items', [BaseItemController::class, 'index'])->name('base-items.index');
+                Route::delete('base-items/{baseItem}', [BaseItemController::class, 'delete'])->name('base-items.delete');
                 Route::get('base-items/search', [BaseItemController::class, 'search'])->name('base-items.search');
                 Route::get('base-items/{baseItem}', [BaseItemController::class, 'show'])->name('base-items.show');
                 Route::get('base-items/{baseItem}/edit', [BaseItemController::class, 'edit'])->name('base-items.edit');

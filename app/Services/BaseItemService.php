@@ -65,4 +65,10 @@ final class BaseItemService extends BaseService
     {
         $baseItem->update(['attributes' => $attributes, 'edited_manually' => true]);
     }
+
+    public function delete(BaseItem $baseItem)
+    {
+        abort_if($baseItem->isInUse(), 422, 'Nie możesz usunąć używanego przedmiotu');
+        $baseItem->delete();
+    }
 }

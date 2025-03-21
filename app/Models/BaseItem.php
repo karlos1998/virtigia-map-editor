@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use App\Enums\BaseItemCategory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class BaseItem extends DynamicModel
 {
+
+    use SoftDeletes;
+
     protected $fillable = [
         'name',
         'src',
@@ -35,7 +39,7 @@ class BaseItem extends DynamicModel
 
     public function isInUse()
     {
-        return $this->shops()->exists() &&
+        return $this->shops()->exists() ||
             $this->baseNpcs()->exists();
     }
 }

@@ -8,6 +8,8 @@ export interface BaseItemResource {
     src: string
 
     attributes: object
+
+    in_use: boolean
     // ...
 }
 
