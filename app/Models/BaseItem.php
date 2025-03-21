@@ -12,11 +12,14 @@ class BaseItem extends DynamicModel
         'stats',
         'cl',
         'pr',
+        'edited_manually',
+        'attributes'
     ];
 
     protected $casts = [
         'attributes' => 'json',
         'category' => BaseItemCategory::class,
+        'edited_manually' => 'boolean'
     ];
 
     public function shops()

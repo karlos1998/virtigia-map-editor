@@ -11,6 +11,7 @@ import Item from "../../karlos3098-LaravelPrimevueTable/Components/Item.vue";
 import BaseNpcsUsedItemTable from "./Partials/BaseNpcsUsedItemTable.vue";
 import ShopsUsedItemTable from "./Partials/ShopsUsedItemTable.vue";
 import {ref} from "vue";
+import {Link} from "@inertiajs/vue3";
 
 const { baseItem } = defineProps<{
     baseItem: BaseItemWithRelations,
@@ -19,9 +20,6 @@ const { baseItem } = defineProps<{
 </script>
 
 <template>
-<!--    <div class="card">-->
-<!--        <pre>{{baseItem}}</pre>-->
-<!--    </div>-->
 
     <AppLayout>
 
@@ -30,11 +28,14 @@ const { baseItem } = defineProps<{
         >
             <template #header>
                 #{{ baseItem.id }} - {{ baseItem.name }}
-
-                <!--                <img alt="" :src="`https://s3.letscode.it/virtigia-assets/img/${baseItem.src}`" />-->
-
-
             </template>
+
+            <template #right-buttons>
+                <Link :href="route('base-items.edit', {baseItem})" type="button" class="font-medium px-4 py-2 text-white bg-purple-500 hover:bg-purple-600 rounded shadow mr-2">
+                    Edytuj statystyki
+                </Link>
+            </template>
+
         </ItemHeader>
 
         <div class="card">

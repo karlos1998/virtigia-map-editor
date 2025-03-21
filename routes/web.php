@@ -82,6 +82,8 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('base-items', [BaseItemController::class, 'index'])->name('base-items.index');
                 Route::get('base-items/search', [BaseItemController::class, 'search'])->name('base-items.search');
                 Route::get('base-items/{baseItem}', [BaseItemController::class, 'show'])->name('base-items.show');
+                Route::get('base-items/{baseItem}/edit', [BaseItemController::class, 'edit'])->name('base-items.edit');
+                Route::patch('base-items/{baseItem}/attributes', [BaseItemController::class, 'updateAttributes'])->name('base-items.attributes.update');
 
                 Route::get('npcs', [NpcController::class, 'index'])->name('npcs.index');
                 Route::get('npcs/{npc}', [NpcController::class, 'show'])->name('npcs.show');
@@ -103,7 +105,9 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('base-npcs', [BaseNpcController::class, 'index'])->name('base-npcs.index');
                 Route::get('base-npcs/create', [BaseNpcController::class, 'create'])->name('base-npcs.create');
                 Route::get('base-npcs/search', [BaseNpcController::class, 'search'])->name('base-npcs.search');
+
                 Route::get('base-npcs/{baseNpc}', [BaseNpcController::class, 'show'])->name('base-npcs.show');
+
                 Route::post('base-npcs/{baseNpc}/loots', [BaseNpcController::class, 'attachLoot'])->name('base-npcs.loots.attach');
                 Route::delete('base-npcs/{baseNpc}/loots/{loot}', [BaseNpcController::class, 'detachLoot'])->name('base-npcs.loots.detach');
                 Route::get('web-api/base-npcs', [BaseNpcController::class, 'indexJson'])->name('web-api.base-npcs.index');

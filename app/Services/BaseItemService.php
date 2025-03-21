@@ -60,4 +60,9 @@ final class BaseItemService extends BaseService
     {
         return $this->baseItemModel->where('name', 'like', '%' . $search . '%')->limit(30)->get();
     }
+
+    public function updateAttributes(BaseItem $baseItem, mixed $attributes)
+    {
+        $baseItem->update(['attributes' => $attributes, 'edited_manually' => true]);
+    }
 }

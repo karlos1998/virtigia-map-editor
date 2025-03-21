@@ -6,6 +6,8 @@ export interface BaseItemResource {
     name: string
 
     src: string
+
+    attributes: object
     // ...
 }
 

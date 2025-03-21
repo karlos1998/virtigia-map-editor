@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { router } from "@inertiajs/vue3";
 
-defineProps<{
+withDefaults(defineProps<{
     routeBack: string
-}>();
+    routeBackLabel: string
+}>(), {
+    routeBackLabel: 'Lista'
+});
 </script>
 
 <template>
@@ -18,7 +21,7 @@ defineProps<{
                     @click="router.get(routeBack)"
                 >
                     <i class="pi pi-arrow-left mr-2"></i>
-                    Lista
+                    {{ routeBackLabel }}
                 </button>
                 <slot name="right-buttons" />
             </div>
