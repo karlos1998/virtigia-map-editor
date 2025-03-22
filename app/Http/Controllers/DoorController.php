@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\MoveDoorRequest;
 use App\Http\Requests\StoreDoorRequest;
 use App\Models\Door;
 use App\Services\DoorService;
@@ -22,5 +23,10 @@ class DoorController extends Controller
     public function destroy(Door $door)
     {
         $this->doorService->destroy($door);
+    }
+
+    public function move(Door $door, MoveDoorRequest $request)
+    {
+        $this->doorService->move($door, $request->validated());
     }
 }

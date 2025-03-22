@@ -28,4 +28,9 @@ class Door extends DynamicModel
             ->where('go_y', $this->y)
             ->exists();
     }
+
+    public function map()
+    {
+        return $this->hasOne(Map::class, 'id', 'map_id');
+    }
 }

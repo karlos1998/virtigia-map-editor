@@ -93,6 +93,11 @@ const addNewObject = (event: MouseEvent) => {
         return;
     }
 
+    if(moveDoorLocationData.value) {
+        updateMoveDoorLocation(x, y)
+        return;
+    }
+
     if(editColsOn.value) {
         toggleCollision(x, y)
         return;
@@ -306,10 +311,37 @@ const removeDoor = (door: DoorResource) => {
 const mouseTrackerEl = ref<HTMLElement | null>(null)
 
 
+
+
+const moveDoorLocationData = ref<DoorResource>(null);
+
+const moveDoor = (door: DoorResource) => {
+    moveDoorLocationData.value = door;
+    moveNpcLocationData.value = null;
+}
+
+const updateMoveDoorLocation = (x: number, y: number) => {
+    router.patch(route('doors.move', {
+        door: moveDoorLocationData.value.id,
+    }), {
+        x,
+        y,
+    }, {
+        preserveScroll: true,
+        preserveState: true,
+    })
+    moveDoorLocationData.value = null;
+}
+
+
+
+
 const moveNpcLocationData = ref<NpcWithLocationResource>(null);
 const moveNpc = (npc: NpcWithLocationResource) => {
+    moveDoorLocationData.value = null;
     moveNpcLocationData.value = npc;
 }
+
 
 const updateMoveNpcLocation = (x: number, y: number) => {
     router.patch(route('npcs.update.location', {
@@ -390,6 +422,8 @@ const getGroupColor = (groupId) => groupColors[groupId % groupColors.length]
                     </Link>
 
                     <Button label="Usuń" @click="removeDoor(message.door); rejectCallback()" severity="danger" size="small" />
+
+                    <Button label="Przesuń" @click="moveDoor(message.door); rejectCallback()" severity="info" size="small" />
                 </div>
 
             </template>

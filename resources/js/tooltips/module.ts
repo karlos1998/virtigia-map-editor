@@ -140,7 +140,7 @@ const getTipPositionByDirection = (direction: TipDirection) => {
 
 const updateDataset = (el: HTMLElement, binding: DirectiveBinding) => {
     const heroStore = useHeroStore();
-    console.log('binding', heroStore.getLvl(), binding.modifiers, binding.value)
+    // console.log('binding', heroStore.getLvl(), binding.modifiers, binding.value)
     // if (binding.modifiers.npc) {
     //     el.dataset.npc = JSON.stringify(binding.value)
     // } else if (binding.modifiers.item) {
