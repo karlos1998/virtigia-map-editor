@@ -13,6 +13,7 @@ import ShopsUsedItemTable from "./Partials/ShopsUsedItemTable.vue";
 import {ref} from "vue";
 import {Link, router} from "@inertiajs/vue3";
 import {useConfirm, useToast} from "primevue";
+import EditBaseItemSrcDialog from "./Components/EditBaseItemSrcDialog.vue";
 
 const { baseItem } = defineProps<{
     baseItem: BaseItemWithRelations,
@@ -52,6 +53,7 @@ const deleteConfirm = () => {
     });
 };
 
+const isEditBaseItemSrcDialogVisible = ref(false);
 </script>
 
 <template>
@@ -59,6 +61,8 @@ const deleteConfirm = () => {
     <AppLayout>
 
         <ConfirmDialog/>
+
+        <EditBaseItemSrcDialog :baseItem v-model:visible="isEditBaseItemSrcDialogVisible" />
 
         <ItemHeader
             :route-back="route('base-items.index')"
@@ -75,6 +79,15 @@ const deleteConfirm = () => {
                 >
                     <i class="pi pi-trash mr-2"></i>
                     Usuń
+                </button>
+
+                <button
+                    v-if="!baseItem.in_use"
+                    class="px-4 py-2 text-white bg-yellow-500 hover:bg-yellow-600 rounded shadow mr-2"
+                    @click="isEditBaseItemSrcDialogVisible = true"
+                >
+                    <i class="pi pi-trash mr-2"></i>
+                    Edytuj grafikę
                 </button>
 
                 <Link :href="route('base-items.edit', {baseItem})" type="button" class="font-medium px-4 py-2 text-white bg-purple-500 hover:bg-purple-600 rounded shadow mr-2">

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateBaseItemImageRequest;
 use App\Http\Requests\UpdateBaseNpcImageRequest;
 use App\Http\Requests\UpdateItemAttributesRequest;
 use App\Http\Resources\BaseItemResource;
@@ -58,5 +59,10 @@ class BaseItemController extends Controller
     {
         $this->baseItemService->delete($baseItem);
         return to_route('base-items.index');
+    }
+
+    public function updateImage(BaseItem $baseItem, UpdateBaseItemImageRequest $request)
+    {
+        $this->baseItemService->updateImageFromBase64($baseItem, $request->string('image'), $request->string('name'), 'img');
     }
 }

@@ -119,6 +119,6 @@ class BaseNpcController extends Controller
 
     public function updateImage(BaseNpc $baseNpc, UpdateBaseNpcImageRequest $request)
     {
-        $this->baseNpcService->updateImageFromBase64($baseNpc, $request->string('image'), $request->string('name'));
+        $this->baseNpcService->updateImageFromBase64($baseNpc, $request->string('image'), $request->string('name'), 'img/npc');
     }
 }

@@ -6,6 +6,7 @@ use App\Enums\BaseItemCategory;
 use App\Enums\Profession;
 use App\Http\Resources\BaseItemResource;
 use App\Models\BaseItem;
+use App\Services\Traits\UpdateImage;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownOptions\TableDropdownOption;
@@ -15,6 +16,9 @@ use Karlos3098\LaravelPrimevueTableService\Services\TableService;
 
 final class BaseItemService extends BaseService
 {
+
+    use UpdateImage;
+
     public function __construct(private readonly BaseItem $baseItemModel)
     {
     }
