@@ -112,6 +112,8 @@ export namespace Translations {
         "orbs": "Orby magiczne",
         "keys": "Klucze",
         "bags": "Torby",
+        "backpacks": "Torby", //todo - udandaryzowac, raczej uzyc bags
+        "staffs": "Laski"
     };
 
     const attrPositive = (value: string | number) => `+${attrNumber(value)}`;
@@ -422,6 +424,9 @@ export namespace Translations {
         },
         "magicalDamageAbsorption": (value: number) => {
             return `Absorbuje do ${attrBox(value)} obrażeń magicznych`
+        },
+        "incrementGold": (value: number) => {
+            return `Złoto: +${attrBox(value)}`
         },
 
         /* Tags */

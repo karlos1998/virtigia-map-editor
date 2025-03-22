@@ -35,13 +35,16 @@ class TransferSelectedMapsFromClassicToRetro extends Command
     public function handle()
     {
 
+        //krolik i orla
+        $ids = [1745, 1800];
+
         //mumie przed tuzmer
 //        $ids = [1159, 1974, 1223, 1346, 1347, 1167, 1357, 1356, 1622, 1621,
 //            1348, 1877, 1613, 1607, 1350, 3081, 1349, 1368, 1358];
 
 
         //jakies miski podobno
-        $ids = [1733, 1735, 1734, 1736, 1130, 1193, 1204, 3530, 1730];
+//        $ids = [1733, 1735, 1734, 1736, 1130, 1193, 1204, 3530, 1730];
 
         //mapy z sosnowego
 //        $ids = [

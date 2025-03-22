@@ -144,6 +144,7 @@ export namespace Attributes {
             {"priority": 4, "name": "blockPoints"},
             {"priority": 3, "name": "physicalDamageAbsorption"},
             {"priority": 3, "name": "magicalDamageAbsorption"},
+            {"priority": 3, "name": "incrementGold"},
             {"priority": 3, "name": "physicalCritPower"},
             {"priority": 3, "name": "magicalCritPower"},
             {"priority": 2, "name": "poisonResistance"},
