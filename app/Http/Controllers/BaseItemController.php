@@ -65,4 +65,11 @@ class BaseItemController extends Controller
     {
         $this->baseItemService->updateImageFromBase64($baseItem, $request->string('image'), $request->string('name'), 'img');
     }
+
+
+    public function copy(BaseItem $baseItem)
+    {
+        $newBaseItem = $this->baseItemService->copy($baseItem);
+        return to_route('base-items.show', $newBaseItem->id);
+    }
 }

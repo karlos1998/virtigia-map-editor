@@ -53,6 +53,38 @@ const deleteConfirm = () => {
     });
 };
 
+
+const copyConfirm = () => {
+    confirm.require({
+        message: 'Czy na pewno chcesz skopiować ten przedmiot?',
+        header: 'Uwaga',
+        icon: 'pi pi-info-circle',
+        position: 'bottomleft',
+        rejectProps: {
+            label: 'Anuluj',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Kopiuj',
+            severity: 'success'
+        },
+        accept: () => {
+            router.post(route('base-items.copy', {baseItem}), {}, {
+                onError: () => {
+                    toast.add({ severity: 'error', summary: 'Błąd', detail: 'Nie udało się skopiować przedmiotu', life: 3000 });
+                },
+                onSuccess: () => {
+                    toast.add({ severity: 'info', summary: 'Usunieto', detail: 'Przedmiot został Skopiowany', life: 3000 });
+                }
+            })
+        },
+        reject: () => {
+
+        }
+    });
+};
+
 const isEditBaseItemSrcDialogVisible = ref(false);
 </script>
 
@@ -82,12 +114,19 @@ const isEditBaseItemSrcDialogVisible = ref(false);
                 </button>
 
                 <button
-                    v-if="!baseItem.in_use"
                     class="px-4 py-2 text-white bg-yellow-500 hover:bg-yellow-600 rounded shadow mr-2"
                     @click="isEditBaseItemSrcDialogVisible = true"
                 >
-                    <i class="pi pi-trash mr-2"></i>
+                    <i class="pi pi-folder mr-2"></i>
                     Edytuj grafikę
+                </button>
+
+                <button
+                    class="px-4 py-2 text-white bg-lime-500 hover:bg-yellow-600 rounded shadow mr-2"
+                    @click="copyConfirm"
+                >
+                    <i class="pi pi-link mr-2"></i>
+                    Kopiuj przedmiot
                 </button>
 
                 <Link :href="route('base-items.edit', {baseItem})" type="button" class="font-medium px-4 py-2 text-white bg-purple-500 hover:bg-purple-600 rounded shadow mr-2">

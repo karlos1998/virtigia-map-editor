@@ -75,4 +75,11 @@ final class BaseItemService extends BaseService
         abort_if($baseItem->isInUse(), 422, 'Nie możesz usunąć używanego przedmiotu');
         $baseItem->delete();
     }
+
+    public function copy(BaseItem $baseItem)
+    {
+        $newBaseItem = $baseItem->replicate();
+        $newBaseItem->save();
+        return $newBaseItem;
+    }
 }
