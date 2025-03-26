@@ -90,7 +90,8 @@ const remove = () => {
             <Button icon="pi pi-times" severity="danger" aria-label="Cancel" @click="form.additional_action = null" />
             <Select v-model="form.additional_action" :options="dialogNodeOptionAdditionalActionsList" optionLabel="label" option-value="value" placeholder="Wybierz dodatkową akcje" class="w-full md:w-56" />
         </InputGroup>
-        <Textarea v-model="form.label" rows="5" cols="50" />
+        <Textarea v-model="form.label" rows="5" cols="50" maxlength="250" />
+        <Message severity="error" size="small" variant="simple">{{ form.errors.label }}</Message>
         <div class="flex gap-1">
             <Button  :loading="processing"  fluid @click="remove" severity="danger">Usuń</Button>
             <Button :loading="processing" fluid @click="save">Zapisz</Button>
