@@ -26,7 +26,6 @@ class BaseItem extends DynamicModel
         return [
             'id' => $this->id,
             'name' => $this->name,
-
         ];
     }
 

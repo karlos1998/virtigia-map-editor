@@ -1,1 +1,4 @@
-export type DropdownListType = {label: string, value: string}[]
+export type DropdownListType<V = string, A extends Record<string, any> = {}> = ({
+    label: string;
+    value: V;
+} & A)[];

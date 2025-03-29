@@ -7,6 +7,7 @@ use App\Enums\Profession;
 use App\Http\Resources\BaseItemResource;
 use App\Models\BaseItem;
 use App\Services\Traits\UpdateImage;
+use Illuminate\Support\Collection;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownOptions\TableDropdownOption;
@@ -60,12 +61,30 @@ final class BaseItemService extends BaseService
         );
     }
 
-    public function search(string $search = '')
+    public function search(string $search = '', Collection $ids = null)
     {
 //        return $this->baseItemModel->where('name', 'like', '%' . $search . '%')->limit(30)->get();
-        return $this->baseItemModel->search($search)->take(30)->get();
+        $idsResults = $this->baseItemModel->whereIn('id', $ids->toArray())->get();
+        $searchItems = $this->baseItemModel->search($search)->take(30)->get();
+        return $idsResults->merge($searchItems);
     }
 
+//    public function search(string $search = '', Collection $ids = null)
+//    {
+//        $query = $this->baseItemModel->search($search);
+//
+//        // Jeśli $ids nie jest null, wyszukaj rekordy o pasujących ID na pierwszym miejscu
+//        if ($ids && $ids->isNotEmpty()) {
+//            $idsResults = $query->whereIn('id', $ids->toArray())->get();
+//            // Wykonaj zapytanie dla pozostałych rekordów
+//            $otherResults = $query->whereNotIn('id', $ids->toArray())->take(30)->get();
+//
+//            // Połącz oba zestawy wyników, tak aby rekordy z listy ID były na samej górze
+//            return $idsResults->merge($otherResults);
+//        }
+//
+//        return $query->take(30)->get();
+//    }
     public function updateAttributes(BaseItem $baseItem, mixed $attributes)
     {
         $baseItem->update(['attributes' => $attributes, 'edited_manually' => true]);
