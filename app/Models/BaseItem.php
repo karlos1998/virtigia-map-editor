@@ -4,11 +4,36 @@ namespace App\Models;
 
 use App\Enums\BaseItemCategory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Scout\Engines\MeilisearchEngine;
+use Laravel\Scout\Searchable;
 
 class BaseItem extends DynamicModel
 {
 
     use SoftDeletes;
+    use Searchable;
+
+    /**
+     * Get the name of the index associated with the model.
+     */
+    public function searchableAs(): string
+    {
+        return 'base_items_' . $this->getConnectionName();
+    }
+
+    public function toSearchableArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+
+        ];
+    }
+
+//    public function searchableUsing()
+//    {
+//        return app(MeiliSearchEngine::class)->setConnection('retro');
+//    }
 
     protected $fillable = [
         'name',

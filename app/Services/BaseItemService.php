@@ -62,7 +62,8 @@ final class BaseItemService extends BaseService
 
     public function search(string $search = '')
     {
-        return $this->baseItemModel->where('name', 'like', '%' . $search . '%')->limit(30)->get();
+//        return $this->baseItemModel->where('name', 'like', '%' . $search . '%')->limit(30)->get();
+        return $this->baseItemModel->search($search)->take(30)->get();
     }
 
     public function updateAttributes(BaseItem $baseItem, mixed $attributes)
