@@ -12,6 +12,10 @@ class DialogEdge extends DynamicModel
 
     protected $fillable = ['rules'];
 
+    protected $casts = [
+        'rules' => 'json'
+    ];
+
     public function sourceDialog(): BelongsTo
     {
         return $this->belongsTo(Dialog::class, 'source_dialog_id');
