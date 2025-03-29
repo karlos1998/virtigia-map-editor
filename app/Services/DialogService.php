@@ -59,10 +59,10 @@ class DialogService extends BaseService
              */
             $sourceOption = $sourceNode->options()->find($data['sourceOptionId']);
 
-            if ($sourceOption->edges()->count() >= 1)
+            if ($sourceOption->edges()->count() > 1)
             {
                 throw \Illuminate\Validation\ValidationException::withMessages([
-                    'message' => 'Opcja może mieć NA TEN MOMENT tylko jedno połączenie',
+                    'message' => 'Opcja może mieć NA TEN MOMENT tylko 2 połączenia',
                 ]);
             }
 
@@ -142,6 +142,17 @@ class DialogService extends BaseService
     public function updateOption(Dialog $dialog, DialogNode $dialogNode, DialogNodeOption $dialogNodeOption, mixed $validated): DialogNodeOption
     {
         $dialogNodeOption->update($validated);
+
+        $edgesData = $validated['edges'];
+//        dump($edgesData, $dialogNodeOption->edges->pluck('id'));
+        foreach($edgesData as $edgeData)
+        {
+            $foundEdge = $dialogNodeOption->edges->where('id', $edgeData['edge_id'])->first();
+            if(!$foundEdge) continue;
+
+            $foundEdge->update(['rules' => $edgeData['rules']]);
+        }
+
         return $dialogNodeOption;
     }
 

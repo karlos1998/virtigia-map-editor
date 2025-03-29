@@ -43,22 +43,22 @@ const editOption = (option: DialogOptionResource) => {
             dialog_id: props.data.dialog_id,
         },
         onClose(closeOptions: DynamicDialogCloseOptions & { data: { remove?: boolean, dialogOption?:DialogOptionResource } }) {
-            if (closeOptions.data.remove) {
+            if (closeOptions.data?.remove) {
                 removeSourceConnections(option);
                 options.value = options.value.filter((o) => o.id !== option.id);
             }
 
-            if (closeOptions.data.dialogOption) {
+            if (closeOptions.data?.dialogOption) {
                 option.label = closeOptions.data.dialogOption.label;
                 option.additional_action = closeOptions.data.dialogOption.additional_action;
                 console.log('new option data ', option)
             }
 
-          updateNodeData(props.id, {
-            options: [...options.value]
-          });
+              updateNodeData(props.id, {
+                options: [...options.value]
+              });
 
-          console.log(options.value);
+              console.log(options.value);
         },
     });
 };

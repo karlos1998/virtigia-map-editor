@@ -3,13 +3,16 @@
 namespace App\Http\Requests;
 
 use App\Enums\DialogNodeOptionAdditionalAction;
+use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
 use App\Models\BaseItem;
+use App\Rules\DialogOptionRuleValidator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 use App\Enums\DialogNodeOptionRule;
 
 class UpdateDialogNodeOptionRequest extends FormRequest
 {
+    use LoadCurrentWorldTemplate;
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -39,45 +42,26 @@ class UpdateDialogNodeOptionRequest extends FormRequest
             'rules' => [
                 'nullable',
                 'array',
-                function ($attribute, $value, $fail) {
-                    foreach ($value as $key => $ruleData) {
-                        // Sprawdzenie, czy klucz istnieje w enumie
-                        $enumRule = DialogNodeOptionRule::tryFrom($key);
-                        if (!$enumRule) {
-                            return $fail("Nieprawidłowy klucz rule: {$key}");
-                        }
+                new DialogOptionRuleValidator()
+            ],
 
-                        // Sprawdzenie poprawności wartości value
-                        if (!isset($ruleData['value'])) {
-                            return $fail("Brak wartości dla rule: {$key}");
-                        }
+            'edges' => [
+                'array',
+                'nullable',
+            ],
 
-                        if ($key === DialogNodeOptionRule::ITEMS->value) {
-                            // Dla items: value musi być tablicą istniejących ID z BaseItem
-                            if (!is_array($ruleData['value']) || !collect($ruleData['value'])->every(fn($v) => is_int($v))) {
-                                return $fail("Dla rule: {$key}, wartość musi być tablicą liczb całkowitych.");
-                            }
+            'edges.*.edge_id' => [
+                'required',
+                "exists:$this->selectedDatabase.dialog_edges,id"
+                //todo - sprwadzac czy source_dialog_id to nasz dialog
+            ],
 
-                            $invalidItems = collect($ruleData['value'])
-                                ->filter(fn($id) => !BaseItem::where('id', $id)->exists());
-
-                            if ($invalidItems->isNotEmpty()) {
-                                return $fail("Dla rule: {$key}, następujące ID nie istnieją: " . $invalidItems->implode(', '));
-                            }
-                        } elseif (!is_numeric($ruleData['value'])) {
-                            return $fail("Dla rule: {$key}, wartość musi być liczbą.");
-                        }
-
-                        // Sprawdzenie `consume`
-                        if (isset($ruleData['consume'])) {
-                            $canBeUsed = $enumRule->canBeUsed();
-                            if (!$canBeUsed && $ruleData['consume'] !== false) {
-                                return $fail("Dla rule: {$key}, consume musi być false lub nieobecne.");
-                            }
-                        }
-                    }
-                }
+            'edges.*.rules' => [
+                'nullable',
+                'array',
+                new DialogOptionRuleValidator(),
             ]
+
         ];
     }
 
