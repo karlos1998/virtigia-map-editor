@@ -101,6 +101,8 @@ onMounted(() => {
         <InputNumber
             v-if="typeof rules[name].value == 'number' && (name == DialogNodeOptionRule.gold || name == DialogNodeOptionRule.level)"
             v-model="rules[name].value"
+            :max="2000000000"
+            :min="0"
         />
 
         <InputGroupAddon v-if="name == DialogNodeOptionRule.brotherhood">
@@ -111,7 +113,7 @@ onMounted(() => {
             v-if="name == DialogNodeOptionRule.items"
             v-model="rules[name].value"
             variant="filled"
-            optionLabel="name"
+            :optionLabel="(item: BaseItemResource) => `[${item.id}] ${item.name} (${item.in_use ? 'W użyciu' : 'Nieużywany'})`"
             option-value="id"
             filter
             placeholder="Szukaj przedmiotów"
