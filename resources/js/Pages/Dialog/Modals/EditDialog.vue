@@ -114,8 +114,6 @@ const itemsSearchChanged = ({ value }: MultiSelectFilterEvent) => {
     <div class="flex flex-col gap-2">
         <Textarea v-model="form.content" rows="5" cols="50" />
 
-        {{ form.additional_actions }}
-
         <InputGroup v-for="(value, name) in form.additional_actions">
 
             <Button icon="pi pi-times" severity="danger" aria-label="Cancel"  @click="delete form.additional_actions[name]" />
