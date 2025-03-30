@@ -63,9 +63,11 @@ final class BaseItemService extends BaseService
 
     public function search(string $search = '', Collection $ids = null)
     {
-//        return $this->baseItemModel->where('name', 'like', '%' . $search . '%')->limit(30)->get();
         $idsResults = $this->baseItemModel->whereIn('id', $ids->toArray())->get();
-        $searchItems = $this->baseItemModel->search($search)->take(30)->get();
+
+//        $searchItems = $this->baseItemModel->search($search)->take(30)->get();
+        $searchItems = $this->baseItemModel->where('name', 'like', '%' . $search . '%')->limit(30)->get();
+
         return $idsResults->merge($searchItems);
     }
 

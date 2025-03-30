@@ -5,13 +5,13 @@ namespace App\Models;
 use App\Enums\BaseItemCategory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Scout\Engines\MeilisearchEngine;
-use Laravel\Scout\Searchable;
+//use Laravel\Scout\Searchable;
 
 class BaseItem extends DynamicModel
 {
 
     use SoftDeletes;
-    use Searchable;
+//    use Searchable;
 
     /**
      * Get the name of the index associated with the model.
