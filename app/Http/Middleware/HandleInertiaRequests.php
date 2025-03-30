@@ -39,7 +39,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => $request->user() ? [
                 'user' => [
                     ...$request->user()->only('id', 'name', 'email', 'src', 'forum_background_src'),
-                    'src' => str_replace('img/img', 'img', config('assets.url') . $request->user()->src), //todo - drut
+                    'src' => str_replace('imgimg', 'img', config('assets.url') . $request->user()->src), //todo - drut
                 ],
                 'roles' => $request->user()->roles,
                 'permissions' => $request->user()->permissions,
