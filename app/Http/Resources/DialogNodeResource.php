@@ -26,6 +26,7 @@ class DialogNodeResource extends JsonResource
                     'content' => $this->resource->content,
                     'options' => DialogNodeOptionResource::collection($this->resource->options),
                     'action_data' => $this->resource->action_data,
+                    'additional_actions' => $this->resource->additional_actions,
                 ]
             ]),
 
@@ -55,7 +56,7 @@ class DialogNodeResource extends JsonResource
                         ],
                     ]
                 ];
-            })
+            }),
         ];
     }
 }

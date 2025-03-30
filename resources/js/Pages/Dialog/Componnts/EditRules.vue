@@ -8,6 +8,7 @@ import axios from "axios";
 import {route} from "ziggy-js";
 import {MultiSelectFilterEvent} from "primevue";
 import {DialogNodeRulesResource} from "../../../Resources/DialogNodeRules.resource";
+import {debounce} from "../../../debounce";
 
 const rules = defineModel<DialogNodeRulesResource>('rules')
 
@@ -19,17 +20,6 @@ const staticAvailableRules = usePage<{
 }>().props.availableRules;
 
 const availableRules = computed(() => staticAvailableRules.filter(rule => !rules.value[rule.value]))
-
-//do helpera
-const debounce = <T extends (...args: any[]) => void>(func: T, timeout: number = 300) => {
-    let timer: ReturnType<typeof setTimeout> = 0;
-    return (...args: Parameters<T>) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-            func(...args);
-        }, timeout);
-    };
-};
 
 const itemsDropdown = ref<BaseItemResource[]>([]);
 

@@ -7,6 +7,9 @@ use App\Enums\Attributes\GetAttributes;
 use App\Enums\Traits\ToDropdownList;
 use App\Enums\Traits\ValuesToList;
 
+/**
+ * Akcje bezposrednio przypisane do opcji dialogowej uruchamiane po jej kliknieciu
+ */
 enum DialogNodeOptionAdditionalAction: string
 {
     use ValuesToList;
@@ -19,8 +22,8 @@ enum DialogNodeOptionAdditionalAction: string
     #[Description('Zabij')]
     case KILL = 'KILL';
 
-    #[Description('Dodaj poziomy')]
-    case ADD_LEVELS = 'ADD_LEVELS';
+//    #[Description('Dodaj poziomy')]
+//    case ADD_LEVELS = 'ADD_LEVELS';
 
     #[Description('Cofa doświadczenie')]
     case SUBTRACT_EXP = 'SUBTRACT_EXP';

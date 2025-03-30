@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\DialogNodeAdditionalAction;
 use App\Enums\DialogNodeOptionAdditionalAction;
 use App\Enums\DialogNodeOptionRule;
 use App\Http\Requests\AssignShopToDialogNodeRequest;
@@ -54,6 +55,7 @@ class DialogController extends Controller
             'edges' => DialogEdgeResource::collection($dialog->edges),
             'dialogNodeOptionAdditionalActionsList' => DialogNodeOptionAdditionalAction::toDropdownList(),
             'availableRules' => DialogNodeOptionRule::list(),
+            'dialogNodeAdditionalActionsList' => DialogNodeAdditionalAction::toDropdownList(),
         ]);
     }
 

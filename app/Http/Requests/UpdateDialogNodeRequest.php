@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\DialogNodeAdditionalAction;
+use App\Models\BaseItem;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateDialogNodeRequest extends FormRequest
@@ -26,6 +29,46 @@ class UpdateDialogNodeRequest extends FormRequest
                 'required',
                 'min:3',
                 'max:2000',
+            ],
+
+            'additional_actions' => [
+                'nullable',
+                function(string $attribute, mixed $value, Closure $fail): void
+                {
+                    foreach ($value as $key => $ruleData) {
+                        // Sprawdzenie, czy klucz istnieje w enumie
+                        $enumRule = DialogNodeAdditionalAction::tryFrom($key);
+                        if (!$enumRule) {
+                            $fail("Nieprawidłowy klucz rule: {$key}");
+                            return;
+                        }
+
+                        // Sprawdzenie poprawności wartości value
+                        if (!isset($ruleData['value'])) {
+                            $fail("Brak wartości dla rule: {$key}");
+                            return;
+                        }
+
+                        if ($key === DialogNodeAdditionalAction::ADD_ITEMS->value) {
+                            // Dla items: value musi być tablicą istniejących ID z BaseItem
+                            if (!is_array($ruleData['value']) || !collect($ruleData['value'])->every(fn($v) => is_int($v))) {
+                                $fail("Dla rule: {$key}, wartość musi być tablicą liczb całkowitych.");
+                                return;
+                            }
+
+                            $invalidItems = collect($ruleData['value'])
+                                ->filter(fn($id) => !BaseItem::where('id', $id)->exists());
+
+                            if ($invalidItems->isNotEmpty()) {
+                                $fail("Dla rule: {$key}, następujące ID nie istnieją: " . $invalidItems->implode(', '));
+                                return;
+                            }
+                        } elseif (!is_numeric($ruleData['value'])) {
+                            $fail("Dla rule: {$key}, wartość musi być liczbą.");
+                            return;
+                        }
+                    }
+                }
             ]
         ];
     }

@@ -11,6 +11,7 @@ import {route} from "ziggy-js";
 import {DialogOptionResource} from "@/Resources/DialogOption.resource";
 import {useConfirm, useToast} from "primevue";
 import RemoveNodeButton from "./Componnts/RemoveNodeButton.vue";
+import {DialogNodeAdditionalActionsResource} from "../../Resources/DialogNodeAdditionalActions.resource";
 
 const primeDialog = useDialog();
 
@@ -20,6 +21,7 @@ const props = defineProps<NodeProps<{
     label: string,
     content: string,
     options: Array<DialogOptionResource>
+    additional_actions: DialogNodeAdditionalActionsResource
 }>>();
 
 const { updateNodeData, edges, removeEdges, removeNodes, connectionLookup } = useVueFlow();
@@ -41,6 +43,7 @@ const editOption = (option: DialogOptionResource) => {
             parent: props.id,
             option,
             dialog_id: props.data.dialog_id,
+            additional_action: props.data.additional_actions,
         },
         onClose(closeOptions: DynamicDialogCloseOptions & { data: { remove?: boolean, dialogOption?:DialogOptionResource } }) {
             if (closeOptions.data?.remove) {
@@ -93,6 +96,7 @@ const editNode = () => {
             content: state.value.content,
             dialog_id: props.data.dialog_id,
             node_id: props.id,
+            additional_actions: props.data.additional_actions,
         },
         onClose(options) {
 

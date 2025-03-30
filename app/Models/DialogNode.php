@@ -11,11 +11,12 @@ class DialogNode extends DynamicModel
 {
     use HasFactory;
 
-    protected $fillable = ['content', 'type', 'position', 'action_data'];
+    protected $fillable = ['content', 'type', 'position', 'action_data', 'additional_actions'];
 
     protected $casts = [
         'position' => 'json',
         'action_data' => 'json',
+        'additional_actions' => 'json',
     ];
 
     public function options(): HasMany
