@@ -10,6 +10,10 @@ export interface BaseItemResource {
     attributes: object
 
     in_use: boolean
+
+    category: string //todo to moze byc enum w sumie
+
+    rarity: string
     // ...
 }
 

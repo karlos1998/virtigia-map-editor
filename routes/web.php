@@ -82,6 +82,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('base-items', [BaseItemController::class, 'index'])->name('base-items.index');
                 Route::post('base-items/{baseItem}/copy', [BaseItemController::class, 'copy'])->name('base-items.copy');
                 Route::delete('base-items/{baseItem}', [BaseItemController::class, 'delete'])->name('base-items.delete');
+                Route::patch('base-items/{baseItem}', [BaseItemController::class, 'update'])->name('base-items.update');
                 Route::patch('base-items/{baseItem}/image', [BaseItemController::class, 'updateImage'])->name('base-items.image.update');
                 Route::get('base-items/search', [BaseItemController::class, 'search'])->name('base-items.search');
                 Route::get('base-items/{baseItem}', [BaseItemController::class, 'show'])->name('base-items.show');

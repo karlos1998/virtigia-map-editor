@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\BaseItemCategory;
+use App\Enums\BaseItemRarity;
 use App\Http\Requests\UpdateBaseItemImageRequest;
+use App\Http\Requests\UpdateBaseItemRequest;
 use App\Http\Requests\UpdateBaseNpcImageRequest;
 use App\Http\Requests\UpdateItemAttributesRequest;
 use App\Http\Resources\BaseItemResource;
@@ -39,6 +42,8 @@ class BaseItemController extends Controller
     {
         return Inertia::render('BaseItem/Show', [
             'baseItem' => BaseItemResource::make($baseItem),
+            'baseItemCategoryList' => BaseItemCategory::toDropdownList(),
+            'baseItemRarityList' => BaseItemRarity::toDropdownList(),
         ]);
     }
 
@@ -71,5 +76,10 @@ class BaseItemController extends Controller
     {
         $newBaseItem = $this->baseItemService->copy($baseItem);
         return to_route('base-items.show', $newBaseItem->id);
+    }
+
+    public function update(BaseItem $baseItem, UpdateBaseItemRequest $request)
+    {
+        $this->baseItemService->update($baseItem, $request->validated());
     }
 }

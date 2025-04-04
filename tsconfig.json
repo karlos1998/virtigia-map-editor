@@ -1,0 +1,58 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "strict": true,
+        "noImplicitAny": true,
+        "noImplicitThis": true,
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
+        "strictBindCallApply": true,
+        "strictPropertyInitialization": true,
+        "alwaysStrict": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "noUncheckedIndexedAccess": true,
+        "exactOptionalPropertyTypes": true,
+        "forceConsistentCasingInFileNames": true,
+        "isolatedModules": true,
+        "esModuleInterop": true,
+        "skipLibCheck": false, // Celowo wyłączone dla lepszego type-checking bibliotek
+        "allowJs": false, // Wyłączone - wymuszamy czysty TypeScript
+        "noEmit": true,
+        "jsx": "preserve",
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["./resources/js/*"],
+            "@advance-table/*": ["./packages/karlos3098/laravel-primevue-table-service/src/Assets/*"],
+            "@advance-table-primevue-dir/*": ["./packages/karlos3098/laravel-primevue-table-service/src/Assets/PrimeVue/4.0.5/*"]
+        },
+        "types": ["vite/client", "unplugin-vue-define-options/macros-global"],
+        "typeRoots": ["./node_modules/@types", "./resources/js/types"],
+        "composite": true,
+        "incremental": true
+    },
+    "include": [
+        "resources/js/**/*.ts",
+        "resources/js/**/*.tsx",
+        "resources/js/**/*.vue",
+        "resources/js/**/*.d.ts",
+        "packages/**/*.ts",
+        "packages/**/*.vue"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist",
+        "**/*.spec.ts",
+        "**/*.test.ts",
+        "**/__tests__/*"
+    ],
+    "vueCompilerOptions": {
+        "target": 3,
+        "strictTemplates": true,
+        "experimentalDisableTemplateSupport": false
+    }
+}

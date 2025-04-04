@@ -41,7 +41,9 @@ class BaseItem extends DynamicModel
         'cl',
         'pr',
         'edited_manually',
-        'attributes'
+        'attributes',
+        'rarity',
+        'category',
     ];
 
     protected $casts = [

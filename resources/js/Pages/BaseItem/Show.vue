@@ -14,6 +14,7 @@ import {ref} from "vue";
 import {Link, router} from "@inertiajs/vue3";
 import {useConfirm, useToast} from "primevue";
 import EditBaseItemSrcDialog from "./Components/EditBaseItemSrcDialog.vue";
+import EditBaseItemDialog from "@/Pages/BaseItem/Components/EditBaseItemDialog.vue";
 
 const { baseItem } = defineProps<{
     baseItem: BaseItemWithRelations,
@@ -86,6 +87,8 @@ const copyConfirm = () => {
 };
 
 const isEditBaseItemSrcDialogVisible = ref(false);
+
+const isEditBaseItemDialogVisible = ref(false);
 </script>
 
 <template>
@@ -95,6 +98,8 @@ const isEditBaseItemSrcDialogVisible = ref(false);
         <ConfirmDialog/>
 
         <EditBaseItemSrcDialog :baseItem v-model:visible="isEditBaseItemSrcDialogVisible" />
+
+        <EditBaseItemDialog v-model:visible="isEditBaseItemDialogVisible"  :baseItem />
 
         <ItemHeader
             :route-back="route('base-items.index')"
@@ -111,6 +116,14 @@ const isEditBaseItemSrcDialogVisible = ref(false);
                 >
                     <i class="pi pi-trash mr-2"></i>
                     Usuń
+                </button>
+
+                <button
+                    class="px-4 py-2 text-white bg-cyan-500 hover:bg-cyan-600 rounded shadow mr-2"
+                    @click="isEditBaseItemDialogVisible = true"
+                >
+                    <i class="pi pi-folder mr-2"></i>
+                    Edytuj
                 </button>
 
                 <button

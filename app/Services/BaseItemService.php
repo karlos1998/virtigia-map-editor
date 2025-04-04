@@ -104,4 +104,9 @@ final class BaseItemService extends BaseService
         $newBaseItem->save();
         return $newBaseItem;
     }
+
+    public function update(BaseItem $baseItem, array $validated)
+    {
+        $baseItem->update($validated);
+    }
 }
