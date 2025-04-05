@@ -97,6 +97,7 @@ const confirm = () => {
                     buttonLayout="horizontal"
                     :step="5000"
                     :max="10000000"
+                    :min="0"
                 />
                 <label for="price">Wartość</label>
             </IftaLabel>

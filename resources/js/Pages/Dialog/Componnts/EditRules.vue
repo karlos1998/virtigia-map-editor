@@ -103,6 +103,17 @@ onMounted(() => {
             :min="0"
         />
 
+        <InputNumber
+            v-if="rules[name] && typeof rules[name].value == 'number' && (name == DialogNodeOptionRule.percentageChance)"
+            v-model="rules[name].value"
+            showButtons
+            buttonLayout="horizontal"
+            :step="5"
+            :max="100"
+            :min="0"
+            suffix=" %"
+        />
+
         <InputGroupAddon v-if="name == DialogNodeOptionRule.brotherhood">
             <b>Wymaga bycia członkiem</b>
         </InputGroupAddon>
