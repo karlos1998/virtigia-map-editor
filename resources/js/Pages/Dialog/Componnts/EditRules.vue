@@ -1,16 +1,22 @@
 <script setup lang="ts">
-import {DialogNodeOptionRule} from "../../../types/DialogNodeOptionRule";
-import {DropdownListType} from "../../../Resources/DropdownList.type";
+import {DialogNodeOptionRule} from "@/types/DialogNodeOptionRule";
+import {DropdownListType} from "@/Resources/DropdownList.type";
 import {usePage} from "@inertiajs/vue3";
 import {computed, onMounted, ref} from "vue";
-import {BaseItemResource} from "../../../Resources/BaseItem.resource";
+import {BaseItemResource} from "@/Resources/BaseItem.resource";
 import axios from "axios";
 import {route} from "ziggy-js";
 import {MultiSelectFilterEvent} from "primevue";
-import {DialogNodeRulesResource} from "../../../Resources/DialogNodeRules.resource";
-import {debounce} from "../../../debounce";
+import {DialogNodeRulesResource} from "@/Resources/DialogNodeRules.resource";
+import {debounce} from "@/debounce";
 
-const rules = defineModel<DialogNodeRulesResource>('rules')
+const rules = defineModel<DialogNodeRulesResource>('rules', {
+    required: true,
+    get(value) {
+        return Array.isArray(value) ? {} : value;
+    },
+    default: () => ({})
+});
 
 
 type RuleDropdownOption = DropdownListType<DialogNodeOptionRule, {canBeUsed: boolean}>;
@@ -29,7 +35,9 @@ const searchItems = debounce(async (query: string, ids: number[]) => {
 }, 500);
 
 const itemsSearchChanged = ({ value }: MultiSelectFilterEvent) => {
-    searchItems(value, rules.value[DialogNodeOptionRule.items].value as number[]);
+    if(rules.value[DialogNodeOptionRule.items]) {
+        searchItems(value, rules.value[DialogNodeOptionRule.items].value as number[]);
+    }
 };
 
 const newRule = ref<DialogNodeOptionRule>();
@@ -71,16 +79,16 @@ onMounted(() => {
 </script>
 
 <template>
-    <InputGroup v-for="(value, name) in rules">
+    <InputGroup v-for="(_, name) in rules">
 
         <Button icon="pi pi-times" severity="danger" aria-label="Cancel"  @click="delete rules[name]" />
 
         <InputGroupAddon style="min-width: 220px;">
-            {{staticAvailableRules.find(rule => rule.value == name).label}}
+            {{staticAvailableRules.find(rule => rule.value == name)?.label}}
         </InputGroupAddon>
 
         <Select
-            v-if="staticAvailableRules.find(rule => rule.value == name).canBeUsed"
+            v-if="staticAvailableRules.find(rule => rule.value == name)?.canBeUsed && rules[name]"
             v-model="rules[name].consume"
             optionLabel="label"
             option-value="value"
@@ -89,7 +97,7 @@ onMounted(() => {
         />
 
         <InputNumber
-            v-if="typeof rules[name].value == 'number' && (name == DialogNodeOptionRule.gold || name == DialogNodeOptionRule.level)"
+            v-if="rules[name] && typeof rules[name].value == 'number' && (name == DialogNodeOptionRule.gold || name == DialogNodeOptionRule.level)"
             v-model="rules[name].value"
             :max="2000000000"
             :min="0"
@@ -100,7 +108,7 @@ onMounted(() => {
         </InputGroupAddon>
 
         <MultiSelect
-            v-if="name == DialogNodeOptionRule.items"
+            v-if="rules[name] && name == DialogNodeOptionRule.items"
             v-model="rules[name].value"
             variant="filled"
             :optionLabel="(item: BaseItemResource) => `[${item.id}] ${item.name} (${item.in_use ? 'W użyciu' : 'Nieużywany'})`"

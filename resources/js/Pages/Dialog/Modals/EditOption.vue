@@ -9,12 +9,10 @@ import {useForm, usePage} from "@inertiajs/vue3";
 import {route} from "ziggy-js";
 import {MultiSelectFilterEvent, useToast} from "primevue";
 import axios from "axios";
-import {DialogNodeOptionEdgeWithRules, DialogOptionResource} from "../../../Resources/DialogOption.resource";
-import {DropdownListType} from "../../../Resources/DropdownList.type";
-import {DialogNodeOptionRule} from "../../../types/DialogNodeOptionRule";
-import {BaseItemResource} from "../../../Resources/BaseItem.resource";
+import {DialogNodeOptionEdgeWithRules, DialogOptionResource} from "@/Resources/DialogOption.resource";
+import {DropdownListType} from "@/Resources/DropdownList.type";
 import EditRules from "../Componnts/EditRules.vue";
-import {DialogNodeRulesResource} from "../../../Resources/DialogNodeRules.resource";
+import {DialogNodeRulesResource} from "@/Resources/DialogNodeRules.resource";
 
 const dialogNodeOptionAdditionalActionsList = ref(usePage<{dialogNodeOptionAdditionalActionsList: DropdownListType}>().props.dialogNodeOptionAdditionalActionsList)
 const dialogRef = inject<Ref<DynamicDialogInstance & {
@@ -42,11 +40,13 @@ const toast = useToast();
 const formLoaded = ref(false);
 
 onMounted(() => {
-    form.label = dialogRef.value.data?.option?.label ?? '';
-    form.additional_action = dialogRef.value.data?.option?.additional_action ?? '';
-    form.rules = dialogRef.value.data?.option?.rules ?? {};
+    if(!dialogRef) return;
 
-    form.edges = dialogRef.value.data?.option.edges?.map(edge => ({
+    form.label = dialogRef.value.data.option.label ?? '';
+    form.additional_action = dialogRef.value.data.option.additional_action ?? '';
+    form.rules = dialogRef.value.data.option.rules ?? {};
+
+    form.edges = dialogRef.value.data.option.edges.map(edge => ({
         ...edge,
         rules: edge.rules || {}
     })) || [];
@@ -59,6 +59,8 @@ const processing = ref(false);
 
 const save = () => {
     //axios zeby form inertia nie przeladowywal strony
+
+    if(!dialogRef) return;
 
     processing.value = true;
 
@@ -84,6 +86,8 @@ const save = () => {
 }
 
 const remove = () => {
+
+    if(!dialogRef) return;
 
     processing.value = true;
 
