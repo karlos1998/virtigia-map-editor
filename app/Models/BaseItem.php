@@ -44,6 +44,7 @@ class BaseItem extends DynamicModel
         'attributes',
         'rarity',
         'category',
+        'price'
     ];
 
     protected $casts = [

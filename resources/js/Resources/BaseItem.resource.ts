@@ -14,6 +14,8 @@ export interface BaseItemResource {
     category: string //todo to moze byc enum w sumie
 
     rarity: string
+
+    price: number
     // ...
 }
 

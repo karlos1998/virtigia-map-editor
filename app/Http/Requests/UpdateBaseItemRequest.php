@@ -39,6 +39,12 @@ class UpdateBaseItemRequest extends FormRequest
             'rarity' => [
                 'required',
                 new Enum(BaseItemRarity::class),
+            ],
+
+            'price' => [
+                'required',
+                'integer',
+                'max:10000000'
             ]
         ];
     }

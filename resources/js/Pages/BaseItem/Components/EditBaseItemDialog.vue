@@ -1,7 +1,6 @@
 <script setup lang="ts">
 
 import {useForm, usePage} from "@inertiajs/vue3";
-import {BaseNpcResource} from "@/Resources/BaseNpc.resource";
 import {route} from "ziggy-js";
 import {DropdownListType} from "@/Resources/DropdownList.type";
 import {ref, watch} from "vue";
@@ -24,12 +23,14 @@ const form = useForm({
     name: '',
     category: '',
     rarity: '',
+    price: 0,
 })
 
 watch(visible, () => {
     form.name = baseItem.name;
     form.category = baseItem.category;
     form.rarity = baseItem.rarity;
+    form.price = baseItem.price;
 })
 
 
@@ -86,6 +87,18 @@ const confirm = () => {
                     class="w-full md:w-14rem"
                 />
                 <label for="rarity">Unikalność</label>
+            </IftaLabel>
+
+            <IftaLabel>
+                <InputNumber
+                    input-id="price"
+                    v-model="form.price"
+                    showButtons
+                    buttonLayout="horizontal"
+                    :step="5000"
+                    :max="10000000"
+                />
+                <label for="price">Wartość</label>
             </IftaLabel>
 
             <Button
