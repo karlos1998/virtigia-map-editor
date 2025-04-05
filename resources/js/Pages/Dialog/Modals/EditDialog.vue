@@ -9,12 +9,11 @@ import {route} from "ziggy-js";
 import axios from "axios";
 import {MultiSelectFilterEvent, useToast} from "primevue";
 import {usePage} from "@inertiajs/vue3";
-import {DropdownListType} from "../../../Resources/DropdownList.type";
-import {DialogNodeAdditionalAction} from "../../../types/DialogNodeAdditionalAction";
-import {BaseItemResource} from "../../../Resources/BaseItem.resource";
-import {DialogNodeAdditionalActionsResource} from "../../../Resources/DialogNodeAdditionalActions.resource";
-import {debounce} from "../../../debounce";
-import {DialogNodeOptionRule} from "../../../types/DialogNodeOptionRule";
+import {DropdownListType} from "@/Resources/DropdownList.type";
+import {DialogNodeAdditionalAction} from "@/types/DialogNodeAdditionalAction";
+import {BaseItemResource} from "@/Resources/BaseItem.resource";
+import {DialogNodeAdditionalActionsResource} from "@/Resources/DialogNodeAdditionalActions.resource";
+import {debounce} from "@/debounce";
 
 const dialogRef = inject<Ref<DynamicDialogInstance & {
     data: {
@@ -33,8 +32,10 @@ const form = reactive<{
 })
 
 onMounted(() => {
+    if(!dialogRef) return;
+
     form.content = dialogRef.value.data?.content ?? '';
-    form.additional_actions = dialogRef.value.data?.additional_actions ?? {};
+    form.additional_actions = !Array.isArray(dialogRef.value.data?.additional_actions) ? dialogRef.value.data?.additional_actions ?? {} : {};
 
     if(form.additional_actions[DialogNodeAdditionalAction.addItems]) {
         searchItems('', form.additional_actions[DialogNodeAdditionalAction.addItems].value as number[])
@@ -46,6 +47,8 @@ const toast = useToast();
 const processing = ref(false);
 
 const save = () => {
+    if(!dialogRef) return;
+
     processing.value = true;
     axios.patch(route('dialogs.nodes.update', {
         dialog: dialogRef.value.data.dialog_id,
@@ -66,7 +69,7 @@ const save = () => {
 }
 
 const dialogNodeAdditionalActionsList = usePage<{
-    dialogNodeAdditionalActionsList: DropdownListType
+    dialogNodeAdditionalActionsList: DropdownListType<DialogNodeAdditionalAction>
 }>().props.dialogNodeAdditionalActionsList
 
 const availableDialogNodeAdditionalActionsList = computed( () => dialogNodeAdditionalActionsList.filter(action => !form.additional_actions[action.value]))
@@ -78,7 +81,7 @@ const addAdditionalAction = () => {
 
     if(form.additional_actions[newAdditionalAction.value]) return;
 
-    let value;
+    let value: number|number[] = 1;
 
     if(newAdditionalAction.value == DialogNodeAdditionalAction.addItems) {
         value = [];
@@ -105,7 +108,9 @@ const searchItems = debounce(async (query: string, ids: number[]) => {
 }, 500);
 
 const itemsSearchChanged = ({ value }: MultiSelectFilterEvent) => {
-    searchItems(value, form.additional_actions[DialogNodeAdditionalAction.addItems].value as number[]);
+    if(form.additional_actions[DialogNodeAdditionalAction.addItems]) {
+        searchItems(value, form.additional_actions[DialogNodeAdditionalAction.addItems].value as number[]);
+    }
 };
 
 </script>
@@ -114,23 +119,23 @@ const itemsSearchChanged = ({ value }: MultiSelectFilterEvent) => {
     <div class="flex flex-col gap-2">
         <Textarea v-model="form.content" rows="5" cols="50" />
 
-        <InputGroup v-for="(value, name) in form.additional_actions">
+        <InputGroup v-for="(_, name) in form.additional_actions">
 
             <Button icon="pi pi-times" severity="danger" aria-label="Cancel"  @click="delete form.additional_actions[name]" />
 
             <InputGroupAddon style="min-width: 220px;">
-                {{dialogNodeAdditionalActionsList.find(action => action.value == name).label}}
+                {{dialogNodeAdditionalActionsList.find(action => action.value == name)?.label}}
             </InputGroupAddon>
 
             <InputNumber
-                v-if="typeof form.additional_actions[name].value == 'number' && (name == DialogNodeAdditionalAction.addGold)"
+                v-if="form.additional_actions[name] && typeof form.additional_actions[name].value == 'number' && (name == DialogNodeAdditionalAction.addGold)"
                 v-model="form.additional_actions[name].value"
                 :max="2000000000"
                 :min="0"
             />
 
             <MultiSelect
-                v-if="name == DialogNodeAdditionalAction.addItems"
+                v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.addItems"
                 v-model="form.additional_actions[name].value"
                 variant="filled"
                 :optionLabel="(item: BaseItemResource) => `[${item.id}] ${item.name} (${item.in_use ? 'W użyciu' : 'Nieużywany'})`"

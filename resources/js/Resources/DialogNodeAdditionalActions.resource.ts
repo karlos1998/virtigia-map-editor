@@ -1,3 +1,3 @@
-import {DialogNodeAdditionalAction} from "../types/DialogNodeAdditionalAction";
+import {DialogNodeAdditionalAction} from "@/types/DialogNodeAdditionalAction";
 
-export type DialogNodeAdditionalActionsResource = Record<DialogNodeAdditionalAction, { value: number| number[] }>
+export type DialogNodeAdditionalActionsResource = Partial<Record<DialogNodeAdditionalAction, { value: number| number[] }>>
