@@ -19,6 +19,7 @@
         "laravel/framework": "^11.31",
         "laravel/scout": "^10.14",
         "laravel/socialite": "^5.16",
+        "laravel/telescope": "^5.7",
         "laravel/tinker": "^2.9",
         "league/flysystem-aws-s3-v3": "^3.29",
         "meilisearch/meilisearch-php": "^1.13",

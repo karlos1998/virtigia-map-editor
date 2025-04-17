@@ -146,6 +146,10 @@ Route::middleware(['auth'])->group(function () {
         })->where('path', '.*');
     });
 
+    Route::get('user-me', function() {
+        dd(auth()->user());
+    });
+
 });
 
 Route::get('debug-stats/characters', fn() => \Inertia\Inertia::render('DebugStats/Characters'));
