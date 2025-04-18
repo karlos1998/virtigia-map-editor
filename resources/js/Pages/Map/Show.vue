@@ -77,6 +77,7 @@ const lastSelectedNpc = ref<NpcResource>();
 
 
 const toggleCollision = (x: number, y: number) => {
+    console.log('toggle collision')
     const index = y * props.map.x + x;
     const colArray = props.map.col.split('');
     colArray[index] = colArray[index] === '0' ? '1' : '0';
@@ -84,6 +85,8 @@ const toggleCollision = (x: number, y: number) => {
 };
 
 const addNewObject = (event: MouseEvent) => {
+
+    console.log('addNewObject')
 
     const x = trackerPosition.value.x;
     const y = trackerPosition.value.y;
@@ -366,6 +369,50 @@ const groupColors = [
 ]
 const getGroupColor = (groupId) => groupColors[groupId % groupColors.length]
 
+
+
+const isPaintingCollision = ref(false)
+const paintingMode = ref<'add' | 'remove' | null>(null)
+
+const paintCollision = (event: MouseEvent) => {
+    if (!editColsOn.value || !isPaintingCollision.value || !paintingMode.value) return
+
+    const x = Math.floor(event.offsetX / scale.value / 32)
+    const y = Math.floor(event.offsetY / scale.value / 32)
+    const index = y * props.map.x + x
+    const colArray = props.map.col.split('')
+
+    if (paintingMode.value === 'add' && colArray[index] === '0') {
+        colArray[index] = '1'
+        props.map.col = colArray.join('')
+    } else if (paintingMode.value === 'remove' && colArray[index] === '1') {
+        colArray[index] = '0'
+        props.map.col = colArray.join('')
+    }
+}
+
+const startPaintingCollision = (event: MouseEvent) => {
+    if (!editColsOn.value || event.button !== 0) return
+
+    paintingStart.value = {
+        x: event.clientX,
+        y: event.clientY,
+    }
+
+    // nie uruchamiamy jeszcze paintingMode ani isPaintingCollision – dopiero w `mousemove`
+}
+
+
+const stopPaintingCollision = () => {
+    isPaintingCollision.value = false
+    paintingMode.value = null
+    paintingStart.value = null
+}
+
+const paintingStart = ref<{ x: number, y: number } | null>(null)
+
+
+
 </script>
 
 <template>
@@ -478,12 +525,48 @@ const getGroupColor = (groupId) => groupColors[groupId % groupColors.length]
         transformOrigin: 'top left',
         transform: `translate(${mapOffset.x}px, ${mapOffset.y}px)`,
     }"
-                @mousemove="handleMouseMove"
-                @mousedown="startPanning"
-                @mouseup="stopPanning"
-                @mouseleave="stopPanning"
+                @mousemove="(e) => {
+                    if (paintingStart) {
+                        const dx = Math.abs(e.clientX - paintingStart.x)
+                        const dy = Math.abs(e.clientY - paintingStart.y)
+                        const threshold = 16 * scale
+
+                        if (!isPaintingCollision && (dx > threshold || dy > threshold)) {
+                            const x = Math.floor(e.offsetX / scale / 32)
+                            const y = Math.floor(e.offsetY / scale / 32)
+                            const index = y * props.map.x + x
+                            const colArray = props.map.col.split('')
+                            const current = colArray[index]
+
+                            paintingMode = current === '1' ? 'remove' : 'add'
+                            isPaintingCollision = true
+                        }
+                    }
+
+                    if (isPaintingCollision) {
+                        paintCollision(e)
+                    } else {
+                        handleMouseMove(e)
+                    }
+                }"
+                                @mousedown="(e) => {
+                    startPanning(e)
+                    startPaintingCollision(e)
+                }"
+                                @mouseup="(e) => {
+                    stopPanning()
+                    stopPaintingCollision()
+                }"
+                                @mouseleave="() => {
+                    stopPanning()
+                    stopPaintingCollision()
+                }"
+
                 @contextmenu.prevent
-                @click.self="addNewObject($event)"
+                @click.self="(e) => {
+                    addNewObject(e)
+                }"
+
             >
                 <div
                     :class="{
