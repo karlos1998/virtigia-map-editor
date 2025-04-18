@@ -59,12 +59,12 @@ class DialogService extends BaseService
              */
             $sourceOption = $sourceNode->options()->find($data['sourceOptionId']);
 
-            if ($sourceOption->edges()->count() > 1)
-            {
-                throw \Illuminate\Validation\ValidationException::withMessages([
-                    'message' => 'Opcja może mieć NA TEN MOMENT tylko 2 połączenia',
-                ]);
-            }
+//            if ($sourceOption->edges()->count() > 1)
+//            {
+//                throw \Illuminate\Validation\ValidationException::withMessages([
+//                    'message' => 'Opcja może mieć NA TEN MOMENT tylko 2 połączenia',
+//                ]);
+//            }
 
             $edge->sourceOption()->associate($sourceOption);
         } else {
