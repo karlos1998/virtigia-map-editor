@@ -121,4 +121,11 @@ class BaseNpcController extends Controller
     {
         $this->baseNpcService->updateImageFromBase64($baseNpc, $request->string('image'), $request->string('name'), 'img/npc');
     }
+
+
+    //metoda dosc tymczasowa...
+    public function forumGenerator() {
+        $npcs = BaseNpc::where('rank', request()->enum('rank', BaseNpcRank::class))->get();
+        return view('npcs-forum-generator', ['npcs' => $npcs]);
+    }
 }

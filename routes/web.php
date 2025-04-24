@@ -106,6 +106,8 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('shops/{shop}/items', [ShopController::class, 'addItem'])->name('shops.items.store');
                 Route::delete('shops/{shop}/items/{position}', [ShopController::class, 'destroyItem'])->name('shops.items.destroy');
 
+                Route::get('base-npcs/forum-generator', [BaseNpcController::class, 'forumGenerator'])->name('base-npcs.forum-generator');
+
                 Route::get('base-npcs', [BaseNpcController::class, 'index'])->name('base-npcs.index');
                 Route::get('base-npcs/create', [BaseNpcController::class, 'create'])->name('base-npcs.create');
                 Route::get('base-npcs/search', [BaseNpcController::class, 'search'])->name('base-npcs.search');
