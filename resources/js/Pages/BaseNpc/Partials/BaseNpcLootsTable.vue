@@ -4,6 +4,7 @@ import {BaseNpcWithLoots} from "../../../Resources/BaseNpc.resource";
 import {router} from "@inertiajs/vue3";
 import {route} from "ziggy-js";
 import AddShopItemDialog from "../../Shop/Components/AddShopItemDialog.vue";
+import AddBaseNpcLootsDialog from "../Components/AddBaseNpcLootsDialog.vue";
 import {useDialog} from "primevue/usedialog";
 import {useToast} from "primevue";
 import {BaseItemResource} from "../../../Resources/BaseItem.resource";
@@ -43,6 +44,34 @@ const showAttachItemModal = () => {
     })
 }
 
+const showAttachLootsFromBaseNpcModal = () => {
+    primeDialog.open(AddBaseNpcLootsDialog, {
+        props: {
+            header: 'Dodaj looty z innego potwora',
+            modal: true,
+        },
+        onClose(options) {
+            if (options.data?.baseNpc) {
+                const sourceBaseNpcId = options.data.baseNpc.id;
+                router.post(route('base-npcs.loots.attach-from-base-npc', {
+                    baseNpc: baseNpc.id
+                }), {
+                    sourceBaseNpcId,
+                }, {
+                    onError: (errors) =>  {
+                        toast.add({
+                            severity: 'error',
+                            summary: 'Wystąpił bład',
+                            detail: Object.values(errors)[0],
+                            life: 5000,
+                        })
+                    }
+                })
+            }
+        }
+    })
+}
+
 const detachItem = (item: BaseItemResource) => {
     router.delete(route('base-npcs.loots.detach', {
         baseNpc: baseNpc.id,
@@ -51,7 +80,10 @@ const detachItem = (item: BaseItemResource) => {
 }
 </script>
 <template>
-    <Button label="Dodaj przedmiot" @click="showAttachItemModal" />
+    <div class="flex gap-2 mb-2">
+        <Button label="Dodaj przedmiot" @click="showAttachItemModal" />
+        <Button label="Dodaj looty z innego potwora" @click="showAttachLootsFromBaseNpcModal" />
+    </div>
 
 
     <DataView data-key="id" :value="baseNpc.loots">

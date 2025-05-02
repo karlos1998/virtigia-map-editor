@@ -117,6 +117,11 @@ class BaseNpcController extends Controller
         $this->baseNpcService->detachLoot($baseNpc, $loot);
     }
 
+    public function attachLootsFromBaseNpc(BaseNpc $baseNpc, Request $request)
+    {
+        $this->baseNpcService->attachLootsFromBaseNpc($baseNpc, $request->get('sourceBaseNpcId'));
+    }
+
     public function updateImage(BaseNpc $baseNpc, UpdateBaseNpcImageRequest $request)
     {
         $this->baseNpcService->updateImageFromBase64($baseNpc, $request->string('image'), $request->string('name'), 'img/npc');

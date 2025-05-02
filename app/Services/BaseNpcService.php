@@ -116,5 +116,32 @@ final class BaseNpcService extends BaseService
             ->log('detach-base-npc-loots');
     }
 
+    public function attachLootsFromBaseNpc(BaseNpc $targetBaseNpc, int $sourceBaseNpcId)
+    {
+        $sourceBaseNpc = BaseNpc::findOrFail($sourceBaseNpcId);
+        $sourceLoots = $sourceBaseNpc->loots;
+
+        foreach ($sourceLoots as $loot) {
+            // Check if the loot is already attached to the target base NPC
+            if (!$targetBaseNpc->loots()->where('base_item_id', $loot->id)->exists()) {
+                $targetBaseNpc->loots()->attach($loot);
+
+                activity()
+                    ->causedBy(Auth::user())
+                    ->performedOn($loot)
+                    ->event('attach-to-base-npc-loots')
+                    ->withProperty('base_npc', $targetBaseNpc)
+                    ->log('attach-to-base-npc-loots');
+
+                activity()
+                    ->causedBy(Auth::user())
+                    ->performedOn($targetBaseNpc)
+                    ->event('attach-base-npc-loots')
+                    ->withProperty('base_item', $loot)
+                    ->log('attach-base-npc-loots');
+            }
+        }
+    }
+
 
 }
