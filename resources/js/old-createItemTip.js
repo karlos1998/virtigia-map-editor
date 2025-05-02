@@ -1514,6 +1514,10 @@ export function itemRarity(stat) {
     return '';
 }
 
+const unix_time = () => {
+    return Math.floor(new Date().getTime() / 1000);
+}
+
 export function itemTip(a) {
     // console.log('item tip init data', a)
     const b = ["", "", "", "", "", "", "", "", "", ""];
