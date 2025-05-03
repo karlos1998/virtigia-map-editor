@@ -41,4 +41,10 @@ final class DoorService
         $door->max_lvl = $validated['max_lvl'];
         $door->save();
     }
+
+    public function updateRequiredItem(Door $door, array $validated)
+    {
+        $door->requiredBaseItem()->associate($validated['base_item_id']);
+        $door->save();
+    }
 }

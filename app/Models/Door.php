@@ -36,4 +36,9 @@ class Door extends DynamicModel
     {
         return $this->hasOne(Map::class, 'id', 'map_id');
     }
+
+    public function requiredBaseItem()
+    {
+        return $this->belongsTo(BaseItem::class, 'required_base_item_id');
+    }
 }

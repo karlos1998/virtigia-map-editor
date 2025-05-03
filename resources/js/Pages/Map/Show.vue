@@ -14,6 +14,7 @@ import AddNpcToMap from "@/Pages/Map/Modals/AddNpcToMap.vue";
 import TeleportationSelectModal from "../../Components/TeleportationSelectModal.vue";
 import {DialogNodeTeleportationDataResource} from "@/Resources/DialogNodeTeleportationData.resource";
 import DoorLevelModal from "@/Pages/Map/Modals/DoorLevelModal.vue";
+import DoorRequiredItemModal from "@/Pages/Map/Modals/DoorRequiredItemModal.vue";
 
 const props = defineProps<{
     map: MapResource;
@@ -330,6 +331,27 @@ const openLevelModal = (door: DoorResource) => {
     });
 }
 
+const openRequiredItemModal = (door: DoorResource) => {
+    primeDialog.open(DoorRequiredItemModal, {
+        props: {
+            header: 'Ustaw wymagany przedmiot',
+            modal: true,
+            breakpoints: {
+                '960px': '75vw',
+                '640px': '90vw'
+            },
+            style: 'max-width:500px'
+        },
+        data: {
+            door
+        },
+        onClose() {
+            // Refresh the page to get updated door data
+            router.reload({ only: ['doors'] });
+        }
+    });
+}
+
 
 const mouseTrackerEl = ref<HTMLElement | null>(null)
 
@@ -493,6 +515,8 @@ const paintingStart = ref<{ x: number, y: number } | null>(null)
                     <Button label="Przesuń" @click="moveDoor(message.door); rejectCallback()" severity="info" size="small" />
 
                     <Button label="Poziom" @click="openLevelModal(message.door); rejectCallback()" severity="success" size="small" />
+
+                    <Button label="Przedmiot" @click="openRequiredItemModal(message.door); rejectCallback()" severity="help" size="small" />
                 </div>
 
             </template>
@@ -649,7 +673,8 @@ const paintingStart = ref<{ x: number, y: number } | null>(null)
                     v-for="door in doors"
                     v-tooltip="'Przejście do: ' + door.name + ' (' + door.go_x + ',' + door.go_y + '), \nPowrót: ' + (door.double_sided ? 'Tak' : 'Nie' ) +
                     (door.min_lvl !== null ? '\nMinimalny poziom: ' + door.min_lvl : '') +
-                    (door.max_lvl !== null ? '\nMaksymalny poziom: ' + door.max_lvl : '')"
+                    (door.max_lvl !== null ? '\nMaksymalny poziom: ' + door.max_lvl : '') +
+                    (door.required_base_item ? '\nWymagany przedmiot: ' + door.required_base_item.name : '')"
                     :style="{
                         width: `${32 * scale}px`,
                         height: `${32 * scale}px`,

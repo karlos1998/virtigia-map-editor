@@ -20,6 +20,10 @@ class DoorResource extends JsonResource
             'name' => $this->resource->targetMap->name,
 
             'double_sided' => $this->resource->doubleSided(),
+
+            'required_base_item' => $this->whenLoaded('requiredBaseItem', function() {
+                return BaseItemResource::make($this->resource->requiredBaseItem);
+            }),
         ];
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\MoveDoorRequest;
 use App\Http\Requests\StoreDoorRequest;
 use App\Http\Requests\UpdateDoorLevelRequest;
+use App\Http\Requests\UpdateDoorRequiredItemRequest;
 use App\Models\Door;
 use App\Services\DoorService;
 use Illuminate\Http\Request;
@@ -34,5 +35,10 @@ class DoorController extends Controller
     public function updateLevel(Door $door, UpdateDoorLevelRequest $request)
     {
         $this->doorService->updateLevel($door, $request->validated());
+    }
+
+    public function updateRequiredItem(Door $door, UpdateDoorRequiredItemRequest $request)
+    {
+        $this->doorService->updateRequiredItem($door, $request->validated());
     }
 }

@@ -47,7 +47,7 @@ class MapController extends Controller
         return Inertia::render('Map/Show', [
             'map' => MapResource::make($map),
             'npcs' => NpcResource::collection($map->npcs),
-            'doors' => DoorResource::collection($map->doors),
+            'doors' => DoorResource::collection($map->doors()->with('requiredBaseItem')->get()),
         ]);
     }
 
