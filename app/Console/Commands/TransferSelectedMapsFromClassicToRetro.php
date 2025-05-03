@@ -35,8 +35,11 @@ class TransferSelectedMapsFromClassicToRetro extends Command
     public function handle()
     {
 
+        //#1047 - Baszta p.2, #1048 - Baszta p.1, #1049 - Baszta, #1054 - Przejście astronoma, #1051 - Grota Heretyków p.2,  #1050 - Grota Heretyków p.1, #1053 - Grota Heretyków p.3, #1694 - Grota Heretyków p.4, #1695 - Grota Heretyków p.5.
+        $ids = [1047, 1048, 1049, 1054, 1051, 1050, 1053, 1694, 1695];
+
         //stary kupiecki trakt itp
-        $ids = [2308, 2352, 2351, 2350, 2324, 2330];
+//        $ids = [2308, 2352, 2351, 2350, 2324, 2330];
 
         //tristam
 //        $ids = [1293, 1294, 1297, 1302, 1315, 1322, 1307, 1298, 1308, 1303, 1306, 1301, 1305, 1304, 1299, 1300];
@@ -84,7 +87,7 @@ class TransferSelectedMapsFromClassicToRetro extends Command
 
         DynamicModel::setGlobalConnection('retro');
         if(\App\Models\Map::whereIn('id', $ids)->exists()) {
-            dd('ktoras z wybranych map juz istnieje');
+            dd('ktoras z wybranych map juz istnieje', \App\Models\Map::whereIn('id', $ids)->pluck('id'));
         }
         DynamicModel::setGlobalConnection('classic');
 
