@@ -76,7 +76,9 @@ const detachItem = (item: BaseItemResource) => {
     router.delete(route('base-npcs.loots.detach', {
         baseNpc: baseNpc.id,
         loot: item.id,
-    }));
+    }), {
+        preserveScroll: true,
+    });
 }
 </script>
 <template>
