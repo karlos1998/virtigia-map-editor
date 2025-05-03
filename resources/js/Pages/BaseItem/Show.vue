@@ -15,9 +15,11 @@ import {Link, router} from "@inertiajs/vue3";
 import {useConfirm, useToast} from "primevue";
 import EditBaseItemSrcDialog from "./Components/EditBaseItemSrcDialog.vue";
 import EditBaseItemDialog from "@/Pages/BaseItem/Components/EditBaseItemDialog.vue";
+import BaseItemActivityLogsTable from "./Partials/BaseItemActivityLogsTable.vue";
 
-const { baseItem } = defineProps<{
+const { baseItem, logs } = defineProps<{
     baseItem: BaseItemWithRelations,
+    logs?: any[]
 }>();
 
 const confirm = useConfirm();
@@ -189,6 +191,8 @@ const isEditBaseItemDialogVisible = ref(false);
         <div class="card" >
             <ShopsUsedItemTable :shops="baseItem.shops" />
         </div>
+
+        <BaseItemActivityLogsTable v-if="logs" :logs="logs" :base-item-id="baseItem.id" />
 
     </AppLayout>
 

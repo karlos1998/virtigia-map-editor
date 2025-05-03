@@ -14,6 +14,8 @@ use App\Models\BaseNpc;
 use App\Services\BaseItemService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Http\Resources\ActivityLogResource;
+use Spatie\Activitylog\Models\Activity;
 
 class BaseItemController extends Controller
 {
@@ -40,10 +42,17 @@ class BaseItemController extends Controller
 
     public function show(BaseItem $baseItem): \Inertia\Response
     {
+        // Get activity logs for this base item
+        $logs = Activity::where('subject_type', BaseItem::class)
+            ->where('subject_id', $baseItem->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return Inertia::render('BaseItem/Show', [
             'baseItem' => BaseItemResource::make($baseItem),
             'baseItemCategoryList' => BaseItemCategory::toDropdownList(),
             'baseItemRarityList' => BaseItemRarity::toDropdownList(),
+            'logs' => ActivityLogResource::collection($logs),
         ]);
     }
 

@@ -17,6 +17,8 @@ use App\Services\BaseNpcService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use App\Http\Resources\ActivityLogResource;
+use Spatie\Activitylog\Models\Activity;
 
 class BaseNpcController extends Controller
 {
@@ -67,9 +69,21 @@ class BaseNpcController extends Controller
      */
     public function show(BaseNpc $baseNpc)
     {
+        // Get activity logs for this base NPC
+        $logs = Activity::where('subject_type', BaseNpc::class)
+            ->where('subject_id', $baseNpc->id)
+            ->orWhere(function($query) use ($baseNpc) {
+                // Also get logs for loot changes related to this NPC
+                $query->where('description', 'like', '%loot%')
+                      ->where('properties->attributes->base_npc_id', $baseNpc->id);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         return Inertia::render('BaseNpc/Show', [
             'baseNpc' => BaseNpcResource::make($baseNpc->load('loots')),
             'locations' => $this->baseNpcService->getLocations($baseNpc),
+            'logs' => ActivityLogResource::collection($logs),
 
             'availableRanks' => BaseNpcRank::toDropdownList(),
             'availableCategories' => BaseNpcCategory::toDropdownList(),

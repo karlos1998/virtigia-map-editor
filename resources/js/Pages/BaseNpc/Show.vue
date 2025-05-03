@@ -15,10 +15,12 @@ import {ref} from "vue";
 import {BaseNpcWithLoots} from "../../Resources/BaseNpc.resource";
 import BaseNpcLootsTable from "./Partials/BaseNpcLootsTable.vue";
 import EditBaseNpcSrcDialog from "./Components/EditBaseNpcSrcDialog.vue";
+import BaseNpcActivityLogsTable from "./Partials/BaseNpcActivityLogsTable.vue";
 
 defineProps<{
     baseNpc: BaseNpcWithLoots
     locations: NpcLocationResource[]
+    logs?: any[]
 }>()
 
 const isEditBaseNpcDialogVisible = ref(false );
@@ -80,6 +82,8 @@ const isEditSrcVisible = ref(false );
         <div class="card">
             <BaseNpcLocationsTable />
         </div>
+
+        <BaseNpcActivityLogsTable v-if="logs" :logs="logs" :base-npc-id="baseNpc.id" />
 
         <RemoveBaseNpc :baseNpc />
 
