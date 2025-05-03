@@ -6,6 +6,8 @@ export interface DoorResource {
     go_map_id: number
     go_x: number
     go_y: number
+    min_lvl: number | null
+    max_lvl: number | null
 
     name: string
     double_sided: boolean

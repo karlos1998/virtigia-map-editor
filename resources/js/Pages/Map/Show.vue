@@ -8,13 +8,12 @@ import {NpcResource, NpcWithLocationResource} from '@/Resources/Npc.resource';
 import { DoorResource } from '@/Resources/Door.resource';
 import {useConfirm, useToast} from 'primevue';
 import ItemHeader from "@/Components/ItemHeader.vue";
-import EditOption from "@/Pages/Dialog/Modals/EditOption.vue";
 import {DynamicDialogCloseOptions, DynamicDialogInstance} from "primevue/dynamicdialogoptions";
 import {useDialog} from "primevue/usedialog";
 import AddNpcToMap from "@/Pages/Map/Modals/AddNpcToMap.vue";
 import TeleportationSelectModal from "../../Components/TeleportationSelectModal.vue";
-import {DialogNodeTeleportationDataResource} from "../../Resources/DialogNodeTeleportationData.resource";
-import axios from "axios";
+import {DialogNodeTeleportationDataResource} from "@/Resources/DialogNodeTeleportationData.resource";
+import DoorLevelModal from "@/Pages/Map/Modals/DoorLevelModal.vue";
 
 const props = defineProps<{
     map: MapResource;
@@ -310,6 +309,27 @@ const removeDoor = (door: DoorResource) => {
     }))
 }
 
+const openLevelModal = (door: DoorResource) => {
+    primeDialog.open(DoorLevelModal, {
+        props: {
+            header: 'Ustaw poziom przejścia',
+            modal: true,
+            breakpoints: {
+                '960px': '75vw',
+                '640px': '90vw'
+            },
+            style: 'max-width:500px'
+        },
+        data: {
+            door
+        },
+        onClose() {
+            // Refresh the page to get updated door data
+            router.reload({ only: ['doors'] });
+        }
+    });
+}
+
 
 const mouseTrackerEl = ref<HTMLElement | null>(null)
 
@@ -471,6 +491,8 @@ const paintingStart = ref<{ x: number, y: number } | null>(null)
                     <Button label="Usuń" @click="removeDoor(message.door); rejectCallback()" severity="danger" size="small" />
 
                     <Button label="Przesuń" @click="moveDoor(message.door); rejectCallback()" severity="info" size="small" />
+
+                    <Button label="Poziom" @click="openLevelModal(message.door); rejectCallback()" severity="success" size="small" />
                 </div>
 
             </template>
@@ -625,7 +647,9 @@ const paintingStart = ref<{ x: number, y: number } | null>(null)
                 <div
                     class="door"
                     v-for="door in doors"
-                    v-tooltip="'Przejście do: ' + door.name + ' (' + door.go_x + ',' + door.go_y + '), \nPowrót: ' + (door.double_sided ? 'Tak' : 'Nie' )"
+                    v-tooltip="'Przejście do: ' + door.name + ' (' + door.go_x + ',' + door.go_y + '), \nPowrót: ' + (door.double_sided ? 'Tak' : 'Nie' ) +
+                    (door.min_lvl !== null ? '\nMinimalny poziom: ' + door.min_lvl : '') +
+                    (door.max_lvl !== null ? '\nMaksymalny poziom: ' + door.max_lvl : '')"
                     :style="{
                         width: `${32 * scale}px`,
                         height: `${32 * scale}px`,

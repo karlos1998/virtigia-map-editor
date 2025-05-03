@@ -15,6 +15,9 @@ class Door extends DynamicModel
         'go_map_id',
         'go_x',
         'go_y',
+
+        'min_lvl',
+        'max_lvl',
     ];
 
     public function targetMap() {

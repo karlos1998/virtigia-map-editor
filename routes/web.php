@@ -129,6 +129,7 @@ Route::middleware(['auth'])->group(function () {
 
                 Route::post('doors', [DoorController::class, 'store'])->name('doors.store');
                 Route::patch('doors/{door}/move', [DoorController::class, 'move'])->name('doors.move');
+                Route::patch('doors/{door}/level', [DoorController::class, 'updateLevel'])->name('doors.level.update');
                 Route::delete('doors/{door}', [DoorController::class, 'destroy'])->name('doors.destroy');
 
 

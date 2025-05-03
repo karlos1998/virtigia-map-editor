@@ -34,4 +34,11 @@ final class DoorService
             $reverseDoor->save();
         }
     }
+
+    public function updateLevel(Door $door, array $validated)
+    {
+        $door->min_lvl = $validated['min_lvl'];
+        $door->max_lvl = $validated['max_lvl'];
+        $door->save();
+    }
 }
