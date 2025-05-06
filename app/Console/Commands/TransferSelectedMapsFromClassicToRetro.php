@@ -35,8 +35,19 @@ class TransferSelectedMapsFromClassicToRetro extends Command
     public function handle()
     {
 
+        //thuzal
+        $ids = [
+            347, 2020, 2066, 2055, 2899, 2900, 2901, 2065, 2176, 2064,
+            2063, 2056, 2163, 2171, 2172, 2166, 2168, 2169, 2170, 2164,
+            2165, 2183, 2145, 2143, 2144, 2153, 2154, 2146, 2147, 3152,
+            2221, 2222, 2223, 114, 1985, 1983, 2180, 1986, 1988, 2001,
+            2009, 1990, 2053, 2049, 2131, 2132, 2134, 2046, 2047, 2050,
+            2051, 1992, 2124, 2126, 2125, 1994, 2008, 1991, 2007, 2002,
+            2432, 2434, 2431, 2435, 2433, 2760, 2052, 2357, 2355, 2356,
+            2354, 2353, 1396, 1390, 1395, 1856, 1857,
+        ];
         //#1047 - Baszta p.2, #1048 - Baszta p.1, #1049 - Baszta, #1054 - Przejście astronoma, #1051 - Grota Heretyków p.2,  #1050 - Grota Heretyków p.1, #1053 - Grota Heretyków p.3, #1694 - Grota Heretyków p.4, #1695 - Grota Heretyków p.5.
-        $ids = [1047, 1048, 1049, 1054, 1051, 1050, 1053, 1694, 1695];
+//        $ids = [1047, 1048, 1049, 1054, 1051, 1050, 1053, 1694, 1695];
 
         //stary kupiecki trakt itp
 //        $ids = [2308, 2352, 2351, 2350, 2324, 2330];
@@ -94,13 +105,22 @@ class TransferSelectedMapsFromClassicToRetro extends Command
         $maps = \App\Models\Map::whereIn('id', $ids)->get();
 
         $mapsArray = [];
+
         foreach ($maps as $map) {
             $this->copyImageToRetroDirectory("img/locations/{$map->src}");
-            $mapsArray[] = [
-              ...$map->toArray(),
-                'pvp' => $map->pvp == 2 ? 3 : $map->pvp,
-              'src' => str_replace('classic', 'retro', $map->src),
-            ];
+
+            $mapData = $map->toArray();
+
+            $mapData['pvp'] = $map->pvp == 2 ? 3 : $map->pvp;
+            $mapData['src'] = str_replace('classic', 'retro', $map->src);
+
+            if (isset($mapData['welcome'])) {
+//                $mapData['welcome'] = mb_convert_encoding($mapData['welcome'], 'UTF-8', 'UTF-8');
+//                $mapData['welcome'] = preg_replace('/[^\x20-\x7E\xA0-\xFFąćęłńóśżźĄĆĘŁŃÓŚŻŹ]/u', '', $mapData['welcome']);
+                $mapData['welcome'] = "";
+            }
+
+            $mapsArray[] = $mapData;
         }
 
         $npcLocations = NpcLocation::whereIn('map_id', $ids)->get();
@@ -164,6 +184,8 @@ class TransferSelectedMapsFromClassicToRetro extends Command
                 unset($data['id']);
                 $data['created_at'] = now()->toDateTimeString();
                 $data['updated_at'] = now()->toDateTimeString();
+                $data['max_lvl'] = $data['max_lvl'] ?? null;
+                $data['min_lvl'] = $data['min_lvl'] ?? null;
                 DB::connection('retro')->table('doors')->insert($data);
             }
         });
