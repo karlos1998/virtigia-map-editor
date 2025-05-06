@@ -70,6 +70,38 @@ type Data = {
                     </template>
                 </AdvanceColumn>
 
+                <AdvanceColumn field="rank" header="Rank">
+                    <template #body="{ data }: Data">
+                        <Badge style="background: #4caf50" class="w-full">
+                            {{ data.rank }}
+                        </Badge>
+                    </template>
+                </AdvanceColumn>
+
+                <AdvanceColumn field="category" header="Category">
+                    <template #body="{ data }: Data">
+                        <Badge style="background: #ff9800" class="w-full">
+                            {{ data.category }}
+                        </Badge>
+                    </template>
+                </AdvanceColumn>
+
+                <AdvanceColumn field="profession" header="Profession">
+                    <template #body="{ data }: Data">
+                        <Badge style="background: #9c27b0" class="w-full">
+                            {{ data.profession_name }}
+                        </Badge>
+                    </template>
+                </AdvanceColumn>
+
+                <AdvanceColumn field="type" header="Type">
+                    <template #body="{ data }: Data">
+                        <Badge style="background: #607d8b" class="w-full">
+                            {{ data.type }}
+                        </Badge>
+                    </template>
+                </AdvanceColumn>
+
                 <AdvanceColumn field="location_count" header="Ilość Wystąpień">
                     <template #body="{ data }: Data">
                         <Badge style="background: #31c1d0" class="w-full">

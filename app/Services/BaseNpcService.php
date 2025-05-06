@@ -36,6 +36,10 @@ final class BaseNpcService extends BaseService
                   'name' => new TableTextColumn(sortable: true),
                   'src' => new TableTextColumn(sortable: true),
                   'lvl' => new TableTextColumn(sortable: true),
+                  'rank' => new TableTextColumn(sortable: true),
+                  'category' => new TableTextColumn(sortable: true),
+                  'profession' => new TableTextColumn(sortable: true),
+                  'type' => new TableTextColumn(sortable: true),
                 ],
                 globalFilterColumns: ['name'],
             )
