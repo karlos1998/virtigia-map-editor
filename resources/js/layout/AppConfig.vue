@@ -387,39 +387,66 @@ function applyTheme(type, color) {
 const layoutStore = useLayoutStore()
 
 const loadLayoutConfigFromStorage = () => {
-    if(
-        // layoutStore.darkTheme
-        document.documentElement.classList.contains('app-dark') //pewniejsza metoda
-    ) {
+    // First check if we have settings in the store
+    if (layoutStore.darkTheme !== undefined) {
+        // Apply dark theme if it's set in the store
+        if (layoutStore.darkTheme) {
+            if (!document.documentElement.classList.contains('app-dark')) {
+                document.documentElement.classList.add('app-dark');
+            }
+            layout.layoutConfig.darkTheme = true;
+            layout.layoutConfig.menuTheme = 'dark';
+            darkTheme.value = true;
+        } else {
+            if (document.documentElement.classList.contains('app-dark')) {
+                document.documentElement.classList.remove('app-dark');
+            }
+            layout.layoutConfig.darkTheme = false;
+            layout.layoutConfig.menuTheme = layoutStore.menuTheme || 'light';
+            darkTheme.value = false;
+        }
+    } else if (document.documentElement.classList.contains('app-dark')) {
+        // Fallback to checking the DOM if store doesn't have the setting
         layout.layoutConfig.darkTheme = true;
         layout.layoutConfig.menuTheme = 'dark';
         darkTheme.value = true;
-        // layout.toggleDarkMode();
     }
 
-
-    if(layoutStore.primary) {
-        const primary = primaryColors.value.find(color => color.name === layoutStore.primary)
-        if(primary) {
+    // Apply primary color
+    if (layoutStore.primary) {
+        layout.layoutConfig.primary = layoutStore.primary;
+        const primary = primaryColors.value.find(color => color.name === layoutStore.primary);
+        if (primary) {
             updateColors('primary', primary);
         }
     }
 
-    if(layoutStore.surface) {
+    // Apply surface color
+    if (layoutStore.surface) {
+        layout.layoutConfig.surface = layoutStore.surface;
         const surface = surfaces.value.find(color => color.name === layoutStore.surface);
-        if(surface) {
+        if (surface) {
             updateColors('surface', surface);
         }
     }
 
-    if(layoutStore.menuMode) {
-        layout.setMenuMode(layoutStore.menuMode)
+    // Apply menu mode
+    if (layoutStore.menuMode) {
+        layout.layoutConfig.menuMode = layoutStore.menuMode;
+        menuMode.value = layoutStore.menuMode;
+        layout.setMenuMode(layoutStore.menuMode);
     }
 
-    if(layoutStore.menuTheme) {
-        layout.layoutConfig.menuTheme = layoutStore.menuTheme
+    // Apply menu theme
+    if (layoutStore.menuTheme) {
+        layout.layoutConfig.menuTheme = layoutStore.menuTheme;
     }
 
+    // Apply preset
+    if (layoutStore.preset) {
+        layout.layoutConfig.preset = layoutStore.preset;
+        preset.value = layoutStore.preset;
+    }
 }
 
 if(!layoutLoaded.value) {
@@ -428,16 +455,27 @@ if(!layoutLoaded.value) {
 
     //zapis do local localstorage i pinii konfiguracji motywu
     watch(layout.layoutConfig, (newValue) => {
-
+        // Synchronize all layout config properties with the Pinia store
         for (const key in newValue) {
             if (newValue.hasOwnProperty(key)) {
                 layoutStore[key] = newValue[key];
             }
         }
 
-        // document.cookie = `is_theme_dark=${newValue.darkTheme}; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/`;
+        // Save dark theme setting to localStorage for quick access on page load
         localStorage.setItem('is_theme_dark', newValue.darkTheme ? '1' : '0');
-    })
+
+        // Ensure the DOM class is in sync with the dark theme setting
+        if (newValue.darkTheme) {
+            if (!document.documentElement.classList.contains('app-dark')) {
+                document.documentElement.classList.add('app-dark');
+            }
+        } else {
+            if (document.documentElement.classList.contains('app-dark')) {
+                document.documentElement.classList.remove('app-dark');
+            }
+        }
+    }, { deep: true }) // Use deep watching to catch nested property changes
 
     //zmiana motywu systemowego
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener('change', (event) => {
@@ -446,7 +484,6 @@ if(!layoutLoaded.value) {
             layout.toggleDarkMode()
         }
     });
-
 }
 
 /////////////////////////////////////////////////////////////////////
