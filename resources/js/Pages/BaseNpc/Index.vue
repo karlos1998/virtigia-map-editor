@@ -110,6 +110,30 @@ type Data = {
                     </template>
                 </AdvanceColumn>
 
+                <AdvanceColumn field="loot_counts.total" header="Looty">
+                    <template #body="{ data }: Data">
+                        <div class="flex flex-column gap-1">
+                            <Badge style="background: #607d8b" class="w-full">
+                                Razem: {{ data.loot_counts.total }}
+                            </Badge>
+                            <div class="flex gap-1 justify-content-between">
+                                <Badge v-if="data.loot_counts.legendary > 0" style="background: #ff9800" class="flex-1">
+                                    L: {{ data.loot_counts.legendary }}
+                                </Badge>
+                                <Badge v-if="data.loot_counts.heroic > 0" style="background: #2196f3" class="flex-1">
+                                    H: {{ data.loot_counts.heroic }}
+                                </Badge>
+                                <Badge v-if="data.loot_counts.unique > 0" style="background: #4caf50" class="flex-1">
+                                    U: {{ data.loot_counts.unique }}
+                                </Badge>
+                                <Badge v-if="data.loot_counts.common > 0" style="background: #9e9e9e" class="flex-1">
+                                    C: {{ data.loot_counts.common }}
+                                </Badge>
+                            </div>
+                        </div>
+                    </template>
+                </AdvanceColumn>
+
                 <Column header="Action" style="width: 20%">
                     <template #body="{data}">
                         <div style="white-space: nowrap">

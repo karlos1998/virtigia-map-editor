@@ -25,9 +25,9 @@ class NpcService extends BaseService
     {
         return $this->fetchData(
             NpcResource::class,
-            $this->npcModel->with(['locations']),
+            $this->npcModel->with(['locations', 'dialog', 'base']),
             new TableService(
-//                globalFilterColumns: ['base.name'], //todo - brak szukania po relacji ;c
+                globalFilterColumns: ['base.name', 'base.lvl', 'base.rank', 'base.category'],
             )
         );
     }

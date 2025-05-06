@@ -26,16 +26,16 @@ const expandedRows = ref();
 
             <div class="flex flex-wrap gap-2 items-center justify-between">
                 <div class="font-extrabold">Lista Dialogów</div>
-<!--                <IconField>-->
-<!--                    <InputIcon>-->
-<!--                        <i class="pi pi-search" />-->
-<!--                    </InputIcon>-->
-<!--                    <InputText-->
-<!--                        :value="globalFilterValue"-->
-<!--                        @update:model-value="globalFilterUpdated"-->
-<!--                        placeholder="Szukaj"-->
-<!--                    />-->
-<!--                </IconField>-->
+                <IconField>
+                    <InputIcon>
+                        <i class="pi pi-search" />
+                    </InputIcon>
+                    <InputText
+                        :value="globalFilterValue"
+                        @update:model-value="globalFilterUpdated"
+                        placeholder="Szukaj po nazwie"
+                    />
+                </IconField>
             </div>
         </template>
 

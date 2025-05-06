@@ -1,6 +1,9 @@
 <?php
 namespace App\Services;
 
+use App\Enums\BaseNpcCategory;
+use App\Enums\BaseNpcRank;
+use App\Enums\Profession;
 use App\Http\Resources\BaseNpcResource;
 use App\Http\Resources\PureNpcWithOnlyLocationsResource;
 use App\Models\BaseItem;
@@ -11,6 +14,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Stringable;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
+use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownColumn;
+use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownOptions\TableDropdownOption;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableTextColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\TableService;
 
@@ -36,12 +41,38 @@ final class BaseNpcService extends BaseService
                   'name' => new TableTextColumn(sortable: true),
                   'src' => new TableTextColumn(sortable: true),
                   'lvl' => new TableTextColumn(sortable: true),
-                  'rank' => new TableTextColumn(sortable: true),
-                  'category' => new TableTextColumn(sortable: true),
-                  'profession' => new TableTextColumn(sortable: true),
+
+                  'rank' => new TableDropdownColumn(
+                      placeholder: 'Rank',
+                      options: array_map(function($rank) {
+                          return new TableDropdownOption($rank->description(), fn($query) => $query->where('rank', $rank->value));
+                      }, BaseNpcRank::cases())
+                  ),
+
+                  'category' => new TableDropdownColumn(
+                      placeholder: 'Category',
+                      options: array_map(function($category) {
+                          return new TableDropdownOption($category->description(), fn($query) => $query->where('category', $category->value));
+                      }, BaseNpcCategory::cases())
+                  ),
+
+                  'profession' => new TableDropdownColumn(
+                      placeholder: 'Profession',
+                      options: array_map(function($profession) {
+                          return new TableDropdownOption($profession->description(), fn($query) => $query->where('profession', $profession->value));
+                      }, Profession::cases())
+                  ),
+
                   'type' => new TableTextColumn(sortable: true),
+
+                  'loot_counts.total' => new TableTextColumn(
+                      placeholder: 'Ilość lootów',
+                      sortable: true,
+                      sortPath: 'loots_count'
+                  ),
                 ],
-                globalFilterColumns: ['name'],
+                globalFilterColumns: ['name', 'rank', 'category', 'profession', 'type'],
+//                withCount: ['loots'],
             )
         );
     }

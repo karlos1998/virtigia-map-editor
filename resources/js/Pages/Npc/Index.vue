@@ -21,22 +21,22 @@ type Data = {
             >
 
 
-<!--                <template #header="{ globalFilterValue, globalFilterUpdated }">-->
+                <template #header="{ globalFilterValue, globalFilterUpdated }">
 
-<!--                    <div class="flex flex-wrap gap-2 items-center justify-between">-->
-<!--                        <h4 class="m-0">Lista rozmieszczonych npc</h4>-->
-<!--                        <IconField>-->
-<!--                            <InputIcon>-->
-<!--                                <i class="pi pi-search" />-->
-<!--                            </InputIcon>-->
-<!--                            <InputText-->
-<!--                                :value="globalFilterValue"-->
-<!--                                @update:model-value="globalFilterUpdated"-->
-<!--                                placeholder="Szukaj"-->
-<!--                            />-->
-<!--                        </IconField>-->
-<!--                    </div>-->
-<!--                </template>-->
+                    <div class="flex flex-wrap gap-2 items-center justify-between">
+                        <h4 class="m-0">Lista rozmieszczonych npc</h4>
+                        <IconField>
+                            <InputIcon>
+                                <i class="pi pi-search" />
+                            </InputIcon>
+                            <InputText
+                                :value="globalFilterValue"
+                                @update:model-value="globalFilterUpdated"
+                                placeholder="Szukaj po nazwie, lvl, rank, category"
+                            />
+                        </IconField>
+                    </div>
+                </template>
 
                 <AdvanceColumn field="id" header="ID" style="width: 5%" />
 
@@ -55,6 +55,23 @@ type Data = {
                 <AdvanceColumn field="locations" header="Lokalizacja/a">
                     <template #body="{ data }: Data">
                         <NpcLocationsColumnTemplate :npc="data" />
+                    </template>
+                </AdvanceColumn>
+
+                <AdvanceColumn field="dialog" header="Dialog">
+                    <template #body="{ data }: Data">
+                        <div v-if="data.dialog">
+                            <Badge severity="success" class="mr-1">
+                                <i class="pi pi-check mr-1"></i>
+                                <span>Dialog przypisany</span>
+                            </Badge>
+                        </div>
+                        <div v-else>
+                            <Badge severity="warning">
+                                <i class="pi pi-times mr-1"></i>
+                                <span>Brak dialogu</span>
+                            </Badge>
+                        </div>
                     </template>
                 </AdvanceColumn>
 

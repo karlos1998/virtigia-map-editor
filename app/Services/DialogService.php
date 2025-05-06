@@ -20,6 +20,9 @@ class DialogService extends BaseService
         return $this->fetchData(
             DialogResource::class,
             $this->dialogModel->with(['npcs', 'npcs.locations']),
+            new \Karlos3098\LaravelPrimevueTableService\Services\TableService(
+                globalFilterColumns: ['name'],
+            )
         );
     }
 
