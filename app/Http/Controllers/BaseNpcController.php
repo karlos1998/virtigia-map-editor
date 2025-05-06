@@ -144,7 +144,7 @@ class BaseNpcController extends Controller
 
     //metoda dosc tymczasowa...
     public function forumGenerator() {
-        $npcs = BaseNpc::where('rank', request()->enum('rank', BaseNpcRank::class))->get();
+        $npcs = BaseNpc::where('rank', request()->enum('rank', BaseNpcRank::class))->orderBy('lvl', 'asc')->get();
         return view('npcs-forum-generator', ['npcs' => $npcs]);
     }
 }

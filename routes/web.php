@@ -44,8 +44,6 @@ Route::middleware(['auth'])->group(function () {
 
     Route::middleware(\App\Http\Middleware\HasRole::class)->group(function () {
 
-        Route::get('/dashboard', DashboardController::class)->name('dashboard');
-
         Route
 //        ->where(['retro', 'classic'])
             ::middleware([
@@ -53,6 +51,8 @@ Route::middleware(['auth'])->group(function () {
                 //RemoveWorldTemplateNameFromRouteParameters::class //todo
             ])
             ->group(function () {
+
+                Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
                 //todo - trzbea to pogrupowac...
                 Route::get('dialogs', [DialogController::class, 'index'])->name('dialogs.index');
@@ -106,6 +106,9 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('shops/{shop}/items', [ShopController::class, 'addItem'])->name('shops.items.store');
                 Route::delete('shops/{shop}/items/{position}', [ShopController::class, 'destroyItem'])->name('shops.items.destroy');
 
+                /**
+                Generowanie template z npc dla forum
+                 */
                 Route::get('base-npcs/forum-generator', [BaseNpcController::class, 'forumGenerator'])->name('base-npcs.forum-generator');
 
                 Route::get('base-npcs', [BaseNpcController::class, 'index'])->name('base-npcs.index');
