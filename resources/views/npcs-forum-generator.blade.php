@@ -7,6 +7,7 @@
         <div>{{ $npc->name }}</div>
         <div>#base-npc.retro.{{ $npc->id }}</div>
         <br><br>
+
         @php
             $groupedLoots = $npc->loots->groupBy('rarity');
         @endphp
@@ -35,8 +36,24 @@
             @endif
         @endforeach
 
+        @if ($npc->locations->isNotEmpty())
+            @php
+                $validLocations = $npc->locations->filter(fn($npcInstance) => $npcInstance->locations->isNotEmpty());
+            @endphp
+
+            @if ($validLocations->isNotEmpty())
+                <br>
+                <div>Respy:</div>
+                @foreach ($validLocations as $npcInstance)
+                    @foreach ($npcInstance->locations as $location)
+                        <div>
+                             {{ $location->map->name }} ({{ $location->map_id }}) ({{ $location->x }}, {{ $location->y }})
+                        </div>
+                    @endforeach
+                @endforeach
+            @endif
+        @endif
+
         [/center]</div>
-
-        <br><br>
-
+    <br><br>
 @endforeach
