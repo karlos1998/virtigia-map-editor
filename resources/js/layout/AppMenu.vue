@@ -78,7 +78,7 @@ const model = ref([
 
 <template>
     <div class="menu-wrapper" :class="{ 'horizontal': isHorizontal, 'slim': isSlim, 'slim-plus': isSlimPlus }">
-        <div class="menu-search mb-4" v-if="!isSlim && !isSlimPlus">
+        <div class="menu-search mb-4" v-if="!isSlim && !isSlimPlus && !isHorizontal">
             <span class="p-input-icon-left w-full">
                 <i class="pi pi-search"></i>
                 <InputText type="text" placeholder="Szukaj w menu..." class="w-full" />
@@ -87,7 +87,7 @@ const model = ref([
 
         <ul class="layout-menu" :class="{ 'horizontal-menu': isHorizontal }">
             <template v-for="(item, i) in model" :key="item">
-                <div class="menu-category" v-if="!isSlim && !isSlimPlus">
+                <div class="menu-category" v-if="!isSlim && !isSlimPlus && !isHorizontal">
                     <span class="menu-category-label">{{ item.label }}</span>
                 </div>
 

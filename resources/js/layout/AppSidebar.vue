@@ -74,7 +74,7 @@ const showLogoText = computed(() => !isSlim.value && !isSlimPlus.value);
 
 :deep(.layout-horizontal) .layout-sidebar {
     @apply fixed top-16 left-0 right-0 h-auto w-full border-r-0 border-b border-gray-100 dark:border-gray-700 pt-0;
-    z-index: 49;
+    z-index: 39;
 }
 
 :deep(.layout-slim) .layout-sidebar,

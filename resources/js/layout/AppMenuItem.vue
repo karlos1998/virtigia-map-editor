@@ -157,6 +157,10 @@ function calculatePosition(overlay, target) {
         if (isHorizontal.value) {
             const width = left + oWidth + scrollbarWidth;
             overlay.style.left = vWidth < width ? `${left - (width - vWidth)}px` : `${left}px`;
+
+            // Set top position for horizontal menu to be below the menu item
+            const menuHeight = target.offsetHeight;
+            overlay.style.top = `${top + menuHeight + 5}px`; // Add 5px extra space
         } else if (isSlim.value || isSlimPlus.value) {
             const height = top + oHeight;
             overlay.style.top = vHeight < height ? `${top - (height - vHeight)}px` : `${top}px`;
@@ -215,11 +219,11 @@ const pathname = computed(() => window.location.pathname);
 
 <style lang="scss" scoped>
 .horizontal-menuitem {
-    @apply mx-1;
+    @apply mx-2;
 }
 
 .horizontal-menuitem > .layout-menuitem-link {
-    @apply rounded-lg px-3 py-2;
+    @apply rounded-lg px-4 py-2 flex items-center;
 }
 
 .slim-menuitem > .layout-menuitem-link {
@@ -231,11 +235,11 @@ const pathname = computed(() => window.location.pathname);
 }
 
 :deep(.layout-horizontal) .layout-root-submenulist {
-    @apply absolute top-full left-0 bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-100 dark:border-gray-700 min-w-48 z-50;
+    @apply absolute top-full left-0 bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-100 dark:border-gray-700 min-w-48 z-50 p-2 mt-2;
 }
 
 :deep(.layout-slim) .layout-root-submenulist,
 :deep(.layout-slim-plus) .layout-root-submenulist {
-    @apply absolute left-full top-0 bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-100 dark:border-gray-700 min-w-48 z-50;
+    @apply absolute left-full top-0 bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-100 dark:border-gray-700 min-w-48 z-50 p-2;
 }
 </style>

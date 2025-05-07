@@ -100,6 +100,10 @@ const user = computed(() => usePage().props.auth.user);
     @apply flex items-center;
 }
 
+:deep(.layout-horizontal) .topbar-end {
+    @apply ml-auto px-4;
+}
+
 .topbar-menu {
     @apply flex items-center list-none p-0 m-0;
 }
