@@ -178,5 +178,46 @@ final class BaseNpcService extends BaseService
         }
     }
 
+    public function storeSimple(mixed $validated)
+    {
+        // Extract image data
+        $base64 = $validated['image'];
+        preg_match('/^data:image\/(png|gif);base64,/', $base64, $matches);
+        $extension = $matches[1] ?? 'png';
+
+        $imageData = substr($base64, strpos($base64, ',') + 1);
+        $decodedImage = base64_decode($imageData);
+
+        // Generate filename from name
+        $fileName = Str::slug(pathinfo($validated['name'], PATHINFO_FILENAME));
+        if (empty($fileName)) {
+            $fileName = Str::uuid();
+        }
+
+        // Set the storage path to retro/new
+        $storagePath = "img/npc/retro/new/";
+        $filePath = "{$storagePath}{$fileName}.{$extension}";
+
+        // Check if file exists and generate a unique name if needed
+        if (Storage::disk('s3')->exists($filePath)) {
+            $fileName = Str::uuid() . "-{$fileName}";
+            $filePath = "{$storagePath}{$fileName}.{$extension}";
+        }
+
+        // Upload the file
+        Storage::disk('s3')->put($filePath, $decodedImage);
+
+        // Create and save the BaseNpc with the correct src
+        $baseNpc = new BaseNpc();
+        $baseNpc->name = $validated['name'];
+        $baseNpc->lvl = $validated['lvl'];
+        $baseNpc->rank = $validated['rank'];
+        $baseNpc->category = $validated['category'];
+        $baseNpc->src = "retro/new/{$fileName}.{$extension}";
+        $baseNpc->save();
+
+        return $baseNpc;
+    }
+
 
 }

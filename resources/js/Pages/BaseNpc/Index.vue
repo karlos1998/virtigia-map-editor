@@ -16,9 +16,14 @@ type Data = {
     <AppLayout>
 
         <div class="card">
-            <Link :href="route('base-npcs.create')">
-                <Button label="Dodaj bazowego NPC" />
-            </Link>
+            <div class="flex gap-2">
+                <Link :href="route('base-npcs.create')">
+                    <Button label="Dodaj bazowego NPC (prosty)" icon="pi pi-plus" />
+                </Link>
+                <Link :href="route('base-npcs.create-advanced')">
+                    <Button label="Dodaj bazowego NPC (zaawansowany)" icon="pi pi-plus" severity="secondary" />
+                </Link>
+            </div>
         </div>
 
         <div class="card">

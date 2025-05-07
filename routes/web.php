@@ -112,6 +112,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('base-npcs/forum-generator', [BaseNpcController::class, 'forumGenerator'])->name('base-npcs.forum-generator');
 
                 Route::get('base-npcs', [BaseNpcController::class, 'index'])->name('base-npcs.index');
+                Route::get('base-npcs/create-advanced', [BaseNpcController::class, 'createAdvanced'])->name('base-npcs.create-advanced');
                 Route::get('base-npcs/create', [BaseNpcController::class, 'create'])->name('base-npcs.create');
                 Route::get('base-npcs/search', [BaseNpcController::class, 'search'])->name('base-npcs.search');
 
@@ -123,7 +124,8 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('base-npcs/{baseNpc}/loots/from-base-npc', [BaseNpcController::class, 'attachLootsFromBaseNpc'])->name('base-npcs.loots.attach-from-base-npc');
                 Route::delete('base-npcs/{baseNpc}/loots/{loot}', [BaseNpcController::class, 'detachLoot'])->name('base-npcs.loots.detach');
                 Route::get('web-api/base-npcs', [BaseNpcController::class, 'indexJson'])->name('web-api.base-npcs.index');
-                Route::post('base-npcs', [BaseNpcController::class, 'store'])->name('base-npcs.store');
+                Route::post('base-npcs/advanced', [BaseNpcController::class, 'store'])->name('base-npcs.store');
+                Route::post('base-npcs', [BaseNpcController::class, 'storeSimple'])->name('base-npcs.store-simple');
                 Route::delete('base-npcs/{baseNpc}', [BaseNpcController::class, 'destroy'])->name('base-npcs.destroy');
                 Route::patch('base-npcs/{baseNpc}', [BaseNpcController::class, 'update'])->name('base-npcs.update');
 

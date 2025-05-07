@@ -7,6 +7,7 @@ use App\Enums\BaseNpcRank;
 use App\Enums\Profession;
 use App\Http\Requests\AttachBaseNpcLootRequest;
 use App\Http\Requests\StoreBaseNpcRequest;
+use App\Http\Requests\StoreSimpleBaseNpcRequest;
 use App\Http\Requests\UpdateBaseNpcImageRequest;
 use App\Http\Requests\UpdateBaseNpcRequest;
 use App\Http\Resources\BaseNpcResource;
@@ -44,9 +45,9 @@ class BaseNpcController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show the form for creating a new resource with advanced options.
      */
-    public function create()
+    public function createAdvanced()
     {
         return Inertia::render('BaseNpc/Create', [
             'availableRanks' => BaseNpcRank::toDropdownList(),
@@ -54,13 +55,33 @@ class BaseNpcController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        return Inertia::render('BaseNpc/SimpleCreate', [
+            'availableRanks' => BaseNpcRank::toDropdownList(),
+            'availableCategories' => BaseNpcCategory::toDropdownList(),
+        ]);
+    }
+
+    /**
+     * Store a newly created resource in storage using the advanced form.
      */
     public function store(StoreBaseNpcRequest $request)
     {
         $model = $this->baseNpcService->store($request->validated());
         return to_route('base-npcs.show', $model->id);
+    }
 
+    /**
+     * Store a newly created resource in storage with image upload.
+     */
+    public function storeSimple(StoreSimpleBaseNpcRequest $request)
+    {
+        $baseNpc = $this->baseNpcService->storeSimple($request->validated());
+
+        return to_route('base-npcs.show', $baseNpc->id);
     }
 
     /**
