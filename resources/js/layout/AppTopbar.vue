@@ -6,6 +6,7 @@ import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
 import UserAvatar from "@advance-table/Components/UserAvatar.vue";
+import AppLogo from '@/Components/AppLogo.vue';
 
 const { isHorizontal, onMenuToggle, showConfigSidebar, showSidebar } = useLayout();
 
@@ -15,82 +16,103 @@ const user = computed(() => usePage().props.auth.user);
 <template>
     <div class="layout-topbar">
         <div class="topbar-start">
-            <Button ref="menubutton" type="button" class="topbar-menubutton p-trigger duration-300" @click="onMenuToggle">
+            <Button ref="menubutton" type="button" class="topbar-menubutton p-trigger duration-300 bg-primary-600 hover:bg-primary-700 text-white" @click="onMenuToggle">
                 <i class="pi pi-bars"></i>
             </Button>
+
+            <div class="hidden md:flex items-center ml-4">
+                <AppLogo />
+                <Badge value="Editor" severity="info" class="ml-2"></Badge>
+            </div>
         </div>
+
         <div class="layout-topbar-menu-section">
             <AppSidebar></AppSidebar>
         </div>
+
         <div class="topbar-end">
             <ul class="topbar-menu">
-<!--                <li :class="isHorizontal ? 'topbar-search hidden' : 'topbar-search hidden sm:block'">-->
-<!--                    <IconField>-->
-<!--                        <InputIcon class="pi pi-search" />-->
-<!--                        <InputText type="text" placeholder="Search" class="w-48 sm:w-full" />-->
-<!--                    </IconField>-->
-<!--                </li>-->
-
-
-                <li :class="isHorizontal ? 'block topbar-item' : 'block sm:!hidden topbar-item'">
-                    <a v-styleclass="{ selector: '@next', enterFromClass: '!hidden', enterActiveClass: 'animate-scalein', leaveToClass: '!hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: 'true' }">
-                        <Button type="button" icon="pi pi-search" text severity="secondary"></Button>
-                    </a>
-                    <ul class="!hidden topbar-menu active-topbar-menu !p-4 w-60 z-5" style="bottom: -5.8rem">
-                        <IconField class="w-full">
-                            <InputIcon class="pi pi-search" />
-                            <InputText type="text" placeholder="Search" class="w-full" />
-                        </IconField>
-                    </ul>
+                <li class="hidden md:block mr-2">
+                    <span class="p-input-icon-left">
+                        <i class="pi pi-search"></i>
+                        <InputText type="text" placeholder="Szukaj..." class="p-inputtext-sm" />
+                    </span>
                 </li>
 
+                <li class="md:hidden">
+                    <Button type="button" icon="pi pi-search" rounded outlined severity="secondary" class="mr-2"></Button>
+                </li>
+
+                <li class="mr-2">
+                    <Button type="button" icon="pi pi-bell" badge="3" badgeClass="bg-accent-500" rounded outlined severity="secondary" aria-label="Notifications"></Button>
+                </li>
 
                 <li class="topbar-item">
-                    <a v-styleclass="{ selector: '@next', enterFromClass: '!hidden', enterActiveClass: 'animate-scalein', leaveToClass: '!hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: 'true' }" class="cursor-pointer">
+                    <a v-styleclass="{ selector: '@next', enterFromClass: '!hidden', enterActiveClass: 'animate-scalein', leaveToClass: '!hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: 'true' }" class="cursor-pointer flex items-center">
                         <UserAvatar />
+                        <span class="ml-2 font-medium hidden md:inline">{{ user.name }}</span>
+                        <i class="pi pi-chevron-down ml-2 text-xs"></i>
                     </a>
-                    <ul :class="'topbar-menu active-topbar-menu !p-6 w-60 z-50 !hidden'">
-                        <li role="menuitem" class="!m-0 !mb-4">
-                            <a
-                                href="#"
-                                class="flex items-center hover:text-primary-500 duration-200"
-                                v-styleclass="{ selector: '@grandparent', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: 'true' }"
-                            >
-                                <i class="pi pi-fw pi-lock mr-2"></i>
-                                <span>{{ user.name }}</span>
+                    <ul class="!hidden topbar-menu active-topbar-menu !p-3 w-60 z-50 rounded-lg shadow-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
+                        <li role="menuitem" class="!m-0 !mb-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200">
+                            <a href="#" class="flex items-center text-gray-700 dark:text-gray-200">
+                                <i class="pi pi-fw pi-user mr-2 text-primary-500"></i>
+                                <span>Profil</span>
                             </a>
                         </li>
-                        <li role="menuitem" class="!m-0 !mb-4">
-<!--                            <Link-->
-<!--                                :href="route('profile.edit')"-->
-<!--                                class="flex items-center hover:text-primary-500 duration-200"-->
-<!--                                v-styleclass="{ selector: '@grandparent', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: 'true' }"-->
-<!--                            >-->
-<!--                                <i class="pi pi-fw pi-cog mr-2"></i>-->
-<!--                                <span>Ustawienia</span>-->
-<!--                            </Link>-->
+                        <li role="menuitem" class="!m-0 !mb-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200">
+                            <a href="#" class="flex items-center text-gray-700 dark:text-gray-200">
+                                <i class="pi pi-fw pi-cog mr-2 text-primary-500"></i>
+                                <span>Ustawienia</span>
+                            </a>
                         </li>
-                        <li role="menuitem" class="!m-0">
+                        <li role="menuitem" class="!m-0 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200">
                             <Link
                                 :href="route('logout')"
                                 method="post"
-                                class="flex items-center hover:text-primary-500 duration-200"
-                                v-styleclass="{ selector: '@grandparent', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: 'true' }"
+                                class="flex items-center text-gray-700 dark:text-gray-200"
                             >
-                                <i class="pi pi-fw pi-sign-out mr-2"></i>
+                                <i class="pi pi-fw pi-sign-out mr-2 text-primary-500"></i>
                                 <span>Wyloguj się</span>
                             </Link>
                         </li>
                     </ul>
                 </li>
-                <li>
-                    <Button type="button" icon="pi pi-cog" class="flex-shrink-0" text severity="secondary" @click="showConfigSidebar"></Button>
-                </li>
 
-<!--                <li>-->
-<!--                    <Button type="button" icon="pi pi-arrow-left" class="flex-shrink-0" text severity="secondary" @click="showSidebar"></Button>-->
-<!--                </li>-->
+                <li>
+                    <Button type="button" icon="pi pi-cog" rounded outlined severity="secondary" class="ml-2" @click="showConfigSidebar"></Button>
+                </li>
             </ul>
         </div>
     </div>
 </template>
+
+<style lang="scss" scoped>
+.layout-topbar {
+    @apply fixed top-0 left-0 w-full h-16 px-4 flex items-center justify-between bg-white dark:bg-gray-800 shadow-sm z-40 border-b border-gray-100 dark:border-gray-700;
+}
+
+.topbar-start {
+    @apply flex items-center;
+}
+
+.topbar-end {
+    @apply flex items-center;
+}
+
+.topbar-menu {
+    @apply flex items-center list-none p-0 m-0;
+}
+
+.topbar-item {
+    @apply relative;
+}
+
+:deep(.p-button.p-button-icon-only) {
+    @apply w-10 h-10;
+}
+
+:deep(.p-inputtext) {
+    @apply py-1.5;
+}
+</style>

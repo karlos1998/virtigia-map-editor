@@ -169,8 +169,13 @@ const pathname = computed(() => window.location.pathname);
 </script>
 
 <template>
-    <li ref="menuItemRef" :class="{ 'layout-root-menuitem': root, 'active-menuitem': isStatic || isOverlay ? !root && isActiveMenu : isActiveMenu }">
-        <div v-if="root && item.visible !== false" class="layout-menuitem-root-text">
+    <li ref="menuItemRef" :class="{
+        'layout-root-menuitem': root,
+        'active-menuitem': isStatic || isOverlay ? !root && isActiveMenu : isActiveMenu,
+        'horizontal-menuitem': isHorizontal,
+        'slim-menuitem': isSlim || isSlimPlus
+    }">
+        <div v-if="root && item.visible !== false && !isSlim && !isSlimPlus" class="layout-menuitem-root-text">
             <span>{{ item.label }}</span> <i class="layout-menuitem-root-icon"></i>
         </div>
         <a
@@ -181,22 +186,25 @@ const pathname = computed(() => window.location.pathname);
             :target="item.target"
             tabindex="0"
             @mouseenter="onMouseEnter"
+            class="layout-menuitem-link"
         >
             <i :class="item.icon" class="layout-menuitem-icon"></i>
-            <span class="layout-menuitem-text">{{ item.label }}</span>
-            <i class="pi pi-fw pi-angle-down layout-submenu-toggler" v-if="item.items"></i>
+            <span v-if="!isSlim && !isSlimPlus" class="layout-menuitem-text">{{ item.label }}</span>
+            <span v-if="item.badge && (!isSlim && !isSlimPlus)" :class="['layout-menuitem-badge', item.badgeClass]">{{ item.badge }}</span>
+            <i class="pi pi-fw pi-angle-down layout-submenu-toggler" v-if="item.items && (!isSlim && !isSlimPlus)"></i>
         </a>
         <a
             v-if="item.to && !item.items && item.visible !== false"
             :href="item.to"
             @click="itemClick($event, item)"
-            :class="[item.class, { 'active-route': pathname === item.to }]"
+            :class="[item.class, { 'active-route': pathname === item.to }, 'layout-menuitem-link']"
             tabindex="0"
             @mouseenter="onMouseEnter"
         >
             <i :class="item.icon" class="layout-menuitem-icon"></i>
-            <span class="layout-menuitem-text">{{ item.label }}</span>
-            <i class="pi pi-fw pi-angle-down layout-submenu-toggler" v-if="item.items"></i>
+            <span v-if="!isSlim && !isSlimPlus" class="layout-menuitem-text">{{ item.label }}</span>
+            <span v-if="item.badge && (!isSlim && !isSlimPlus)" :class="['layout-menuitem-badge', item.badgeClass]">{{ item.badge }}</span>
+            <i class="pi pi-fw pi-angle-down layout-submenu-toggler" v-if="item.items && (!isSlim && !isSlimPlus)"></i>
         </a>
 
         <ul ref="subMenuRef" :class="{ 'layout-root-submenulist': root }" v-if="item.items && item.visible !== false">
@@ -204,3 +212,30 @@ const pathname = computed(() => window.location.pathname);
         </ul>
     </li>
 </template>
+
+<style lang="scss" scoped>
+.horizontal-menuitem {
+    @apply mx-1;
+}
+
+.horizontal-menuitem > .layout-menuitem-link {
+    @apply rounded-lg px-3 py-2;
+}
+
+.slim-menuitem > .layout-menuitem-link {
+    @apply justify-center px-2;
+}
+
+.slim-menuitem .layout-menuitem-icon {
+    @apply mx-auto;
+}
+
+:deep(.layout-horizontal) .layout-root-submenulist {
+    @apply absolute top-full left-0 bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-100 dark:border-gray-700 min-w-48 z-50;
+}
+
+:deep(.layout-slim) .layout-root-submenulist,
+:deep(.layout-slim-plus) .layout-root-submenulist {
+    @apply absolute left-full top-0 bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-100 dark:border-gray-700 min-w-48 z-50;
+}
+</style>

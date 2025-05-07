@@ -2,29 +2,36 @@
 import { ref } from 'vue';
 import AppMenuItem from './AppMenuItem.vue';
 import {route} from "ziggy-js";
+import { useLayout } from '@/layout/composables/layout';
 // import { hasRole } from '@/roles.ts';
+
+const { isHorizontal, isSlim, isSlimPlus } = useLayout();
 
 const model = ref([
     {
         label: 'General',
-        icon: 'pi pi-home',
+        icon: 'pi pi-compass',
         items: [
             {
                 label: 'Dashboard',
                 icon: 'pi pi-fw pi-home',
                 route: 'dashboard',
+                badge: 'New',
+                badgeClass: 'bg-accent-500 text-white',
             },
         ],
     },
     {
         label: 'Edycja',
-        icon: 'pi pi-server',
+        icon: 'pi pi-pencil',
         // hidden: !hasRole('system-admin'),
         items: [
             {
                 label: 'Mapy',
                 icon: 'pi pi-map',
                 route: 'maps.index',
+                badge: '5',
+                badgeClass: 'bg-primary-500 text-white',
             },
             {
                 label: 'Bazowe Npc',
@@ -35,31 +42,33 @@ const model = ref([
                 label: 'Rozmieszczone Npc',
                 icon: 'pi pi-users',
                 route: 'npcs.index',
+                badge: '12',
+                badgeClass: 'bg-secondary-500 text-white',
             },
             {
                 label: 'Dialogi Npc',
-                icon: 'pi pi-sitemap',
+                icon: 'pi pi-comments',
                 route: 'dialogs.index',
             },
             {
                 label: 'Sklepy',
-                icon: 'pi pi-shop',
+                icon: 'pi pi-shopping-cart',
                 route: 'shops.index',
             },
             {
                 label: 'Bazowe Przedmioty',
-                icon: 'pi pi-shopping-bag',
+                icon: 'pi pi-box',
                 route: 'base-items.index',
             },
         ],
     },
     {
-        label: 'Zaasansowane',
-        icon: 'pi pi-home',
+        label: 'Zaawansowane',
+        icon: 'pi pi-cog',
         items: [
             {
                 label: 'Logi zmian',
-                icon: 'pi pi-fw pi-home',
+                icon: 'pi pi-history',
                 route: 'activity-logs.index',
             },
         ],
@@ -68,13 +77,91 @@ const model = ref([
 </script>
 
 <template>
-    <ul class="layout-menu">
-        <template v-for="(item, i) in model" :key="item">
-            <AppMenuItem :item="item" root :index="i" />
+    <div class="menu-wrapper" :class="{ 'horizontal': isHorizontal, 'slim': isSlim, 'slim-plus': isSlimPlus }">
+        <div class="menu-search mb-4" v-if="!isSlim && !isSlimPlus">
+            <span class="p-input-icon-left w-full">
+                <i class="pi pi-search"></i>
+                <InputText type="text" placeholder="Szukaj w menu..." class="w-full" />
+            </span>
+        </div>
 
-            <li class="menu-separator"></li>
-        </template>
-    </ul>
+        <ul class="layout-menu" :class="{ 'horizontal-menu': isHorizontal }">
+            <template v-for="(item, i) in model" :key="item">
+                <div class="menu-category" v-if="!isSlim && !isSlimPlus">
+                    <span class="menu-category-label">{{ item.label }}</span>
+                </div>
+
+                <AppMenuItem :item="item" root :index="i" />
+
+                <li class="menu-separator" v-if="i < model.length - 1 && !isHorizontal"></li>
+            </template>
+        </ul>
+    </div>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.menu-wrapper {
+    @apply w-full;
+}
+
+.menu-wrapper.horizontal {
+    @apply w-full flex flex-col items-center;
+}
+
+.menu-wrapper.slim,
+.menu-wrapper.slim-plus {
+    @apply w-full flex flex-col items-center;
+}
+
+.menu-search {
+    @apply px-2;
+}
+
+.menu-category {
+    @apply px-3 py-2;
+}
+
+.menu-category-label {
+    @apply text-xs font-semibold uppercase text-gray-500 dark:text-gray-400;
+}
+
+.layout-menu {
+    @apply list-none p-0 m-0;
+}
+
+.layout-menu.horizontal-menu {
+    @apply flex flex-row flex-wrap justify-center gap-2;
+}
+
+.menu-separator {
+    @apply border-t border-gray-100 dark:border-gray-700 my-2;
+}
+
+:deep(.p-inputtext) {
+    @apply py-1.5 text-sm;
+}
+
+:deep(.layout-menuitem-root) {
+    @apply mb-1;
+}
+
+:deep(.layout-menuitem-root > .layout-menuitem-link) {
+    @apply rounded-lg transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-gray-700;
+}
+
+:deep(.layout-menuitem-icon) {
+    @apply text-primary-500;
+}
+
+:deep(.layout-menuitem-text) {
+    @apply font-medium;
+}
+
+:deep(.layout-submenu-toggler) {
+    @apply text-gray-400;
+}
+
+:deep(.layout-menuitem-badge) {
+    @apply rounded-full text-xs font-medium px-2 py-0.5 ml-auto;
+}
+</style>
