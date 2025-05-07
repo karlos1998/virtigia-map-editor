@@ -21,7 +21,7 @@ class SetDynamicModelConnection
         $connectionName = session("world");
 
         if(!$connectionName) {
-            return response()->redirectToRoute("home");
+            return response()->redirectToRoute("login");
         }
 
         DynamicModel::setGlobalConnection($connectionName);
