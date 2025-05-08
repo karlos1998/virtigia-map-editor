@@ -54,6 +54,13 @@ const showNpcConfirmDialog = (event: MouseEvent, npc: NpcWithLocationResource) =
     });
 };
 
+// Handle adding NPC to group
+const handleAddNpcToGroup = (npc: NpcWithLocationResource) => {
+    if (mapContainerRef.value) {
+        mapContainerRef.value.setAddToGroupMode(npc);
+    }
+};
+
 // Handle Door confirm dialog
 const showDoorConfirmDialog = (event: MouseEvent, door: DoorResource) => {
     confirm.require({
@@ -91,7 +98,7 @@ const handleTrackerPositionChanged = (position: { x: number, y: number }) => {
         <ConfirmDialog />
 
         <!-- NPC Confirm Popup -->
-        <NpcConfirmPopup @move-npc="handleMoveNpc" />
+        <NpcConfirmPopup @move-npc="handleMoveNpc" @add-to-group="handleAddNpcToGroup" />
 
         <!-- Door Confirm Popup -->
         <DoorConfirmPopup @move-door="handleMoveDoor" />
@@ -138,4 +145,3 @@ const handleTrackerPositionChanged = (position: { x: number, y: number }) => {
         />
     </AppLayout>
 </template>
-

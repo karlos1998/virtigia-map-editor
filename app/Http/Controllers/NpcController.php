@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AddNpcToGroupRequest;
+use App\Http\Requests\CreateNpcGroupRequest;
 use App\Http\Requests\StoreNpcRequest;
 use App\Http\Requests\UpdateNpcLocationRequest;
 use App\Http\Requests\UpdateNpcRequest;
@@ -61,5 +63,24 @@ class NpcController extends Controller
     public function detachGroup(Npc $npc): void
     {
         $this->npcService->detachGroup($npc);
+    }
+
+    public function addToGroup(AddNpcToGroupRequest $request): void
+    {
+        $validated = $request->validated();
+
+        $sourceNpc = Npc::findOrFail($validated['source_npc_id']);
+        $targetNpc = Npc::findOrFail($validated['target_npc_id']);
+
+        $this->npcService->addToGroup($sourceNpc, $targetNpc);
+    }
+
+    public function createGroup(CreateNpcGroupRequest $request): void
+    {
+        $validated = $request->validated();
+
+        $npcs = Npc::whereIn('id', $validated['npc_ids'])->get();
+
+        $this->npcService->createGroup($npcs);
     }
 }

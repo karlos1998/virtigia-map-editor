@@ -55,6 +55,10 @@ const paintingStart = ref<{ x: number, y: number } | null>(null);
 const moveNpcLocationData = ref<NpcWithLocationResource>(null);
 const moveDoorLocationData = ref<DoorResource>(null);
 
+// NPC grouping
+const addToGroupMode = ref<boolean>(false);
+const sourceNpc = ref<NpcWithLocationResource>(null);
+
 // NPC dialog
 const addNpcToMapDialogInstance = ref<DynamicDialogInstance>();
 const lastSelectedNpc = ref<NpcWithLocationResource>();
@@ -278,6 +282,53 @@ const updateMoveDoorLocation = (x: number, y: number) => {
     moveDoorLocationData.value = null;
 };
 
+// Add NPC to group
+const addNpcToGroup = (targetNpc: NpcWithLocationResource) => {
+    if (!sourceNpc.value || !addToGroupMode.value) return;
+
+    // Check if NPCs are close enough (max 5 tiles in x or y direction)
+    const dx = Math.abs(targetNpc.location.x - sourceNpc.value.location.x);
+    const dy = Math.abs(targetNpc.location.y - sourceNpc.value.location.y);
+
+    if (dx > 5 || dy > 5) {
+        toast.add({ severity: 'error', summary: 'Za daleko', detail: 'NPC jest za daleko (max 5 kratek)', life: 3000 });
+        return;
+    }
+
+    // If source NPC has a group, add target NPC to that group
+    if (sourceNpc.value.group_id) {
+        router.post(route('npcs.group.add'), {
+            source_npc_id: sourceNpc.value.id,
+            target_npc_id: targetNpc.id
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.add({ severity: 'success', summary: 'Sukces', detail: 'NPC został dodany do grupy', life: 3000 });
+                addToGroupMode.value = false;
+                sourceNpc.value = null;
+            },
+            onError: () => {
+                toast.add({ severity: 'error', summary: 'Błąd', detail: 'Nie udało się dodać NPC do grupy', life: 3000 });
+            }
+        });
+    } else {
+        // If source NPC doesn't have a group, create a new group with both NPCs
+        router.post(route('npcs.group.create'), {
+            npc_ids: [sourceNpc.value.id, targetNpc.id]
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                toast.add({ severity: 'success', summary: 'Sukces', detail: 'Utworzono nową grupę z wybranymi NPC', life: 3000 });
+                addToGroupMode.value = false;
+                sourceNpc.value = null;
+            },
+            onError: () => {
+                toast.add({ severity: 'error', summary: 'Błąd', detail: 'Nie udało się utworzyć grupy', life: 3000 });
+            }
+        });
+    }
+};
+
 // Public methods exposed to parent component
 defineExpose({
     setEditColsOn: (value: boolean) => {
@@ -286,10 +337,21 @@ defineExpose({
     setMoveNpcLocationData: (npc: NpcWithLocationResource) => {
         moveDoorLocationData.value = null;
         moveNpcLocationData.value = npc;
+        addToGroupMode.value = false;
+        sourceNpc.value = null;
     },
     setMoveDoorLocationData: (door: DoorResource) => {
         moveDoorLocationData.value = door;
         moveNpcLocationData.value = null;
+        addToGroupMode.value = false;
+        sourceNpc.value = null;
+    },
+    setAddToGroupMode: (npc: NpcWithLocationResource) => {
+        moveDoorLocationData.value = null;
+        moveNpcLocationData.value = null;
+        addToGroupMode.value = true;
+        sourceNpc.value = npc;
+        toast.add({ severity: 'info', summary: 'Tryb grupowania', detail: 'Kliknij na innego NPC w pobliżu (max 5 kratek) aby dodać go do grupy', life: 5000 });
     }
 });
 </script>
@@ -366,7 +428,10 @@ defineExpose({
                 :npcs="npcs"
                 :scale="scale"
                 :npc-scale="npcScale"
+                :add-to-group-mode="addToGroupMode"
+                :source-npc="sourceNpc"
                 @show-npc-confirm-dialog="(event, npc) => emit('showNpcConfirmDialog', event, npc)"
+                @add-to-group="addNpcToGroup"
             />
 
             <!-- Doors -->

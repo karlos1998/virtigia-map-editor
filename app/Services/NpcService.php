@@ -7,7 +7,9 @@ use App\Http\Resources\NpcResource;
 use App\Models\BaseNpc;
 use App\Models\Map;
 use App\Models\Npc;
+use App\Models\NpcGroup;
 use App\Models\NpcLocation;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 use Karlos3098\LaravelPrimevueTableService\Services\TableService;
@@ -97,6 +99,35 @@ class NpcService extends BaseService
         else
         {
             $group->delete();
+        }
+    }
+
+    public function addToGroup(Npc $sourceNpc, Npc $targetNpc)
+    {
+        // If source NPC doesn't have a group, create one
+        if (!$sourceNpc->group_id) {
+            $group = NpcGroup::create();
+            $sourceNpc->group()->associate($group)->save();
+        }
+
+        // Add target NPC to the source NPC's group
+        $targetNpc->group()->associate($sourceNpc->group_id)->save();
+    }
+
+    public function createGroup(Collection $npcs)
+    {
+        if ($npcs->count() < 2) {
+            throw ValidationException::withMessages([
+                'message' => 'Grupa musi zawierać co najmniej 2 NPC',
+            ]);
+        }
+
+        // Create a new group
+        $group = NpcGroup::create();
+
+        // Add all NPCs to the group
+        foreach ($npcs as $npc) {
+            $npc->group()->associate($group)->save();
         }
     }
 }
