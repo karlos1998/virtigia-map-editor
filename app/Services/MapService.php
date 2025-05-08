@@ -71,5 +71,19 @@ final class MapService extends BaseService
         $map->update(['col' => $col]);
     }
 
+    public function updateName(Map $map, string $name)
+    {
+        $map->update(['name' => $name]);
+    }
 
+    public function updatePvp(Map $map, int $pvp)
+    {
+        $map->update(['pvp' => $pvp]);
+    }
+
+    public function updateRespawnPoint(Map $map, int $respawnPointId)
+    {
+        $map->respawnPoint()->associate($respawnPointId);
+        $map->save();
+    }
 }

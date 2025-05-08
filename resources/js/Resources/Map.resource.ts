@@ -1,3 +1,5 @@
+import {RespawnPointResource} from "@/Resources/RespawnPoint.resource";
+
 export interface MapResource {
     id: number
     name: string
@@ -5,6 +7,9 @@ export interface MapResource {
     x: number
     y: number
     col: string
+    pvp: number
 
     // ....
+
+    respawn_point?: RespawnPointResource
 }

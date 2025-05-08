@@ -2,9 +2,13 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Map;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @property-read Map $resource
+ */
 class MapResource extends JsonResource
 {
     /**
@@ -16,7 +20,8 @@ class MapResource extends JsonResource
     {
         return [
             ...parent::toArray($request),
-            'src' => config('assets.url') . config('assets.dirs.maps') . $this->resource->src
+            'src' => config('assets.url') . config('assets.dirs.maps') . $this->resource->src,
+            'respawn_point' => RespawnPointResource::make($this->resource->respawnPoint),
         ];
     }
 }

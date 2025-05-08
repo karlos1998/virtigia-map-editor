@@ -78,6 +78,9 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('maps', [MapController::class, 'index'])->name('maps.index');
                 Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');
                 Route::patch('maps/{map}/cols', [MapController::class, 'updateCol'])->name('maps.update.col');
+                Route::patch('maps/{map}/name', [MapController::class, 'updateName'])->name('maps.update.name');
+                Route::patch('maps/{map}/pvp', [MapController::class, 'updatePvp'])->name('maps.update.pvp');
+                Route::patch('maps/{map}/respawn-point', [MapController::class, 'updateRespawnPoint'])->name('maps.update.respawn-point');
 
                 Route::get('base-items', [BaseItemController::class, 'index'])->name('base-items.index');
                 Route::post('base-items/{baseItem}/copy', [BaseItemController::class, 'copy'])->name('base-items.copy');
