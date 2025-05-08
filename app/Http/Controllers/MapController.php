@@ -50,12 +50,18 @@ class MapController extends Controller
 
     public function show(Map $map)
     {
+        // Eager load all necessary relationships to reduce database queries
+        $map->load(['respawnPoint', 'npcs.base', 'doors.requiredBaseItem', 'doors.targetMap']);
+
+        // Also eager load the map relationship for respawn points
+        $respawnPoints = RespawnPoint::with('map')->get();
+
         return Inertia::render('Map/Show', [
             'map' => MapResource::make($map),
             'npcs' => NpcResource::collection($map->npcs),
-            'doors' => DoorResource::collection($map->doors()->with('requiredBaseItem')->get()),
+            'doors' => DoorResource::collection($map->doors),
             'pvpTypeList' => PvpType::toDropdownList(),
-            'respawnPoints' => RespawnPointResource::collection(RespawnPoint::all()),
+            'respawnPoints' => RespawnPointResource::collection($respawnPoints),
         ]);
     }
 
