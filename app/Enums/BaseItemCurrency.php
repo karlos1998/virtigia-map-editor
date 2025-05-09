@@ -14,4 +14,5 @@ enum BaseItemCurrency: string
 
     case GOLD = 'gold';
     case UNSET = 'unset';
+    case DRAGON_TEAR = 'dragonTear';
 }
