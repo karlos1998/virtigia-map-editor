@@ -44,13 +44,15 @@ class BaseItem extends DynamicModel
         'attributes',
         'rarity',
         'category',
-        'price'
+        'price',
+        'currency'
     ];
 
     protected $casts = [
         'attributes' => 'json',
         'category' => BaseItemCategory::class,
-        'edited_manually' => 'boolean'
+        'edited_manually' => 'boolean',
+        'currency' => \App\Enums\BaseItemCurrency::class
     ];
 
     public function shops()

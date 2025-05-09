@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\BaseItemCategory;
+use App\Enums\BaseItemCurrency;
 use App\Enums\BaseItemRarity;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
@@ -45,7 +46,12 @@ class UpdateBaseItemRequest extends FormRequest
                 'required',
                 'integer',
                 'max:10000000'
-            ]
+            ],
+
+            'currency' => [
+                'required',
+                new Enum(BaseItemCurrency::class),
+            ],
         ];
     }
 }

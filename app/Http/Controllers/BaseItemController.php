@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\BaseItemCategory;
+use App\Enums\BaseItemCurrency;
 use App\Enums\BaseItemRarity;
 use App\Http\Requests\UpdateBaseItemImageRequest;
 use App\Http\Requests\UpdateBaseItemRequest;
@@ -52,6 +53,7 @@ class BaseItemController extends Controller
             'baseItem' => BaseItemResource::make($baseItem),
             'baseItemCategoryList' => BaseItemCategory::toDropdownList(),
             'baseItemRarityList' => BaseItemRarity::toDropdownList(),
+            'baseItemCurrencyList' => BaseItemCurrency::toDropdownList(),
             'logs' => ActivityLogResource::collection($logs),
         ]);
     }

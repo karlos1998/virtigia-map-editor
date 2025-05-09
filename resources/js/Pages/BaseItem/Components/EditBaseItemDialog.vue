@@ -14,9 +14,10 @@ const {baseItem} = defineProps<{
     baseItem: BaseItemResource
 }>()
 
-const { baseItemCategoryList, baseItemRarityList } = usePage<{
+const { baseItemCategoryList, baseItemRarityList, baseItemCurrencyList } = usePage<{
     baseItemCategoryList: DropdownListType
     baseItemRarityList: DropdownListType
+    baseItemCurrencyList: DropdownListType
 }>().props
 
 const form = useForm({
@@ -24,6 +25,7 @@ const form = useForm({
     category: '',
     rarity: '',
     price: 0,
+    currency: '',
 })
 
 watch(visible, () => {
@@ -31,6 +33,7 @@ watch(visible, () => {
     form.category = baseItem.category;
     form.rarity = baseItem.rarity;
     form.price = baseItem.price;
+    form.currency = baseItem.currency;
 })
 
 
@@ -87,6 +90,21 @@ const confirm = () => {
                     class="w-full md:w-14rem"
                 />
                 <label for="rarity">Unikalność</label>
+            </IftaLabel>
+
+            <IftaLabel>
+                <Dropdown
+                    input-id="currency"
+                    v-model="form.currency"
+                    :options="baseItemCurrencyList"
+                    optionLabel="label"
+                    option-value="value"
+                    placeholder="Wybierz walutę"
+                    checkmark
+                    :highlightOnSelect="false"
+                    class="w-full md:w-14rem"
+                />
+                <label for="currency">Waluta</label>
             </IftaLabel>
 
             <IftaLabel>

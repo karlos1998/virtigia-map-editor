@@ -64,6 +64,12 @@ type Data = {
                     </template>
                 </AdvanceColumn>
 
+                <AdvanceColumn field="currency_name" header="Waluta">
+                    <template #body="{ data }: Data">
+                        {{data.currency_name }}
+                    </template>
+                </AdvanceColumn>
+
                 <AdvanceColumn field="need_professions" header="Wymagana profesja">
                     <template #body="{ data }: Data">
                         {{data.need_professions.join(', ') || 'Dowolna' }}

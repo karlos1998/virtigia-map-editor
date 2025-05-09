@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\BaseItemCategory;
+use App\Enums\BaseItemCurrency;
 use App\Enums\Profession;
 use App\Http\Resources\BaseItemResource;
 use App\Models\BaseItem;
@@ -40,6 +41,13 @@ final class BaseItemService extends BaseService
                         options: array_map(function($category){
                             return new TableDropdownOption($category->description(), fn($query) => $query->where('category', $category->value));
                         }, BaseItemCategory::cases())
+                    ),
+
+                    'currency_name' => new TableDropdownColumn(
+                        placeholder: 'Waluta',
+                        options: array_map(function($currency){
+                            return new TableDropdownOption($currency->description(), fn($query) => $query->where('currency', $currency->value));
+                        }, BaseItemCurrency::cases())
                     ),
 
                     'need_professions' => new TableDropdownColumn(
