@@ -7,7 +7,7 @@ import AppRightMenu from './AppRightMenu.vue';
 import AppTopbar from './AppTopbar.vue';
 import DynamicDialog from 'primevue/dynamicdialog';
 import {usePage} from "@inertiajs/vue3";
-import RockTip from "../RockTip/components/rockTip.vue";
+import {RockTip} from "virtigia-tips";
 
 const {watchSidebarActive, unbindOutsideClickListener, containerClass, onMenuToggle} = useLayout();
 

@@ -29,6 +29,7 @@ class BaseItemResource extends JsonResource
 
             'category_name' => $this->resource->category?->description(),
             'currency_name' => $this->resource->currency?->description(),
+            'currency' => $this->resource->currency,
             'need_professions' => array_map(fn($code) => Profession::tryFrom($code)?->description(), $this->resource->attributes['needProfessions'] ?? []),
             'need_level' => $this->resource->attributes['needLevel'] ?? null,
 

@@ -27,7 +27,10 @@ import DialogService from 'primevue/dialogservice';
 
 import {createPinia} from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
+import {ToolTipDirective} from "virtigia-tips";
 // import OwnDataTable from '@/../../packages/karlos3098/laravel-primevue-table-service/src/Assets/PrimeVue/4.0.5/OwnDataTable.vue';
+
+import 'virtigia-tips/style.css';
 
 library.add(fas);
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
@@ -39,7 +42,6 @@ pinia.use(piniaPluginPersistedstate)
 //     dsn: import.meta.env.VITE_SENTRY_DSN_PUBLIC,
 // });
 
-import ToolTipDirective from '@/tooltips/module'
 
 createInertiaApp({
     progress: {
