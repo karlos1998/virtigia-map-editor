@@ -93,11 +93,13 @@ Route::middleware(['auth'])->group(function () {
                 Route::patch('base-items/{baseItem}/attributes', [BaseItemController::class, 'updateAttributes'])->name('base-items.attributes.update');
 
                 Route::get('npcs', [NpcController::class, 'index'])->name('npcs.index');
+                Route::get('npcs/search-hero', [NpcController::class, 'searchHero'])->name('npcs.search-hero');
                 Route::get('npcs/{npc}', [NpcController::class, 'show'])->name('npcs.show');
                 Route::patch('npcs/{npc}', [NpcController::class, 'update'])->name('npcs.update');
                 Route::patch('npcs/{npc}/locations/{npcLocation}', [NpcController::class, 'updateLocation'])->name('npcs.update.location');
 
                 Route::post('npcs', [NpcController::class, 'store'])->name('npcs.store');
+                Route::post('npcs/{npc}/locations', [NpcController::class, 'storeLocation'])->name('npcs.locations.store');
                 Route::delete('npcs/{npc}/locations/{npcLocation}', [NpcController::class, 'destroyLocation'])->name('npcs.locations.destroy');
 
                 Route::delete('npcs/{npc}/group-detach', [NpcController::class, 'detachGroup'])->name('npcs.group.detach');
@@ -120,6 +122,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('base-npcs/create-advanced', [BaseNpcController::class, 'createAdvanced'])->name('base-npcs.create-advanced');
                 Route::get('base-npcs/create', [BaseNpcController::class, 'create'])->name('base-npcs.create');
                 Route::get('base-npcs/search', [BaseNpcController::class, 'search'])->name('base-npcs.search');
+                Route::get('base-npcs/search-hero', [BaseNpcController::class, 'searchHero'])->name('base-npcs.search-hero');
 
                 Route::get('base-npcs/{baseNpc}', [BaseNpcController::class, 'show'])->name('base-npcs.show');
 

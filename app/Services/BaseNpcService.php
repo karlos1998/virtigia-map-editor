@@ -96,6 +96,17 @@ final class BaseNpcService extends BaseService
         return BaseNpcResource::collection($this->baseNpcModel->where('name', 'like', '%' . $search . '%')->limit(25)->get());
     }
 
+    public function searchHero(string $search)
+    {
+        return BaseNpcResource::collection(
+            $this->baseNpcModel
+                ->where('name', 'like', '%' . $search . '%')
+                ->where('rank', BaseNpcRank::HERO->value)
+                ->limit(25)
+                ->get()
+        );
+    }
+
     public function store(array $validated): BaseNpc
     {
         return BaseNpc::create($validated);

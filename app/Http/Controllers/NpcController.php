@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AddNpcToGroupRequest;
 use App\Http\Requests\CreateNpcGroupRequest;
+use App\Http\Requests\StoreNpcLocationRequest;
 use App\Http\Requests\StoreNpcRequest;
 use App\Http\Requests\UpdateNpcLocationRequest;
 use App\Http\Requests\UpdateNpcRequest;
@@ -55,7 +56,7 @@ class NpcController extends Controller
     /**
      * @throws ValidationException
      */
-    public function updateLocation(Npc $npc, NpcLocation $npcLocation, UpdatENpcLocationRequest $request): void
+    public function updateLocation(Npc $npc, NpcLocation $npcLocation, UpdateNpcLocationRequest $request): void
     {
         $this->npcService->updateLocation($npc, $npcLocation, $request->validated());
     }
@@ -82,5 +83,16 @@ class NpcController extends Controller
         $npcs = Npc::whereIn('id', $validated['npc_ids'])->get();
 
         $this->npcService->createGroup($npcs);
+    }
+
+    public function searchHero(Request $request)
+    {
+        return response()->json($this->npcService->searchHero($request->get('query', '')));
+    }
+
+    public function storeLocation(Npc $npc, StoreNpcLocationRequest $request): void
+    {
+
+        $this->npcService->storeLocation($npc, $request->validated());;
     }
 }

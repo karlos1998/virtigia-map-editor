@@ -12,6 +12,8 @@ import {route} from "ziggy-js";
 import {useForm} from "@inertiajs/vue3";
 import {BaseNpcResource} from "@/Resources/BaseNpc.resource";
 import {NpcResource} from "@/Resources/Npc.resource";
+import { useDialog } from 'primevue/usedialog';
+import HeroSearchModal from './HeroSearchModal.vue';
 
 const dialogRef = inject<Ref<DynamicDialogInstance & {
     data: {
@@ -21,6 +23,8 @@ const dialogRef = inject<Ref<DynamicDialogInstance & {
         lastSelectedNpc?: NpcResource,
     }
 }> | null>('dialogRef');
+
+const primeDialog = useDialog();
 
 const confirm = () => {
     form
@@ -54,19 +58,52 @@ const form = useForm<{
 })
 
 const filteredNpcs = ref<BaseNpcResource[]>([]);
+const filteredHeroNpcs = ref<BaseNpcResource[]>([]);
 
-const search = async  (query: string) => {
+const search = async (query: string) => {
     const { data } = await axios.get(route('base-npcs.search', {query}))
     console.log(data);
     return data;
 }
+
+const searchHero = async (query: string) => {
+    const { data } = await axios.get(route('base-npcs.search-hero', {query}))
+    console.log(data);
+    return data;
+}
+
 const filterNpcs = async ({ query }: { query: string }) => {
     filteredNpcs.value = await search(query);
+};
+
+const filterHeroNpcs = async ({ query }: { query: string }) => {
+    filteredHeroNpcs.value = await searchHero(query);
 };
 
 const addDoor = () => {
     dialogRef.value.close({
         addDoor: true,
+    });
+}
+
+const addHeroInstance = () => {
+    // Close current dialog
+    dialogRef.value.close();
+
+    // Open hero search dialog
+    primeDialog.open(HeroSearchModal, {
+        props: {
+            header: 'Dodawanie wystąpienia herosa',
+            modal: true,
+        },
+        data: {
+            x: dialogRef.value.data.x,
+            y: dialogRef.value.data.y,
+            map: dialogRef.value.data.map,
+        },
+        onClose(closeOptions) {
+            // Handle the result if needed
+        }
     });
 }
 </script>
@@ -125,6 +162,8 @@ const addDoor = () => {
             <Button :loading="form.processing" fluid @click="confirm">Dodaj</Button>
 
             <Button @click="addDoor" class="mt-2" severity="info" fluid>Lub dodaj Przejście</Button>
+
+            <Button @click="addHeroInstance" class="mt-2" severity="success" fluid>Lub dodaj wystąpienie herosa</Button>
         </div>
     </div>
 </template>

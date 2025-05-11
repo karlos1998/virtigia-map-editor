@@ -130,4 +130,27 @@ class NpcService extends BaseService
             $npc->group()->associate($group)->save();
         }
     }
+
+    public function searchHero(string $search)
+    {
+        return NpcResource::collection(
+            $this->npcModel
+                ->with(['base', 'locations'])
+                ->whereHas('base', function($query) use ($search) {
+                    $query->where('name', 'like', '%' . $search . '%')
+                          ->where('rank', 'HERO');
+                })
+                ->limit(25)
+                ->get()
+        );
+    }
+
+    public function storeLocation(Npc $npc, array $data): void
+    {
+        $npc->locations()->create([
+            'map_id' => $data['map_id'],
+            'x' => $data['x'],
+            'y' => $data['y'],
+        ])->save();
+    }
 }

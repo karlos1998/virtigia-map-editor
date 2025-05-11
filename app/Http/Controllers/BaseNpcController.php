@@ -142,6 +142,11 @@ class BaseNpcController extends Controller
         return response()->json($this->baseNpcService->search($request->get('query', '')));
     }
 
+    public function searchHero(Request $request)
+    {
+        return response()->json($this->baseNpcService->searchHero($request->get('query', '')));
+    }
+
     public function attachLoot(BaseNpc $baseNpc, AttachBaseNpcLootRequest $request)
     {
         $this->baseNpcService->attachLoot($baseNpc, $request->get('baseItemId'));
