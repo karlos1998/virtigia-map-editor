@@ -5,8 +5,8 @@ import AppLayout from "../../layout/AppLayout.vue";
 import ItemHeader from "../../Components/ItemHeader.vue";
 import {router, useForm} from "@inertiajs/vue3";
 import {onMounted, ref} from "vue";
-import JsonEditorVue from 'json-editor-vue'
 import {useToast} from "primevue";
+import AttributeEditor from "../../Components/AttributeEditor.vue";
 
 const { baseItem } = defineProps<{
     baseItem: BaseItemWithRelations,
@@ -67,10 +67,7 @@ const save = () => {
         </div>
 
         <div class="card">
-            <JsonEditorVue
-                v-model="form.attributes"
-                v-bind="{/* local props & attrs */}"
-            />
+            <AttributeEditor v-model="form.attributes" />
         </div>
     </AppLayout>
 </template>
