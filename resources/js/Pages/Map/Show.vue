@@ -45,6 +45,13 @@ const handleEditColsChanged = (value: boolean) => {
     }
 };
 
+// Handle edit water change
+const handleEditWaterChanged = (value: boolean) => {
+    if (mapContainerRef.value) {
+        mapContainerRef.value.setEditWaterOn(value);
+    }
+};
+
 // Handle NPC confirm dialog
 const showNpcConfirmDialog = (event: MouseEvent, npc: NpcWithLocationResource) => {
     confirm.require({
@@ -130,6 +137,7 @@ const handleTrackerPositionChanged = (position: { x: number, y: number }) => {
             @zoom-in="zoomIn"
             @zoom-out="zoomOut"
             @edit-cols-changed="handleEditColsChanged"
+            @edit-water-changed="handleEditWaterChanged"
         />
 
         <!-- Map Container -->

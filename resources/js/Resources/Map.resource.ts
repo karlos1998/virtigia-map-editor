@@ -8,6 +8,7 @@ export interface MapResource {
     y: number
     col: string
     pvp: number
+    water?: string
 
     // ....
 

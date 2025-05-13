@@ -14,6 +14,7 @@ import { useToast, useConfirm } from 'primevue';
 import NpcRenderer from './NpcRenderer.vue';
 import DoorRenderer from './DoorRenderer.vue';
 import CollisionRenderer from './CollisionRenderer.vue';
+import WaterRenderer from './WaterRenderer.vue';
 
 const props = defineProps<{
     map: MapResource;
@@ -36,6 +37,7 @@ const confirm = useConfirm();
 const isMapVisible = ref(true);
 const npcScale = ref(true);
 const editColsOn = ref(false);
+const editWaterOn = ref(false);
 
 // Mouse tracking
 const trackerPosition = ref({ x: 0, y: 0 });
@@ -90,7 +92,7 @@ const handleMouseMove = (event: MouseEvent) => {
 
 // Start panning the map
 const startPanning = (event: MouseEvent) => {
-    if (event.button === 2) { // Right mouse button
+    if (event.button === 2 && !editWaterOn.value) { // Right mouse button and not in water editing mode
         isPanning.value = true;
         panStart.value = { x: event.clientX - mapOffset.value.x, y: event.clientY - mapOffset.value.y };
         event.preventDefault();
@@ -108,6 +110,66 @@ const toggleCollision = (x: number, y: number) => {
     const colArray = props.map.col.split('');
     colArray[index] = colArray[index] === '0' ? '1' : '0';
     props.map.col = colArray.join('');
+};
+
+// Handle water editing at a specific position
+const handleWaterEdit = (x: number, y: number, isRightClick: boolean = false) => {
+    if (!props.map.water) {
+        props.map.water = '';
+    }
+
+    // Parse existing water data
+    const waterSegments = props.map.water ? props.map.water.split('|') : [];
+    const waterMap = new Map();
+
+    // Build a map of water positions and depths
+    waterSegments.forEach(segment => {
+        const [x1, x2, y, depth] = segment.split(',').map(Number);
+        for (let i = x1; i <= x2; i++) {
+            const key = `${i},${y}`;
+            waterMap.set(key, depth);
+        }
+    });
+
+    const key = `${x},${y}`;
+    const currentDepth = waterMap.get(key) || 0;
+
+    if (isRightClick) {
+        // Right click: decrease depth or remove
+        if (currentDepth > 1) {
+            waterMap.set(key, currentDepth - 1);
+        } else {
+            waterMap.delete(key);
+        }
+    } else {
+        // Left click: increase depth (max 9)
+        const newDepth = Math.min((currentDepth || 0) + 1, 9);
+        waterMap.set(key, newDepth);
+    }
+
+    // Convert back to water string format
+    // Group adjacent tiles with same depth for optimization
+    const waterData = [];
+    const processed = new Set();
+
+    for (const [key, depth] of waterMap.entries()) {
+        if (processed.has(key)) continue;
+
+        const [tileX, tileY] = key.split(',').map(Number);
+        let x1 = tileX;
+        let x2 = tileX;
+
+        // Check if we can extend this segment to the right
+        while (waterMap.get(`${x2 + 1},${tileY}`) === depth) {
+            x2++;
+            processed.add(`${x2},${tileY}`);
+        }
+
+        waterData.push(`${x1},${x2},${tileY},${depth}`);
+        processed.add(key);
+    }
+
+    props.map.water = waterData.join('|');
 };
 
 // Paint collision based on mouse movement
@@ -162,6 +224,11 @@ const addNewObject = (event: MouseEvent) => {
 
     if (editColsOn.value) {
         toggleCollision(x, y);
+        return;
+    }
+
+    if (editWaterOn.value) {
+        handleWaterEdit(x, y, event.button === 2);
         return;
     }
 
@@ -333,6 +400,15 @@ const addNpcToGroup = (targetNpc: NpcWithLocationResource) => {
 defineExpose({
     setEditColsOn: (value: boolean) => {
         editColsOn.value = value;
+        if (value) {
+            editWaterOn.value = false;
+        }
+    },
+    setEditWaterOn: (value: boolean) => {
+        editWaterOn.value = value;
+        if (value) {
+            editColsOn.value = false;
+        }
     },
     setMoveNpcLocationData: (npc: NpcWithLocationResource) => {
         moveDoorLocationData.value = null;
@@ -403,7 +479,14 @@ defineExpose({
                 stopPanning();
                 stopPaintingCollision();
             }"
-            @contextmenu.prevent
+            @contextmenu.prevent="(e) => {
+                if (editWaterOn) {
+                    // Directly call handleWaterEdit with isRightClick=true
+                    const x = trackerPosition.x;
+                    const y = trackerPosition.y;
+                    handleWaterEdit(x, y, true);
+                }
+            }"
             @click.self="(e) => {
                 addNewObject(e);
             }"
@@ -446,6 +529,12 @@ defineExpose({
                 :map="map"
                 :scale="scale"
                 :edit-cols-on="editColsOn"
+            />
+
+            <!-- Water -->
+            <WaterRenderer
+                :map="map"
+                :scale="scale"
             />
         </div>
     </div>

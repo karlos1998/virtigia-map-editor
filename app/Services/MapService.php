@@ -86,4 +86,9 @@ final class MapService extends BaseService
         $map->respawnPoint()->associate($respawnPointId);
         $map->save();
     }
+
+    public function updateWater(Map $map, ?string $water)
+    {
+        $map->update(['water' => $water ?? '']);
+    }
 }

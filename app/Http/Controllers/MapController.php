@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateMapColsRequest;
 use App\Http\Requests\UpdateMapNameRequest;
 use App\Http\Requests\UpdateMapPvpRequest;
 use App\Http\Requests\UpdateMapRespawnPointRequest;
+use App\Http\Requests\UpdateMapWaterRequest;
 use App\Http\Resources\DoorResource;
 use App\Http\Resources\MapResource;
 use App\Http\Resources\NpcResource;
@@ -88,5 +89,10 @@ class MapController extends Controller
     public function updateRespawnPoint(Map $map, UpdateMapRespawnPointRequest $request): void
     {
         $this->mapService->updateRespawnPoint($map, $request->input('respawn_point_id'));
+    }
+
+    public function updateWater(Map $map, UpdateMapWaterRequest $request): void
+    {
+        $this->mapService->updateWater($map, $request->input('water'));
     }
 }
