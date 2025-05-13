@@ -32,7 +32,7 @@ final class BaseItemService extends BaseService
     {
         return $this->fetchData(
             BaseItemResource::class,
-            $this->baseItemModel,
+            $this->baseItemModel->with(['shops', 'baseNpcs']),
             new TableService(
                 columns: [
 
