@@ -74,7 +74,7 @@ const save = () => {
             </TabList>
             <TabPanels>
                 <TabPanel value="0">
-                    <AttributeEditor v-model="form.attributes" />
+                    <AttributeEditor v-model:attributes="form.attributes" />
                 </TabPanel>
                 <TabPanel value="1">
                     <JsonEditorVue

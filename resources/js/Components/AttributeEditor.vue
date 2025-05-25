@@ -73,23 +73,8 @@
 import { ref, computed, watch } from 'vue';
 import AutoComplete from 'primevue/autocomplete';
 
-const props = defineProps<{
-  modelValue: Record<string, any>
-}>();
+const attributes = defineModel<Record<string, any>>('attributes');
 
-const emit = defineEmits(['update:modelValue']);
-
-const attributes = ref<Record<string, any>>({...props.modelValue});
-
-// Watch for changes in the attributes and emit them
-watch(attributes, (newValue) => {
-  emit('update:modelValue', newValue);
-}, { deep: true });
-
-// Watch for changes in the modelValue from parent
-watch(() => props.modelValue, (newValue) => {
-  attributes.value = {...newValue};
-}, { deep: true });
 
 const selectedAttribute = ref<any>(null);
 const attributeValue = ref<any>(null);
