@@ -72,12 +72,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import AutoComplete from 'primevue/autocomplete';
-import InputText from 'primevue/inputtext';
-import InputNumber from 'primevue/inputnumber';
-import Dropdown from 'primevue/dropdown';
-import Button from 'primevue/button';
-import Checkbox from 'primevue/checkbox';
-import MultiSelect from 'primevue/multiselect';
 
 const props = defineProps<{
   modelValue: Record<string, any>

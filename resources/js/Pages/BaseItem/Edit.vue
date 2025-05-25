@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import {route} from "ziggy-js";
-import {BaseItemWithRelations} from "../../Resources/BaseItem.resource";
+import {BaseItemWithRelations} from "@/Resources/BaseItem.resource";
 import AppLayout from "../../layout/AppLayout.vue";
 import ItemHeader from "../../Components/ItemHeader.vue";
 import {router, useForm} from "@inertiajs/vue3";
 import {onMounted, ref} from "vue";
 import {useToast} from "primevue";
 import AttributeEditor from "../../Components/AttributeEditor.vue";
+import JsonEditorVue from 'json-editor-vue'
 
 const { baseItem } = defineProps<{
     baseItem: BaseItemWithRelations,
@@ -66,8 +67,24 @@ const save = () => {
             /> ^ Podgląd edytowanego przedmiotu
         </div>
 
-        <div class="card">
-            <AttributeEditor v-model="form.attributes" />
-        </div>
+        <Tabs value="0" class="card">
+            <TabList>
+                <Tab value="0">Edytor atrybutów</Tab>
+                <Tab value="1">Edytor json</Tab>
+            </TabList>
+            <TabPanels>
+                <TabPanel value="0">
+                    <AttributeEditor v-model="form.attributes" />
+                </TabPanel>
+                <TabPanel value="1">
+                    <JsonEditorVue
+                        v-model="form.attributes"
+                        v-bind="{/* local props & attrs */}"
+                    />
+                </TabPanel>
+            </TabPanels>
+        </Tabs>
+
+
     </AppLayout>
 </template>
