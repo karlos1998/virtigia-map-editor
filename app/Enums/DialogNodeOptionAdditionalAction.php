@@ -19,8 +19,9 @@ enum DialogNodeOptionAdditionalAction: string
     #[Description('Ulecz')]
     case HEAL = 'HEAL';
 
-    #[Description('Zabij')]
-    case KILL = 'KILL';
+    #[Description('Samobójstwo')]
+    case SELF_KILL = 'SELF_KILL';
+
 
 //    #[Description('Dodaj poziomy')]
 //    case ADD_LEVELS = 'ADD_LEVELS';
@@ -33,4 +34,7 @@ enum DialogNodeOptionAdditionalAction: string
 
     #[Description('Zabij i pokaż okno łupów')]
     case KILL_AND_LOOT = 'KILL_AND_LOOT';
+
+    #[Description('Zabij automatycznie npc')]
+    case KILL = 'KILL';
 }
