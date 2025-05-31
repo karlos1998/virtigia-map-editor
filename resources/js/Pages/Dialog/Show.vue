@@ -141,7 +141,7 @@ onEdgesChange(async (changes) => {
                 sourceOptionId: change.item.sourceNode.type != 'start' ? change.item.sourceHandle.substring(7) : null,
                 targetNodeId: change.item.targetNode.id
             }).then(({ data: { edge } }) => {
-                console.log(' add edge from backend ---<', edge)
+                console.log(' add edge from backend ---<', edge, props.dialog)
                 let edgeTmp = change;
                 edgeTmp.item.id = edge.id;
                 applyEdgeChanges([edgeTmp]);
