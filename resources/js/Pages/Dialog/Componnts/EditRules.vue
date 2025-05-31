@@ -1,129 +1,153 @@
 <script setup lang="ts">
-import {DialogNodeOptionRule} from "@/types/DialogNodeOptionRule";
-import {DropdownListType} from "@/Resources/DropdownList.type";
-import {usePage} from "@inertiajs/vue3";
-import {computed, onMounted, ref} from "vue";
-import {BaseItemResource} from "@/Resources/BaseItem.resource";
-import axios from "axios";
-import {route} from "ziggy-js";
-import {MultiSelectFilterEvent} from "primevue";
-import {DialogNodeRulesResource} from "@/Resources/DialogNodeRules.resource";
-import {debounce} from "@/debounce";
+import { computed, onMounted, ref, watch } from "vue"
+import { usePage } from "@inertiajs/vue3"
+import { debounce } from "@/debounce"
+import { DialogNodeOptionRule } from "@/types/DialogNodeOptionRule"
+import { DropdownListType } from "@/Resources/DropdownList.type"
+import { BaseItemResource } from "@/Resources/BaseItem.resource"
+import { DialogNodeRulesResource } from "@/Resources/DialogNodeRules.resource"
+import { route } from "ziggy-js"
+import axios from "axios"
+import { MultiSelectFilterEvent } from "primevue"
 
-const rules = defineModel<DialogNodeRulesResource>('rules', {
+const rules = defineModel<DialogNodeRulesResource>("rules", {
     required: true,
     get(value) {
-        return Array.isArray(value) ? {} : value;
+        return Array.isArray(value) ? {} : value
     },
     default: () => ({})
-});
+})
 
-
-type RuleDropdownOption = DropdownListType<DialogNodeOptionRule, {canBeUsed: boolean}>;
+type RuleDropdownOption = DropdownListType<DialogNodeOptionRule, { canBeUsed: boolean }>
 
 const staticAvailableRules = usePage<{
-    availableRules: RuleDropdownOption,
-}>().props.availableRules;
+    availableRules: RuleDropdownOption
+}>().props.availableRules
 
-const availableRules = computed(() => staticAvailableRules.filter(rule => !rules.value[rule.value]))
+const availableRules = computed(() =>
+    staticAvailableRules.filter(rule => !rules.value[rule.value])
+)
 
-const itemsDropdown = ref<BaseItemResource[]>([]);
+const itemsDropdown = ref<BaseItemResource[]>([])
 
 const searchItems = debounce(async (query: string, ids: number[]) => {
-    const { data } = await axios.get<BaseItemResource[]>(route('base-items.search', { query, ids }));
-    itemsDropdown.value = data;
-}, 500);
+    const { data } = await axios.get<BaseItemResource[]>(
+        route("base-items.search", { query, ids })
+    )
+    itemsDropdown.value = data
+}, 500)
 
 const itemsSearchChanged = ({ value }: MultiSelectFilterEvent) => {
-    if(rules.value[DialogNodeOptionRule.items]) {
-        searchItems(value, rules.value[DialogNodeOptionRule.items].value as number[]);
+    if (rules.value[DialogNodeOptionRule.items]) {
+        searchItems(value, rules.value[DialogNodeOptionRule.items].value as number[])
     }
-};
+}
 
-const newRule = ref<DialogNodeOptionRule>();
+const newRule = ref<DialogNodeOptionRule>()
 
 const submitNewRule = () => {
-    if(!newRule.value) return;
+    if (!newRule.value) return
 
-    let value: (number|number[]) = 0;
-
-    if(newRule.value == DialogNodeOptionRule.items) {
-        value = [];
+    let value: number | number[] = 0
+    if (newRule.value === DialogNodeOptionRule.items) {
+        value = []
     }
 
-    const rulesTmp = rules.value;
-
-    rulesTmp[newRule.value] = {
+    rules.value[newRule.value] = {
         value,
         consume: false,
+        value2: null
     }
 
-    rules.value = rulesTmp;
-
-    console.log('after submit new rule', rules.value)
+    newRule.value = undefined
 }
 
 const canBeUsedOptions = [
-    {value: true, label: "Zużyj"},
-    {value: false, label: "Nie ingeruj"},
+    { value: true, label: "Zużyj" },
+    { value: false, label: "Nie ingeruj" }
 ]
 
-onMounted(() => {
+// Modal ilości przedmiotów
+const showItemsAmountModal = ref(false)
+const itemAmounts = ref<number[]>([])
 
-    if(rules.value[DialogNodeOptionRule.items]) {
-        searchItems('', rules.value[DialogNodeOptionRule.items].value as number[])
+const openItemsAmountModal = () => {
+    const rule = rules.value[DialogNodeOptionRule.items]
+    if (!rule || !Array.isArray(rule.value)) return
+
+    itemAmounts.value = rule.value.map((_, i) => rule.value2?.[i] ?? 1)
+    showItemsAmountModal.value = true
+}
+
+const saveItemAmounts = () => {
+    if (rules.value[DialogNodeOptionRule.items]) {
+        rules.value[DialogNodeOptionRule.items].value2 = [...itemAmounts.value]
+    }
+    showItemsAmountModal.value = false
+}
+
+watch(
+    () => rules.value[DialogNodeOptionRule.items]?.value,
+    (value: number[] | undefined) => {
+        if (value) {
+            searchItems("", value)
+        }
+    },
+    { immediate: true }
+)
+
+onMounted(() => {
+    if (rules.value[DialogNodeOptionRule.items]) {
+        searchItems("", rules.value[DialogNodeOptionRule.items].value as number[])
     }
 })
-
-
 </script>
 
 <template>
-    <InputGroup v-for="(_, name) in rules">
+    <InputGroup v-for="(_, name) in rules" :key="name">
+        <Button icon="pi pi-times" severity="danger" @click="delete rules[name]" />
 
-        <Button icon="pi pi-times" severity="danger" aria-label="Cancel"  @click="delete rules[name]" />
-
-        <InputGroupAddon style="min-width: 220px;">
-            {{staticAvailableRules.find(rule => rule.value == name)?.label}}
+        <InputGroupAddon style="min-width: 220px">
+            {{ staticAvailableRules.find(rule => rule.value === name)?.label }}
         </InputGroupAddon>
 
         <Select
-            v-if="staticAvailableRules.find(rule => rule.value == name)?.canBeUsed && rules[name]"
+            v-if="staticAvailableRules.find(rule => rule.value === name)?.canBeUsed && rules[name]"
             v-model="rules[name].consume"
             optionLabel="label"
-            option-value="value"
+            optionValue="value"
             class="w-full md:w-80"
             :options="canBeUsedOptions"
         />
 
         <InputNumber
-            v-if="rules[name] && typeof rules[name].value == 'number' && (name == DialogNodeOptionRule.gold || name == DialogNodeOptionRule.level)"
+            v-if="rules[name] && typeof rules[name].value === 'number' && (name === DialogNodeOptionRule.gold || name === DialogNodeOptionRule.level)"
             v-model="rules[name].value"
             :max="2000000000"
             :min="0"
         />
 
         <InputNumber
-            v-if="rules[name] && typeof rules[name].value == 'number' && (name == DialogNodeOptionRule.percentageChance)"
+            v-if="rules[name] && typeof rules[name].value === 'number' && name === DialogNodeOptionRule.percentageChance"
             v-model="rules[name].value"
             showButtons
             buttonLayout="horizontal"
             :step="5"
             :max="100"
             :min="0"
-            suffix=" %"
+            suffix="%"
         />
 
-        <InputGroupAddon v-if="name == DialogNodeOptionRule.brotherhood">
+        <InputGroupAddon v-if="name === DialogNodeOptionRule.brotherhood">
             <b>Wymaga bycia członkiem</b>
         </InputGroupAddon>
 
         <MultiSelect
-            v-if="rules[name] && name == DialogNodeOptionRule.items"
+            v-if="rules[name] && name === DialogNodeOptionRule.items"
             v-model="rules[name].value"
             variant="filled"
             :optionLabel="(item: BaseItemResource) => `[${item.id}] ${item.name} (${item.in_use ? 'W użyciu' : 'Nieużywany'})`"
-            option-value="id"
+            optionValue="id"
             filter
             placeholder="Szukaj przedmiotów"
             :maxSelectedLabels="3"
@@ -132,22 +156,69 @@ onMounted(() => {
             :options="itemsDropdown"
         />
 
-        <InputNumber
-            v-if="rules[name] && (name == DialogNodeOptionRule.items)"
-            v-model="rules[name].value2"
-            showButtons
-            buttonLayout="horizontal"
-            :step="1"
-            :max="1000"
-            :min="1"
-            placeholder="Ilość"
-            suffix=" sztuk"
+        <Button
+            v-if="rules[name] && name === DialogNodeOptionRule.items"
+            label="Ustaw ilości"
+            icon="pi pi-pencil"
+            severity="secondary"
+            @click="openItemsAmountModal"
         />
-
     </InputGroup>
 
     <InputGroup>
-        <Select v-model="newRule" :options="availableRules" optionLabel="label" option-value="value" placeholder="Wybierz dodatkową regułe" class="w-full md:w-56" />
+        <Select
+            v-model="newRule"
+            :options="availableRules"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Wybierz dodatkową regułę"
+            class="w-full md:w-56"
+        />
         <Button severity="info" label="Dodaj regułę" @click="submitNewRule" />
     </InputGroup>
+
+    <Dialog
+        v-model:visible="showItemsAmountModal"
+        modal
+        header="Ilości przedmiotów"
+        :style="{ width: '36rem', maxWidth: '95vw' }"
+    >
+        <div
+            v-if="Array.isArray(rules[DialogNodeOptionRule.items]?.value)"
+            class="space-y-4 max-h-[60vh] overflow-y-auto"
+        >
+            <div
+                v-for="(itemId, idx) in rules[DialogNodeOptionRule.items]?.value"
+                :key="itemId"
+                class="border border-gray-200 rounded-xl p-4 shadow-sm"
+            >
+                <div class="text-sm text-gray-500 mb-1 font-medium">
+                    [#{{ itemId }}]
+                </div>
+                <div class="text-base font-semibold mb-3">
+                    {{ itemsDropdown.find(i => i.id === itemId)?.name ?? 'Nieznany' }}
+                </div>
+                <InputNumber
+                    v-model="itemAmounts[idx]"
+                    :min="1"
+                    :max="1000"
+                    showButtons
+                    buttonLayout="horizontal"
+                    suffix=" szt."
+                    class="w-full"
+                />
+            </div>
+        </div>
+
+        <template #footer>
+            <div class="flex justify-end gap-2">
+                <Button label="Anuluj" severity="secondary" @click="showItemsAmountModal = false" />
+                <Button label="Zapisz" icon="pi pi-check" severity="primary" @click="saveItemAmounts" />
+            </div>
+        </template>
+    </Dialog>
+
+
+
+
 </template>
