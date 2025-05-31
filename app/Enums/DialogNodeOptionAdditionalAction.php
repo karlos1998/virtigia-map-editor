@@ -37,4 +37,13 @@ enum DialogNodeOptionAdditionalAction: string
 
     #[Description('Zabij automatycznie npc')]
     case KILL = 'KILL';
+
+    #[Description('Pokaż pocztę')]
+    case SHOW_MAIL = 'SHOW_MAIL';
+
+    #[Description('Pokaż depozyt')]
+    case SHOW_DEPOSIT = 'SHOW_DEPOSIT';
+
+    #[Description('Pokaż depozyt')]
+    case SHOW_AUCTIONS = 'SHOW_AUCTIONS';
 }
