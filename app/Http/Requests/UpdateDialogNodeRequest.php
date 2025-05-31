@@ -63,6 +63,18 @@ class UpdateDialogNodeRequest extends FormRequest
                                 $fail("Dla rule: {$key}, następujące ID nie istnieją: " . $invalidItems->implode(', '));
                                 return;
                             }
+                        } else if ($key === DialogNodeAdditionalAction::SET_QUEST_STEP->value) {
+                            if (!is_numeric($ruleData['value'])) {
+                                $fail("Dla rule: {$key}, wartość musi być liczbą (ID kroku questa).");
+                                return;
+                            }
+
+                            // Check if the quest step exists
+                            if (!\App\Models\QuestStep::where('id', $ruleData['value'])->exists()) {
+                                $fail("Dla rule: {$key}, krok questa o ID {$ruleData['value']} nie istnieje.");
+                                return;
+                            }
+
                         } elseif (!is_numeric($ruleData['value'])) {
                             $fail("Dla rule: {$key}, wartość musi być liczbą.");
                             return;

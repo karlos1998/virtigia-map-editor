@@ -21,4 +21,7 @@ enum DialogNodeAdditionalAction: string
 
     #[Description('Dodaj złoto')]
     case ADD_GOLD = 'addGold';
+
+    #[Description('Ustaw postęp questa')]
+    case SET_QUEST_STEP = 'setQuestStep';
 }
