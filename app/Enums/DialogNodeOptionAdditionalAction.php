@@ -27,4 +27,10 @@ enum DialogNodeOptionAdditionalAction: string
 
     #[Description('Cofa doświadczenie')]
     case SUBTRACT_EXP = 'SUBTRACT_EXP';
+
+    #[Description('Rozpoczyna walkę')]
+    case BATTLE = 'BATTLE';
+
+    #[Description('Zabij i pokaż okno łupów')]
+    case KILL_AND_LOOT = 'KILL_AND_LOOT';
 }

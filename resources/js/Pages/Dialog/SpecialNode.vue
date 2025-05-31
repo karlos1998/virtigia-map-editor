@@ -148,7 +148,7 @@ export default {
 
         <div class="options">
             <div class="option" :class="{
-                exit: !handleHasConnections[`source-${option.id}`]
+                exit: !handleHasConnections[`source-${option.id}`] && !option.additional_action
             }" v-for="option in options" :key="option.id" @click="editOption(option)">
                 {{ option.label }}
                 <Handle v-tooltip.top="'Drag to connect to dialog, right click to remove connections'"
