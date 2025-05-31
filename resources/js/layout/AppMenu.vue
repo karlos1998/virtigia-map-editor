@@ -60,6 +60,11 @@ const model = ref([
                 icon: 'pi pi-box',
                 route: 'base-items.index',
             },
+            {
+                label: 'Questy',
+                icon: 'pi pi-box',
+                route: 'quests.index',
+            },
         ],
     },
     {
