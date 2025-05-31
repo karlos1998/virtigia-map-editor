@@ -132,6 +132,18 @@ onMounted(() => {
             :options="itemsDropdown"
         />
 
+        <InputNumber
+            v-if="rules[name] && (name == DialogNodeOptionRule.items)"
+            v-model="rules[name].value2"
+            showButtons
+            buttonLayout="horizontal"
+            :step="1"
+            :max="1000"
+            :min="1"
+            placeholder="Ilość"
+            suffix=" sztuk"
+        />
+
     </InputGroup>
 
     <InputGroup>
