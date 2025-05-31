@@ -10,6 +10,8 @@ use App\Http\Controllers\DoorController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\NpcController;
+use App\Http\Controllers\QuestController;
+use App\Http\Controllers\QuestStepController;
 use App\Http\Controllers\ShopController;
 use App\Http\Middleware\RemoveWorldTemplateNameFromRouteParameters;
 use App\Http\Middleware\SetDynamicModelConnection;
@@ -113,6 +115,19 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('shops/{shop}', [ShopController::class, 'show'])->name('shops.show');
                 Route::post('shops/{shop}/items', [ShopController::class, 'addItem'])->name('shops.items.store');
                 Route::delete('shops/{shop}/items/{position}', [ShopController::class, 'destroyItem'])->name('shops.items.destroy');
+
+                // Quest routes
+                Route::get('quests', [QuestController::class, 'index'])->name('quests.index');
+                Route::post('quests', [QuestController::class, 'store'])->name('quests.store');
+                Route::get('quests/search', [QuestController::class, 'search'])->name('quests.search');
+                Route::get('quests/{quest}', [QuestController::class, 'show'])->name('quests.show');
+                Route::patch('quests/{quest}', [QuestController::class, 'update'])->name('quests.update');
+                Route::delete('quests/{quest}', [QuestController::class, 'destroy'])->name('quests.destroy');
+
+                // Quest Step routes
+                Route::post('quests/{quest}/steps', [QuestStepController::class, 'store'])->name('quests.steps.store');
+                Route::patch('quests/{quest}/steps/{step}', [QuestStepController::class, 'update'])->name('quests.steps.update');
+                Route::delete('quests/{quest}/steps/{step}', [QuestStepController::class, 'destroy'])->name('quests.steps.destroy');
 
                 /**
                 Generowanie template z npc dla forum
