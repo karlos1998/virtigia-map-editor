@@ -97,10 +97,40 @@ watch(
 )
 
 onMounted(() => {
+    console.log('on mounted')
     if (rules.value[DialogNodeOptionRule.items]) {
         searchItems("", rules.value[DialogNodeOptionRule.items].value as number[])
     }
 })
+
+
+watch(
+    () => rules.value[DialogNodeOptionRule.items]?.value,
+    (current: number[] | undefined, previous: number[] | undefined) => {
+        if (!Array.isArray(current)) return
+
+        console.log('watch current', current)
+
+        const rule = rules.value[DialogNodeOptionRule.items]
+        if (!rule) return
+
+        const oldIds = Array.isArray(previous) ? previous : []
+        const oldValue2 = Array.isArray(rule.value2) ? rule.value2 : []
+
+        const newValue2: number[] = []
+
+        current.forEach((id, idx) => {
+            const prevIndex = oldIds.indexOf(id)
+            newValue2[idx] = prevIndex !== -1 ? oldValue2[prevIndex] : 1
+        })
+
+        console.log('newValue2', newValue2)
+
+        rule.value2 = newValue2
+    },
+    { deep: true }
+)
+
 </script>
 
 <template>
