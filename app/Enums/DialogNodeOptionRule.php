@@ -32,6 +32,9 @@ enum DialogNodeOptionRule: string
     #[Description('Procentowa szansa')]
     case PERCENTAGE_CHANCE = 'percentageChance';
 
+    #[Description('Krok questa')]
+    case QUEST_STEP = 'questStep';
+
     public function canBeUsed(): bool
     {
         $ref = new ReflectionClassConstant(self::class, $this->name);

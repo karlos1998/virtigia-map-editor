@@ -9,6 +9,8 @@ import { DialogNodeRulesResource } from "@/Resources/DialogNodeRules.resource"
 import { route } from "ziggy-js"
 import axios from "axios"
 import { MultiSelectFilterEvent } from "primevue"
+import { QuestResource, QuestStepResource } from "@/Resources/Quest.resource"
+import TreeSelectAdapter from "@/Pages/Dialog/Componnts/TreeSelectAdapter.vue";
 
 const rules = defineModel<DialogNodeRulesResource>("rules", {
     required: true,
@@ -29,6 +31,8 @@ const availableRules = computed(() =>
 )
 
 const itemsDropdown = ref<BaseItemResource[]>([])
+const questNodes = ref<{ key: string, label: string, children?: any[], leaf?: boolean, loading?: boolean }[]>([])
+const loading = ref(false)
 
 const searchItems = debounce(async (query: string, ids: number[]) => {
     const { data } = await axios.get<BaseItemResource[]>(
@@ -43,14 +47,110 @@ const itemsSearchChanged = ({ value }: MultiSelectFilterEvent) => {
     }
 }
 
+const loadQuests = async () => {
+    loading.value = true
+    try {
+        const { data } = await axios.get<QuestResource[]>(route("quests.search"))
+        questNodes.value = data.map(quest => ({
+            key: `q-${quest.id}`,
+            label: quest.name,
+            leaf: false,
+            loading: false
+        }))
+    } catch (error) {
+        console.error("Error loading quests:", error)
+    } finally {
+        loading.value = false
+    }
+}
+
+const loadQuestStepById = async (stepId: number) => {
+    loading.value = true
+    try {
+        const { data } = await axios.get(route("quest.steps.show", { step: stepId }))
+        const step = data.step
+        const questId = step.quest_id
+
+        // First, make sure the quest is loaded
+        if (!questNodes.value.some(q => q.key === `q-${questId}`)) {
+            const questResponse = await axios.get<QuestResource[]>(route("quests.search"))
+            const quest = questResponse.data.find(q => q.id === questId)
+            if (quest) {
+                questNodes.value.push({
+                    key: `q-${quest.id}`,
+                    label: quest.name,
+                    leaf: false,
+                    loading: false
+                })
+            }
+        }
+
+        // Find the quest node
+        const questNode = questNodes.value.find(q => q.key === `q-${questId}`)
+        if (questNode) {
+            // Load the steps for this quest if not already loaded
+            if (!questNode.children) {
+                const stepsResponse = await axios.get(route("quests.steps", { quest: questId }))
+                questNode.children = stepsResponse.data.steps.map((s: any) => ({
+                    key: `s-${s.id}`,
+                    label: s.name,
+                    leaf: true,
+                    questId: questId,
+                    stepId: s.id
+                }))
+            }
+
+            // Make sure the step is in the children
+            if (!questNode.children?.some(s => s.key === `s-${stepId}`)) {
+                questNode.children?.push({
+                    key: `s-${stepId}`,
+                    label: step.name,
+                    leaf: true,
+                    questId: questId,
+                    stepId: stepId
+                })
+            }
+        }
+    } catch (error) {
+        console.error("Error loading quest step:", error)
+    } finally {
+        loading.value = false
+    }
+}
+
+const onQuestNodeExpand = async (node: any) => {
+    if (!node.children && !node.leaf) {
+        node.loading = true
+        try {
+            // Extract quest ID from the key (format: "q-{id}")
+            const questId = node.key.substring(2)
+            const { data } = await axios.get(route("quests.steps", { quest: questId }))
+
+            node.children = data.steps.map((step: any) => ({
+                key: `s-${step.id}`,
+                label: step.name,
+                leaf: true,
+                questId: questId,
+                stepId: step.id
+            }))
+        } catch (error) {
+            console.error("Error loading quest steps:", error)
+        } finally {
+            node.loading = false
+        }
+    }
+}
+
 const newRule = ref<DialogNodeOptionRule>()
 
 const submitNewRule = () => {
     if (!newRule.value) return
 
-    let value: number | number[] = 0
+    let value: number | number[] | string = 0
     if (newRule.value === DialogNodeOptionRule.items) {
         value = []
+    } else if (newRule.value === DialogNodeOptionRule.questStep) {
+        value = ""
     }
 
     rules.value[newRule.value] = {
@@ -101,6 +201,21 @@ onMounted(() => {
     if (rules.value[DialogNodeOptionRule.items]) {
         searchItems("", rules.value[DialogNodeOptionRule.items].value as number[])
     }
+
+    // Load quests for the TreeSelect
+    loadQuests()
+
+    // Check if a quest step is already selected and load its details
+    if (rules.value[DialogNodeOptionRule.questStep] && typeof rules.value[DialogNodeOptionRule.questStep].value === 'string') {
+        const value = rules.value[DialogNodeOptionRule.questStep].value as string
+        if (value.startsWith('s-')) {
+            // Extract step ID from the value (format: "s-{id}")
+            const stepId = parseInt(value.substring(2))
+            if (!isNaN(stepId)) {
+                loadQuestStepById(stepId)
+            }
+        }
+    }
 })
 
 
@@ -134,6 +249,8 @@ watch(
 </script>
 
 <template>
+
+
     <InputGroup v-for="(_, name) in rules" :key="name">
         <Button icon="pi pi-times" severity="danger" @click="delete rules[name]" />
 
@@ -193,6 +310,15 @@ watch(
             severity="secondary"
             @click="openItemsAmountModal"
         />
+
+        <TreeSelectAdapter
+            v-if="rules[name] && name === DialogNodeOptionRule.questStep"
+            v-model="rules[name].value"
+            :loading="loading"
+            :options="questNodes"
+            :onNodeExpand="onQuestNodeExpand"
+        />
+
     </InputGroup>
 
     <InputGroup>

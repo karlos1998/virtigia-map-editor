@@ -23,12 +23,14 @@ const dialogRef = inject<Ref<DynamicDialogInstance & {
     }
 }> | null>('dialogRef');
 
-const form = useForm<{
+type FormOptionData = {
     label: string
     additional_action: any// todo
     rules: DialogNodeRulesResource
-    edges: DialogNodeOptionEdgeWithRules[],
-}>({
+    edges: DialogNodeOptionEdgeWithRules[]
+}
+
+const form = useForm<FormOptionData>({
     label: '',
     additional_action: null,
     rules: {},
@@ -64,8 +66,20 @@ const save = () => {
 
     processing.value = true;
 
-    const data = form.data();
 
+    console.log('save option', form.data())
+
+    const transformData = (data: FormOptionData) => {
+        const d = data;
+        // for(const ruleId in data.rules) {
+        //     if(ruleId == 'questStep' && d.rules[ruleId] && d.rules[ruleId].value && typeof d.rules[ruleId].value == 'object') {
+        //         d.rules[ruleId].value = Object.keys(data.rules[ruleId].value)[0];
+        //     }
+        // }
+        return d;
+    }
+
+    const data = transformData(form.data());
     axios.patch<DialogOptionResource>(route('dialogs.nodes.options.update', {
         dialogNodeOption: dialogRef.value.data?.option?.id,
         dialog: dialogRef.value.data.dialog_id,
@@ -83,6 +97,33 @@ const save = () => {
         .finally(() => {
             processing.value = false;
         })
+
+    // form
+    //     .transform(data => {
+    //         const d = data;
+    //         for(const ruleId in data.rules) {
+    //             if(ruleId == 'questStep' && d.rules[ruleId] && d.rules[ruleId].value && typeof d.rules[ruleId].value == 'object') {
+    //                 d.rules[ruleId].value = Object.keys(data.rules[ruleId].value)[0];
+    //             }
+    //         }
+    //         return d;
+    //     })
+    //     .patch(route('dialogs.nodes.options.update', {
+    //     dialogNodeOption: dialogRef.value.data?.option?.id,
+    //     dialog: dialogRef.value.data.dialog_id,
+    //     dialogNode: dialogRef.value.data?.option?.node_id,
+    // }), {
+    //     preserveState: true,
+    //     onSuccess: () => {
+    //         toast.add({ severity: 'success', summary: 'Udało się', detail: 'Opcja dialogowa została edytowana', life: 3000 });
+    //         dialogRef.value.close({
+    //             dialogOption: form.data(),
+    //         });
+    //     },
+    //     onError: () => {
+    //         toast.add({ severity: 'error', summary: 'Błąd', detail: 'Wystąpił problem podczas edycji opcji dialogowej', life: 3000 });
+    //     }
+    // })
 }
 
 const remove = () => {

@@ -84,4 +84,14 @@ class QuestController extends Controller
 
         return response()->json(QuestResource::collection($quests));
     }
+
+    /**
+     * Get steps for a specific quest.
+     */
+    public function getSteps(Quest $quest)
+    {
+        return response()->json([
+            'steps' => $quest->steps()->get()
+        ]);
+    }
 }

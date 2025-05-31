@@ -121,6 +121,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('quests', [QuestController::class, 'store'])->name('quests.store');
                 Route::get('quests/search', [QuestController::class, 'search'])->name('quests.search');
                 Route::get('quests/{quest}', [QuestController::class, 'show'])->name('quests.show');
+                Route::get('quests/{quest}/steps', [QuestController::class, 'getSteps'])->name('quests.steps');
                 Route::patch('quests/{quest}', [QuestController::class, 'update'])->name('quests.update');
                 Route::delete('quests/{quest}', [QuestController::class, 'destroy'])->name('quests.destroy');
 
@@ -128,6 +129,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('quests/{quest}/steps', [QuestStepController::class, 'store'])->name('quests.steps.store');
                 Route::patch('quests/{quest}/steps/{step}', [QuestStepController::class, 'update'])->name('quests.steps.update');
                 Route::delete('quests/{quest}/steps/{step}', [QuestStepController::class, 'destroy'])->name('quests.steps.destroy');
+                Route::get('quest-steps/{step}', [QuestStepController::class, 'show'])->name('quest.steps.show');
 
                 /**
                 Generowanie template z npc dla forum

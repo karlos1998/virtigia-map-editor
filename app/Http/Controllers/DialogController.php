@@ -106,9 +106,10 @@ class DialogController extends Controller
         $this->dialogService->updateNode($dialog, $dialogNode, $request->validated());
     }
 
-    public function updateOption(Dialog $dialog, DialogNode $dialogNode, DialogNodeOption $dialogNodeOption, UpdateDialogNodeOptionRequest $request): JsonResponse
+    public function updateOption(Dialog $dialog, DialogNode $dialogNode, DialogNodeOption $dialogNodeOption, UpdateDialogNodeOptionRequest $request)//: JsonResponse
     {
-        return response()->json(DialogNodeOptionResource::make($this->dialogService->updateOption($dialog, $dialogNode, $dialogNodeOption, $request->validated())));
+//        return response()->json(DialogNodeOptionResource::make($this->dialogService->updateOption($dialog, $dialogNode, $dialogNodeOption, $request->validated())));
+        $this->dialogService->updateOption($dialog, $dialogNode, $dialogNodeOption, $request->validated());
     }
 
     public function destroyOption(Dialog $dialog, DialogNode $dialogNode, DialogNodeOption $dialogNodeOption): \Illuminate\Http\Response

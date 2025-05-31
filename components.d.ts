@@ -55,6 +55,7 @@ declare module 'vue' {
     Textarea: typeof import('primevue/textarea')['default']
     Toast: typeof import('primevue/toast')['default']
     Tree: typeof import('primevue/tree')['default']
+    TreeSelect: typeof import('primevue/treeselect')['default']
   }
   export interface ComponentCustomProperties {
     FocusTrap: typeof import('primevue/focustrap')['default']

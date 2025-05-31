@@ -44,6 +44,22 @@ class DialogOptionRuleValidator implements ValidationRule
                     $fail("Dla rule: {$key}, następujące ID nie istnieją: " . $invalidItems->implode(', '));
                     return;
                 }
+            } elseif ($key === DialogNodeOptionRule::QUEST_STEP->value) {
+                // Dla quest_step: value musi być stringiem w formacie "s-{id}"
+                if (!is_string($ruleData['value']) || !preg_match('/^(s|q)-\d+$/', $ruleData['value'])) {
+                    $fail("Dla rule: {$key}, wartość musi być stringiem w formacie \"s-{id}\" lub \"q-{id}\".");
+                    return;
+                }
+
+
+                // Extract the step ID from the value
+                $stepId = (int) substr($ruleData['value'], 2);
+
+                // Check if the quest step exists
+                if (!\App\Models\QuestStep::where('id', $stepId)->exists()) {
+                    $fail("Dla rule: {$key}, krok questa o ID {$stepId} nie istnieje.");
+                    return;
+                }
             } elseif (!is_numeric($ruleData['value'])) {
                 $fail("Dla rule: {$key}, wartość musi być liczbą.");
                 return;

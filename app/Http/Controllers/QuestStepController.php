@@ -10,6 +10,16 @@ use Illuminate\Http\Request;
 class QuestStepController extends Controller
 {
     /**
+     * Get a specific quest step by ID.
+     */
+    public function show(QuestStep $step)
+    {
+        return response()->json([
+            'step' => QuestStepResource::make($step->load('quest')),
+        ]);
+    }
+
+    /**
      * Store a newly created quest step in storage.
      */
     public function store(Request $request, Quest $quest)
