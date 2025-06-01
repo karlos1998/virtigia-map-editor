@@ -52,6 +52,7 @@ const itemsSearchChanged = ({ value }: MultiSelectFilterEvent) => {
 const newRule = ref<DialogNodeOptionRule>()
 
 const submitNewRule = () => {
+
     if (!newRule.value) return
 
     let value: number | number[] | string = 0
@@ -61,10 +62,19 @@ const submitNewRule = () => {
         value = ""
     }
 
-    rules.value[newRule.value] = {
+    const data = {
         value,
         consume: false,
         value2: null
+    }
+
+    if(Object.values(rules.value).length == 0) {
+        //todo - ten if na pierwszy rzut oka jest bez sensu i starczyloby to co w else, ale czesto jak byl pusty obiekt i to na pewno {} a nie [] to i tak nie dodawlao elementu w else...
+        rules.value = {
+            [newRule.value]: data
+        }
+    } else {
+        rules.value[newRule.value] = data
     }
 
     newRule.value = undefined
@@ -157,8 +167,6 @@ watch(
 </script>
 
 <template>
-
-
     <InputGroup v-for="(_, name) in rules" :key="name">
         <Button icon="pi pi-times" severity="danger" @click="delete rules[name]" />
 
