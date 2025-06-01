@@ -49,6 +49,41 @@ class DialogController extends Controller
 
     public function show(Dialog $dialog): \Inertia\Response
     {
+        // Eager load all relationships to improve performance
+        $dialog->load([
+            'nodes' => function($query) {
+                $query->with(['options' => function($query) {
+                    $query->with(['edges' => function($query) {
+                        $query->with('targetNode');
+                    }]);
+                }, 'shop']);
+            },
+            'edges' => function($query) {
+                $query->with(['sourceOption' => function($query) {
+                    $query->with('node');
+                }, 'targetNode']);
+            }
+        ]);
+
+        // Preload maps for teleportation nodes to avoid N+1 queries
+        $teleportationNodes = $dialog->nodes->where('type', 'teleportation');
+        $mapIds = [];
+
+        foreach ($teleportationNodes as $node) {
+            if (isset($node->action_data['teleportation']['mapId'])) {
+                $mapIds[] = $node->action_data['teleportation']['mapId'];
+            }
+        }
+
+        // If there are any map IDs, preload those maps
+        $maps = [];
+        if (!empty($mapIds)) {
+            $maps = \App\Models\Map::whereIn('id', $mapIds)->get()->keyBy('id');
+        }
+
+        // Share the preloaded maps with the DialogNodeResource
+        \App\Http\Resources\DialogNodeResource::$maps = $maps;
+
         return Inertia::render('Dialog/Show', [
             'dialog' => $dialog->only('id'),
             'nodes' => DialogNodeResource::collection($dialog->nodes),

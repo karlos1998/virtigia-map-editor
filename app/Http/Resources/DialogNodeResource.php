@@ -9,6 +9,11 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class DialogNodeResource extends JsonResource
 {
     /**
+     * Static property to hold preloaded maps
+     */
+    public static $maps = [];
+
+    /**
      * Transform the resource into an array.
      *
      * @return array<string, mixed>
@@ -44,8 +49,13 @@ class DialogNodeResource extends JsonResource
             $this->mergeWhen($this->resource->type == 'teleportation', function(){
                 $teleportation = $this->resource->action_data['teleportation'] ?? null;
 
-                if($teleportation){
-                    $teleportation['mapName'] = Map::find($teleportation['mapId'])->name;
+                if($teleportation && isset($teleportation['mapId'])){
+                    // Use preloaded maps if available, otherwise fall back to Map::find
+                    if (isset(self::$maps[$teleportation['mapId']])) {
+                        $teleportation['mapName'] = self::$maps[$teleportation['mapId']]->name;
+                    } else {
+                        $teleportation['mapName'] = Map::find($teleportation['mapId'])->name;
+                    }
                 }
 
                 return [
