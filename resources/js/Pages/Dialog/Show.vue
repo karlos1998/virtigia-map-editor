@@ -34,6 +34,7 @@ const {
     onNodesChange,
     applyNodeChanges,
     removeEdges,
+    updateNodeData,
 } = useVueFlow();
 
 onConnect(({ source, target, sourceHandle, targetHandle }) => {
@@ -145,6 +146,39 @@ onEdgesChange(async (changes) => {
                 let edgeTmp = change;
                 edgeTmp.item.id = edge.id;
                 applyEdgeChanges([edgeTmp]);
+
+                // Update the option's edges list
+                if (change.item.sourceNode.type !== 'start' && change.item.sourceHandle) {
+                    const sourceNodeId = change.item.sourceNode.id;
+                    const sourceOptionId = change.item.sourceHandle.substring(7);
+                    const targetNodeId = change.item.targetNode.id;
+
+                    // Find the source node
+                    const sourceNode = nodes.value.find(node => node.id === sourceNodeId);
+                    if (sourceNode && sourceNode.data && sourceNode.data.options) {
+                        // Find the option within the node
+                        const option = sourceNode.data.options.find(opt => opt.id.toString() === sourceOptionId);
+                        if (option) {
+                            // Add the edge to the option's edges list if it doesn't already exist
+                            if (!option.edges.some(e => e.edge_id === edge.id)) {
+                                option.edges.push({
+                                    edge_id: edge.id,
+                                    node: {
+                                        id: targetNodeId,
+                                        type: change.item.targetNode.type,
+                                        content: change.item.targetNode.data?.content || ''
+                                    },
+                                    rules: {}
+                                });
+
+                                // Update the node data
+                                updateNodeData(sourceNodeId, {
+                                    options: [...sourceNode.data.options]
+                                });
+                            }
+                        }
+                    }
+                }
             })
                 // .catch((error) => {
                 // applyEdgeChanges([{
@@ -172,6 +206,48 @@ onEdgesChange(async (changes) => {
 
 const toast = useToast();
 const removeEdge = (edgeChange: EdgeRemoveChange) => {
+    // Find the edge in the edges array
+    const edge = props.edges.find(e => e.id === edgeChange.id);
+
+    if (edge && edge.source && edge.sourceHandle) {
+        // Extract the source node ID and option ID from the edge
+        const sourceNodeId = edge.source;
+        const sourceOptionId = edge.sourceHandle.substring(7); // Remove "source-" prefix
+
+
+
+        // Find the source node
+        const sourceNode = nodes.value.find(node => node.id === sourceNodeId);
+
+        console.log('remove edge', sourceOptionId, sourceNodeId, sourceNode)
+
+        if (sourceNode && sourceNode.data && sourceNode.data.options) {
+            // Find the option within the node
+            const option = sourceNode.data.options.find(opt => opt.id.toString() === sourceOptionId);
+
+            console.log('found option', option)
+
+            if (option) {
+                // Remove the edge from the option's edges list
+
+                console.log('remove edge id... ', edgeChange.id);
+
+                console.log('edges before', option.edges);
+
+                option.edges = option.edges.filter(e => {
+                    console.log('e.edge_id !== edgeChange.id', e.edge_id , edgeChange.id)
+                    return e.edge_id != edgeChange.id;
+                });
+
+                console.log('edges after', option.edges);
+
+                // Update the node data
+                updateNodeData(sourceNodeId, {
+                    options: [...sourceNode.data.options]
+                });
+            }
+        }
+    }
 
     axios.delete(route('dialogs.edges.destroy', {
         dialog: props.dialog.id,

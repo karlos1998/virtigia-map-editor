@@ -287,7 +287,7 @@ const remove = () => {
                         </AccordionContent>
                     </AccordionPanel>
                 </Accordion>
-                <Message severity="warn">Brak kolejnych kroków dialogowych</Message>
+                <Message v-else severity="warn">Brak kolejnych kroków dialogowych</Message>
             </div>
 
             <div class="flex gap-3 justify-end mt-4">
