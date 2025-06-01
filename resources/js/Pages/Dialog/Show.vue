@@ -2,7 +2,7 @@
 import AppLayout from '../../layout/AppLayout.vue';
 
 import { MiniMap } from '@vue-flow/minimap';
-import {ConnectionMode, EdgeRemoveChange, NodeProps, SmoothStepEdge, useVueFlow, VueFlow} from '@vue-flow/core';
+import {ConnectionMode, EdgeRemoveChange, NodeProps, BezierEdge, useVueFlow, VueFlow} from '@vue-flow/core';
 
 import SpecialNode from '@/Pages/Dialog/SpecialNode.vue';
 import { Controls } from '@vue-flow/controls';
@@ -303,6 +303,12 @@ const items = ref([
                 :max-zoom="1"
                 fit-view-on-init
                 :apply-default="false"
+                :default-edge-options="{
+                    type: 'bezier',
+                    style: { strokeWidth: '2px', stroke: '#6366f1' },
+                    animated: true
+                }"
+                :elevate-edges-on-select="true"
             >
                 <!-- bind your custom node type to a component by using slots, slot names are always `node-<type>` -->
                 <template #node-special="specialNodeProps">
@@ -323,8 +329,7 @@ const items = ref([
                 </template>
 
                 <template #edge-default="customEdgeProps">
-
-                    <SmoothStepEdge
+                    <BezierEdge
                         :id="customEdgeProps.id"
                         :source-x="customEdgeProps.sourceX"
                         :source-y="customEdgeProps.sourceY"
@@ -334,6 +339,8 @@ const items = ref([
                         :target-position="customEdgeProps.targetPosition"
                         :data="customEdgeProps.data"
                         :marker-end="customEdgeProps.markerEnd"
+                        :style="{ strokeWidth: '2px', stroke: '#6366f1' }"
+                        :path-options="{ curvature: 0.5 }"
                     />
                 </template>
 
@@ -354,3 +361,35 @@ const items = ref([
         </div>
     </AppLayout>
 </template>
+
+<style scoped>
+/* Custom edge styling */
+:deep(.vue-flow__edge) {
+    transition: stroke 0.3s, stroke-width 0.3s;
+}
+
+:deep(.vue-flow__edge:hover) {
+    stroke-width: 3px !important;
+    stroke: #4f46e5 !important; /* Darker indigo on hover */
+}
+
+:deep(.vue-flow__edge.selected) {
+    stroke-width: 3px !important;
+    stroke: #4f46e5 !important; /* Darker indigo when selected */
+}
+
+:deep(.vue-flow__edge-path) {
+    stroke-dasharray: none; /* Remove any dash pattern */
+}
+
+:deep(.vue-flow__edge.animated .vue-flow__edge-path) {
+    stroke-dasharray: 5, 5; /* Add dash pattern for animated edges */
+    animation: dashdraw 0.5s linear infinite;
+}
+
+@keyframes dashdraw {
+    from {
+        stroke-dashoffset: 10;
+    }
+}
+</style>
