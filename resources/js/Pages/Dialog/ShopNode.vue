@@ -9,7 +9,7 @@ import EditShopNodeDialog from "./Modals/EditShopNodeDialog.vue";
 import axios from "axios";
 import {route} from "ziggy-js";
 import {useToast} from "primevue";
-
+import { Link } from '@inertiajs/vue3';
 const primeDialog = useDialog();
 
 const props = defineProps<NodeProps<{
@@ -73,9 +73,14 @@ export default {
             <RemoveNodeButton :dialog-node-id="id" :dialog-id="data.dialog_id" />
         </div>
 
-        <div class="mt-auto mb-16" v-if="data.shop">
+        <div class="mt-auto mb-6" v-if="data.shop">
             <div>Nazwa sklepu: {{ data.shop.name }}</div>
             <div>Ilość przedmiotów: {{ data.shop.items_count }}</div>
+            <Link :href="route('shops.show', data.shop.id)">
+                <Button size="small">
+                    Podgląd sklepu
+                </Button>
+            </Link>
         </div>
         <div v-else class="mt-auto mb-16 text-red-500">
             Nie wybrano sklepu
