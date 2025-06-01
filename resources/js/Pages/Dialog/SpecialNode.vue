@@ -14,6 +14,8 @@ import RemoveNodeButton from "./Componnts/RemoveNodeButton.vue";
 import {DialogNodeAdditionalActionsResource} from "../../Resources/DialogNodeAdditionalActions.resource";
 
 const primeDialog = useDialog();
+const showEditOption = ref(false);
+const currentOption = ref<DialogOptionResource | null>(null);
 
 
 const props = defineProps<NodeProps<{
@@ -33,37 +35,38 @@ const state = ref({
 const options = ref(props.data.options);
 
 const editOption = (option: DialogOptionResource) => {
-    // noinspection JSUnusedGlobalSymbols
-    primeDialog.open(EditOption, {
-        props: {
-          header: 'Edycja opcji',
-            modal: true,
-        },
-        data: {
-            parent: props.id,
-            option,
-            dialog_id: props.data.dialog_id,
-            additional_action: props.data.additional_actions,
-        },
-        onClose(closeOptions: DynamicDialogCloseOptions & { data: { remove?: boolean, dialogOption?:DialogOptionResource } }) {
-            if (closeOptions.data?.remove) {
-                removeSourceConnections(option);
-                options.value = options.value.filter((o) => o.id !== option.id);
-            }
+    currentOption.value = option;
+    showEditOption.value = true;
+};
 
-            if (closeOptions.data?.dialogOption) {
-                option.label = closeOptions.data.dialogOption.label;
-                option.additional_action = closeOptions.data.dialogOption.additional_action;
-                console.log('new option data ', option)
-            }
+const handleEditOptionClose = (closeData: { remove?: boolean, dialogOption?: DialogOptionResource }) => {
 
-              updateNodeData(props.id, {
-                options: [...options.value]
-              });
+    console.log('handleEditOptionClose', closeData);
 
-              console.log(options.value);
-        },
+    if (!currentOption.value) return;
+
+    if (closeData?.remove) {
+        removeSourceConnections(currentOption.value);
+        options.value = options.value.filter((o) => o.id !== currentOption.value!.id);
+    }
+
+    if (closeData?.dialogOption) {
+        currentOption.value.label = closeData.dialogOption.label;
+        currentOption.value.additional_action = closeData.dialogOption.additional_action;
+        currentOption.value.rules = closeData.dialogOption.rules;
+        currentOption.value.edges = closeData.dialogOption.edges;
+        console.log('new option data ', currentOption.value);
+    }
+
+    updateNodeData(props.id, {
+        options: [...options.value]
     });
+
+    console.log(options.value);
+
+    // Reset state
+    showEditOption.value = false;
+    currentOption.value = null;
 };
 
 const removeSourceConnections = (option: { label: string, id: string }) => {
@@ -162,6 +165,16 @@ export default {
             </div>
         </div>
     </div>
+
+    <!-- EditOption component -->
+    <EditOption
+        v-model:visible="showEditOption"
+        @close="handleEditOptionClose"
+        :option="currentOption"
+        :parent="props.id"
+        :dialog_id="props.data.dialog_id"
+        :additional_action="props.data.additional_actions"
+    />
 </template>
 
 <style scoped lang="scss">
