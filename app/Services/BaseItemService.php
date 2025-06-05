@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\BaseItemCategory;
 use App\Enums\BaseItemCurrency;
+use App\Enums\BaseItemRarity;
 use App\Enums\Profession;
 use App\Http\Resources\BaseItemResource;
 use App\Models\BaseItem;
@@ -32,6 +33,11 @@ final class BaseItemService extends BaseService
      */
     public function getAll(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
+//        dd(array_map(function($rarity){
+//            return new TableDropdownOption($rarity->description(), fn($query) => $query->whereJsonContains('attributes->rarity', $rarity->value));
+//        }, BaseItemRarity::cases()), array_map(function($category){
+//            return new TableDropdownOption($category->description(), fn($query) => $query->where('category', $category->value));
+//        }, BaseItemCategory::cases()));
         return $this->fetchData(
             BaseItemResource::class,
             $this->baseItemModel->with(['shops', 'baseNpcs']),
@@ -68,7 +74,13 @@ final class BaseItemService extends BaseService
                         queryPaths: ['attributes->needLevel'],
                         sortPath: 'attributes->needLevel',
                         sortDataType: TableColumnDataType::NUMERIC,
-                    )
+                    ),
+                    'rarity' => new TableDropdownColumn(
+                        placeholder: 'Rzadkość',
+                        options: array_map(function($rarity){
+                            return new TableDropdownOption($rarity->description(), fn($query) => $query->where('rarity', $rarity->value));
+                        }, BaseItemRarity::cases())
+                    ),
                 ],
                 globalFilterColumns: ['name', 'src'],
                 rowsPerPage: [100, 300, 500]

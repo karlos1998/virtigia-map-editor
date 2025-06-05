@@ -76,6 +76,12 @@ type Data = {
                     </template>
                 </AdvanceColumn>
 
+                <AdvanceColumn field="rarity" header="Rzadkość">
+                    <template #body="{ data }: Data">
+                        {{ data.rarity }}
+                    </template>
+                </AdvanceColumn>
+
                 <AdvanceColumn field="need_level" header="Wymagany poziom">
                     <template #body="{ data }: Data">
                         {{data.need_level || '-' }}
