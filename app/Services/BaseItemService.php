@@ -9,10 +9,12 @@ use App\Http\Resources\BaseItemResource;
 use App\Models\BaseItem;
 use App\Services\Traits\UpdateImage;
 use Illuminate\Support\Collection;
+use Karlos3098\LaravelPrimevueTableService\Enum\TableColumnDataType;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownOptions\TableDropdownOption;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownOptions\TableDropdownOptionTag;
+use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableSliderColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableTextColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\TableService;
 
@@ -57,10 +59,14 @@ final class BaseItemService extends BaseService
                         }, Profession::cases())
                     ),
 
-                    'need_level' => new TableTextColumn(
-                        placeholder: 'Dokładny lvl (TODO)',
+                    'need_level' => new TableSliderColumn(
+                        placeholder: 'Level',
+                        min: 0,
+                        max: 300,
+                        step: 1,
                         sortable: true,
-                        sortPath: 'attributes->needLevel'
+                        sortPath: 'attributes->needLevel',
+                        sortDataType: TableColumnDataType::NUMERIC,
                     )
                 ],
                 globalFilterColumns: ['name', 'src'],
