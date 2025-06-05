@@ -50,14 +50,6 @@ provide('service', service.value)
         @sort="(data: DataTableSortEvent) => service.sortEvent(data)"
     >
 
-        <template #groupheader="slotProps">
-            <slot name="groupheader" v-bind="slotProps" />
-        </template>
-
-        <template #expansion="slotProps">
-            <slot name="expansion" v-bind="slotProps" />
-        </template>
-
         <template #header>
             <slot name="header"
                   v-bind:globalFilterValue="service.globalFilterValue.value"

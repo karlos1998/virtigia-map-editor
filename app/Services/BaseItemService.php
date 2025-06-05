@@ -65,6 +65,7 @@ final class BaseItemService extends BaseService
                         max: 300,
                         step: 1,
                         sortable: true,
+                        queryPaths: ['attributes->needLevel'],
                         sortPath: 'attributes->needLevel',
                         sortDataType: TableColumnDataType::NUMERIC,
                     )

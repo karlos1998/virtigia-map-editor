@@ -41,6 +41,7 @@ declare module 'vue' {
     RadioButtonGroup: typeof import('primevue/radiobuttongroup')['default']
     Select: typeof import('primevue/select')['default']
     SelectButton: typeof import('primevue/selectbutton')['default']
+    Slider: typeof import('primevue/slider')['default']
     SpeedDial: typeof import('primevue/speeddial')['default']
     Step: typeof import('primevue/step')['default']
     StepItem: typeof import('primevue/stepitem')['default']

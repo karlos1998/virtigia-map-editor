@@ -5,8 +5,8 @@ import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
-import UserAvatar from "@advance-table/Components/UserAvatar.vue";
 import AppLogo from '@/Components/AppLogo.vue';
+import UserAvatar from "@/layout/UserAvatar.vue";
 
 const { isHorizontal, onMenuToggle, showConfigSidebar, showSidebar } = useLayout();
 
