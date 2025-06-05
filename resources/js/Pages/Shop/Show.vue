@@ -7,7 +7,6 @@ import {route} from "ziggy-js";
 import {router} from "@inertiajs/vue3";
 import {ShopResource} from "@/Resources/Shop.resource";
 import {BaseItemResource, BaseItemWithPosition} from "@/Resources/BaseItem.resource";
-import Item from "@advance-table/Components/Item.vue";
 import ItemHeader from "@/Components/ItemHeader.vue";
 import {useConfirm, useToast} from "primevue";
 import {ref} from "vue";
@@ -16,6 +15,7 @@ import RockTip from "../../RockTip/components/rockTip.vue";
 
 // @ts-ignore
 import { itemTip } from "../../old-createItemTip";
+import Item from "@/Components/Item.vue";
 const props = defineProps<{
     shop: ShopResource
     items: BaseItemWithPosition

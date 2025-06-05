@@ -1,10 +1,10 @@
 <script setup>
 import AppConfig from '@/layout/AppConfig.vue';
-import UserAvatar from "@advance-table/Components/UserAvatar.vue";
 import {computed} from "vue";
 import {router, usePage} from "@inertiajs/vue3";
 import { Link } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
+import UserAvatar from "@/layout/UserAvatar.vue";
 
 const user = computed(() => usePage().props.auth.user);
 const role = computed(() => {

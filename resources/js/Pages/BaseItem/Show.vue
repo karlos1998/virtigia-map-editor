@@ -6,8 +6,6 @@ import {route} from "ziggy-js";
 import ItemHeader from "../../Components/ItemHeader.vue";
 
 import { itemTip } from "../../old-createItemTip";
-import rockAdapter from "../../RockTip/components/rockAdapter.vue";
-import Item from "../../karlos3098-LaravelPrimevueTable/Components/Item.vue";
 import BaseNpcsUsedItemTable from "./Partials/BaseNpcsUsedItemTable.vue";
 import ShopsUsedItemTable from "./Partials/ShopsUsedItemTable.vue";
 import {ref} from "vue";
