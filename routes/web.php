@@ -211,6 +211,8 @@ Route::get('go-to-classic', function() {
 
 Route::post('switch-world', [\App\Http\Controllers\WorldController::class, 'switchWorld'])->name('switch-world');
 
+Route::get('search', [\App\Http\Controllers\SearchController::class, 'search'])->name('search');
+
 Route::get('npcs-without-locations', function(){
     Npc::setGlobalConnection('retro');
    $output = Npc::doesntHave('locations')->get();

@@ -61,7 +61,7 @@ const showLogoText = computed(() => !isSlim.value && !isSlimPlus.value);
 
         <div class="sidebar-footer">
             <div class="version">v1.0.0</div>
-            <div class="copyright">© 2023 Virtigia</div>
+            <div class="copyright">© 2025 Virtigia</div>
         </div>
     </div>
 </template>
