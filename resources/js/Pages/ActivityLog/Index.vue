@@ -243,6 +243,8 @@ const formatDate = (dateString) => {
                     </template>
                 </AdvanceColumn>
 
+                <Column field="world" header="Świat" />
+
                 <template #expansion="{data}: Data">
                     <div class="p-4">
                         <div class="mb-4">

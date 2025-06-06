@@ -1,8 +1,8 @@
 <script setup>
 import AppSidebar from '@/layout/AppSidebar.vue';
 import { useLayout } from '@/layout/composables/layout';
-import { usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { usePage, router } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
 import AppLogo from '@/Components/AppLogo.vue';
@@ -11,6 +11,21 @@ import UserAvatar from "@/layout/UserAvatar.vue";
 const { isHorizontal, onMenuToggle, showConfigSidebar, showSidebar } = useLayout();
 
 const user = computed(() => usePage().props.auth.user);
+const world = computed(() => usePage().props.auth.world);
+
+const worldOptions = ref([
+    { label: 'Retro', value: 'retro' },
+    { label: 'Classic', value: 'classic' },
+    { label: 'Legacy', value: 'legacy' }
+]);
+
+const selectedWorld = ref(world.value);
+
+const switchWorld = () => {
+    router.post(route('switch-world'), {
+        world: selectedWorld.value
+    });
+};
 </script>
 
 <template>
@@ -44,7 +59,18 @@ const user = computed(() => usePage().props.auth.user);
                 </li>
 
                 <li class="mr-2">
-                    <Button type="button" icon="pi pi-bell" badge="3" badgeClass="bg-accent-500" rounded outlined severity="secondary" aria-label="Notifications"></Button>
+                    <div class="flex items-center">
+                        <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">World:</span>
+                        <Dropdown
+                            v-model="selectedWorld"
+                            :options="worldOptions"
+                            optionLabel="label"
+                            optionValue="value"
+                            class="w-32"
+                            @change="switchWorld"
+                            aria-label="Select World"
+                        />
+                    </div>
                 </li>
 
                 <li class="topbar-item">
