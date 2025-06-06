@@ -6,6 +6,7 @@ use App\Enums\Profession;
 use App\Models\BaseItem;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @property-read BaseItem $resource
@@ -22,7 +23,8 @@ class BaseItemResource extends JsonResource
         return [
             ...parent::toArray($request),
 
-            'src' => config('assets.url') . config('assets.dirs.items') . $this->resource->src . '?' . $this->resource->updated_at->timestamp,
+            //'src' => config('assets.url') . config('assets.dirs.items') . $this->resource->src . '?' . $this->resource->updated_at->timestamp,
+            'src' => Storage::disk('s3')->temporaryUrl('img' . config('assets.dirs.items') . $this->resource->src, now()->addHour()),
             $this->mergeWhen($this->resource->pivot?->position !== null, fn() => [
                 'position' => $this->resource->pivot->position,
             ]),
