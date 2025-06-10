@@ -23,5 +23,5 @@ enum BaseItemCurrency: string
     case DRAGON_TEAR = 'dragonTear';
 
     #[Description('Punkty Honoru')]
-    case HONOR_POINTS = 'honorPoints';
+    case HONOR = 'honor';
 }
