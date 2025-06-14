@@ -7,6 +7,7 @@ use App\Models\BaseItem;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Resources\DialogResource;
 
 /**
  * @property-read BaseItem $resource
@@ -43,6 +44,7 @@ class BaseItemResource extends JsonResource
               return [
                   'shops' => ShopResource::collection($this->resource->shops),
                   'baseNpcs' => BaseNpcResource::collection($this->resource->baseNpcs),
+                  'dialogs' => DialogResource::collection($this->resource->dialogs()->get()),
               ];
             })
         ];

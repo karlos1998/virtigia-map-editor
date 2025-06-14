@@ -79,7 +79,7 @@ const filterItems = async ({ query }: { query: string }) => {
                         />
                         <div class="text-center">
                             <span class="font-semibold text-gray-800">
-                                [{{ slotProps.option.id }}] {{ slotProps.option.name }}
+                                [{{ slotProps.option.id }}] {{ slotProps.option.name }} ({{slotProps.option.in_use ? 'W użyciu' : 'Nieużywany'}})
                             </span>
                         </div>
                     </div>

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\BaseItemCategory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Laravel\Scout\Engines\MeilisearchEngine;
 //use Laravel\Scout\Searchable;
 
@@ -69,6 +70,21 @@ class BaseItem extends DynamicModel
     public function isInUse()
     {
         return $this->shops()->exists() ||
-            $this->baseNpcs()->exists();
+            $this->baseNpcs()->exists() ||
+            $this->dialogs()->exists();
+    }
+
+    /**
+     * Get all dialogs where this item is used in dialog node options.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function dialogs()
+    {
+        return Dialog::whereHas('nodes.options', function ($query) {
+            $query->whereRaw('JSON_CONTAINS(rules, ?, \'$.items.value\')', [$this->id]);
+        })->orWhereHas('nodes', function ($query) {
+            $query->whereRaw('JSON_CONTAINS(additional_actions, ?, \'$.addItems.value\')', [$this->id]);
+        });
     }
 }

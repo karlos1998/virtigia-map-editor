@@ -8,6 +8,7 @@ import ItemHeader from "../../Components/ItemHeader.vue";
 import { itemTip } from "../../old-createItemTip";
 import BaseNpcsUsedItemTable from "./Partials/BaseNpcsUsedItemTable.vue";
 import ShopsUsedItemTable from "./Partials/ShopsUsedItemTable.vue";
+import DialogsUsedItemTable from "./Partials/DialogsUsedItemTable.vue";
 import {ref} from "vue";
 import {Link, router} from "@inertiajs/vue3";
 import {useConfirm, useToast} from "primevue";
@@ -188,6 +189,10 @@ const isEditBaseItemDialogVisible = ref(false);
 
         <div class="card" >
             <ShopsUsedItemTable :shops="baseItem.shops" />
+        </div>
+
+        <div class="card" >
+            <DialogsUsedItemTable :dialogs="baseItem.dialogs" />
         </div>
 
         <BaseItemActivityLogsTable v-if="logs" :logs="logs" :base-item-id="baseItem.id" />
