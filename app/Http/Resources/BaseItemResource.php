@@ -44,7 +44,7 @@ class BaseItemResource extends JsonResource
               return [
                   'shops' => ShopResource::collection($this->resource->shops),
                   'baseNpcs' => BaseNpcResource::collection($this->resource->baseNpcs),
-                  'dialogs' => DialogResource::collection($this->resource->dialogs()->get()),
+                  'dialogs' => DialogResource::collection($this->resource->dialogs->unique()),
               ];
             })
         ];

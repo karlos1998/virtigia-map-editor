@@ -81,6 +81,24 @@ final class BaseItemService extends BaseService
                             return new TableDropdownOption($rarity->description(), fn($query) => $query->where('rarity', $rarity->value));
                         }, BaseItemRarity::cases())
                     ),
+
+                    'in_use' => new TableDropdownColumn(
+                        placeholder: 'W Użuciu',
+                        options: [
+                            new TableDropdownOption('W użyciu', function($query) {
+                                return $query->where(function($q) {
+                                    $q->whereHas('shops')
+                                      ->orWhereHas('baseNpcs')
+                                      ->orWhereHas('dialogs');
+                                });
+                            }),
+                            new TableDropdownOption('Nie używany', function($query) {
+                                return $query->whereDoesntHave('shops')
+                                    ->whereDoesntHave('baseNpcs')
+                                    ->whereDoesntHave('dialogs');
+                            }),
+                        ]
+                    ),
                 ],
                 globalFilterColumns: ['name', 'src'],
                 rowsPerPage: [100, 300, 500]

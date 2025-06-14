@@ -77,14 +77,18 @@ class BaseItem extends DynamicModel
     /**
      * Get all dialogs where this item is used in dialog node options.
      *
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
     public function dialogs()
     {
-        return Dialog::whereHas('nodes.options', function ($query) {
-            $query->whereRaw('JSON_CONTAINS(rules, ?, \'$.items.value\')', [$this->id]);
-        })->orWhereHas('nodes', function ($query) {
-            $query->whereRaw('JSON_CONTAINS(additional_actions, ?, \'$.addItems.value\')', [$this->id]);
-        });
+        return $this->belongsToMany(Dialog::class, 'dialog_nodes', 'id', 'source_dialog_id')
+            ->distinct()
+            ->whereRaw('1=0') // Start with an impossible condition
+            ->orWhereHas('nodes.options', function ($query) {
+                $query->whereRaw('JSON_CONTAINS(rules, ?, \'$.items.value\')', [$this->id]);
+            })
+            ->orWhereHas('nodes', function ($query) {
+                $query->whereRaw('JSON_CONTAINS(additional_actions, ?, \'$.addItems.value\')', [$this->id]);
+            });
     }
 }
