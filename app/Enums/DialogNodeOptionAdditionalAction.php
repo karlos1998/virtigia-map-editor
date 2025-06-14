@@ -44,6 +44,6 @@ enum DialogNodeOptionAdditionalAction: string
     #[Description('Pokaż depozyt')]
     case SHOW_DEPOSIT = 'SHOW_DEPOSIT';
 
-    #[Description('Pokaż depozyt')]
+    #[Description('Pokaż aukcje')]
     case SHOW_AUCTIONS = 'SHOW_AUCTIONS';
 }
