@@ -14,8 +14,7 @@ use App\Http\Controllers\QuestController;
 use App\Http\Controllers\QuestStepController;
 use App\Http\Controllers\ShopController;
 use App\Http\Middleware\RemoveWorldTemplateNameFromRouteParameters;
-use App\Http\Middleware\SetDynamicModelConnection;
-use App\Jobs\FindNearestRespForMap;
+use App\Http\Middleware\SetDynamicModelConnection;;
 use App\Models\DynamicModel;
 use App\Models\Npc;
 use Illuminate\Support\Facades\Auth;
@@ -195,7 +194,7 @@ Route::get('debug-stats/api/characters', function() {
     return $request->json();
 });
 Route::get('debug-stats/api/base-npcs', function() {
-    $request = Http::get('https://mbp-karol-java.letscode.it/debug-stats/base-npcs?rank=' . request()->get('rank') . '&profession=' . request()->get('profession'));
+    $request = Http::get('https://virtigia-engine.letscode.it/debug-stats/base-npcs?rank=' . request()->get('rank') . '&profession=' . request()->get('profession'));
     return $request->json();
 });
 
