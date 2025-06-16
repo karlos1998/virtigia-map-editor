@@ -39,6 +39,7 @@ class FindNearestRespForMap implements ShouldQueue
 
         if ($respawnPoints->isEmpty()) {
             //Brak dostępnych punktów respawn spełniających wymagania.
+
             return;
         }
 
@@ -54,14 +55,45 @@ class FindNearestRespForMap implements ShouldQueue
 
             // Jeśli osiągnięto jedną z docelowych map, sprawdzamy warunki i zwracamy wynik
             if ($respawnPoints->has($currentMap) && $steps <= $respawnPoints[$currentMap]->max_steps) {
-                $this->map->respawn_point_id = RespawnPoint::where('map_id', $currentMap)->first()->id;
+                $respawnPoint = RespawnPoint::where('map_id', $currentMap)->first();
+                $this->map->respawn_point_id = $respawnPoint->id;
                 $this->map->save();
+
+                // Log the activity
+                activity()
+                    ->performedOn($this->map)
+                    ->event('find-nearest-respawn-point')
+                    ->withProperties([
+                        'map_id' => $this->map->id,
+                        'map_name' => $this->map->name,
+                        'respawn_point_id' => $respawnPoint->id,
+                        'respawn_point_map_id' => $respawnPoint->map_id,
+                        'steps' => $steps
+                    ])
+                    ->tap(function ($activity) {
+                        $activity->world = 'retro';
+                    })
+                    ->log('Found nearest respawn point for map');
+
                 return;
             }
 
             // Jeśli liczba kroków przekracza limit, przerywamy
             if ($steps > $maxDepth) {
                 //zbyt dluga sciezka
+
+                // Log the activity
+//                activity()
+//                    ->performedOn($this->map)
+//                    ->event('find-nearest-respawn-point-failed')
+//                    ->withProperties([
+//                        'map_id' => $this->map->id,
+//                        'map_name' => $this->map->name,
+//                        'reason' => 'Path too long',
+//                        'max_depth' => $maxDepth
+//                    ])
+//                    ->log('Failed to find nearest respawn point for map: path too long');
+
                 return;
             }
 
@@ -78,5 +110,16 @@ class FindNearestRespForMap implements ShouldQueue
                 }
             }
         }
+
+        // If we've exhausted all possible paths without finding a respawn point
+//        activity()
+//            ->performedOn($this->map)
+//            ->event('find-nearest-respawn-point-failed')
+//            ->withProperties([
+//                'map_id' => $this->map->id,
+//                'map_name' => $this->map->name,
+//                'reason' => 'No path found'
+//            ])
+//            ->log('Failed to find nearest respawn point for map: no path found');
     }
 }
