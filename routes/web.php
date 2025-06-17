@@ -78,6 +78,8 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('maps/search', [MapController::class, 'search'])->name('maps.search');
                 Route::get('maps', [MapController::class, 'index'])->name('maps.index');
                 Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');
+
+                Route::get('respawn-points', [\App\Http\Controllers\RespawnPointController::class, 'index'])->name('respawn-points.index');
                 Route::patch('maps/{map}/cols', [MapController::class, 'updateCol'])->name('maps.update.col');
                 Route::patch('maps/{map}/water', [MapController::class, 'updateWater'])->name('maps.update.water');
                 Route::patch('maps/{map}/name', [MapController::class, 'updateName'])->name('maps.update.name');

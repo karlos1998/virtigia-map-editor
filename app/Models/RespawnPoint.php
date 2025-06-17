@@ -15,4 +15,9 @@ class RespawnPoint extends DynamicModel
         return $this->belongsTo(Map::class);
     }
 
+    public function maps()
+    {
+        return $this->hasMany(Map::class);
+    }
+
 }

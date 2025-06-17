@@ -4,4 +4,5 @@ export interface RespawnPointResource {
     map_name: string
     x: number
     y: number
+    maps_count: number
 }

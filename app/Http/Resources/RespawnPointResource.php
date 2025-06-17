@@ -24,6 +24,7 @@ class RespawnPointResource extends JsonResource
             'map_name' => $this->resource->map->name,
             'x' => $this->resource->x,
             'y' => $this->resource->y,
+            'maps_count' => $this->resource->maps_count ?? 0,
         ];
     }
 }

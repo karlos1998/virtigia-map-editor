@@ -65,6 +65,11 @@ const model = ref([
                 icon: 'pi pi-box',
                 route: 'quests.index',
             },
+            {
+                label: 'Miejsca odrodzenia',
+                icon: 'pi pi-box',
+                route: 'respawn-points.index',
+            },
         ],
     },
     {

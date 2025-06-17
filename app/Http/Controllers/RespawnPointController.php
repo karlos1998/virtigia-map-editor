@@ -13,7 +13,10 @@ class RespawnPointController extends Controller
      */
     public function index()
     {
-        //
+        $respawnPoints = \App\Models\RespawnPoint::withCount('maps')->get();
+        return \Inertia\Inertia::render('RespawnPoint/Index', [
+            'respawnPoints' => \App\Http\Resources\RespawnPointResource::collection($respawnPoints)
+        ]);
     }
 
     /**
