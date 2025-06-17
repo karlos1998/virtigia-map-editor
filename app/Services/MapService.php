@@ -8,6 +8,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
+use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownColumn;
+use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownOptions\TableDropdownOption;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableTextColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\TableService;
 
@@ -15,7 +17,8 @@ final class MapService extends BaseService
 {
     public function __construct(
         private readonly Map $mapModel,
-        private readonly AssetService $assetService
+        private readonly AssetService $assetService,
+        private readonly RespawnPointService $respawnPointService,
     )
     {
     }
@@ -33,7 +36,13 @@ final class MapService extends BaseService
                   'id' => new TableTextColumn(
                       placeholder: 'Wpisz szukane id',
                       sortable: true,
-                  )
+                  ),
+                    'respawn_point' => new TableDropdownColumn(
+                        placeholder: 'Punkt odrodzenia',
+                        options: $this->respawnPointService->getRespawnPointsSelectOptions(),
+                        sortable: true,
+                        sortPath: 'respawn_point_id',
+                    )
                 ],
                 globalFilterColumns: ['name', 'src']
             )

@@ -54,7 +54,7 @@ type Data = {
                     </template>
                 </AdvanceColumn>
 
-                <AdvanceColumn field="src" header="Ścieżka" >/</AdvanceColumn>
+                <AdvanceColumn field="src" header="Ścieżka"  />
 
                 <Column header="Action" style="width: 20%">
                     <template #body="{data}">
@@ -78,6 +78,16 @@ type Data = {
                         </div>
                     </template>
                 </Column>
+
+                <AdvanceColumn field="respawn_point" header="Miejsce odrodzenia">
+                    <template #body="{data}">
+                        <div v-if="data.respawn_point">
+                            {{data.respawn_point.map_name}} ({{data.respawn_point.x}}, {{data.respawn_point.y}})
+                        </div>
+                        <div v-else>-</div>
+                    </template>
+                </AdvanceColumn>
+
             </AdvanceTable>
         </div>
     </AppLayout>
