@@ -70,6 +70,11 @@ const model = ref([
                 icon: 'pi pi-box',
                 route: 'respawn-points.index',
             },
+            {
+                label: 'Punkty startowe profesji',
+                icon: 'pi pi-user-plus',
+                route: 'spawn-points.index',
+            },
         ],
     },
     {
