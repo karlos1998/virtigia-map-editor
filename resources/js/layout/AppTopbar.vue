@@ -17,7 +17,8 @@ const world = computed(() => usePage().props.auth.world);
 const worldOptions = ref([
     { label: 'Retro', value: 'retro' },
     { label: 'Classic', value: 'classic' },
-    { label: 'Legacy', value: 'legacy' }
+    { label: 'Legacy', value: 'legacy' },
+    { label: 'Demo', value: 'demo' },
 ]);
 
 const selectedWorld = ref(world.value);

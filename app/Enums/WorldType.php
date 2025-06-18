@@ -7,6 +7,7 @@ enum WorldType: string
     case RETRO = 'retro';
     case CLASSIC = 'classic';
     case LEGACY = 'legacy';
+    case DEMO = 'demo';
 
     public static function getAll(): array
     {
@@ -23,6 +24,7 @@ enum WorldType: string
             self::RETRO->value => 'Retro',
             self::CLASSIC->value => 'Classic',
             self::LEGACY->value => 'Legacy',
+            self::DEMO->value => 'Demo',
         ];
     }
 }
