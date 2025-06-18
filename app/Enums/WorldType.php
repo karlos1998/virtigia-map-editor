@@ -15,6 +15,7 @@ enum WorldType: string
             self::RETRO->value,
             self::CLASSIC->value,
             self::LEGACY->value,
+            self::DEMO->value,
         ];
     }
 
