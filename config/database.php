@@ -168,6 +168,20 @@ return [
             'engine' => null,
         ],
 
+//        'retro_tmp' => [
+//            'driver' => env('REMOTE_DB_CONNECTION', 'mysql'),
+//            'host' => env('REMOTE_DB_HOST', 'srv01.letscode.it'),
+//            'port' => env('REMOTE_DB_PORT', '3436'),
+//            'database' => env('RETRO_DB_DATABASE', 'retro_tmp'),
+//            'username' => env('REMOTE_DB_USERNAME', ''),
+//            'password' => env('REMOTE_DB_PASSWORD', ''),
+//            'charset' => 'utf8mb4',
+//            'collation' => 'utf8mb4_unicode_ci',
+//            'prefix' => '',
+//            'strict' => true,
+//            'engine' => null,
+//        ],
+
         'test' => [
             'driver' => env('REMOTE_DB_CONNECTION', 'mysql'),
             'host' => env('REMOTE_DB_HOST', 'srv01.letscode.it'),
