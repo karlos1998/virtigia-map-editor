@@ -228,7 +228,7 @@ watch(
         />
 
         <TreeSelectAdapter
-            v-if="rules[name] && name === DialogNodeOptionRule.questStep"
+            v-if="rules[name] && (name === DialogNodeOptionRule.questStep || name === DialogNodeOptionRule.questBeforeStep || name === DialogNodeOptionRule.questAfterStep)"
             v-model="rules[name].value"
             :loading="loading"
             :options="questNodes"

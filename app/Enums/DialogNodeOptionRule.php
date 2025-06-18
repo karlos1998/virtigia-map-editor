@@ -35,6 +35,13 @@ enum DialogNodeOptionRule: string
     #[Description('Krok questa')]
     case QUEST_STEP = 'questStep';
 
+    #[Description('Quest nierozpoczęty, lub przed krokiem')]
+    case QUEST_BEFORE_STEP = 'questBeforeStep';
+
+    #[Description('Quest rozpoczęty, lub po kroku')]
+    case QUEST_AFTER_STEP = 'questAfterStep';
+
+
     public function canBeUsed(): bool
     {
         $ref = new ReflectionClassConstant(self::class, $this->name);
