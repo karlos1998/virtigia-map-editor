@@ -1,9 +1,10 @@
 <script setup lang="ts">
 
 
-import {onMounted, ref} from "vue";
+import {computed, onMounted, ref} from "vue";
 import axios from "axios";
 import {route} from "ziggy-js";
+import {usePage} from "@inertiajs/vue3";
 
 const src = defineModel<string>('src')
 
@@ -49,8 +50,10 @@ const load = async (path) => {
     })
 }
 
+const world = computed(() => usePage().props.auth.world);
+
 const init = async () => {
-    nodes.value = await load('img/npc/retro');
+    nodes.value = await load('img/npc/' + world.value);
 }
 
 onMounted(() => {
