@@ -59,13 +59,13 @@ final class MapService extends BaseService
      */
     public function store(string $imgBase64, string $fileName, string $name)
     {
-        $imageData = $this->assetService->storeFromBase64('img/locations/retro/', $imgBase64, $fileName);
+        $imageData = $this->assetService->storeFromBase64('img/locations/' . session("world") . '/', $imgBase64, $fileName);
         $width = $imageData['width'] / 32;
         $height = $imageData['height'] / 32;
 
         return $this->mapModel->create([
             'name' => $name,
-            'src' => "retro/$fileName",
+            'src' => session("world") . "/$fileName",
             'x' => $width,
             'y' => $height,
             'col' => str_repeat('0', $width * $height),

@@ -206,7 +206,7 @@ final class BaseNpcService extends BaseService
         }
 
         // Set the storage path to retro/new
-        $storagePath = "img/npc/retro/new/";
+        $storagePath = 'img/npc/' . session("world"). '/new/';
         $filePath = "{$storagePath}{$fileName}.{$extension}";
 
         // Check if file exists and generate a unique name if needed
@@ -224,7 +224,7 @@ final class BaseNpcService extends BaseService
         $baseNpc->lvl = $validated['lvl'];
         $baseNpc->rank = $validated['rank'];
         $baseNpc->category = $validated['category'];
-        $baseNpc->src = "retro/new/{$fileName}.{$extension}";
+        $baseNpc->src = session("world") . "/new/{$fileName}.{$extension}";
         $baseNpc->save();
 
         return $baseNpc;
