@@ -28,6 +28,7 @@ export interface QuestStepResource {
     quest_id: number;
     name: string;
     description: string;
+    visible_in_quest_list: boolean;
     auto_progress?: QuestStepAutoProgress | null;
     created_at: string;
     updated_at: string;

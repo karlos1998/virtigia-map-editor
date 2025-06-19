@@ -53,6 +53,7 @@ class QuestStepService
         $step->update([
             'name' => $data['name'],
             'description' => $data['description'],
+            'visible_in_quest_list' => $data['visible_in_quest_list'] ?? false,
         ]);
 
         // Handle auto progress

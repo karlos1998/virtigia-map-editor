@@ -27,6 +27,7 @@ class UpdateQuestStepRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'description' => 'required|string',
+            'visible_in_quest_list' => 'boolean',
             'auto_progress' => 'boolean',
             'progress_type' => 'nullable|string|in:time,mobs',
             'progress_time' => 'nullable|integer|min:0',

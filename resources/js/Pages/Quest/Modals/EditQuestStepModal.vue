@@ -31,6 +31,7 @@ const filteredBaseNpcs = ref<BaseNpcResource[]>([]);
 const form = useForm({
     name: '',
     description: '',
+    visible_in_quest_list: false,
     auto_progress: false,
     progress_type: 'time',
     progress_time: 0,
@@ -39,8 +40,10 @@ const form = useForm({
 
 watch(() => props.step, (newStep) => {
     if (newStep) {
+        console.log(newStep, 'newStep')
         form.name = newStep.name;
         form.description = newStep.description;
+        form.visible_in_quest_list = newStep.visible_in_quest_list || false;
 
         // Initialize auto progress settings if they exist
         if (newStep.auto_progress) {
@@ -124,6 +127,11 @@ const submit = () => {
 <template>
     <Dialog v-model:visible="visible" modal header="Edycja kroku questa" :style="{ width: '40rem' }">
         <div class="flex flex-col gap-4 mb-4" v-if="step">
+            <div class="flex items-center mb-2">
+                <Checkbox v-model="form.visible_in_quest_list" :binary="true" inputId="visibleInQuestList" />
+                <label for="visibleInQuestList" class="ml-2 font-semibold">Widoczny w liscie questow</label>
+            </div>
+
             <div>
                 <label for="name" class="font-semibold block mb-2">Nazwa</label>
                 <InputText id="name" class="w-full" autocomplete="off" v-model="form.name" />

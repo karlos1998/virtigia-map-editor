@@ -15,6 +15,11 @@ class QuestStep extends DynamicModel
         'name',
         'description',
         'quest_id',
+        'visible_in_quest_list',
+    ];
+
+    protected $casts = [
+        'visible_in_quest_list' => 'boolean',
     ];
 
     public function quest(): BelongsTo

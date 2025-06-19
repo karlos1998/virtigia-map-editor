@@ -24,6 +24,7 @@ class StoreQuestStepRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'description' => 'required|string',
+            'visible_in_quest_list' => 'boolean',
         ];
     }
 }
