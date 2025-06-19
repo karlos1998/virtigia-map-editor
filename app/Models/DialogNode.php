@@ -32,4 +32,14 @@ class DialogNode extends DynamicModel
     public function shop() {
         return $this->hasOne(Shop::class, 'id', 'shop_id');
     }
+
+
+
+    //tylko dla type start
+    public function getEdges()
+    {
+        if($this->type != 'start') throw new \Exception('Próbowano pobrać edges do node który nie jest startoway');
+
+        return DialogEdge::where('source_dialog_id', $this->source_dialog_id)->whereNull('source_option_id')->with('targetNode')->get();
+    }
 }

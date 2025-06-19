@@ -71,19 +71,19 @@ class DialogService extends BaseService
 
             $edge->sourceOption()->associate($sourceOption);
         } else {
-            if ($dialog->edges()->whereNull('source_option_id')->count() >= 1)
-            {
-                throw \Illuminate\Validation\ValidationException::withMessages([
-                    'message' => 'Node wejściowy może mieć NA TEN MOMENT tylko jedno połączenie',
-                ]);
-            }
+//            if ($dialog->edges()->whereNull('source_option_id')->count() >= 1)
+//            {
+//                throw \Illuminate\Validation\ValidationException::withMessages([
+//                    'message' => 'Node wejściowy może mieć NA TEN MOMENT tylko jedno połączenie',
+//                ]);
+//            }
 
-            if($targetNode->type != 'special')
-            {
-                throw \Illuminate\Validation\ValidationException::withMessages([
-                    'message' => 'Node wejściowy może być połączony tylko z normalnymi dialogami (nie sklepami czy teleportacją)',
-                ]);
-            }
+//            if($targetNode->type != 'special')
+//            {
+//                throw \Illuminate\Validation\ValidationException::withMessages([
+//                    'message' => 'Node wejściowy może być połączony tylko z normalnymi dialogami (nie sklepami czy teleportacją)',
+//                ]);
+//            }
         }
 
         $edge->save();
@@ -228,5 +228,27 @@ class DialogService extends BaseService
     public function search(string $query = '')
     {
         return $this->dialogModel->where('name', 'like', '%' . $query . '%')->limit(10)->get();
+    }
+
+    public function updateStartNodeEdges(Dialog $dialog, DialogNode $dialogNode, array $validated)
+    {
+        if ($dialogNode->type !== 'start') {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'message' => 'Tylko węzeł startowy może mieć reguły przejścia do kolejnych dialogów',
+            ]);
+        }
+
+        $edgesData = $validated['edges'];
+        $edges = $dialogNode->getEdges();
+
+        foreach($edgesData as $edgeData)
+        {
+            $foundEdge = $edges->where('id', $edgeData['edge_id'])->first();
+            if(!$foundEdge) continue;
+
+            $foundEdge->update(['rules' => $edgeData['rules']]);
+        }
+
+        return $dialogNode;
     }
 }

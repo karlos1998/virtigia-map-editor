@@ -14,6 +14,7 @@ use App\Http\Requests\StoreDialogRequest;
 use App\Http\Requests\UpdateDialogNodeActionDataRequest;
 use App\Http\Requests\UpdateDialogNodeOptionRequest;
 use App\Http\Requests\UpdateDialogNodeRequest;
+use App\Http\Requests\UpdateStartNodeEdgesRequest;
 use App\Http\Resources\DialogEdgeResource;
 use App\Http\Resources\DialogNodeOptionResource;
 use App\Http\Resources\DialogNodeResource;
@@ -172,5 +173,13 @@ class DialogController extends Controller
     public function search(Request $request)
     {
         return response()->json($this->dialogService->search($request->get('query', '')));
+    }
+
+    public function updateStartNodeEdges(Dialog $dialog, DialogNode $dialogNode, UpdateStartNodeEdgesRequest $request)
+    {
+        $node = $this->dialogService->updateStartNodeEdges($dialog, $dialogNode, $request->validated());
+        return response()->json([
+            'dialogNode' => DialogNodeResource::make($node),
+        ]);
     }
 }

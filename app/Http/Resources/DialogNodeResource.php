@@ -67,6 +67,27 @@ class DialogNodeResource extends JsonResource
                     ]
                 ];
             }),
+
+            $this->mergeWhen($this->resource->type == 'start', function() {
+                return [
+                    'data' => [
+                        'dialog_id' => $this->resource->source_dialog_id,
+                        'edges' => $this->resource->getEdges()->map(function($edge) {
+                            return [
+                                'edge_id' => $edge->id,
+                                'node' => $this->when($edge->targetNode, function() use ($edge) {
+                                    return [
+                                        'id' => $edge->targetNode->id,
+                                        'type' => $edge->targetNode->type,
+                                        'content' => $edge->targetNode->content,
+                                    ];
+                                }),
+                                'rules' => $edge->rules,
+                            ];
+                        }),
+                    ]
+                ];
+            })
         ];
     }
 }

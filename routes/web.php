@@ -71,6 +71,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::delete('dialogs/{dialog}/nodes/{dialogNode}/options/{dialogNodeOption}', [DialogController::class, 'destroyOption'])->name('dialogs.nodes.options.destroy');
                 Route::patch('dialog/{dialog}/nodes/{dialogNode}/action', [DialogController::class, 'updateAction'])->name('dialogs.nodes.action.update');
                 Route::put('dialog/{dialog}/nodes/{dialogNode}/shop', [DialogController::class, 'assignShop'])->name('dialogs.nodes.shop.assign');
+                Route::patch('dialogs/{dialog}/nodes/{dialogNode}/start-edges', [DialogController::class, 'updateStartNodeEdges'])->name('dialogs.nodes.start-edges.update');
 
                 Route::get('maps/create', [MapController::class, 'create'])->name('maps.create');
                 Route::post('maps', [MapController::class, 'store'])->name('maps.store');
