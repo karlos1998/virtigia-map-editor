@@ -103,7 +103,6 @@ form.edges = nodeEdges.value.map(edge => ({
     <div class="vue-flow__node-default">
         <div class="font-bold text-lg flex flex-row gap-1">
             <span class="grow">Start</span>
-            <RemoveNodeButton :dialog-node-id="id" :dialog-id="data.dialog_id" />
         </div>
 
         <div class="edges mt-4">

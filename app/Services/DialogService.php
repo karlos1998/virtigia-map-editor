@@ -184,6 +184,12 @@ class DialogService extends BaseService
             ]);
         }
 
+        if($dialogNode->type == 'start' ) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'message' => 'Nie możesz usunąć startowej kwesti dialogowej',
+            ]);
+        }
+
         if($dialogNode->type == 'special' && $dialog->nodes()->where('type', 'special')->count() <= 1) {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'message' => 'Nie możesz usunąć jedynej kwesti dialogowej',
