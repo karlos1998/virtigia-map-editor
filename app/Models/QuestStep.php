@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class QuestStep extends DynamicModel
 {
@@ -19,5 +20,13 @@ class QuestStep extends DynamicModel
     public function quest(): BelongsTo
     {
         return $this->belongsTo(Quest::class);
+    }
+
+    /**
+     * Get the auto progress settings for this quest step.
+     */
+    public function autoProgress(): HasOne
+    {
+        return $this->hasOne(QuestStepAutoProgress::class);
     }
 }

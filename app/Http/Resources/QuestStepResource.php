@@ -14,11 +14,23 @@ class QuestStepResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+
         return [
             'id' => $this->id,
             'quest_id' => $this->quest_id,
             'name' => $this->name,
             'description' => $this->description,
+            'auto_progress' => $this->whenLoaded('autoProgress', fn($autoProgress) => [
+                'type' => $autoProgress->type,
+                'time_seconds' => $autoProgress->time_seconds,
+                'mobs' => $autoProgress->mobs->map(function ($mob) {
+                    return [
+                        'base_npc_id' => $mob->base_npc_id,
+                        'quantity' => $mob->quantity,
+                        'base_npc' => $mob->baseNpc,
+                    ];
+                }),
+            ]),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
