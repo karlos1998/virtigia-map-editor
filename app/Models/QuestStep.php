@@ -28,6 +28,10 @@ class QuestStep extends DynamicModel
         'visible_in_quest_list' => 'boolean',
     ];
 
+    protected $attributes = [
+        'visible_in_quest_list' => true,
+    ];
+
     public function quest(): BelongsTo
     {
         return $this->belongsTo(Quest::class);
