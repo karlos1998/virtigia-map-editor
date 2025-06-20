@@ -55,11 +55,15 @@ const submitNewRule = () => {
 
     if (!newRule.value) return
 
-    let value: number | number[] | string = 0
+    let value: number | number[] | string | string[] = 0
     if (newRule.value === DialogNodeOptionRule.items) {
         value = []
-    } else if (newRule.value === DialogNodeOptionRule.questStep) {
-        value = ""
+    } else if (
+        newRule.value === DialogNodeOptionRule.questStep ||
+        newRule.value === DialogNodeOptionRule.questBeforeStep ||
+        newRule.value === DialogNodeOptionRule.questAfterStep
+    ) {
+        value = []
     }
 
     const data = {
@@ -123,15 +127,27 @@ onMounted(() => {
     // Load quests for the TreeSelect
     loadQuests()
 
-    // Check if a quest step is already selected and load its details
-    if (rules.value[DialogNodeOptionRule.questStep] && typeof rules.value[DialogNodeOptionRule.questStep].value === 'string') {
-        const value = rules.value[DialogNodeOptionRule.questStep].value as string
-        if (value.startsWith('s-')) {
-            // Extract step ID from the value (format: "s-{id}")
+    // Check if quest steps are already selected and load their details
+    if (rules.value[DialogNodeOptionRule.questStep]) {
+        const value = rules.value[DialogNodeOptionRule.questStep].value
+
+        // Handle both string (legacy) and array (new) formats
+        if (typeof value === 'string' && value.startsWith('s-')) {
+            // Legacy format: single string
             const stepId = parseInt(value.substring(2))
             if (!isNaN(stepId)) {
                 loadQuestStepById(stepId)
             }
+        } else if (Array.isArray(value)) {
+            // New format: array of strings
+            value.forEach(stepValue => {
+                if (typeof stepValue === 'string' && stepValue.startsWith('s-')) {
+                    const stepId = parseInt(stepValue.substring(2))
+                    if (!isNaN(stepId)) {
+                        loadQuestStepById(stepId)
+                    }
+                }
+            })
         }
     }
 })
@@ -233,6 +249,7 @@ watch(
             :loading="loading"
             :options="questNodes"
             :onNodeExpand="onQuestNodeExpand"
+            :returnList="true"
         />
 
     </InputGroup>
