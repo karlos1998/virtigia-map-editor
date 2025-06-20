@@ -139,6 +139,19 @@ const formatAutoProgress = (autoProgress: any) => {
                 </div>
             </div>
 
+            <!-- Quest Dialogs Nodes Section -->
+            <div v-if="quest.nodes && quest.nodes.length > 0" class="mb-4">
+                <h3 class="text-lg font-semibold mb-2">Odpowiedzi dialogowe powiązane z questem:</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    <div v-for="node in quest.nodes" :key="node.id" class="p-2 border rounded bg-gray-50">
+                        <div class="flex items-center">
+                            <i class="pi pi-comments mr-2 text-blue-500"></i>
+                            <span>{{ node.content }} (ID: {{ node.id }})</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Quest Node Options Section -->
             <div v-if="quest.nodeOptions && quest.nodeOptions.length > 0" class="mb-4">
                 <h3 class="text-lg font-semibold mb-2">Opcje dialogowe powiązane z questem:</h3>
@@ -165,7 +178,6 @@ const formatAutoProgress = (autoProgress: any) => {
                     <div class="p-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
-                                <pre>{{step}}</pre>
                                 <h3 class="text-lg font-semibold mb-2">Informacje podstawowe</h3>
                                 <p><strong>ID:</strong> {{ step.id }}</p>
                                 <p><strong>Nazwa:</strong> {{ step.name }}</p>
@@ -183,6 +195,19 @@ const formatAutoProgress = (autoProgress: any) => {
                                             <div class="flex items-center">
                                                 <i class="pi pi-comments mr-2 text-blue-500"></i>
                                                 <span>{{ dialog.name }} (ID: {{ dialog.id }})</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Step Nodes Section -->
+                                <div v-if="step.nodes && step.nodes.length > 0" class="mb-4">
+                                    <h3 class="text-lg font-semibold mb-2">Odpowiedzi dialogowe powiązane z krokiem:</h3>
+                                    <div class="grid grid-cols-1 gap-2">
+                                        <div v-for="node in step.nodes" :key="node.id" class="p-2 border rounded bg-gray-50">
+                                            <div class="flex items-center">
+                                                <i class="pi pi-arrow-down mr-2 text-green-500"></i>
+                                                <span>{{ node.content }} (ID: {{ node.id }})</span>
                                             </div>
                                         </div>
                                     </div>
