@@ -61,6 +61,5 @@ class QuestStepController extends Controller
     public function destroy(Quest $quest, QuestStep $step)
     {
         $this->questStepService->deleteQuestStep($step);
-
     }
 }

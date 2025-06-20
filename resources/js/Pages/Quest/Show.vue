@@ -2,10 +2,11 @@
 import AppLayout from "@/layout/AppLayout.vue";
 import { ref, computed } from "vue";
 import { route } from "ziggy-js";
-import { useToast } from "primevue";
-import { useForm } from "@inertiajs/vue3";
+import { useToast, useConfirm } from "primevue";
+import { useForm, router } from "@inertiajs/vue3";
 import CreateQuestStepModal from "@/Pages/Quest/Modals/CreateQuestStepModal.vue";
 import EditQuestStepModal from "@/Pages/Quest/Modals/EditQuestStepModal.vue";
+import EditQuestNameModal from "@/Pages/Quest/Modals/EditQuestNameModal.vue";
 import {
     QuestWithStepsResource,
     QuestStepResource,
@@ -20,8 +21,10 @@ const props = defineProps<{
 }>();
 
 const toast = useToast();
+const confirm = useConfirm();
 const isCreateQuestStepModalVisible = ref(false);
 const isEditQuestStepModalVisible = ref(false);
+const isEditQuestNameModalVisible = ref(false);
 const selectedStep = ref<QuestStepResource | null>(null);
 
 const editStep = (step: QuestStepResource) => {
@@ -30,16 +33,45 @@ const editStep = (step: QuestStepResource) => {
 };
 
 const deleteStep = (stepId: number) => {
-    if (confirm('Czy na pewno chcesz usunąć ten krok?')) {
-        axios.delete(route('quests.steps.destroy', { quest: props.quest.id, step: stepId }))
-            .then(() => {
-                toast.add({ severity: 'success', summary: 'Udało się', detail: 'Krok został usunięty', life: 3000 });
-                window.location.reload();
-            })
-            .catch(({response}) => {
-                toast.add({ severity: 'error', summary: 'Błąd', detail: response.data.message, life: 6000 });
+    confirm.require({
+        message: 'Czy na pewno chcesz usunąć ten krok?',
+        header: 'Potwierdzenie usunięcia',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Usuń',
+        rejectLabel: 'Anuluj',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            router.delete(route('quests.steps.destroy', { quest: props.quest.id, step: stepId }), {
+                onSuccess: () => {
+                    toast.add({ severity: 'success', summary: 'Udało się', detail: 'Krok został usunięty', life: 3000 });
+                },
+                onError: (errors) => {
+                    toast.add({ severity: 'error', summary: 'Błąd', detail: errors.message, life: 6000 });
+                }
             });
-    }
+        }
+    });
+};
+
+const deleteQuest = () => {
+    confirm.require({
+        message: 'Czy na pewno chcesz usunąć ten quest?',
+        header: 'Potwierdzenie usunięcia',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Usuń',
+        rejectLabel: 'Anuluj',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            router.delete(route('quests.destroy', { quest: props.quest.id }), {
+                onSuccess: () => {
+                    toast.add({ severity: 'success', summary: 'Udało się', detail: 'Quest został usunięty', life: 3000 });
+                },
+                onError: (errors) => {
+                    toast.add({ severity: 'error', summary: 'Błąd', detail: errors.message, life: 6000 });
+                }
+            });
+        }
+    });
 };
 
 // Format auto progress information
@@ -61,6 +93,8 @@ const formatAutoProgress = (autoProgress: any) => {
 
 <template>
     <AppLayout>
+        <ConfirmDialog />
+
         <CreateQuestStepModal
             v-model:visible="isCreateQuestStepModalVisible"
             :quest-id="quest.id"
@@ -70,12 +104,20 @@ const formatAutoProgress = (autoProgress: any) => {
             :quest-id="quest.id"
             :step="selectedStep"
         />
+        <EditQuestNameModal
+            v-model:visible="isEditQuestNameModalVisible"
+            :quest="quest"
+        />
 
         <div class="card">
             <div class="flex justify-between items-center mb-4">
-                <h1 class="text-2xl font-bold">{{ quest.name }}</h1>
-                <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-2xl font-bold">{{ quest.name }}</h1>
+                    <Button icon="pi pi-pencil" text @click="isEditQuestNameModalVisible = true" />
+                </div>
+                <div class="flex gap-2">
                     <Button label="Dodaj krok" icon="pi pi-plus" @click="isCreateQuestStepModalVisible = true" />
+                    <Button label="Usuń quest" icon="pi pi-trash" severity="danger" @click="deleteQuest" />
                 </div>
             </div>
             <div class="mb-4">

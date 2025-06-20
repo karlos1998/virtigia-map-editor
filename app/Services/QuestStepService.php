@@ -38,6 +38,11 @@ class QuestStepService
      */
     public function deleteQuestStep(QuestStep $step): void
     {
+        if (!$step->getDialogs()->isEmpty()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'message' => 'Nie można usunąć questa, ponieważ jest używany w dialogach.'
+            ]);
+        }
         $step->delete();
     }
     /**

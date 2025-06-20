@@ -63,6 +63,8 @@ class QuestController extends Controller
         ]);
 
         $quest->update($validated);
+
+        return to_route('quests.show', $quest->id);
     }
 
     /**
@@ -70,6 +72,13 @@ class QuestController extends Controller
      */
     public function destroy(Quest $quest)
     {
+        // Check if the quest can be deleted
+        if (!$quest->getDialogs()->isEmpty()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'message' => 'Nie można usunąć questa, ponieważ jest używany w dialogach.'
+            ]);
+        }
+
         $quest->delete();
 
         return to_route('quests.index');
