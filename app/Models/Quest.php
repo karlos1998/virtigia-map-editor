@@ -48,19 +48,24 @@ class Quest extends DynamicModel
             '$.questStep.value'
         ];
 
-        return Dialog::distinct()
+        $query = Dialog::distinct()
             ->whereHas('nodes.options', function ($query) use ($allIds, $rulePaths) {
                 $this->scopeWhereJsonContainsAnyInPaths($query, 'rules', $rulePaths, $allIds->all());
-            })
-            ->orWhereHas('nodes', function ($query) use ($questStepIds) {
+            });
+
+        // Only add the orWhereHas clause if there are quest steps
+        if ($questStepIds->isNotEmpty()) {
+            $query->orWhereHas('nodes', function ($query) use ($questStepIds) {
                 // Handle matches for quest step IDs in additional_actions
                 $query->where(function($subQuery) use ($questStepIds) {
                     foreach ($questStepIds as $stepId) {
                         $this->scopeWhereJsonContains($subQuery, 'additional_actions', '$.setQuestStep.value', $stepId, 'or');
                     }
                 });
-            })
-            ->get();
+            });
+        }
+
+        return $query->get();
     }
     /**
      * Get all dialog nodes where this quest or its steps are used in additional actions.
@@ -76,6 +81,11 @@ class Quest extends DynamicModel
         $questStepIds = $this->steps->map(function($value){
             return "s-$value->id";
         });
+
+        // If there are no quest steps, return an empty collection
+        if ($questStepIds->isEmpty()) {
+            return collect();
+        }
 
         return DialogNode::distinct()
             ->where(function($query) use ($questStepIds) {
