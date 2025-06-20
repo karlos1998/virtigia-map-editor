@@ -53,6 +53,7 @@ class QuestStep extends DynamicModel
         }
 
         $stepId = 's-' . $this->id;
+        $numericStepId = $this->id;
         $rulePaths = [
             '$.questBeforeStep.value',
             '$.questAfterStep.value',
@@ -63,8 +64,11 @@ class QuestStep extends DynamicModel
             ->whereHas('nodes.options', function ($query) use ($stepId, $rulePaths) {
                 $this->scopeWhereJsonContainsInPaths($query, 'rules', $rulePaths, $stepId);
             })
-            ->orWhereHas('nodes', function ($query) use ($stepId) {
-                $this->scopeWhereJsonContains($query, 'additional_actions', '$.setQuestStep.value', $stepId);
+            ->orWhereHas('nodes', function ($query) use ($stepId, $numericStepId) {
+                // Check for string format with s- prefix
+                $query->whereRaw('JSON_CONTAINS(additional_actions, ?, \'$.setQuestStep.value\')', [$stepId])
+                    // Also check for numeric format without prefix
+                    ->orWhereRaw('JSON_CONTAINS(additional_actions, ?, \'$.setQuestStep.value\')', [$numericStepId]);
             })
             ->get();
     }
@@ -79,11 +83,11 @@ class QuestStep extends DynamicModel
             return collect();
         }
 
-        $stepId = 's-' . $this->id;
+        $stepId = $this->id;
 
         return DialogNode::distinct()
             ->where(function($query) use ($stepId) {
-                $this->scopeWhereJsonContains($query, 'additional_actions', '$.setQuestStep.value', $stepId);
+                $query->whereRaw('JSON_CONTAINS(additional_actions, ?, \'$.setQuestStep.value\')', [$stepId]);
             })
             ->get();
     }

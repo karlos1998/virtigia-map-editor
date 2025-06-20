@@ -165,6 +165,7 @@ const formatAutoProgress = (autoProgress: any) => {
                     <div class="p-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
+                                <pre>{{step}}</pre>
                                 <h3 class="text-lg font-semibold mb-2">Informacje podstawowe</h3>
                                 <p><strong>ID:</strong> {{ step.id }}</p>
                                 <p><strong>Nazwa:</strong> {{ step.name }}</p>
