@@ -46,8 +46,10 @@ class QuestController extends Controller
      */
     public function show(Quest $quest)
     {
+        $quest->load(['steps', 'steps.autoProgress']);
+
         return Inertia::render('Quest/Show', [
-            'quest' => QuestResource::make($quest->load('steps', 'steps.autoProgress')),
+            'quest' => QuestResource::make($quest),
         ]);
     }
 

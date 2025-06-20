@@ -1,12 +1,19 @@
 <script setup lang="ts">
 import AppLayout from "@/layout/AppLayout.vue";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { route } from "ziggy-js";
 import { useToast } from "primevue";
 import { useForm } from "@inertiajs/vue3";
 import CreateQuestStepModal from "@/Pages/Quest/Modals/CreateQuestStepModal.vue";
 import EditQuestStepModal from "@/Pages/Quest/Modals/EditQuestStepModal.vue";
-import { QuestWithStepsResource, QuestStepResource } from "@/Resources/Quest.resource";
+import {
+    QuestWithStepsResource,
+    QuestStepResource,
+    SimpleDialogResource,
+    SimpleDialogNodeResource,
+    SimpleDialogNodeOptionResource,
+    SimpleDialogEdgeResource
+} from "@/Resources/Quest.resource";
 
 const props = defineProps<{
     quest: QuestWithStepsResource
@@ -34,6 +41,22 @@ const deleteStep = (stepId: number) => {
             });
     }
 };
+
+// Format auto progress information
+const formatAutoProgress = (autoProgress: any) => {
+    if (!autoProgress) return 'Brak';
+
+    if (autoProgress.type === 'time') {
+        const seconds = autoProgress.time_seconds || 0;
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `Czas: ${minutes > 0 ? `${minutes} min ` : ''}${remainingSeconds > 0 ? `${remainingSeconds} sek` : ''}`;
+    } else if (autoProgress.type === 'mobs') {
+        return `Moby: ${autoProgress.mobs.map(mob => `${mob.quantity}x ${mob.base_npc?.name || 'Mob #' + mob.base_npc_id}`).join(', ')}`;
+    }
+
+    return 'Nieznany typ';
+};
 </script>
 
 <template>
@@ -60,6 +83,32 @@ const deleteStep = (stepId: number) => {
                 <p><strong>Data utworzenia:</strong> {{ new Date(quest.created_at).toLocaleString() }}</p>
                 <p><strong>Data aktualizacji:</strong> {{ new Date(quest.updated_at).toLocaleString() }}</p>
             </div>
+
+            <!-- Quest Dialogs Section -->
+            <div v-if="quest.dialogs && quest.dialogs.length > 0" class="mb-4">
+                <h3 class="text-lg font-semibold mb-2">Dialogi powiązane z questem:</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    <div v-for="dialog in quest.dialogs" :key="dialog.id" class="p-2 border rounded bg-gray-50">
+                        <div class="flex items-center">
+                            <i class="pi pi-comments mr-2 text-blue-500"></i>
+                            <span>{{ dialog.name }} (ID: {{ dialog.id }})</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quest Node Options Section -->
+            <div v-if="quest.nodeOptions && quest.nodeOptions.length > 0" class="mb-4">
+                <h3 class="text-lg font-semibold mb-2">Opcje dialogowe powiązane z questem:</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div v-for="option in quest.nodeOptions" :key="option.id" class="p-2 border rounded bg-gray-50">
+                        <div class="flex items-center">
+                            <i class="pi pi-reply mr-2 text-green-500"></i>
+                            <span>{{ option.label }} (ID: {{ option.id }})</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="card">
@@ -70,23 +119,64 @@ const deleteStep = (stepId: number) => {
             </div>
 
             <Accordion v-else>
-                <AccordionPanel v-for="step in quest.steps" :key="step.id">
+                <AccordionPanel v-for="step in quest.steps" :key="step.id" :header="step.name">
+                    <div class="p-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold mb-2">Informacje podstawowe</h3>
+                                <p><strong>ID:</strong> {{ step.id }}</p>
+                                <p><strong>Nazwa:</strong> {{ step.name }}</p>
+                                <p><strong>Opis:</strong> <span class="whitespace-pre-wrap">{{ step.description }}</span></p>
+                                <p><strong>Widoczny na liście questów:</strong> {{ step.visible_in_quest_list ? 'Tak' : 'Nie' }}</p>
+                                <p><strong>Automatyczny postęp:</strong> {{ formatAutoProgress(step.auto_progress) }}</p>
+                            </div>
 
-                    <AccordionHeader>{{step.name}}</AccordionHeader>
+                            <div>
+                                <!-- Step Dialogs Section -->
+                                <div v-if="step.dialogs && step.dialogs.length > 0" class="mb-4">
+                                    <h3 class="text-lg font-semibold mb-2">Dialogi powiązane z krokiem:</h3>
+                                    <div class="grid grid-cols-1 gap-2">
+                                        <div v-for="dialog in step.dialogs" :key="dialog.id" class="p-2 border rounded bg-gray-50">
+                                            <div class="flex items-center">
+                                                <i class="pi pi-comments mr-2 text-blue-500"></i>
+                                                <span>{{ dialog.name }} (ID: {{ dialog.id }})</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-                    <AccordionContent>
-                        <div class="p-4">
-                            <div class="whitespace-pre-wrap mb-4">{{ step.description }}</div>
-                            <div class="flex justify-end gap-2">
-                                <Button icon="pi pi-pencil" label="Edytuj" @click="editStep(step)" />
-                                <Button icon="pi pi-trash" label="Usuń" severity="danger" @click="deleteStep(step.id)" />
+                                <!-- Step Node Options Section -->
+                                <div v-if="step.nodeOptions && step.nodeOptions.length > 0" class="mb-4">
+                                    <h3 class="text-lg font-semibold mb-2">Opcje dialogowe powiązane z krokiem:</h3>
+                                    <div class="grid grid-cols-1 gap-2">
+                                        <div v-for="option in step.nodeOptions" :key="option.id" class="p-2 border rounded bg-gray-50">
+                                            <div class="flex items-center">
+                                                <i class="pi pi-reply mr-2 text-green-500"></i>
+                                                <span>{{ option.label }} (ID: {{ option.id }})</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </AccordionContent>
 
+                        <div class="flex justify-end gap-2">
+                            <Button icon="pi pi-pencil" label="Edytuj" @click="editStep(step)" />
+                            <Button icon="pi pi-trash" label="Usuń" severity="danger" @click="deleteStep(step.id)" />
+                        </div>
+                    </div>
                 </AccordionPanel>
             </Accordion>
         </div>
+
+        <!-- Debug section - can be removed in production -->
+<!--        <div class="card mt-4">-->
+<!--            <Accordion>-->
+<!--                <AccordionPanel header="Debug - Raw Quest Data">-->
+<!--                    <pre class="text-xs overflow-auto max-h-96">{{ JSON.stringify(quest, null, 2) }}</pre>-->
+<!--                </AccordionPanel>-->
+<!--            </Accordion>-->
+<!--        </div>-->
     </AppLayout>
 </template>
 

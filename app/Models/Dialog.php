@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\JsonQueryHelpers;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 class Dialog extends DynamicModel
 {
-    use HasFactory;
+    use HasFactory, JsonQueryHelpers;
 
     protected $fillable = [
         'name',
@@ -27,5 +29,36 @@ class Dialog extends DynamicModel
     public function npcs()
     {
         return $this->hasMany(Npc::class);
+    }
+
+    /**
+     * Get all dialog edges where a quest or its steps are used in rules.
+     *
+     * @param Quest|null $quest The quest to search for
+     * @return Collection
+     */
+    public function getEdges(Quest $quest = null): Collection
+    {
+        if ($quest === null || !$quest->id) {
+            return collect();
+        }
+
+        $questId = 'q-' . $quest->id;
+        $questStepIds = $quest->steps->map(function($value) {
+            return "s-$value->id";
+        });
+
+        $allIds = collect([$questId])->merge($questStepIds);
+        $rulePaths = [
+            '$.questBeforeStep.value',
+            '$.questAfterStep.value',
+            '$.questStep.value'
+        ];
+
+        return DialogEdge::distinct()
+            ->where(function($query) use ($allIds, $rulePaths) {
+                $this->scopeWhereJsonContainsAnyInPaths($query, 'rules', $rulePaths, $allIds->all());
+            })
+            ->get();
     }
 }

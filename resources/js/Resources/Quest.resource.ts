@@ -1,5 +1,29 @@
 import { BaseNpcResource } from './BaseNpc.resource';
 
+export interface SimpleDialogResource {
+    id: number;
+    name: string;
+}
+
+export interface SimpleDialogNodeResource {
+    id: number;
+    content: string;
+    type: string;
+}
+
+export interface SimpleDialogNodeOptionResource {
+    id: number;
+    label: string;
+}
+
+export interface SimpleDialogEdgeResource {
+    id: number;
+    rules: any;
+    source_dialog_id: number;
+    source_option_id: number;
+    target_node_id: number;
+}
+
 export interface QuestResource {
     id: number;
     name: string;
@@ -9,6 +33,10 @@ export interface QuestResource {
 
 export interface QuestWithStepsResource extends QuestResource {
     steps: QuestStepResource[];
+    dialogs: SimpleDialogResource[];
+    nodes: SimpleDialogNodeResource[];
+    nodeOptions: SimpleDialogNodeOptionResource[];
+    edges: SimpleDialogEdgeResource[];
 }
 
 export interface QuestStepAutoProgressMob {
@@ -30,6 +58,10 @@ export interface QuestStepResource {
     description: string;
     visible_in_quest_list: boolean;
     auto_progress?: QuestStepAutoProgress | null;
+    dialogs: SimpleDialogResource[];
+    nodes: SimpleDialogNodeResource[];
+    nodeOptions: SimpleDialogNodeOptionResource[];
+    edges: SimpleDialogEdgeResource[];
     created_at: string;
     updated_at: string;
 }
