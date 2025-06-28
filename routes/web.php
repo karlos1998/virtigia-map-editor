@@ -175,6 +175,8 @@ Route::middleware(['auth'])->group(function () {
             });
 
         Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+        Route::get('users', [\App\Http\Controllers\UsersController::class, 'index'])->name('users.index');
+        Route::get('users/{user}', [\App\Http\Controllers\UsersController::class, 'show'])->name('users.show');
 
         Route::get('/s3/{path}', function ($path) {
 

@@ -29,19 +29,36 @@ const user = computed(() => usePage().props.auth.user);
 // Format roles for display
 const formatRoles = (roles) => {
     if (!roles || !Array.isArray(roles)) return [];
-    return roles;
+
+    // Map each role to its display_name or name property if it's an object
+    return roles.map(role => {
+        if (typeof role === 'string') {
+            return role;
+        } else if (role && typeof role === 'object') {
+            return role.display_name || role.name || 'Unknown Role';
+        }
+        return 'Unknown Role';
+    });
 };
 
 // Get severity for role tag
 const getRoleSeverity = (role) => {
     const severities = {
         admin: 'danger',
+        administrator: 'danger',
         moderator: 'warning',
         editor: 'info',
         user: 'success'
     };
 
-    return severities[role.toLowerCase()] || 'info';
+    // Check if role is a string, otherwise try to extract the name or use a default
+    const roleName = typeof role === 'string'
+        ? role.toLowerCase()
+        : (role && typeof role === 'object' && role.name
+            ? role.name.toLowerCase()
+            : 'user');
+
+    return severities[roleName] || 'info';
 };
 
 // Format date
@@ -160,10 +177,10 @@ const chartOptions = {
                                         <!-- Roles -->
                                         <div class="mt-2 flex flex-wrap gap-2 justify-center md:justify-start">
                                             <Tag
-                                                v-for="role in formatRoles(user.roles)"
-                                                :key="role"
+                                                v-for="(role, index) in formatRoles(user.roles)"
+                                                :key="index"
                                                 :value="role"
-                                                :severity="getRoleSeverity(role)"
+                                                :severity="getRoleSeverity(user.roles[index])"
                                             />
                                         </div>
                                     </div>

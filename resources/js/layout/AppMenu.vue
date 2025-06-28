@@ -91,6 +91,11 @@ const model = ref([
                 icon: 'pi pi-info-circle',
                 route: 'world-info.index',
             },
+            {
+                label: 'Użytkownicy',
+                icon: 'pi pi-users',
+                route: 'users.index',
+            },
         ],
     },
 ]);
