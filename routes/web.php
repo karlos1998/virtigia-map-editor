@@ -10,6 +10,7 @@ use App\Http\Controllers\DoorController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\NpcController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuestController;
 use App\Http\Controllers\QuestStepController;
 use App\Http\Controllers\ShopController;
@@ -40,6 +41,8 @@ Route::get('login/callback', [LoginController::class, 'handleCallback']);
 Route::middleware(['auth'])->group(function () {
 
     Route::get('locked', [DashboardController::class, 'locked'])->name('locked');
+
+    Route::get('profile', [ProfileController::class, 'show'])->name('profile');
 
     Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 

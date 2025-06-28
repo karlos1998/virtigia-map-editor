@@ -250,10 +250,13 @@ onUnmounted(() => {
                     </a>
                     <ul class="!hidden topbar-menu active-topbar-menu !p-3 w-60 z-50 rounded-lg shadow-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
                         <li role="menuitem" class="!m-0 !mb-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200">
-                            <a href="#" class="flex items-center text-gray-700 dark:text-gray-200">
+                            <Link
+                                :href="route('profile')"
+                                class="flex items-center text-gray-700 dark:text-gray-200"
+                            >
                                 <i class="pi pi-fw pi-user mr-2 text-primary-500"></i>
                                 <span>Profil</span>
-                            </a>
+                            </Link>
                         </li>
                         <li role="menuitem" class="!m-0 !mb-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200">
                             <a href="#" class="flex items-center text-gray-700 dark:text-gray-200">
@@ -274,9 +277,6 @@ onUnmounted(() => {
                     </ul>
                 </li>
 
-                <li>
-                    <Button type="button" icon="pi pi-cog" rounded outlined severity="secondary" class="ml-2" @click="showConfigSidebar"></Button>
-                </li>
             </ul>
         </div>
     </div>
