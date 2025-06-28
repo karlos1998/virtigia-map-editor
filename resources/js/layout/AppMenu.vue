@@ -86,6 +86,11 @@ const model = ref([
                 icon: 'pi pi-history',
                 route: 'activity-logs.index',
             },
+            {
+                label: 'Informacje o świecie',
+                icon: 'pi pi-info-circle',
+                route: 'world-info.index',
+            },
         ],
     },
 ]);
