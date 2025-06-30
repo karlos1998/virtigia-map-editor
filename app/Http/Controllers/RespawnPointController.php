@@ -4,27 +4,29 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreRespawnPointRequest;
 use App\Http\Requests\UpdateRespawnPointRequest;
+use App\Http\Resources\RespawnPointResource;
 use App\Models\RespawnPoint;
+use App\Services\RespawnPointService;
+use Inertia\Inertia;
 
 class RespawnPointController extends Controller
 {
+    protected RespawnPointService $respawnPointService;
+
+    public function __construct(RespawnPointService $respawnPointService)
+    {
+        $this->respawnPointService = $respawnPointService;
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $respawnPoints = \App\Models\RespawnPoint::withCount('maps')->get();
-        return \Inertia\Inertia::render('RespawnPoint/Index', [
-            'respawnPoints' => \App\Http\Resources\RespawnPointResource::collection($respawnPoints)
+        $respawnPoints = RespawnPoint::withCount('maps')->get();
+        return Inertia::render('RespawnPoint/Index', [
+            'respawnPoints' => RespawnPointResource::collection($respawnPoints)
         ]);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
     }
 
     /**
@@ -32,23 +34,7 @@ class RespawnPointController extends Controller
      */
     public function store(StoreRespawnPointRequest $request)
     {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(RespawnPoint $respawnPoint)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(RespawnPoint $respawnPoint)
-    {
-        //
+        $this->respawnPointService->create($request->validated());
     }
 
     /**
@@ -56,7 +42,7 @@ class RespawnPointController extends Controller
      */
     public function update(UpdateRespawnPointRequest $request, RespawnPoint $respawnPoint)
     {
-        //
+        $this->respawnPointService->update($respawnPoint, $request->validated());
     }
 
     /**
@@ -64,6 +50,6 @@ class RespawnPointController extends Controller
      */
     public function destroy(RespawnPoint $respawnPoint)
     {
-        //
+        $this->respawnPointService->delete($respawnPoint);
     }
 }

@@ -1,19 +1,57 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import AppLayout from "@/layout/AppLayout.vue";
 import { RespawnPointResource } from "@/Resources/RespawnPoint.resource";
 import DataView from 'primevue/dataview';
 import Tag from 'primevue/tag';
+import Button from 'primevue/button';
+import ConfirmDialog from 'primevue/confirmdialog';
+import { useConfirm } from 'primevue/useconfirm';
+import { router } from '@inertiajs/vue3';
+import EditRespawnPointDialog from './Components/EditRespawnPointDialog.vue';
 
-defineProps<{
+const props = defineProps<{
   respawnPoints: RespawnPointResource[]
 }>();
+
+const confirm = useConfirm();
+const showCreateDialog = ref(false);
+const showEditDialog = ref(false);
+const selectedRespawnPoint = ref<RespawnPointResource | null>(null);
+
+const openCreateDialog = () => {
+  selectedRespawnPoint.value = null;
+  showCreateDialog.value = true;
+};
+
+const openEditDialog = (respawnPoint: RespawnPointResource) => {
+  selectedRespawnPoint.value = respawnPoint;
+  showEditDialog.value = true;
+};
+
+const confirmDelete = (respawnPoint: RespawnPointResource) => {
+  confirm.require({
+    message: 'Are you sure you want to delete this respawn point?',
+    header: 'Confirmation',
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    accept: () => {
+      router.delete(route('respawn-points.destroy', { respawnPoint: respawnPoint.id }));
+    }
+  });
+};
 </script>
 
 <template>
   <AppLayout>
+    <ConfirmDialog />
+    <EditRespawnPointDialog v-model:visible="showCreateDialog" />
+    <EditRespawnPointDialog v-model:visible="showEditDialog" :respawn-point="selectedRespawnPoint" />
+
     <div class="card">
       <div class="flex flex-wrap gap-2 items-center justify-between mb-4">
         <h4 class="m-0">Lista punktów odrodzenia</h4>
+        <Button label="Dodaj punkt odrodzenia" icon="pi pi-plus" @click="openCreateDialog" />
       </div>
 
       <DataView :value="respawnPoints" layout="list" data-key="id" :paginator="false">
@@ -34,6 +72,10 @@ defineProps<{
                   <div class="flex sm:flex-column align-items-center sm:align-items-end gap-3 sm:gap-2">
                     <Tag severity="info" value="Powiązane mapy" />
                     <span class="text-xl font-semibold">{{ respawnPoint.maps_count }}</span>
+                    <div class="flex gap-2">
+                      <Button icon="pi pi-pencil" severity="secondary" rounded text @click="openEditDialog(respawnPoint)" />
+                      <Button icon="pi pi-trash" severity="danger" rounded text @click="confirmDelete(respawnPoint)" />
+                    </div>
                   </div>
                 </div>
               </div>

@@ -84,6 +84,9 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');
 
                 Route::get('respawn-points', [\App\Http\Controllers\RespawnPointController::class, 'index'])->name('respawn-points.index');
+                Route::post('respawn-points', [\App\Http\Controllers\RespawnPointController::class, 'store'])->name('respawn-points.store');
+                Route::patch('respawn-points/{respawnPoint}', [\App\Http\Controllers\RespawnPointController::class, 'update'])->name('respawn-points.update');
+                Route::delete('respawn-points/{respawnPoint}', [\App\Http\Controllers\RespawnPointController::class, 'destroy'])->name('respawn-points.destroy');
 
                 // Spawn Points routes
                 Route::get('spawn-points', [\App\Http\Controllers\SpawnPointController::class, 'index'])->name('spawn-points.index');
