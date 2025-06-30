@@ -75,6 +75,11 @@ const model = ref([
                 icon: 'pi pi-user-plus',
                 route: 'spawn-points.index',
             },
+            {
+                label: 'Przejścia na tytanów',
+                icon: 'pi pi-user-plus',
+                route: 'titan-doors.index',
+            },
         ],
     },
     {

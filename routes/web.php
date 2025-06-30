@@ -171,6 +171,8 @@ Route::middleware(['auth'])->group(function () {
                 Route::patch('doors/{door}/required-item', [DoorController::class, 'updateRequiredItem'])->name('doors.required-item.update');
                 Route::delete('doors/{door}', [DoorController::class, 'destroy'])->name('doors.destroy');
 
+                Route::get('titan-doors', [DoorController::class, 'titanDoors'])->name('titan-doors.index');
+                Route::post('doors/update-level-restrictions', [DoorController::class, 'updateLevelRestrictions'])->name('doors.update-level-restrictions');
 
             });
 

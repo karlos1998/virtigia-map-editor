@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\BaseNpcCategory;
+use App\Enums\BaseNpcRank;
 use App\Enums\Profession;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +26,8 @@ class BaseNpc extends DynamicModel
 
     protected $casts = [
         'profession' => Profession::class,
+        'rank' => BaseNpcRank::class,
+        'category' => BaseNpcCategory::class,
     ];
 
 
