@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class SpawnPoint extends DynamicModel
 {
+
+    protected $fillable = ['map_id', 'x', 'y', 'profession'];
     protected $casts = [
         'profession' => Profession::class,
     ];

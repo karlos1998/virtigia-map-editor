@@ -84,7 +84,13 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');
 
                 Route::get('respawn-points', [\App\Http\Controllers\RespawnPointController::class, 'index'])->name('respawn-points.index');
+
+                // Spawn Points routes
                 Route::get('spawn-points', [\App\Http\Controllers\SpawnPointController::class, 'index'])->name('spawn-points.index');
+                Route::post('spawn-points', [\App\Http\Controllers\SpawnPointController::class, 'store'])->name('spawn-points.store');
+                Route::patch('spawn-points/{spawnPoint}', [\App\Http\Controllers\SpawnPointController::class, 'update'])->name('spawn-points.update');
+                Route::post('spawn-points/set-default-for-missing', [\App\Http\Controllers\SpawnPointController::class, 'setDefaultForMissing'])->name('spawn-points.set-default-for-missing');
+
                 Route::get('world-info', [\App\Http\Controllers\WorldInfoController::class, 'index'])->name('world-info.index');
                 Route::patch('maps/{map}/cols', [MapController::class, 'updateCol'])->name('maps.update.col');
                 Route::patch('maps/{map}/water', [MapController::class, 'updateWater'])->name('maps.update.water');
