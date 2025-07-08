@@ -17,6 +17,7 @@ const form = useForm({
     rank: baseNpc.rank,
     category: baseNpc.category,
     profession: baseNpc.profession,
+    is_aggressive: baseNpc.is_aggressive || false,
 })
 
 const cancel = () => {
@@ -89,6 +90,12 @@ const availableProfessions = usePage<{availableProfessions: DropdownListType }>(
             />
         </div>
         <Message severity="error" size="small" variant="simple">{{ form.errors.category }}</Message>
+
+        <div class="flex items-center gap-4 mb-8">
+            <label for="is_aggressive" class="font-semibold w-24">Agresywny</label>
+            <Checkbox id="is_aggressive" v-model="form.is_aggressive" :binary="true" />
+        </div>
+        <Message severity="error" size="small" variant="simple">{{ form.errors.is_aggressive }}</Message>
 
         <div class="flex justify-end gap-2">
             <Button type="button" label="Anuluj" severity="secondary" @click="cancel"></Button>

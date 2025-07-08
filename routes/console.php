@@ -2,6 +2,7 @@
 
 use App\Jobs\CombineNpcsIntoGroupsJob;
 use App\Jobs\DispatchFindNearestRespForMaps;
+use App\Jobs\ResetAggressiveNpcsJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -15,3 +16,5 @@ Schedule::job(new CombineNpcsIntoGroupsJob)->hourly();
 Schedule::command('telescope:prune --hours=48')->daily();
 
 Schedule::job(new DispatchFindNearestRespForMaps)->everyFourHours();
+
+Schedule::job(new ResetAggressiveNpcsJob)->hourly();

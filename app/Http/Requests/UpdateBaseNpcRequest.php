@@ -48,6 +48,9 @@ class UpdateBaseNpcRequest extends FormRequest
             'profession' => [
                 'required',
                 new Enum(Profession::class),
+            ],
+            'is_aggressive' => [
+                'boolean',
             ]
         ];
     }

@@ -21,13 +21,15 @@ class BaseNpc extends DynamicModel
         'wt',
         'rank',
         'category',
-        'profession'
+        'profession',
+        'is_aggressive'
     ];
 
     protected $casts = [
         'profession' => Profession::class,
         'rank' => BaseNpcRank::class,
         'category' => BaseNpcCategory::class,
+        'is_aggressive' => 'boolean',
     ];
 
 

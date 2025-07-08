@@ -13,6 +13,7 @@ export interface BaseNpcResource {
     rank: BaseNpcRankEnum
     profession: ProfessionEnum
     profession_name: string
+    is_aggressive: boolean
 }
 
 export interface BaseNpcWithLoots extends BaseNpcResource {
