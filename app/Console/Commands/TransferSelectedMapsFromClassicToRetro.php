@@ -35,7 +35,9 @@ class TransferSelectedMapsFromClassicToRetro extends Command
     public function handle()
     {
 
-        $ids = [2536,2537,2538];
+        $ids = [1568];
+
+//        $ids = [2536,2537,2538];
 
 //        $ids = [2632];
 
@@ -216,8 +218,10 @@ class TransferSelectedMapsFromClassicToRetro extends Command
                 unset($data['id']);
                 $data['created_at'] = now()->toDateTimeString();
                 $data['updated_at'] = now()->toDateTimeString();
-                $data['max_lvl'] = $data['max_lvl'] ?? null;
-                $data['min_lvl'] = $data['min_lvl'] ?? null;
+                // Set max_lvl to null if it's at its maximum value (PHP_INT_MAX or similar) or doesn't exist
+                $data['max_lvl'] = isset($data['max_lvl']) && $data['max_lvl'] > 0 ? $data['max_lvl'] : null;
+                // Set min_lvl to null if it's 0 or doesn't exist
+                $data['min_lvl'] = isset($data['min_lvl']) && $data['min_lvl'] > 0 ? $data['min_lvl'] : null;
                 DB::connection('retro')->table('doors')->insert($data);
             }
         });
