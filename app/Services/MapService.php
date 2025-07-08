@@ -170,4 +170,15 @@ final class MapService extends BaseService
             'src' => session("world") . "/$fileName",
         ]);
     }
+
+    /**
+     * Remove the specified map from storage.
+     *
+     * @param Map $map
+     * @return void
+     */
+    public function destroy(Map $map): void
+    {
+        $map->delete();
+    }
 }

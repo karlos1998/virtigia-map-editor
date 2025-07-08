@@ -16,6 +16,7 @@ import MapCoordinates from './Components/MapCoordinates.vue';
 import NpcConfirmPopup from './Components/NpcConfirmPopup.vue';
 import DoorConfirmPopup from './Components/DoorConfirmPopup.vue';
 import MapContainer from './Components/MapContainer.vue';
+import RemoveMap from './Partials/RemoveMap.vue';
 
 const props = defineProps<{
     map: MapResource;
@@ -209,6 +210,8 @@ const handleTrackerPositionChanged = (position: { x: number, y: number }) => {
                 </TabPanel>
             </TabPanels>
         </Tabs>
+
+        <RemoveMap :map="map" />
 
     </AppLayout>
 </template>

@@ -120,4 +120,16 @@ class MapController extends Controller
     {
         $this->mapService->updateImage($map, $request->input('img'), $request->input('fileName'));
     }
+
+    /**
+     * Remove the specified map from storage.
+     *
+     * @param Map $map
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function destroy(Map $map): \Illuminate\Http\RedirectResponse
+    {
+        $this->mapService->destroy($map);
+        return to_route('maps.index');
+    }
 }
