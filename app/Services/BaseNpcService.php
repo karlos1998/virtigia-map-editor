@@ -70,8 +70,17 @@ final class BaseNpcService extends BaseService
                       sortable: true,
                       sortPath: 'loots_count'
                   ),
+
+                  'is_aggressive' => new TableDropdownColumn(
+                      placeholder: 'Agresywny',
+                      sortable: true,
+                      options: [
+                          new TableDropdownOption('Tak', fn($query) => $query->where('is_aggressive', true)),
+                          new TableDropdownOption('Nie', fn($query) => $query->where('is_aggressive', false)),
+                      ]
+                  ),
                 ],
-                globalFilterColumns: ['name', 'rank', 'category', 'profession', 'type'],
+                globalFilterColumns: ['name', 'rank', 'category', 'profession', 'type', 'is_aggressive'],
 //                withCount: ['loots'],
             )
         );

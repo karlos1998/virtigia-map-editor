@@ -139,6 +139,14 @@ type Data = {
                     </template>
                 </AdvanceColumn>
 
+                <AdvanceColumn field="is_aggressive" header="Agresywny">
+                    <template #body="{ data }: Data">
+                        <Badge :style="{ background: data.is_aggressive ? '#f44336' : '#4caf50' }" class="w-full">
+                            {{ data.is_aggressive ? 'Tak' : 'Nie' }}
+                        </Badge>
+                    </template>
+                </AdvanceColumn>
+
                 <Column header="Action" style="width: 20%">
                     <template #body="{data}">
                         <div style="white-space: nowrap">
