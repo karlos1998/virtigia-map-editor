@@ -64,6 +64,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('dialogs/search', [DialogController::class, 'search'])->name('dialogs.search');
                 Route::get('dialogs/{dialog}', [DialogController::class, 'show'])->name('dialogs.show');
                 Route::patch('dialogs/{dialog}', [DialogController::class, 'update'])->name('dialogs.update');
+                Route::post('dialogs/{dialog}/copy', [DialogController::class, 'copyDialog'])->name('dialogs.copy');
                 Route::post('dialogs/{dialog}/nodes', [DialogController::class, 'addNode'])->name('dialogs.nodes.store');
                 Route::patch('dialogs/{dialog}/nodes/{dialogNode}', [DialogController::class, 'updateNode'])->name('dialogs.nodes.update');
                 Route::delete('dialogs/{dialog}/nodes/{dialogNode}', [DialogController::class, 'destroyNode'])->name('dialogs.nodes.destroy');

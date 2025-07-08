@@ -319,4 +319,81 @@ class DialogService extends BaseService
 
         return $newNode->fresh(['options.edges.targetNode']);
     }
+
+    /**
+     * Copy an entire dialog with all its nodes, options, and connections
+     *
+     * @param Dialog $dialog The dialog to copy
+     * @return Dialog The newly created dialog
+     */
+    public function copyDialog(Dialog $dialog)
+    {
+        // Create a new dialog with the same name + " - kopia"
+        $newDialog = Dialog::create([
+            'name' => $dialog->name . ' - kopia',
+        ]);
+
+        // Load all nodes with their options and edges
+        $dialog->load([
+            'nodes' => function($query) {
+                $query->with(['options' => function($query) {
+                    $query->with(['edges' => function($query) {
+                        $query->with('targetNode');
+                    }]);
+                }]);
+            }
+        ]);
+
+        // Map of original node IDs to new node IDs
+        $nodeMap = [];
+        // Map of original option IDs to new options
+        $optionMap = [];
+
+        // First pass: Create all nodes without connections
+        foreach ($dialog->nodes as $node) {
+            $newNode = $newDialog->nodes()->create([
+                'type' => $node->type,
+                'content' => $node->content,
+                'position' => $node->position,
+                'action_data' => $node->action_data,
+                'shop_id' => $node->shop_id,
+            ]);
+
+            $nodeMap[$node->id] = $newNode->id;
+
+            // Copy all options without edges
+            foreach ($node->options as $option) {
+                $newOption = $newNode->options()->create([
+                    'label' => $option->label,
+                    'additional_action' => $option->additional_action,
+                    'rules' => $option->rules,
+                ]);
+
+                // Store the mapping of original option ID to new option
+                $optionMap[$option->id] = $newOption;
+            }
+        }
+
+        // Second pass: Create all edges with correct connections
+        foreach ($dialog->nodes as $node) {
+            foreach ($node->options as $option) {
+                $newOption = $optionMap[$option->id];
+
+                foreach ($option->edges as $edge) {
+                    // Find the target node in the new dialog
+                    $targetNodeId = $nodeMap[$edge->target_node_id] ?? null;
+
+                    if ($targetNodeId) {
+                        $newEdge = $newDialog->edges()->make();
+                        $newEdge->sourceOption()->associate($newOption);
+                        $newEdge->targetNode()->associate($targetNodeId);
+                        $newEdge->rules = $edge->rules;
+                        $newEdge->save();
+                    }
+                }
+            }
+        }
+
+        return $newDialog->fresh(['nodes.options.edges.targetNode']);
+    }
 }

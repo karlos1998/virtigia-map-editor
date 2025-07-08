@@ -18,6 +18,9 @@ import {useToast} from "primevue";
 import EditDialogNameDialog from '@/Pages/Dialog/Modals/EditDialogNameDialog.vue';
 import DetailsCardList from "@/Components/DetailsCardList.vue";
 import DetailsCardListItem from "@/Components/DetailsCardListItem.vue";
+import { useForm } from '@inertiajs/vue3';
+import ConfirmDialog from 'primevue/confirmdialog';
+import { useConfirm } from 'primevue/useconfirm';
 
 const props = defineProps<{
     dialog: DialogResource,
@@ -26,6 +29,23 @@ const props = defineProps<{
 }>();
 
 const isEditDialogNameVisible = ref(false);
+const confirm = useConfirm();
+
+// Form for copying the dialog
+const copyForm = useForm({});
+
+// Function to copy the dialog
+const copyDialog = () => {
+    confirm.require({
+        message: 'Czy na pewno chcesz skopiować ten dialog? Utworzy to nowy dialog z nazwą "' + props.dialog.name + ' - kopia"',
+        header: 'Potwierdzenie',
+        icon: 'pi pi-exclamation-triangle',
+        acceptClass: 'p-button-primary',
+        accept: () => {
+            copyForm.post(route('dialogs.copy', { dialog: props.dialog.id }));
+        }
+    });
+};
 
 const {
     nodes,
@@ -296,6 +316,7 @@ const items = ref([
 
 <template>
     <AppLayout>
+
         <EditDialogNameDialog :dialog="props.dialog" v-model:visible="isEditDialogNameVisible" />
 
         <DetailsCardList title="Informacje o dialogu" class="mb-4">
@@ -303,7 +324,10 @@ const items = ref([
                 <template #value>
                     <div class="flex items-center justify-between">
                         <span>{{ props.dialog.name }}</span>
-                        <Button @click="isEditDialogNameVisible = true" label="Edytuj nazwę" size="small" />
+                        <div class="flex gap-2">
+                            <Button @click="isEditDialogNameVisible = true" label="Edytuj nazwę" size="small" />
+                            <Button @click="copyDialog" :loading="copyForm.processing" label="Kopiuj dialog" size="small" severity="secondary" />
+                        </div>
                     </div>
                 </template>
             </DetailsCardListItem>
