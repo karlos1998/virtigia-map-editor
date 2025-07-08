@@ -24,6 +24,45 @@ final class MapService extends BaseService
     }
 
     /**
+     * Get doors that lead to the specified map
+     *
+     * @param Map $map
+     * @return Collection
+     */
+    public function getDoorsLeadingToMap(Map $map): Collection
+    {
+        return \App\Models\Door::with(['map', 'requiredBaseItem'])
+            ->where('go_map_id', $map->id)
+            ->get();
+    }
+
+    /**
+     * Get dialog nodes that teleport to the specified map
+     *
+     * @param Map $map
+     * @return Collection
+     */
+    public function getDialogNodesTeleportingToMap(Map $map): Collection
+    {
+        return \App\Models\DialogNode::with('dialog')
+            ->where('type', 'teleportation')
+            ->whereRaw('JSON_EXTRACT(action_data, "$.teleportation.mapId") = ?', [$map->id])
+            ->get();
+    }
+
+    /**
+     * Get base items that teleport to the specified map
+     *
+     * @param Map $map
+     * @return Collection
+     */
+    public function getItemsTeleportingToMap(Map $map): Collection
+    {
+        return \App\Models\BaseItem::whereRaw('JSON_EXTRACT(attributes, "$.teleportTo[0]") = ?', [$map->id])
+            ->get();
+    }
+
+    /**
      * @throws \Exception
      */
     public function getAll(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection

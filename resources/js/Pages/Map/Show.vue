@@ -6,6 +6,8 @@ import { useConfirm } from 'primevue';
 import ItemHeader from "@/Components/ItemHeader.vue";
 import { NpcWithLocationResource } from '@/Resources/Npc.resource';
 import { DoorResource } from '@/Resources/Door.resource';
+import DetailsCardList from "@/Components/DetailsCardList.vue";
+import DetailsCardListItem from "@/Components/DetailsCardListItem.vue";
 
 // Import components
 import MapInformation from './Components/MapInformation.vue';
@@ -21,6 +23,9 @@ const props = defineProps<{
     doors: DoorResource[];
     pvpTypeList: { value: number; label: string }[];
     respawnPoints: { id: number; map_id: number; map_name: string; x: number; y: number }[];
+    doorsLeadingToMap: DoorResource[];
+    dialogNodesTeleportingToMap: any[];
+    itemsTeleportingToMap: any[];
 }>();
 
 // Map state
@@ -127,6 +132,7 @@ const handleTrackerPositionChanged = (position: { x: number, y: number }) => {
             :respawn-points="respawnPoints"
         />
 
+
         <!-- Map Coordinates -->
         <MapCoordinates :x="trackerPosition.x" :y="trackerPosition.y" />
 
@@ -151,5 +157,58 @@ const handleTrackerPositionChanged = (position: { x: number, y: number }) => {
             @show-door-confirm-dialog="showDoorConfirmDialog"
             @tracker-position-changed="handleTrackerPositionChanged"
         />
+
+        <Tabs value="0" class="card">
+            <TabList>
+                <Tab value="0">Drzwi prowadzące na tę mapę</Tab>
+                <Tab value="1">Dialogi teleportujące na tę mapę</Tab>
+                <Tab value="2">Przedmioty teleportujące na tę mapę</Tab>
+            </TabList>
+            <TabPanels>
+                <TabPanel value="0">
+                    <DetailsCardList title="Drzwi prowadzące na tę mapę" v-if="doorsLeadingToMap.length > 0">
+                        <DetailsCardListItem v-for="door in doorsLeadingToMap" :key="door.id" :label="door.map?.name || 'Nieznana mapa'">
+                            <template #value>
+                                <div class="flex flex-col">
+                                    <span>Z pozycji: X: {{ door.x }}, Y: {{ door.y }}</span>
+                                    <span>Na pozycję: X: {{ door.go_x }}, Y: {{ door.go_y }}</span>
+                                    <span v-if="door.min_lvl || door.max_lvl">Poziom: {{ door.min_lvl || 'min' }} - {{ door.max_lvl || 'max' }}</span>
+                                    <span v-if="door.requiredBaseItem">Wymagany przedmiot: {{ door.requiredBaseItem.name }}</span>
+                                </div>
+                            </template>
+                        </DetailsCardListItem>
+                    </DetailsCardList>
+                    <Message v-else severity="warn">Brak przejść prowadzących do tej lokalizacji</Message>
+                </TabPanel>
+                <TabPanel value="1">
+                    <DetailsCardList title="Dialogi teleportujące na tę mapę" v-if="dialogNodesTeleportingToMap.length > 0">
+                        <DetailsCardListItem v-for="node in dialogNodesTeleportingToMap" :key="node.id" :label="node.dialog?.name || 'Nieznany dialog'">
+                            <template #value>
+                                <div class="flex flex-col">
+                                    <span>Treść: {{ node.content }}</span>
+                                    <span>Pozycja docelowa: X: {{ node.action_data?.teleportation?.x }}, Y: {{ node.action_data?.teleportation?.y }}</span>
+                                </div>
+                            </template>
+                        </DetailsCardListItem>
+                    </DetailsCardList>
+                    <Message v-else severity="warn">Brak dialogów prowadzących do tej lokalizacji</Message>
+                </TabPanel>
+                <TabPanel value="2">
+                    <DetailsCardList title="Przedmioty teleportujące na tę mapę" v-if="itemsTeleportingToMap.length > 0">
+                        <DetailsCardListItem v-for="item in itemsTeleportingToMap" :key="item.id" :label="item.name">
+                            <template #value>
+                                <div class="flex flex-col">
+                                    <span>Pozycja docelowa: X: {{ item.attributes?.teleportTo?.[1] }}, Y: {{ item.attributes?.teleportTo?.[2] }}</span>
+                                    <span v-if="item.attributes?.teleportTo?.[3]">Nazwa mapy: {{ item.attributes?.teleportTo?.[3] }}</span>
+                                    <span v-if="item.attributes?.cooldownTime">Cooldown: {{ item.attributes?.cooldownTime?.[0] }}s</span>
+                                </div>
+                            </template>
+                        </DetailsCardListItem>
+                    </DetailsCardList>
+                    <Message v-else severity="warn">Brak przedmiotów teleportujących do tej lokalizacji</Message>
+                </TabPanel>
+            </TabPanels>
+        </Tabs>
+
     </AppLayout>
 </template>

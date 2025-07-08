@@ -58,12 +58,24 @@ class MapController extends Controller
         // Also eager load the map relationship for respawn points
         $respawnPoints = RespawnPoint::with('map')->get();
 
+        // Get doors that lead to this map
+        $doorsLeadingToMap = $this->mapService->getDoorsLeadingToMap($map);
+
+        // Get dialog nodes that teleport to this map
+        $dialogNodesTeleportingToMap = $this->mapService->getDialogNodesTeleportingToMap($map);
+
+        // Get items that teleport to this map
+        $itemsTeleportingToMap = $this->mapService->getItemsTeleportingToMap($map);
+
         return Inertia::render('Map/Show', [
             'map' => MapResource::make($map),
             'npcs' => NpcResource::collection($map->npcs),
             'doors' => DoorResource::collection($map->doors),
             'pvpTypeList' => PvpType::toDropdownList(),
             'respawnPoints' => RespawnPointResource::collection($respawnPoints),
+            'doorsLeadingToMap' => DoorResource::collection($doorsLeadingToMap),
+            'dialogNodesTeleportingToMap' => $dialogNodesTeleportingToMap,
+            'itemsTeleportingToMap' => $itemsTeleportingToMap,
         ]);
     }
 
