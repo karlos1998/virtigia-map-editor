@@ -73,6 +73,12 @@ const isEditSrcVisible = ref(false );
                 </template>
             </DetailsCardListItem>
             <DetailsCardListItem label="Profesja" :value="baseNpc.profession_name" />
+            <DetailsCardListItem label="Agresywny">
+                <template #value>
+                    <Tag v-if="baseNpc.is_aggressive" severity="danger" value="Tak" />
+                    <Tag v-else severity="success" value="Nie" />
+                </template>
+            </DetailsCardListItem>
         </DetailsCardList>
 
         <div class="card">
