@@ -35,6 +35,10 @@ class DialogNode extends DynamicModel
         return $this->hasOne(Shop::class, 'id', 'shop_id');
     }
 
+    public function sourceEdges(): HasMany {
+        return $this->hasMany(DialogEdge::class, 'target_node_id');
+    }
+
 
 
     //tylko dla type start

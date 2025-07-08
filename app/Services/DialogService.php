@@ -197,7 +197,17 @@ class DialogService extends BaseService
             ]);
         }
 
+        // First delete all edges associated with each option
+        foreach ($dialogNode->options as $option) {
+            $option->edges()->delete();
+        }
+
+        // Then delete the options
         $dialogNode->options()->delete();
+
+        $dialogNode->sourceEdges()->delete();
+
+        // Finally delete the node itself
         $dialogNode->delete();
     }
 
