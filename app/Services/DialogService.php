@@ -257,4 +257,46 @@ class DialogService extends BaseService
 
         return $dialogNode;
     }
+
+    /**
+     * Copy a dialog node with its options and connections
+     *
+     * @param Dialog $dialog
+     * @param DialogNode $dialogNode
+     * @return DialogNode The newly created node
+     */
+    public function copyNode(Dialog $dialog, DialogNode $dialogNode)
+    {
+        // Create a new node with the same properties as the original
+        $newNode = $dialog->nodes()->create([
+            'type' => $dialogNode->type,
+            'content' => $dialogNode->content,
+            'position' => [
+                'x' => $dialogNode->position['x'] + 50, // Offset slightly to make it visible
+                'y' => $dialogNode->position['y'] + 50,
+            ],
+            'action_data' => $dialogNode->action_data,
+            'shop_id' => $dialogNode->shop_id,
+        ]);
+
+        // Copy all options
+        foreach ($dialogNode->options as $option) {
+            $newOption = $newNode->options()->create([
+                'label' => $option->label,
+                'additional_action' => $option->additional_action,
+                'rules' => $option->rules,
+            ]);
+
+            // Copy all edges from this option
+            foreach ($option->edges as $edge) {
+                $newEdge = $dialog->edges()->make();
+                $newEdge->sourceOption()->associate($newOption);
+                $newEdge->targetNode()->associate($edge->targetNode);
+                $newEdge->rules = $edge->rules;
+                $newEdge->save();
+            }
+        }
+
+        return $newNode->fresh(['options.edges.targetNode']);
+    }
 }

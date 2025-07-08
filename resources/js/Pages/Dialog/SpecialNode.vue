@@ -102,9 +102,13 @@ const editNode = () => {
             additional_actions: props.data.additional_actions,
         },
         onClose(options) {
-
             if (options.data.content) {
                 state.value.content = options.data.content;
+            }
+
+            // If the dialog was copied, refresh the page to show the new node
+            if (options.data.copied) {
+                window.location.reload();
             }
         }
     });

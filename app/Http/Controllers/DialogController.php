@@ -182,4 +182,19 @@ class DialogController extends Controller
             'dialogNode' => DialogNodeResource::make($node),
         ]);
     }
+
+    /**
+     * Copy a dialog node with its options and connections
+     *
+     * @param Dialog $dialog
+     * @param DialogNode $dialogNode
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function copyNode(Dialog $dialog, DialogNode $dialogNode)
+    {
+        $newNode = $this->dialogService->copyNode($dialog, $dialogNode);
+        return response()->json([
+            'node' => DialogNodeResource::make($newNode),
+        ]);
+    }
 }

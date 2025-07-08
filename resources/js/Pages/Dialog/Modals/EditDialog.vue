@@ -73,6 +73,31 @@ const toast = useToast();
 const { questNodes, loading, loadQuests, loadQuestStepById, onQuestNodeExpand } = useQuestStepSelection();
 
 const processing = ref(false);
+const copyProcessing = ref(false);
+
+const copyDialog = () => {
+    if(!dialogRef) return;
+
+    copyProcessing.value = true;
+    axios.post(route('dialogs.nodes.copy', {
+        dialog: dialogRef.value.data.dialog_id,
+        dialogNode: dialogRef.value.data.node_id,
+    }))
+        .then(({data}) => {
+            toast.add({ severity: 'success', summary: 'Operacja powiodła się', detail: 'Pomyślnie skopiowano dialog', life: 6000 });
+            dialogRef.value.close({
+                content: form.content,
+                copied: true,
+                newNode: data.node
+            });
+        })
+        .catch(({response}) => {
+            toast.add({ severity: 'error', summary: 'Błąd', detail: response.data.message, life: 6000 });
+        })
+        .finally(() => {
+            copyProcessing.value = false;
+        });
+};
 
 const save = () => {
     if(!dialogRef) return;
@@ -236,7 +261,10 @@ const itemsSearchChanged = ({ value }: MultiSelectFilterEvent) => {
             </Button>
         </InputGroup>
 
-        <Button :loading="processing" fluid @click="save">Zapisz</Button>
+        <div class="flex gap-2">
+            <Button :loading="processing" class="flex-1" @click="save">Zapisz</Button>
+            <Button :loading="copyProcessing" severity="secondary" class="flex-1" @click="copyDialog">Kopiuj dialog</Button>
+        </div>
     </div>
 </template>
 
