@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\PvpType;
 use App\Http\Requests\StoreMapRequest;
 use App\Http\Requests\UpdateMapColsRequest;
+use App\Http\Requests\UpdateMapImageRequest;
 use App\Http\Requests\UpdateMapNameRequest;
 use App\Http\Requests\UpdateMapPvpRequest;
 use App\Http\Requests\UpdateMapRespawnPointRequest;
@@ -94,5 +95,17 @@ class MapController extends Controller
     public function updateWater(Map $map, UpdateMapWaterRequest $request): void
     {
         $this->mapService->updateWater($map, $request->input('water'));
+    }
+
+    /**
+     * Update the map image
+     *
+     * @param Map $map
+     * @param UpdateMapImageRequest $request
+     * @return void
+     */
+    public function updateImage(Map $map, UpdateMapImageRequest $request): void
+    {
+        $this->mapService->updateImage($map, $request->input('img'), $request->input('fileName'));
     }
 }

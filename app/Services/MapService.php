@@ -100,4 +100,35 @@ final class MapService extends BaseService
     {
         $map->update(['water' => $water ?? '']);
     }
+
+    /**
+     * Update the map image
+     *
+     * @param Map $map
+     * @param string $imgBase64
+     * @param string $fileName
+     * @return void
+     * @throws ValidationException
+     * @throws \Exception
+     */
+    public function updateImage(Map $map, string $imgBase64, string $fileName): void
+    {
+        // Store the new image
+        $imageData = $this->assetService->storeFromBase64('img/locations/' . session("world") . '/', $imgBase64, $fileName);
+
+        // Validate that the dimensions match the map's dimensions
+        $width = $imageData['width'] / 32;
+        $height = $imageData['height'] / 32;
+
+        if ($width != $map->x || $height != $map->y) {
+            throw ValidationException::withMessages([
+                'img' => 'The image dimensions do not match the map dimensions.',
+            ]);
+        }
+
+        // Update the map's src
+        $map->update([
+            'src' => session("world") . "/$fileName",
+        ]);
+    }
 }

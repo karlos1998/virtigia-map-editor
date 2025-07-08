@@ -4,6 +4,7 @@ import { router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import { useToast } from 'primevue';
 import { MapResource } from '@/Resources/Map.resource';
+import ReplaceMapImageModal from '@/Pages/Map/Modals/ReplaceMapImageModal.vue';
 
 const props = defineProps<{
     map: MapResource;
@@ -16,6 +17,7 @@ const mapName = ref('');
 const selectedPvpType = ref(null);
 const selectedRespawnPointId = ref(null);
 const toast = useToast();
+const showReplaceImageModal = ref(false);
 
 // Format respawn points for dropdown
 const formattedRespawnPoints = computed(() => {
@@ -82,6 +84,14 @@ const updateMapRespawnPoint = () => {
         <h2 class="text-xl font-bold mb-4">Informacje o mapie</h2>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Map Image -->
+            <div>
+                <h3 class="font-semibold mb-2">Grafika mapy</h3>
+                <div class="flex items-center">
+                    <Button label="Podmień grafikę" icon="pi pi-image" @click="showReplaceImageModal = true" class="w-full" />
+                </div>
+            </div>
+
             <!-- Map Name -->
             <div>
                 <h3 class="font-semibold mb-2">Nazwa mapy</h3>
@@ -109,5 +119,8 @@ const updateMapRespawnPoint = () => {
                 </div>
             </div>
         </div>
+
+        <!-- Replace Map Image Modal -->
+        <ReplaceMapImageModal v-model:visible="showReplaceImageModal" :map="map" />
     </div>
 </template>
