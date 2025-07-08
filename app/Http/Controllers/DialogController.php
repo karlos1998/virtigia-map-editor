@@ -14,6 +14,7 @@ use App\Http\Requests\StoreDialogRequest;
 use App\Http\Requests\UpdateDialogNodeActionDataRequest;
 use App\Http\Requests\UpdateDialogNodeOptionRequest;
 use App\Http\Requests\UpdateDialogNodeRequest;
+use App\Http\Requests\UpdateDialogRequest;
 use App\Http\Requests\UpdateStartNodeEdgesRequest;
 use App\Http\Resources\DialogEdgeResource;
 use App\Http\Resources\DialogNodeOptionResource;
@@ -46,6 +47,11 @@ class DialogController extends Controller
         $dialog = $this->dialogService->store($request->validated());
 
         return to_route('dialogs.show', $dialog->id);
+    }
+
+    public function update(Dialog $dialog, UpdateDialogRequest $request)
+    {
+        $this->dialogService->update($dialog, $request->validated());
     }
 
     public function show(Dialog $dialog): \Inertia\Response
@@ -86,7 +92,7 @@ class DialogController extends Controller
         \App\Http\Resources\DialogNodeResource::$maps = $maps;
 
         return Inertia::render('Dialog/Show', [
-            'dialog' => $dialog->only('id'),
+            'dialog' => $dialog->only(['id', 'name']),
             'nodes' => DialogNodeResource::collection($dialog->nodes),
             'edges' => DialogEdgeResource::collection($dialog->edges),
             'dialogNodeOptionAdditionalActionsList' => DialogNodeOptionAdditionalAction::toDropdownList(),

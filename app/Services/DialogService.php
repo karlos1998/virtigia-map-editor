@@ -137,6 +137,15 @@ class DialogService extends BaseService
         return $dialog;
     }
 
+    public function update(Dialog $dialog, array $validated)
+    {
+        $dialog->update([
+            'name' => $validated['name'],
+        ]);
+
+        return $dialog;
+    }
+
     public function updateNode(Dialog $dialog, DialogNode $dialogNode, array $validated)
     {
         $dialogNode->update($validated);

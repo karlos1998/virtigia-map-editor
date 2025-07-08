@@ -15,12 +15,17 @@ import axios from 'axios';
 import { route } from 'ziggy-js';
 import TeleporationNode from '@/Pages/Dialog/TeleporationNode.vue';
 import {useToast} from "primevue";
+import EditDialogNameDialog from '@/Pages/Dialog/Modals/EditDialogNameDialog.vue';
+import DetailsCardList from "@/Components/DetailsCardList.vue";
+import DetailsCardListItem from "@/Components/DetailsCardListItem.vue";
 
 const props = defineProps<{
     dialog: DialogResource,
     nodes: any[], //todo
     edges: any[],
 }>();
+
+const isEditDialogNameVisible = ref(false);
 
 const {
     nodes,
@@ -291,6 +296,19 @@ const items = ref([
 
 <template>
     <AppLayout>
+        <EditDialogNameDialog :dialog="props.dialog" v-model:visible="isEditDialogNameVisible" />
+
+        <DetailsCardList title="Informacje o dialogu" class="mb-4">
+            <DetailsCardListItem label="Nazwa">
+                <template #value>
+                    <div class="flex items-center justify-between">
+                        <span>{{ props.dialog.name }}</span>
+                        <Button @click="isEditDialogNameVisible = true" label="Edytuj nazwę" size="small" />
+                    </div>
+                </template>
+            </DetailsCardListItem>
+        </DetailsCardList>
+
 <!--        <pre v-text="startEdges" />-->
 <!--        <pre v-text="edges" />-->
         <div class="">
