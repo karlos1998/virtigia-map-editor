@@ -173,6 +173,7 @@ class DialogService extends BaseService
             ]);
         }
 
+        $dialogNodeOption->edges()->delete();
         $dialogNodeOption->delete();
     }
 
