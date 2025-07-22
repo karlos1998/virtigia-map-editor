@@ -64,7 +64,7 @@ class SpawnPointController extends Controller
         }
 
         $existingProfessions = SpawnPoint::pluck('profession')->toArray();
-        $missingProfessions = array_diff(Profession::values(), $existingProfessions);
+        $missingProfessions = array_diff(Profession::valuesToList(), $existingProfessions);
 
         foreach ($missingProfessions as $profession) {
             SpawnPoint::create([

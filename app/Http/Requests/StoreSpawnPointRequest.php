@@ -53,7 +53,7 @@ class StoreSpawnPointRequest extends FormRequest
             ],
             'profession' => [
                 'required',
-                Rule::in(Profession::values())
+                Rule::in(Profession::valuesToList())
             ],
         ];
     }
