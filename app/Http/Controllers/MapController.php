@@ -58,9 +58,6 @@ class MapController extends Controller
         // Also eager load the map relationship for respawn points
         $respawnPoints = RespawnPoint::with('map')->get();
 
-        // Get doors that lead to this map
-        $doorsLeadingToMap = $this->mapService->getDoorsLeadingToMap($map);
-
         // Get dialog nodes that teleport to this map
         $dialogNodesTeleportingToMap = $this->mapService->getDialogNodesTeleportingToMap($map);
 
@@ -73,7 +70,7 @@ class MapController extends Controller
             'doors' => DoorResource::collection($map->doors),
             'pvpTypeList' => PvpType::toDropdownList(),
             'respawnPoints' => RespawnPointResource::collection($respawnPoints),
-            'doorsLeadingToMap' => DoorResource::collection($doorsLeadingToMap),
+            'doorsLeadingToMap' => $map->doorsLeadingToMap,
             'dialogNodesTeleportingToMap' => $dialogNodesTeleportingToMap,
             'itemsTeleportingToMap' => $itemsTeleportingToMap,
         ]);

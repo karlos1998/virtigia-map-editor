@@ -34,4 +34,8 @@ class Map extends DynamicModel
     {
         return $this->belongsTo(RespawnPoint::class);
     }
+
+    public function doorsLeadingToMap() {
+        return $this->hasMany(Door::class, 'go_map_id')->with(['map', 'requiredBaseItem']);
+    }
 }

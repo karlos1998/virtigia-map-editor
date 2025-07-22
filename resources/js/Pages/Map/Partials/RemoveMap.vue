@@ -44,8 +44,6 @@ const confirmDelete = (event) => {
 </script>
 <template>
 
-    <ConfirmPopup />
-
     <Button severity="danger" label="Usuń mapę" class="w-full" @click="confirmDelete" />
 </template>
 

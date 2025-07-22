@@ -24,19 +24,6 @@ final class MapService extends BaseService
     }
 
     /**
-     * Get doors that lead to the specified map
-     *
-     * @param Map $map
-     * @return Collection
-     */
-    public function getDoorsLeadingToMap(Map $map): Collection
-    {
-        return \App\Models\Door::with(['map', 'requiredBaseItem'])
-            ->where('go_map_id', $map->id)
-            ->get();
-    }
-
-    /**
      * Get dialog nodes that teleport to the specified map
      *
      * @param Map $map
@@ -179,6 +166,21 @@ final class MapService extends BaseService
      */
     public function destroy(Map $map): void
     {
+
+        if($this->getItemsTeleportingToMap($map)->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'message' => 'Nie możesz usunąć mapy, na którą prowadzą jakieś przedmioty teleportacyjne',
+            ]);
+        }
+
+        if($this->getDialogNodesTeleportingToMap($map)->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'message' => 'Nie możesz usunąć mapy, na którą prowadzą dialogi teleportacyjne',
+            ]);
+        }
+
+        $map->doorsLeadingToMap()->delete();
+        $map->doors()->delete();
         $map->delete();
     }
 }
