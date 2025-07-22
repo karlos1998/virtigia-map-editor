@@ -106,6 +106,11 @@ final class MapService extends BaseService
         $map->update(['col' => $col]);
     }
 
+    public function clearCollisions(Map $map)
+    {
+        $map->update(['col' => str_repeat('0', $map->x * $map->y)]);
+    }
+
     public function updateName(Map $map, string $name)
     {
         $map->update(['name' => $name]);

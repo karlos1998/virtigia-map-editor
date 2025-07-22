@@ -107,6 +107,17 @@ class MapController extends Controller
     }
 
     /**
+     * Clear all collisions on the map
+     *
+     * @param Map $map
+     * @return void
+     */
+    public function clearCollisions(Map $map): void
+    {
+        $this->mapService->clearCollisions($map);
+    }
+
+    /**
      * Update the map image
      *
      * @param Map $map

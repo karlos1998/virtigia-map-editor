@@ -99,6 +99,7 @@ Route::middleware(['auth'])->group(function () {
 
                 Route::get('world-info', [\App\Http\Controllers\WorldInfoController::class, 'index'])->name('world-info.index');
                 Route::patch('maps/{map}/cols', [MapController::class, 'updateCol'])->name('maps.update.col');
+                Route::patch('maps/{map}/clear-collisions', [MapController::class, 'clearCollisions'])->name('maps.clear.collisions');
                 Route::patch('maps/{map}/water', [MapController::class, 'updateWater'])->name('maps.update.water');
                 Route::patch('maps/{map}/name', [MapController::class, 'updateName'])->name('maps.update.name');
                 Route::patch('maps/{map}/pvp', [MapController::class, 'updatePvp'])->name('maps.update.pvp');

@@ -3,11 +3,14 @@ import { ref, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import { MapResource } from '@/Resources/Map.resource';
+import { useConfirm } from 'primevue';
 
 const props = defineProps<{
     map: MapResource;
     scale: number;
 }>();
+
+const confirm = useConfirm();
 
 const emit = defineEmits<{
     (e: 'zoomIn'): void;
@@ -49,6 +52,28 @@ const saveWater = () => {
         water: props.map.water
     });
 };
+
+const confirmClearCollisions = (event) => {
+    confirm.require({
+        target: event.currentTarget,
+        message: 'Czy na pewno chcesz wyczyścić kolizje? Ta operacja jest nieodwracalna.',
+        icon: 'pi pi-info-circle',
+        rejectProps: {
+            label: 'Anuluj',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Wyczyść',
+            severity: 'danger'
+        },
+        accept: () => {
+            router.patch(route('maps.clear.collisions', {
+                map: props.map.id,
+            }));
+        },
+    });
+};
 </script>
 
 <template>
@@ -75,5 +100,7 @@ const saveWater = () => {
             <Button v-if="editMode === 'cols'" @click="saveCols" label="Zapisz kolizje" class="ml-3" />
             <Button v-if="editMode === 'water'" @click="saveWater" label="Zapisz wodę" class="ml-3" />
         </div>
+
+        <Button @click="confirmClearCollisions" label="Wyczyść kolizje" severity="danger" class="ml-3" />
     </div>
 </template>
