@@ -114,6 +114,32 @@ const deleteItem = (event, position: number) => {
 };
 
 
+const bindsItemsPermanently = ref(props.shop.binds_items_permanently);
+
+const toggleBindsItemsPermanently = () => {
+    router.post(route('shops.toggle-binds-items-permanently', {
+        shop: props.shop.id,
+    }), {}, {
+        preserveScroll: true,
+        onError: (errors) => {
+            toast.add({
+                severity: 'error',
+                summary: 'Wystąpił bład',
+                detail: Object.values(errors)[0],
+                life: 5000,
+            });
+        },
+        onSuccess: () => {
+            toast.add({
+                severity: 'success',
+                summary: 'Sukces',
+                detail: 'Ustawienie zostało zmienione',
+                life: 3000
+            });
+        }
+    });
+};
+
 const test = ref(false);
 
 </script>
@@ -131,6 +157,17 @@ const test = ref(false);
                 #{{ shop.id }} - {{ shop.name }}
             </template>
         </ItemHeader>
+
+        <div class="card mb-3">
+            <div class="flex align-items-center">
+                <label for="binds-items-permanently" class="mr-2">Wiąże itemy na stałe po kupieniu:</label>
+                <InputSwitch
+                    id="binds-items-permanently"
+                    v-model="bindsItemsPermanently"
+                    @change="toggleBindsItemsPermanently"
+                />
+            </div>
+        </div>
 
         <div class="card">
 

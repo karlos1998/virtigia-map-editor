@@ -50,7 +50,7 @@ class ShopController extends Controller
     public function show(Shop $shop)
     {
         return Inertia::render('Shop/Show', [
-            'shop' => $shop->only('id', 'name'),
+            'shop' => $shop->only('id', 'name', 'binds_items_permanently'),
             'items' => BaseItemResource::collection($shop->items),
         ]);
     }
@@ -92,5 +92,15 @@ class ShopController extends Controller
     public function search(Request $request)
     {
         return response()->json($this->shopService->search($request->get('query', '')));
+    }
+
+    /**
+     * Toggle the binds_items_permanently field for the specified shop.
+     */
+    public function toggleBindsItemsPermanently(Shop $shop): void
+    {
+        $shop->update([
+            'binds_items_permanently' => !$shop->binds_items_permanently,
+        ]);
     }
 }

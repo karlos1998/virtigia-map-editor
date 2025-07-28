@@ -10,7 +10,7 @@ class Shop extends DynamicModel
     /** @use HasFactory<\Database\Factories\ShopFactory> */
     use HasFactory;
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'binds_items_permanently'];
 
     public function items()
     {

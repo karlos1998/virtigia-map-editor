@@ -137,6 +137,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('shops/{shop}', [ShopController::class, 'show'])->name('shops.show');
                 Route::post('shops/{shop}/items', [ShopController::class, 'addItem'])->name('shops.items.store');
                 Route::delete('shops/{shop}/items/{position}', [ShopController::class, 'destroyItem'])->name('shops.items.destroy');
+                Route::post('shops/{shop}/toggle-binds-items-permanently', [ShopController::class, 'toggleBindsItemsPermanently'])->name('shops.toggle-binds-items-permanently');
 
                 // Quest routes
                 Route::get('quests', [QuestController::class, 'index'])->name('quests.index');
