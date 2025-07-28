@@ -105,6 +105,7 @@ class BaseNpcController extends Controller
             'baseNpc' => BaseNpcResource::make($baseNpc->load('loots')),
             'locations' => $this->baseNpcService->getLocations($baseNpc),
             'logs' => ActivityLogResource::collection($logs),
+            'similarBaseNpcs' => Inertia::lazy(fn () => $this->baseNpcService->findSimilarBaseNpcs($baseNpc)),
 
             'availableRanks' => BaseNpcRank::toDropdownList(),
             'availableCategories' => BaseNpcCategory::toDropdownList(),
@@ -172,5 +173,24 @@ class BaseNpcController extends Controller
     public function forumGenerator() {
         $npcs = BaseNpc::with('loots', 'locations.locations.map')->where('rank', request()->enum('rank', BaseNpcRank::class))->orderBy('lvl', 'asc')->get();
         return view('npcs-forum-generator', ['npcs' => $npcs]);
+    }
+
+    /**
+     * Find similar base NPCs with the exact same name
+     */
+    public function findSimilarBaseNpcs(BaseNpc $baseNpc)
+    {
+        return response()->json([
+            'similarBaseNpcs' => $this->baseNpcService->findSimilarBaseNpcs($baseNpc)
+        ]);
+    }
+
+    /**
+     * Transfer NPCs from one base NPC to another
+     */
+    public function transferNpcs(BaseNpc $sourceBaseNpc, Request $request)
+    {
+        $targetBaseNpc = BaseNpc::findOrFail($request->get('targetBaseNpcId'));
+        $this->baseNpcService->transferNpcs($sourceBaseNpc, $targetBaseNpc);
     }
 }

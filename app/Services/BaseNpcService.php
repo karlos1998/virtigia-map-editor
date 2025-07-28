@@ -239,5 +239,43 @@ final class BaseNpcService extends BaseService
         return $baseNpc;
     }
 
+    /**
+     * Find similar base NPCs with the exact same name
+     */
+    public function findSimilarBaseNpcs(BaseNpc $baseNpc)
+    {
+        return BaseNpcResource::collection(
+            $this->baseNpcModel
+                ->where('name', $baseNpc->name)
+                ->where('id', '!=', $baseNpc->id)
+                ->get()
+        );
+    }
 
+    /**
+     * Transfer NPCs from one base NPC to another
+     */
+    public function transferNpcs(BaseNpc $sourceBaseNpc, BaseNpc $targetBaseNpc)
+    {
+        // Get all NPCs that belong to the source base NPC
+        $npcs = $sourceBaseNpc->locations()->get();
+        $count = $npcs->count();
+
+        // Update their base_npc_id to point to the target base NPC
+        foreach ($npcs as $npc) {
+            $npc->base_npc_id = $targetBaseNpc->id;
+            $npc->save();
+
+            activity()
+                ->causedBy(Auth::user())
+                ->performedOn($npc)
+                ->event('transfer-npc')
+                ->withProperties([
+                    'source_base_npc_id' => $sourceBaseNpc->id,
+                    'target_base_npc_id' => $targetBaseNpc->id
+                ])
+                ->log('transfer-npc');
+        }
+
+    }
 }

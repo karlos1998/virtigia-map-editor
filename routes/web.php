@@ -177,6 +177,9 @@ Route::middleware(['auth'])->group(function () {
                 Route::delete('base-npcs/{baseNpc}', [BaseNpcController::class, 'destroy'])->name('base-npcs.destroy');
                 Route::patch('base-npcs/{baseNpc}', [BaseNpcController::class, 'update'])->name('base-npcs.update');
 
+                // Routes for merging base NPCs
+                Route::post('base-npcs/{sourceBaseNpc}/transfer-npcs', [BaseNpcController::class, 'transferNpcs'])->name('base-npcs.transfer-npcs');
+
                 Route::get('assets/base-npcs/search', [AssetController::class, 'searchNpcs'])->name('assets.base-npcs.search');
 
 

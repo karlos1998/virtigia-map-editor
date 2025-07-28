@@ -7,6 +7,7 @@ import BaseNpcLocationsTable from "@/Pages/BaseNpc/Partials/BaseNpcLocationsTabl
 import {route} from "ziggy-js";
 import ItemHeader from "@/Components/ItemHeader.vue";
 import RemoveBaseNpc from "@/Pages/BaseNpc/Partials/RemoveBaseNpc.vue";
+import MergeBaseNpc from "@/Pages/BaseNpc/Partials/MergeBaseNpc.vue";
 import DetailsCardList from "@/Components/DetailsCardList.vue";
 import DetailsCardListItem from "@/Components/DetailsCardListItem.vue";
 import {Link} from "@inertiajs/vue3";
@@ -90,6 +91,8 @@ const isEditSrcVisible = ref(false );
         </div>
 
         <BaseNpcActivityLogsTable v-if="logs" :logs="logs" :base-npc-id="baseNpc.id" />
+
+        <MergeBaseNpc :baseNpc />
 
         <RemoveBaseNpc :baseNpc />
 
