@@ -46,8 +46,8 @@ class StoreSimpleBaseNpcRequest extends FormRequest
                         return $fail('The image must be a PNG or GIF.');
                     }
 
-                    if ($imageInfo[0] > 128 || $imageInfo[1] > 128) {
-                        return $fail("The image dimensions ({$imageInfo[0]}x{$imageInfo[1]}) exceed the maximum allowed size of 128x128 pixels.");
+                    if ($imageInfo[0] > 192 || $imageInfo[1] > 192) {
+                        return $fail("The image dimensions ({$imageInfo[0]}x{$imageInfo[1]}) exceed the maximum allowed size of 192x192 pixels.");
                     }
                 },
             ],
