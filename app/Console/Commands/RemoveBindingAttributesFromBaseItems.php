@@ -31,13 +31,16 @@ class RemoveBindingAttributesFromBaseItems extends Command
         $fieldsToRemove = [
             'isPermamentlyBounded', //zwiazany na stale
             'isBindsAfterEquip', //wiaze po zalozeniu
-            'isBoundToOwner' //zwiazany z wlascicielem
+            'isBoundToOwner', //zwiazany z wlascicielem
+            'isBindPermamentlyAfterBuy', //wiaze po kupieniu
         ];
 
         // Create a query that filters only items containing any of the binding attributes we want to remove
         $query = BaseItem::on('retro')->where(function($q) use ($fieldsToRemove) {
             foreach ($fieldsToRemove as $field) {
-                $q->orWhereRaw("JSON_EXTRACT(attributes, '$.$field') = 'true'");
+                // Check for both string 'true' and boolean true values
+                $q->orWhereRaw("JSON_EXTRACT(attributes, '$.$field') = 'true'")
+                  ->orWhereRaw("JSON_EXTRACT(attributes, '$.$field') = true");
             }
         });
 
@@ -54,7 +57,7 @@ class RemoveBindingAttributesFromBaseItems extends Command
                 }
 
                 foreach ($fieldsToRemove as $field) {
-                    if (isset($attributes[$field]) && $attributes[$field] === true) {
+                    if (isset($attributes[$field]) && ($attributes[$field] === true || $attributes[$field] === 'true')) {
                         unset($attributes[$field]);
                         $modified = true;
                     }
