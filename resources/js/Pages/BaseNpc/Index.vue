@@ -51,6 +51,29 @@ type Data = {
 
                 <AdvanceColumn field="id" header="ID" style="width: 5%" />
 
+                <Column header="Action" style="width: 20%">
+                    <template #body="{data}">
+                        <div style="white-space: nowrap">
+                            <span class="p-buttonset">
+                                <Link
+                                    :href="route('base-npcs.show', {baseNpc: data.id})"
+                                >
+                                    <Button
+                                        class="px-2"
+                                        icon="pi pi-eye"
+                                        label="Podgląd"
+                                    />
+                                </Link>
+
+
+                                <!-- @click="navigateToApiKeysShow(slotProps.data.id)" -->
+                                <!--                                        <Button class="px-5" label="Edytuj" icon="pi pi-pencil"/>-->
+                                <!--                                        <Button class="px-2" severity="danger" icon="pi pi-trash"/>-->
+                            </span>
+                        </div>
+                    </template>
+                </Column>
+
                 <AdvanceColumn field="src" header="Grafika" style="width: 25%">
                     <template #body="{ data }: Data">
 
@@ -146,29 +169,6 @@ type Data = {
                         </Badge>
                     </template>
                 </AdvanceColumn>
-
-                <Column header="Action" style="width: 20%">
-                    <template #body="{data}">
-                        <div style="white-space: nowrap">
-                            <span class="p-buttonset">
-                                <Link
-                                    :href="route('base-npcs.show', {baseNpc: data.id})"
-                                >
-                                    <Button
-                                        class="px-2"
-                                        icon="pi pi-eye"
-                                        label="Podgląd"
-                                    />
-                                </Link>
-
-
-                                <!-- @click="navigateToApiKeysShow(slotProps.data.id)" -->
-                                <!--                                        <Button class="px-5" label="Edytuj" icon="pi pi-pencil"/>-->
-                                <!--                                        <Button class="px-2" severity="danger" icon="pi pi-trash"/>-->
-                            </span>
-                        </div>
-                    </template>
-                </Column>
             </AdvanceTable>
         </div>
     </AppLayout>

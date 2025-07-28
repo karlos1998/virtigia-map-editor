@@ -45,24 +45,13 @@ type Data = {
 
                 <AdvanceColumn field="id" header="ID" style="width: 5%" />
 
-
-                <AdvanceColumn field="name" header="Name" />
-
-                <AdvanceColumn field="activity" header="Rozmiar" >
-                    <template #body="{ data }: Data">
-                        ({{data.x}}x{{data.y}})
-                    </template>
-                </AdvanceColumn>
-
-                <AdvanceColumn field="src" header="Ścieżka"  />
-
                 <Column header="Action" style="width: 20%">
                     <template #body="{data}">
                         <div style="white-space: nowrap">
                             <span class="p-buttonset">
                                 <Link
                                     :href="route('maps.show', {map: data.id})"
-                                    >
+                                >
                                     <Button
                                         class="px-2"
                                         icon="pi pi-eye"
@@ -78,6 +67,16 @@ type Data = {
                         </div>
                     </template>
                 </Column>
+
+                <AdvanceColumn field="name" header="Name" />
+
+                <AdvanceColumn field="activity" header="Rozmiar" >
+                    <template #body="{ data }: Data">
+                        ({{data.x}}x{{data.y}})
+                    </template>
+                </AdvanceColumn>
+
+                <AdvanceColumn field="src" header="Ścieżka"  />
 
                 <AdvanceColumn field="respawn_point" header="Miejsce odrodzenia">
                     <template #body="{data}">
