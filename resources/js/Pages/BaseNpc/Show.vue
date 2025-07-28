@@ -17,6 +17,7 @@ import {BaseNpcWithLoots} from "../../Resources/BaseNpc.resource";
 import BaseNpcLootsTable from "./Partials/BaseNpcLootsTable.vue";
 import EditBaseNpcSrcDialog from "./Components/EditBaseNpcSrcDialog.vue";
 import BaseNpcActivityLogsTable from "./Partials/BaseNpcActivityLogsTable.vue";
+import ConvertBaseNpcToLayer from "./Partials/ConvertBaseNpcToLayer.vue";
 
 defineProps<{
     baseNpc: BaseNpcWithLoots
@@ -74,6 +75,12 @@ const isEditSrcVisible = ref(false );
                 </template>
             </DetailsCardListItem>
             <DetailsCardListItem label="Profesja" :value="baseNpc.profession_name" />
+            <DetailsCardListItem label="Typ">
+                <template #value>
+                    <Tag v-if="baseNpc.type === 4" severity="success" value="Warstwa" />
+                    <Tag v-else severity="info" :value="baseNpc.type || 'Zwykły (0)'" />
+                </template>
+            </DetailsCardListItem>
             <DetailsCardListItem label="Agresywny">
                 <template #value>
                     <Tag v-if="baseNpc.is_aggressive" severity="danger" value="Tak" />
@@ -91,6 +98,8 @@ const isEditSrcVisible = ref(false );
         </div>
 
         <BaseNpcActivityLogsTable v-if="logs" :logs="logs" :base-npc-id="baseNpc.id" />
+
+        <ConvertBaseNpcToLayer :baseNpc />
 
         <MergeBaseNpc :baseNpc />
 

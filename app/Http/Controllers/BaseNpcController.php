@@ -193,4 +193,22 @@ class BaseNpcController extends Controller
         $targetBaseNpc = BaseNpc::findOrFail($request->get('targetBaseNpcId'));
         $this->baseNpcService->transferNpcs($sourceBaseNpc, $targetBaseNpc);
     }
+
+    /**
+     * Convert a BaseNpc to a layer (type 4)
+     */
+    public function convertToLayer(BaseNpc $baseNpc)
+    {
+        $this->baseNpcService->update($baseNpc, ['type' => 4]);
+        return back();
+    }
+
+    /**
+     * Revert a BaseNpc from a layer to a regular NPC (type 0)
+     */
+    public function revertFromLayer(BaseNpc $baseNpc)
+    {
+        $this->baseNpcService->update($baseNpc, ['type' => 0]);
+        return back();
+    }
 }

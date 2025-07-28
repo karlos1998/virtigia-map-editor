@@ -180,6 +180,8 @@ Route::middleware(['auth'])->group(function () {
 
                 // Routes for merging base NPCs
                 Route::post('base-npcs/{sourceBaseNpc}/transfer-npcs', [BaseNpcController::class, 'transferNpcs'])->name('base-npcs.transfer-npcs');
+                Route::post('base-npcs/{baseNpc}/convert-to-layer', [BaseNpcController::class, 'convertToLayer'])->name('base-npcs.convert-to-layer');
+                Route::post('base-npcs/{baseNpc}/revert-from-layer', [BaseNpcController::class, 'revertFromLayer'])->name('base-npcs.revert-from-layer');
 
                 Route::get('assets/base-npcs/search', [AssetController::class, 'searchNpcs'])->name('assets.base-npcs.search');
 
