@@ -106,6 +106,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::patch('maps/{map}/respawn-point', [MapController::class, 'updateRespawnPoint'])->name('maps.update.respawn-point');
                 Route::post('maps/{map}/image', [MapController::class, 'updateImage'])->name('maps.update.image');
                 Route::delete('maps/{map}', [MapController::class, 'destroy'])->name('maps.destroy');
+                Route::post('maps/{map}/copy', [MapController::class, 'copy'])->name('maps.copy');
 
                 Route::get('base-items', [BaseItemController::class, 'index'])->name('base-items.index');
                 Route::post('base-items/{baseItem}/copy', [BaseItemController::class, 'copy'])->name('base-items.copy');

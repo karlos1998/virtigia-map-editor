@@ -3,6 +3,7 @@ import AppLayout from '@/layout/AppLayout.vue';
 import { MapResource } from '@/Resources/Map.resource';
 import { ref } from 'vue';
 import { useConfirm } from 'primevue';
+import { router } from '@inertiajs/vue3';
 import ItemHeader from "@/Components/ItemHeader.vue";
 import { NpcWithLocationResource } from '@/Resources/Npc.resource';
 import { DoorResource } from '@/Resources/Door.resource';
@@ -119,6 +120,17 @@ const handleTrackerPositionChanged = (position: { x: number, y: number }) => {
         <ItemHeader :route-back="route('maps.index')">
             <template #header>
                 #{{ map.id }} - {{ map.name }}
+            </template>
+            <template #right-buttons>
+                <button
+                    class="px-4 py-2 text-white bg-green-500 hover:bg-green-600 rounded shadow"
+                    @click="() => {
+                        router.post(route('maps.copy', map.id));
+                    }"
+                >
+                    <i class="pi pi-copy mr-2"></i>
+                    Kopiuj mapę
+                </button>
             </template>
         </ItemHeader>
 

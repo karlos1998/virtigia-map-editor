@@ -188,4 +188,33 @@ final class MapService extends BaseService
         $map->doors()->delete();
         $map->delete();
     }
+
+    /**
+     * Create a copy of the specified map.
+     *
+     * @param Map $map
+     * @return Map
+     */
+    public function copy(Map $map): Map
+    {
+        // Create a new map with the same properties
+        $newMap = $this->mapModel->create([
+            'name' => $map->name . ' (kopia)',
+            'src' => $map->src,
+            'x' => $map->x,
+            'y' => $map->y,
+            'col' => $map->col,
+            'battleground' => $map->battleground,
+            'water' => $map->water,
+            'pvp' => $map->pvp,
+        ]);
+
+        // Copy respawn point if exists
+        if ($map->respawn_point_id) {
+            $newMap->respawnPoint()->associate($map->respawn_point_id);
+            $newMap->save();
+        }
+
+        return $newMap;
+    }
 }

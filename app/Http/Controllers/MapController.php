@@ -140,4 +140,16 @@ class MapController extends Controller
         $this->mapService->destroy($map);
         return to_route('maps.index');
     }
+
+    /**
+     * Copy the specified map and redirect to the new map.
+     *
+     * @param Map $map
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function copy(Map $map): \Illuminate\Http\RedirectResponse
+    {
+        $newMap = $this->mapService->copy($map);
+        return to_route('maps.show', $newMap->id);
+    }
 }
