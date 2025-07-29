@@ -12,6 +12,8 @@ class Shop extends DynamicModel
 
     protected $fillable = ['name', 'binds_items_permanently'];
 
+    protected $casts = ['binds_items_permanently' => 'boolean'];
+
     public function items()
     {
         return $this->belongsToMany(BaseItem::class, ShopItem::class, 'shop_id', 'item_id')
