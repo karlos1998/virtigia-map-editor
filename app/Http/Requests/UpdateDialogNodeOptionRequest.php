@@ -32,7 +32,7 @@ class UpdateDialogNodeOptionRequest extends FormRequest
             'label' => [
                 'required',
                 'min:3',
-                'max:250',
+                'max:1000',
                 'string',
             ],
             'additional_action' => [

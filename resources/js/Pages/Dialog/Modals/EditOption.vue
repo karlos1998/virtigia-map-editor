@@ -244,7 +244,7 @@ const remove = () => {
                 <h3 class="text-xl mb-3">Podstawowe informacje</h3>
                 <div class="mb-3">
                     <label class="block mb-2 font-medium">Tekst opcji dialogowej:</label>
-                    <Textarea v-model="form.label" rows="5" cols="50" maxlength="250" class="w-full" />
+                    <Textarea v-model="form.label" rows="5" cols="50" maxlength="1000" class="w-full" />
                     <Message severity="error" size="small" variant="simple">{{ form.errors.label }}</Message>
                 </div>
 
