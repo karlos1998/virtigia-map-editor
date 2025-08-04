@@ -18,6 +18,7 @@ const form = useForm({
     category: baseNpc.category,
     profession: baseNpc.profession,
     is_aggressive: baseNpc.is_aggressive || false,
+    divine_intervention: baseNpc.divine_intervention,
 })
 
 const cancel = () => {
@@ -35,6 +36,12 @@ const confirm = () => {
 const availableRanks = usePage<{availableRanks: DropdownListType }>().props.availableRanks
 const availableCategories = usePage<{availableCategories: DropdownListType }>().props.availableCategories
 const availableProfessions = usePage<{availableProfessions: DropdownListType }>().props.availableProfessions
+
+const divineInterventionOptions = [
+    { value: null, label: 'Domyślnie dla silnika' },
+    { value: true, label: 'Tak' },
+    { value: false, label: 'Nie' },
+]
 
 </script>
 <template>
@@ -96,6 +103,20 @@ const availableProfessions = usePage<{availableProfessions: DropdownListType }>(
             <Checkbox id="is_aggressive" v-model="form.is_aggressive" :binary="true" />
         </div>
         <Message severity="error" size="small" variant="simple">{{ form.errors.is_aggressive }}</Message>
+
+        <div class="flex items-center gap-4 mb-8">
+            <label for="divine_intervention" class="font-semibold w-24">Boska interwencja</label>
+            <Select
+                class="flex-auto"
+                name="divine_intervention"
+                id="divine_intervention"
+                v-model="form.divine_intervention"
+                :options="divineInterventionOptions"
+                option-value="value"
+                option-label="label"
+            />
+        </div>
+        <Message severity="error" size="small" variant="simple">{{ form.errors.divine_intervention }}</Message>
 
         <div class="flex justify-end gap-2">
             <Button type="button" label="Anuluj" severity="secondary" @click="cancel"></Button>

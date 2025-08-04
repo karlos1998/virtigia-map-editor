@@ -51,6 +51,10 @@ class UpdateBaseNpcRequest extends FormRequest
             ],
             'is_aggressive' => [
                 'boolean',
+            ],
+            'divine_intervention' => [
+                'nullable',
+                'boolean',
             ]
         ];
     }

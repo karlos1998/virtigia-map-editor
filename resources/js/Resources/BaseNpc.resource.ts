@@ -14,6 +14,7 @@ export interface BaseNpcResource {
     profession: ProfessionEnum
     profession_name: string
     is_aggressive: boolean
+    divine_intervention: boolean | null
 }
 
 export interface BaseNpcWithLoots extends BaseNpcResource {

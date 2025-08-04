@@ -22,7 +22,8 @@ class BaseNpc extends DynamicModel
         'rank',
         'category',
         'profession',
-        'is_aggressive'
+        'is_aggressive',
+        'divine_intervention'
     ];
 
     protected $casts = [
@@ -30,6 +31,7 @@ class BaseNpc extends DynamicModel
         'rank' => BaseNpcRank::class,
         'category' => BaseNpcCategory::class,
         'is_aggressive' => 'boolean',
+        'divine_intervention' => 'boolean',
     ];
 
 

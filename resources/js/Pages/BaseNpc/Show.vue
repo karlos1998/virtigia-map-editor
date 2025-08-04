@@ -87,6 +87,13 @@ const isEditSrcVisible = ref(false );
                     <Tag v-else severity="success" value="Nie" />
                 </template>
             </DetailsCardListItem>
+            <DetailsCardListItem label="Boska interwencja">
+                <template #value>
+                    <Tag v-if="baseNpc.divine_intervention === null" severity="info" value="Domyślnie dla silnika" />
+                    <Tag v-else-if="baseNpc.divine_intervention" severity="success" value="Tak" />
+                    <Tag v-else-if="!baseNpc.divine_intervention" severity="danger" value="Nie" />
+                </template>
+            </DetailsCardListItem>
         </DetailsCardList>
 
         <div class="card">
