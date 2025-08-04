@@ -19,6 +19,28 @@ import EditBaseNpcSrcDialog from "./Components/EditBaseNpcSrcDialog.vue";
 import BaseNpcActivityLogsTable from "./Partials/BaseNpcActivityLogsTable.vue";
 import ConvertBaseNpcToLayer from "./Partials/ConvertBaseNpcToLayer.vue";
 
+// Function to format time from seconds to a human-readable format
+const formatTimeFromSeconds = (seconds: number): string => {
+  if (seconds === null || seconds === 0) return '0s';
+
+  const days = Math.floor(seconds / (24 * 60 * 60));
+  seconds %= (24 * 60 * 60);
+
+  const hours = Math.floor(seconds / (60 * 60));
+  seconds %= (60 * 60);
+
+  const minutes = Math.floor(seconds / 60);
+  seconds %= 60;
+
+  const parts = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  if (seconds > 0) parts.push(`${seconds}s`);
+
+  return parts.join(' ');
+};
+
 defineProps<{
     baseNpc: BaseNpcWithLoots
     locations: NpcLocationResource[]
@@ -92,6 +114,18 @@ const isEditSrcVisible = ref(false );
                     <Tag v-if="baseNpc.divine_intervention === null" severity="info" value="Domyślnie dla silnika" />
                     <Tag v-else-if="baseNpc.divine_intervention" severity="success" value="Tak" />
                     <Tag v-else-if="!baseNpc.divine_intervention" severity="danger" value="Nie" />
+                </template>
+            </DetailsCardListItem>
+            <DetailsCardListItem label="Min. czas respawnu">
+                <template #value>
+                    <Tag v-if="baseNpc.min_respawn_time === null" severity="info" value="Domyślnie dla silnika" />
+                    <Tag v-else severity="success" :value="formatTimeFromSeconds(baseNpc.min_respawn_time)" />
+                </template>
+            </DetailsCardListItem>
+            <DetailsCardListItem label="Max. czas respawnu">
+                <template #value>
+                    <Tag v-if="baseNpc.max_respawn_time === null" severity="info" value="Domyślnie dla silnika" />
+                    <Tag v-else severity="success" :value="formatTimeFromSeconds(baseNpc.max_respawn_time)" />
                 </template>
             </DetailsCardListItem>
         </DetailsCardList>

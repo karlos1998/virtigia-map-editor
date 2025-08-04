@@ -23,7 +23,9 @@ class BaseNpc extends DynamicModel
         'category',
         'profession',
         'is_aggressive',
-        'divine_intervention'
+        'divine_intervention',
+        'min_respawn_time',
+        'max_respawn_time'
     ];
 
     protected $casts = [
@@ -32,6 +34,8 @@ class BaseNpc extends DynamicModel
         'category' => BaseNpcCategory::class,
         'is_aggressive' => 'boolean',
         'divine_intervention' => 'boolean',
+        'min_respawn_time' => 'integer',
+        'max_respawn_time' => 'integer',
     ];
 
 

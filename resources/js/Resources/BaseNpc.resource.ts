@@ -15,6 +15,8 @@ export interface BaseNpcResource {
     profession_name: string
     is_aggressive: boolean
     divine_intervention: boolean | null
+    min_respawn_time: number | null
+    max_respawn_time: number | null
 }
 
 export interface BaseNpcWithLoots extends BaseNpcResource {

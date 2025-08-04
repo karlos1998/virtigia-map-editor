@@ -4,6 +4,7 @@ import {useForm, usePage} from "@inertiajs/vue3";
 import {BaseNpcResource} from "@/Resources/BaseNpc.resource";
 import {route} from "ziggy-js";
 import {DropdownListType} from "@/Resources/DropdownList.type";
+import TimeInput from "@/Components/TimeInput.vue";
 
 const visible = defineModel<boolean>('visible');
 
@@ -19,6 +20,8 @@ const form = useForm({
     profession: baseNpc.profession,
     is_aggressive: baseNpc.is_aggressive || false,
     divine_intervention: baseNpc.divine_intervention,
+    min_respawn_time: baseNpc.min_respawn_time,
+    max_respawn_time: baseNpc.max_respawn_time,
 })
 
 const cancel = () => {
@@ -117,6 +120,22 @@ const divineInterventionOptions = [
             />
         </div>
         <Message severity="error" size="small" variant="simple">{{ form.errors.divine_intervention }}</Message>
+
+        <div class="mb-8">
+            <TimeInput
+                v-model="form.min_respawn_time"
+                label="Minimalny czas respawnu"
+                :error="form.errors.min_respawn_time"
+            />
+        </div>
+
+        <div class="mb-8">
+            <TimeInput
+                v-model="form.max_respawn_time"
+                label="Maksymalny czas respawnu"
+                :error="form.errors.max_respawn_time"
+            />
+        </div>
 
         <div class="flex justify-end gap-2">
             <Button type="button" label="Anuluj" severity="secondary" @click="cancel"></Button>

@@ -55,6 +55,17 @@ class UpdateBaseNpcRequest extends FormRequest
             'divine_intervention' => [
                 'nullable',
                 'boolean',
+            ],
+            'min_respawn_time' => [
+                'nullable',
+                'integer',
+                'min:0',
+            ],
+            'max_respawn_time' => [
+                'nullable',
+                'integer',
+                'min:0',
+                'gte:min_respawn_time',
             ]
         ];
     }
