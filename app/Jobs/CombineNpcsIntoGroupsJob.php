@@ -43,11 +43,14 @@ class CombineNpcsIntoGroupsJob implements ShouldQueue
 
         Map::chunk(100, function($mapsChunk) {
             foreach ($mapsChunk as $map) {
-                $mapNpcs = $map->npcs()->whereNull('group_id')->whereHas('base', function ($query) {
-                    $query->where('lvl', '>=', 13)
-                        ->where('category', BaseNpcCategory::MOB)
-                        ->whereIn('rank', [BaseNpcRank::NORMAL, BaseNpcRank::ELITE, BaseNpcRank::ELITE_II]);
-                })->get();
+                $mapNpcs = $map->npcs()
+                    ->whereNull('group_id')
+                    ->where('manually_group_detached', false) // Exclude NPCs that have been manually detached
+                    ->whereHas('base', function ($query) {
+                        $query->where('lvl', '>=', 13)
+                            ->where('category', BaseNpcCategory::MOB)
+                            ->whereIn('rank', [BaseNpcRank::NORMAL, BaseNpcRank::ELITE, BaseNpcRank::ELITE_II]);
+                    })->get();
 
                 while ($mapNpcs->isNotEmpty()) {
                     $currentNpc = $mapNpcs->shift();

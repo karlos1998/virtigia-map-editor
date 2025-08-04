@@ -94,10 +94,16 @@ class NpcService extends BaseService
 
         if($group?->npcs()->count() > 2)
         {
+            $npc->manually_group_detached = true;
             $npc->group()->disassociate()->save();
         }
         else
         {
+            // Mark all NPCs in the group as manually detached
+            foreach ($group->npcs as $groupNpc) {
+                $groupNpc->manually_group_detached = true;
+                $groupNpc->save();
+            }
             $group->delete();
         }
     }
@@ -107,10 +113,12 @@ class NpcService extends BaseService
         // If source NPC doesn't have a group, create one
         if (!$sourceNpc->group_id) {
             $group = NpcGroup::create();
+            $sourceNpc->manually_group_detached = false; // Reset the detached flag
             $sourceNpc->group()->associate($group)->save();
         }
 
         // Add target NPC to the source NPC's group
+        $targetNpc->manually_group_detached = false; // Reset the detached flag
         $targetNpc->group()->associate($sourceNpc->group_id)->save();
     }
 
@@ -127,6 +135,7 @@ class NpcService extends BaseService
 
         // Add all NPCs to the group
         foreach ($npcs as $npc) {
+            $npc->manually_group_detached = false; // Reset the detached flag
             $npc->group()->associate($group)->save();
         }
     }

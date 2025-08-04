@@ -7,14 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 class Npc extends DynamicModel
 {
 
-    protected $fillable = ['group_id'];
+    protected $fillable = ['group_id', 'manually_group_detached'];
 
-    protected $casts = ['grp' => 'boolean'];
-
-    //todo !!!! pole GRP do wywalenia
+    protected $casts = ['manually_group_detached' => 'boolean'];
 
     protected $attributes = [
-        'grp' => false
+        'manually_group_detached' => false
     ];
 
     public function base()
