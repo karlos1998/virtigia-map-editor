@@ -45,7 +45,7 @@ class UpdateBaseItemRequest extends FormRequest
             'price' => [
                 'required',
                 'integer',
-                'max:10000000'
+                'max:1000000000'
             ],
 
             'currency' => [

@@ -114,7 +114,7 @@ const confirm = () => {
                     showButtons
                     buttonLayout="horizontal"
                     :step="5000"
-                    :max="10000000"
+                    :max="1000000000"
                     :min="0"
                 />
                 <label for="price">Wartość</label>
