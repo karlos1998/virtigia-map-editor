@@ -84,4 +84,7 @@ enum BaseItemCategory: string
 
     #[Description('Złoto')]
     case GOLDS = 'golds';
+
+    #[Description('Błogosławieństwo')]
+    case BLESSING = 'blessings';
 }
