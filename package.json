@@ -37,7 +37,7 @@
         "primevue": "^4.2.5",
         "tailwindcss-primeui": "^0.3.4",
         "unplugin-vue-components": "^0.27.5",
-        "virtigia-tips": "^1.0.28",
+        "virtigia-tips": "^1.0.33",
         "vue": "^3.5.13",
         "ziggy": "^2.4.0",
         "ziggy-js": "^2.4.1"
