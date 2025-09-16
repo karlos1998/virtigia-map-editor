@@ -33,7 +33,7 @@ const form = reactive<{
     additional_actions: {},
 })
 
-onMounted(() => {
+onMounted(async () => {
     if(!dialogRef) return;
 
     form.content = dialogRef.value.data?.content ?? '';
@@ -41,6 +41,23 @@ onMounted(() => {
 
     if(form.additional_actions[DialogNodeAdditionalAction.addItems]) {
         searchItems('', form.additional_actions[DialogNodeAdditionalAction.addItems].value as number[])
+    }
+
+    if (form.additional_actions[DialogNodeAdditionalAction.blessing]) {
+        const val = form.additional_actions[DialogNodeAdditionalAction.blessing].value;
+        const id = typeof val === 'number' ? val : parseInt(String(val));
+        if (!isNaN(id)) {
+            // load the blessing item so UI shows selected item
+            // await searchBlessings('', id);
+            const {data} = await axios.get<BaseItemResource[]>(route('base-items.search', {query: '', ids: [id], category: 'blessings'}));
+            // selectedBlessingItem.value = blessingDropdown.value.find(i => i.id === id) ?? null;
+            // ensure form stores numeric id (not string)
+            // if (form.additional_actions[DialogNodeAdditionalAction.blessing]) {
+            //     form.additional_actions[DialogNodeAdditionalAction.blessing].value = id;
+            // }
+            // form.additional_actions[DialogNodeAdditionalAction.blessing].value = id;
+            selectedBlessingItem.value = data[0];
+        }
     }
 
     // Load quests for the TreeSelect
@@ -117,6 +134,24 @@ const save = () => {
         }
     }
 
+    // Validate blessing action: ensure selected blessing item exists and has correct category
+    if (form.additional_actions[DialogNodeAdditionalAction.blessing]) {
+        if (!selectedBlessingItem.value) {
+            toast.add({severity: 'error', summary: 'Błąd', detail: 'Wybierz błogosławieństwo', life: 3000});
+            return;
+        }
+
+        if (selectedBlessingItem.value.category !== 'blessings') {
+            toast.add({
+                severity: 'error',
+                summary: 'Błąd',
+                detail: 'Wybrany przedmiot nie jest błogosławieństwem',
+                life: 3000
+            });
+            return;
+        }
+    }
+
     // Create a deep copy of the form data
     const formData = JSON.parse(JSON.stringify(form));
 
@@ -130,6 +165,11 @@ const save = () => {
                 formData.additional_actions[DialogNodeAdditionalAction.setQuestStep].value = stepId;
             }
         }
+    }
+
+    // Assign blessing id from selectedBlessingItem into payload
+    if (formData.additional_actions[DialogNodeAdditionalAction.blessing]) {
+        formData.additional_actions[DialogNodeAdditionalAction.blessing].value = selectedBlessingItem.value ? selectedBlessingItem.value.id : null;
     }
 
     processing.value = true;
@@ -172,6 +212,8 @@ const addAdditionalAction = () => {
         value = 1;
     } else if (newAdditionalAction.value == DialogNodeAdditionalAction.addExp) {
         value = 1;
+    } else if (newAdditionalAction.value == DialogNodeAdditionalAction.blessing) {
+        value = 0;
     } else if(newAdditionalAction.value == DialogNodeAdditionalAction.setQuestStep) {
         value = "";
     }
@@ -200,10 +242,34 @@ const itemsSearchChanged = ({ value }: MultiSelectFilterEvent) => {
     }
 };
 
+// Blessing (single item) search
+const blessingDropdown = ref<BaseItemResource[]>([]);
+const selectedBlessingItem = ref<BaseItemResource | null>(null);
+
+const searchBlessings = debounce(async (query: string, id?: number | null) => {
+    const ids = id ? [id] : [];
+    const {data} = await axios.get<BaseItemResource[]>(route('base-items.search', {query, ids, category: 'blessings'}));
+    blessingDropdown.value = data;
+
+    return data[0];
+}, 500);
+
+const blessingSearchChanged = async ({query}: { query: string }) => {
+    await searchBlessings(query);
+};
+
+watch(selectedBlessingItem, () => {
+    if (form.additional_actions[DialogNodeAdditionalAction.blessing]) {
+        form.additional_actions[DialogNodeAdditionalAction.blessing].value = selectedBlessingItem.value ? selectedBlessingItem.value.id : null;
+        selectedBlessingItem.value = selectedBlessingItem.value;
+    }
+});
+
 </script>
 
 <template>
     <div class="flex flex-col gap-2">
+
         <Textarea v-model="form.content" rows="5" cols="50" />
 
         <InputGroup v-for="(_, name) in form.additional_actions">
@@ -234,6 +300,34 @@ const itemsSearchChanged = ({ value }: MultiSelectFilterEvent) => {
                 @filter="itemsSearchChanged"
                 :options="itemsDropdown"
             />
+
+            <AutoComplete
+                v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.blessing"
+                v-model="selectedBlessingItem"
+                :suggestions="blessingDropdown"
+                @complete="blessingSearchChanged"
+                :option-label="(item: BaseItemResource | null) => item?.name || ''"
+                class="w-full p-0"
+                placeholder="Szukaj błogosławieństwa"
+            >
+                <template #option="slotProps">
+                    <div class="name-item flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <img
+                                class="h-12 w-12 object-cover"
+                                :src="slotProps.option.src"
+                                alt="Option Image"
+                                v-tip.item.top.show-id="slotProps.option"
+                            />
+                            <div class="text-center">
+                                <span class="font-semibold text-gray-800">
+                                    [{{ slotProps.option.id }}] {{ slotProps.option.name }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </AutoComplete>
 
             <!-- TreeSelectAdapter for setQuestStep action -->
             <TreeSelectAdapter

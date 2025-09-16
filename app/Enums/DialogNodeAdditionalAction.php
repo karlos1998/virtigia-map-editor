@@ -27,4 +27,7 @@ enum DialogNodeAdditionalAction: string
 
     #[Description('Ustaw postęp questa')]
     case SET_QUEST_STEP = 'setQuestStep';
+
+    #[Description('Rzuć błogosławieństwo')]
+    case BLESSING = 'blessing';
 }

@@ -106,32 +106,41 @@ final class BaseItemService extends BaseService
         );
     }
 
-    public function search(string $search = '', Collection $ids = null)
+    public function search(string $search = '', Collection $ids = null, ?string $category = null)
     {
-        $idsResults = $this->baseItemModel->whereIn('id', $ids->toArray())->get();
+        $idsArray = $ids?->toArray() ?? [];
 
-//        $searchItems = $this->baseItemModel->search($search)->take(30)->get();
-        $searchItems = $this->baseItemModel->where('name', 'like', '%' . $search . '%')->limit(30)->get();
+        // If ids are provided and search is empty, return only those ids (respecting category if set)
+        if (!empty($idsArray) && $search === '') {
+            $query = $this->baseItemModel->newQuery()->whereIn('id', $idsArray);
+            if ($category) {
+                $query->where('category', $category);
+            }
 
-        return $idsResults->merge($searchItems);
+            return $query->get();
+        }
+
+        // Otherwise, return idsResults (items for given ids) on top of regular search results
+        $idsQuery = $this->baseItemModel->newQuery();
+        if (!empty($idsArray)) {
+            $idsQuery->whereIn('id', $idsArray);
+            if ($category) {
+                $idsQuery->where('category', $category);
+            }
+            $idsResults = $idsQuery->get();
+        } else {
+            $idsResults = collect();
+        }
+
+        $searchQuery = $this->baseItemModel->newQuery();
+        if ($category) {
+            $searchQuery->where('category', $category);
+        }
+        $searchItems = $searchQuery->where('name', 'like', '%' . $search . '%')->limit(30)->get();
+
+        return $idsResults->merge($searchItems)->unique('id')->values();
     }
 
-//    public function search(string $search = '', Collection $ids = null)
-//    {
-//        $query = $this->baseItemModel->search($search);
-//
-//        // Jeśli $ids nie jest null, wyszukaj rekordy o pasujących ID na pierwszym miejscu
-//        if ($ids && $ids->isNotEmpty()) {
-//            $idsResults = $query->whereIn('id', $ids->toArray())->get();
-//            // Wykonaj zapytanie dla pozostałych rekordów
-//            $otherResults = $query->whereNotIn('id', $ids->toArray())->take(30)->get();
-//
-//            // Połącz oba zestawy wyników, tak aby rekordy z listy ID były na samej górze
-//            return $idsResults->merge($otherResults);
-//        }
-//
-//        return $query->take(30)->get();
-//    }
     public function updateAttributes(BaseItem $baseItem, mixed $attributes)
     {
         $baseItem->update(['attributes' => $attributes, 'edited_manually' => true]);

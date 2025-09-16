@@ -75,6 +75,18 @@ class UpdateDialogNodeRequest extends FormRequest
                                 return;
                             }
 
+                        } elseif ($key === \App\Enums\DialogNodeAdditionalAction::BLESSING->value) {
+                            // For blessing action, ensure the provided id exists and has category 'blessings'
+                            if (!is_numeric($ruleData['value'])) {
+                                $fail("Dla rule: {$key}, wartość musi być liczbą (ID przedmiotu).");
+                                return;
+                            }
+
+                            $exists = \App\Models\BaseItem::where('id', $ruleData['value'])->where('category', 'blessings')->exists();
+                            if (!$exists) {
+                                $fail("Dla rule: {$key}, wybrany przedmiot nie istnieje lub nie jest błogosławieństwem.");
+                                return;
+                            }
                         } elseif (!is_numeric($ruleData['value'])) {
                             $fail("Dla rule: {$key}, wartość musi być liczbą.");
                             return;

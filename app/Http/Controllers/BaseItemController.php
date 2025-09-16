@@ -38,7 +38,10 @@ class BaseItemController extends Controller
 
     public function search(Request $request): \Illuminate\Http\JsonResponse
     {
-        return response()->json(BaseItemResource::collection($this->baseItemService->search($request->string('query', ''), ($request->collect('ids')))));
+        $category = $request->string('category', null);
+        return response()->json(BaseItemResource::collection(
+            $this->baseItemService->search($request->string('query', ''), $request->collect('ids'), $category)
+        ));
     }
 
     public function show(BaseItem $baseItem): \Inertia\Response
