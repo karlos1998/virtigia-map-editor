@@ -11,30 +11,40 @@ class MigrateRemoteDatabase extends Command
      *
      * @var string
      */
-    protected $signature = 'migrate:remote {connection}';
+    protected $signature = 'migrate:remote {connection} {action=migrate}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Migrate remote database';
+    protected $description = 'Run migrations (or rollback) on remote database';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        //  ./vendor/bin/sail php artisan db:seed --class=DialogSeeder --database=retro
-
-
         $connection = $this->argument('connection');
+        $action = $this->argument('action');
 
+        if ($action === 'rollback') {
+            $this->call('migrate:rollback', [
+                '--database' => $connection,
+                '--path' => 'database/migrations/remote',
+            ]);
+
+            $this->info('Rollback for remote migrations executed successfully.');
+            return 0;
+        }
+
+        // default: run migrations
         $this->call('migrate', [
             '--database' => $connection,
             '--path' => 'database/migrations/remote',
         ]);
 
-        $this->info('Migrations for the retro database executed successfully.');
+        $this->info('Migrations for the remote database executed successfully.');
+        return 0;
     }
 }

@@ -43,6 +43,7 @@ class BaseItem extends DynamicModel
         'pr',
         'edited_manually',
         'attributes',
+        'attribute_points',
         'rarity',
         'category',
         'price',
@@ -51,6 +52,7 @@ class BaseItem extends DynamicModel
 
     protected $casts = [
         'attributes' => 'json',
+        'attribute_points' => 'json',
         'category' => BaseItemCategory::class,
         'edited_manually' => 'boolean',
         'currency' => \App\Enums\BaseItemCurrency::class
