@@ -85,6 +85,12 @@ const save = () => {
             </TabPanels>
         </Tabs>
 
+        <div class="card mt-4">
+            <h3>Podgląd Attribute Points</h3>
+            <pre class="whitespace-pre-wrap break-words">{{
+                    baseItem.attribute_points
+                }}</pre>
+        </div>
 
     </AppLayout>
 </template>
