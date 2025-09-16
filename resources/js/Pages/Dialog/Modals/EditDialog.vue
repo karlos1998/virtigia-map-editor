@@ -16,6 +16,7 @@ import {DialogNodeAdditionalActionsResource} from "@/Resources/DialogNodeAdditio
 import {debounce} from "@/debounce";
 import TreeSelectAdapter from "../Componnts/TreeSelectAdapter.vue";
 import { useQuestStepSelection } from "../Composables/useQuestStepSelection";
+import InputSwitch from 'primevue/inputswitch';
 
 const dialogRef = inject<Ref<DynamicDialogInstance & {
     data: {
@@ -44,19 +45,26 @@ onMounted(async () => {
     }
 
     if (form.additional_actions[DialogNodeAdditionalAction.blessing]) {
-        const val = form.additional_actions[DialogNodeAdditionalAction.blessing].value;
-        const id = typeof val === 'number' ? val : parseInt(String(val));
+        const current = form.additional_actions[DialogNodeAdditionalAction.blessing];
+        const rawVal = (current && typeof current === 'object' && 'value' in current) ? current.value : current;
+        const id = typeof rawVal === 'number' ? rawVal : parseInt(String(rawVal));
         if (!isNaN(id)) {
-            // load the blessing item so UI shows selected item
-            // await searchBlessings('', id);
-            const {data} = await axios.get<BaseItemResource[]>(route('base-items.search', {query: '', ids: [id], category: 'blessings'}));
-            // selectedBlessingItem.value = blessingDropdown.value.find(i => i.id === id) ?? null;
-            // ensure form stores numeric id (not string)
-            // if (form.additional_actions[DialogNodeAdditionalAction.blessing]) {
-            //     form.additional_actions[DialogNodeAdditionalAction.blessing].value = id;
-            // }
-            // form.additional_actions[DialogNodeAdditionalAction.blessing].value = id;
-            selectedBlessingItem.value = data[0];
+            const {data} = await axios.get<BaseItemResource[]>(route('base-items.search', {
+                query: '',
+                ids: [id],
+                category: 'blessings'
+            }));
+            const item = data[0];
+            selectedBlessingItem.value = item ?? null;
+            // ensure form stores numeric id (not string) and preserves scale
+            if (form.additional_actions[DialogNodeAdditionalAction.blessing]) {
+                const current2 = form.additional_actions[DialogNodeAdditionalAction.blessing];
+                if (current2 && typeof current2 === 'object') {
+                    current2.value = id;
+                } else {
+                    form.additional_actions[DialogNodeAdditionalAction.blessing] = {value: id, scale: false} as any;
+                }
+            }
         }
     }
 
@@ -213,7 +221,7 @@ const addAdditionalAction = () => {
     } else if (newAdditionalAction.value == DialogNodeAdditionalAction.addExp) {
         value = 1;
     } else if (newAdditionalAction.value == DialogNodeAdditionalAction.blessing) {
-        value = 0;
+        value = {value: 0, scale: false};
     } else if(newAdditionalAction.value == DialogNodeAdditionalAction.setQuestStep) {
         value = "";
     }
@@ -258,10 +266,14 @@ const blessingSearchChanged = async ({query}: { query: string }) => {
     await searchBlessings(query);
 };
 
-watch(selectedBlessingItem, () => {
-    if (form.additional_actions[DialogNodeAdditionalAction.blessing]) {
-        form.additional_actions[DialogNodeAdditionalAction.blessing].value = selectedBlessingItem.value ? selectedBlessingItem.value.id : null;
-        selectedBlessingItem.value = selectedBlessingItem.value;
+watch(selectedBlessingItem, (newVal) => {
+    if (!form.additional_actions[DialogNodeAdditionalAction.blessing]) return;
+    const current = form.additional_actions[DialogNodeAdditionalAction.blessing];
+    const id = newVal ? newVal.id : null;
+    if (current && typeof current === 'object') {
+        current.value = id;
+    } else {
+        form.additional_actions[DialogNodeAdditionalAction.blessing] = {value: id, scale: false} as any;
     }
 });
 
@@ -328,6 +340,12 @@ watch(selectedBlessingItem, () => {
                     </div>
                 </template>
             </AutoComplete>
+
+            <div v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.blessing"
+                 class="flex items-center gap-2">
+                <InputSwitch v-model="(form.additional_actions[name] as any).scale"/>
+                <small>Skaluj poziom przedmiotu</small>
+            </div>
 
             <!-- TreeSelectAdapter for setQuestStep action -->
             <TreeSelectAdapter
