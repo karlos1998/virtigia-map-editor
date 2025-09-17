@@ -9,6 +9,7 @@ export interface MapResource {
     col: string
     pvp: number
     water?: string
+    battleground?: string
 
     // ....
 

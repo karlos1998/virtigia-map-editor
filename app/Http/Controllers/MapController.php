@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\PvpType;
 use App\Http\Requests\StoreMapRequest;
+use App\Http\Requests\UpdateMapBattlegroundRequest;
 use App\Http\Requests\UpdateMapColsRequest;
 use App\Http\Requests\UpdateMapImageRequest;
 use App\Http\Requests\UpdateMapNameRequest;
@@ -151,5 +152,10 @@ class MapController extends Controller
     {
         $newMap = $this->mapService->copy($map);
         return to_route('maps.show', $newMap->id);
+    }
+
+    public function updateBattleground(Map $map, UpdateMapBattlegroundRequest $request): void
+    {
+        $this->mapService->updateBattleground($map, $request->input('battleground'));
     }
 }

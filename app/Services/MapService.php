@@ -127,6 +127,11 @@ final class MapService extends BaseService
         $map->save();
     }
 
+    public function updateBattleground(Map $map, string $battleground)
+    {
+        $map->update(['battleground' => $battleground]);
+    }
+
     public function updateWater(Map $map, ?string $water)
     {
         $map->update(['water' => $water ?? '']);

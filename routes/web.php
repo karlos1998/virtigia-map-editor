@@ -103,6 +103,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::patch('maps/{map}/water', [MapController::class, 'updateWater'])->name('maps.update.water');
                 Route::patch('maps/{map}/name', [MapController::class, 'updateName'])->name('maps.update.name');
                 Route::patch('maps/{map}/pvp', [MapController::class, 'updatePvp'])->name('maps.update.pvp');
+                Route::patch('maps/{map}/battleground', [MapController::class, 'updateBattleground'])->name('maps.update.battleground');
                 Route::patch('maps/{map}/respawn-point', [MapController::class, 'updateRespawnPoint'])->name('maps.update.respawn-point');
                 Route::post('maps/{map}/image', [MapController::class, 'updateImage'])->name('maps.update.image');
                 Route::delete('maps/{map}', [MapController::class, 'destroy'])->name('maps.destroy');
