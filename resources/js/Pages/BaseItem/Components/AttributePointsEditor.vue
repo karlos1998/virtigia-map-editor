@@ -66,11 +66,13 @@ const attributeData = ref<AttributeData>({
 
 /**
  * Calculate total attribute points used across all categories
+ * Note: Manual attribute points are NOT counted towards bonus validation limit
  */
 const totalPointsUsed = computed(() => {
     let total = 0;
 
-    // Count regular attribute points
+    // Count ONLY regular attribute points for bonus validation
+    // Manual attribute points don't count towards the limit
     attributeData.value.attributePoints.forEach(attr => {
         const value = getAttributeValue(attr.name, false);
         if (typeof value === 'number') {
@@ -78,7 +80,18 @@ const totalPointsUsed = computed(() => {
         }
     });
 
-    // Count manual attribute points
+    // Manual attribute points are excluded from bonus validation
+    // but we'll create a separate computed for display purposes
+
+    return total;
+});
+
+/**
+ * Calculate total manual attribute points used (for display only)
+ */
+const totalManualPointsUsed = computed(() => {
+    let total = 0;
+
     attributeData.value.manualAttributePoints.forEach(attr => {
         const value = getAttributeValue(attr.name, true);
         if (typeof value === 'number') {
@@ -159,21 +172,27 @@ function updateAttributeValue(attributeName: string, value: number, isManual: bo
 function buildApiParameters(): Record<string, any> {
     const params: Record<string, any> = {};
 
-    // Add base item parameters
-    if (props.baseItem?.need_level) {
-        params.lvl = props.baseItem.need_level;
-    }
+    // Add base item parameters with proper defaults
+    // Level from attributes.needLevel, default to 1 if not present
+    params.lvl = props.baseItem?.attributes?.needLevel || 1;
+
+    // Category from main baseItem.category (not from attributes)
     if (props.baseItem?.category) {
         params.itemCategory = props.baseItem.category;
     }
+
+    // Rarity from main baseItem.rarity (not from attributes)
     if (props.baseItem?.rarity) {
         params.rarity = props.baseItem.rarity;
     }
 
-    // Always include itemProfessions (empty string if no professions)
-    params.itemProfessions = props.baseItem?.need_professions?.length > 0
-        ? props.baseItem.need_professions.join(',')
-        : '';
+    // Professions from attributes.needProfessions, default to empty string
+    const professions = props.baseItem?.attributes?.needProfessions;
+    if (Array.isArray(professions) && professions.length > 0) {
+        params.itemProfessions = professions.join(',');
+    } else {
+        params.itemProfessions = '';
+    }
 
     // Add attribute points (only values > 0)
     [form.value?.attribute_points, form.value?.manual_attribute_points]
@@ -201,6 +220,7 @@ function hasAttributeParameters(params: Record<string, any>): boolean {
  * Get expected bonus count
  */
 function getExpectedBonusCount(): number {
+    // Category and rarity are in main baseItem object, not in attributes
     const category = props.baseItem?.category;
     const rarity = props.baseItem?.rarity;
 
@@ -491,13 +511,14 @@ onMounted(() => {
                 <div class="flex justify-between items-center">
                     <div>
                         <div class="font-semibold text-blue-800">
-                            Łączna suma punktów: {{ totalPointsUsed }}
+                            Punkty atrybutów: {{ totalPointsUsed }} | Manualne: {{ totalManualPointsUsed }}
                         </div>
                         <div class="text-xs text-gray-600 mt-1">
-                            Poziom: {{ props.baseItem?.need_level || 'brak' }} |
+                            <span class="font-medium">Tylko punkty atrybutów liczą się do limitu bonusów</span><br>
+                            Poziom: {{ props.baseItem?.attributes?.needLevel || 'brak' }} |
                             Kategoria: {{ props.baseItem?.category || 'brak' }} |
                             Rzadkość: {{ props.baseItem?.rarity || 'brak' }} |
-                            Profesje: {{ props.baseItem?.need_professions?.join(', ') || 'brak' }}
+                            Profesje: {{ props.baseItem?.attributes?.needProfessions?.join(', ') || 'brak' }}
                         </div>
                     </div>
                     <div v-if="isCalculating" class="flex items-center text-sm text-gray-600">
@@ -667,7 +688,7 @@ onMounted(() => {
                         🐛 Debug: Bonus Validation
                     </summary>
                     <pre
-                        class="mt-3 text-xs bg-gray-50 p-3 rounded border overflow-auto">{{ JSON.stringify(bonusValidation.value || {}, null, 2)
+                        class="mt-3 text-xs bg-gray-50 p-3 rounded border overflow-auto">{{ JSON.stringify(bonusValidation || {}, null, 2)
                         }}</pre>
                 </details>
             </section>

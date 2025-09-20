@@ -143,9 +143,41 @@ final class BaseItemService extends BaseService
         return $idsResults->merge($searchItems)->unique('id')->values();
     }
 
-    public function updateAttributes(BaseItem $baseItem, mixed $attributes)
+    /**
+     * Update item attributes with proper merging and save separate point allocations
+     *
+     * @param BaseItem $baseItem The item to update
+     * @param mixed $newAttributes New attributes from scale calculation
+     * @param array $attributePoints Regular attribute points allocation
+     * @param array $manualAttributePoints Manual attribute points allocation
+     * @return void
+     */
+    public function updateAttributes(BaseItem $baseItem, mixed $newAttributes, array $attributePoints = [], array $manualAttributePoints = []): void
     {
-        $baseItem->update(['attributes' => $attributes, 'edited_manually' => true]);
+        // Get current attributes to preserve existing data
+        $oldAttributes = $baseItem->attributes ?? [];
+
+        // Merge attributes: new attributes override old ones, but unique old attributes are preserved
+        // This preserves things like legendary bonuses, owner binding, etc.
+        $mergedAttributes = array_merge($oldAttributes, $newAttributes ?? []);
+
+        // Update the item with all three fields
+        $baseItem->update([
+            'attributes' => $mergedAttributes,
+            'attribute_points' => $attributePoints,
+            'manual_attribute_points' => $manualAttributePoints,
+            'edited_manually' => true
+        ]);
+
+        // Log the update for auditing
+        Log::info('Item attributes updated', [
+            'item_id' => $baseItem->id,
+            'old_attributes_count' => count($oldAttributes),
+            'new_attributes_count' => count($newAttributes ?? []),
+            'merged_attributes_count' => count($mergedAttributes),
+            'attribute_points_count' => count($attributePoints),
+            'manual_attribute_points_count' => count($manualAttributePoints)
+        ]);
     }
 
     public function delete(BaseItem $baseItem)

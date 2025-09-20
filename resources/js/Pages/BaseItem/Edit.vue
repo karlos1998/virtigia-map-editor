@@ -50,13 +50,45 @@ onMounted(() => {
 })
 
 const save = () => {
+    // Prepare the final attributes by merging current attributes with scale result
+    let finalAttributes = { ...form.attributes };
+
+    // If we have scale result, merge it with current attributes
+    // Scale result values take priority over current attributes
+    if (scaleResult.value) {
+        finalAttributes = { ...form.attributes, ...scaleResult.value };
+    }
+
+    // Create update data with all three fields
+    const updateData = {
+        attributes: finalAttributes,
+        attribute_points: form.attribute_points || {},
+        manual_attribute_points: form.manual_attribute_points || {}
+    };
+
+    // Send the update
     form
+        .transform(() => updateData)
         .patch(route('base-items.attributes.update', {baseItem}), {
+            onSuccess: () => {
+                toast.add({
+                    severity: 'success',
+                    summary: 'Sukces',
+                    detail: 'Przedmiot został zapisany z przeskalowanymi atrybutami',
+                    life: 3000
+                });
+            },
             onError: () => {
-                toast.add({ severity: 'error', summary: 'Błąd', detail: 'Nie udało się zapisać', life: 3000 });
+                toast.add({
+                    severity: 'error',
+                    summary: 'Błąd',
+                    detail: 'Nie udało się zapisać',
+                    life: 3000
+                });
             }
         })
 }
+
 </script>
 
 <template>
@@ -93,7 +125,7 @@ const save = () => {
                 Wyświetlane są przeskalowane atrybuty z kalkulatora punktów
             </div>
         </div>
-
+{{baseItem}}
         <Tabs value="0" class="card">
             <TabList>
                 <Tab value="0">Edytor atrybutów</Tab>

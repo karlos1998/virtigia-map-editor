@@ -38,6 +38,7 @@ class BaseItemResource extends JsonResource
 
             'attributes' => $this->resource->attributes != null ? $this->resource->attributes : [],
             'attribute_points' => $this->resource->attribute_points ?? null,
+            'manual_attribute_points' => $this->resource->manual_attribute_points ?? null,
 
             'in_use' => $this->resource->isInUse(),
 

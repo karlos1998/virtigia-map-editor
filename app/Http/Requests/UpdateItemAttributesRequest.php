@@ -25,7 +25,15 @@ class UpdateItemAttributesRequest extends FormRequest
             'attributes' => [
                 'required',
                 'array',
-            ]
+            ],
+            'attribute_points' => [
+                'nullable',
+                'array',
+            ],
+            'manual_attribute_points' => [
+                'nullable',
+                'array',
+            ],
         ];
     }
 }
