@@ -49,4 +49,8 @@ return [
         'host' => env('LARAVELPASSPORT_HOST'),
     ],
 
+    'margatron_api' => [
+        'base_url' => env('MARGATRON_API_BASE_URL', 'https://mbp-karol-java-margatron.letscode.it/public'),
+        'timeout' => env('MARGATRON_API_TIMEOUT', 30),
+    ],
 ];

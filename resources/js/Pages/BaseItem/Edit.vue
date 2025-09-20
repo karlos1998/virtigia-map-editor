@@ -4,19 +4,44 @@ import {BaseItemWithRelations} from "@/Resources/BaseItem.resource";
 import AppLayout from "../../layout/AppLayout.vue";
 import ItemHeader from "../../Components/ItemHeader.vue";
 import {router, useForm} from "@inertiajs/vue3";
-import {onMounted, ref} from "vue";
+import { onMounted, ref, computed } from 'vue';
 import {useToast} from "primevue";
 import AttributeEditor from "../../Components/AttributeEditor.vue";
+import AttributePointsEditor from './Components/AttributePointsEditor.vue';
 import JsonEditorVue from 'json-editor-vue'
 
 const { baseItem } = defineProps<{
     baseItem: BaseItemWithRelations,
 }>();
 
-
+// Create form with full baseItem structure
 const form = useForm({
     attributes: baseItem.attributes,
+    attribute_points: baseItem.attribute_points || {},
+    manual_attribute_points: baseItem.manual_attribute_points || {}
 })
+
+// Store scale result from AttributePointsEditor
+const scaleResult = ref<any>(null);
+
+// Handle scale result changes from AttributePointsEditor
+const handleScaleResultChanged = (result: any) => {
+    scaleResult.value = result;
+};
+
+// Computed property for tooltip - merge original attributes with scaled attributes
+const tooltipAttributes = computed(() => {
+    const baseAttributes = { ...form.attributes };
+
+    // If we have scale result, merge it with base attributes
+    if (scaleResult.value) {
+        return {
+            ...scaleResult.value
+        };
+    }
+
+    return baseAttributes;
+});
 
 const toast = useToast();
 
@@ -57,20 +82,23 @@ const save = () => {
                 </button>
             </template>
         </ItemHeader>
-
         <div class="card">
             <img
                 class="h-12 w-12 object-cover"
                 :src="baseItem.src"
-                v-tip.item.top.show-id="{...baseItem, attributes: form.attributes}"
+                v-tip.item.top.show-id="{...baseItem, attributes: tooltipAttributes}"
                 alt=""
             /> ^ Podgląd edytowanego przedmiotu
+            <div v-if="scaleResult" class="mt-2 text-sm text-green-600">
+                Wyświetlane są przeskalowane atrybuty z kalkulatora punktów
+            </div>
         </div>
 
         <Tabs value="0" class="card">
             <TabList>
                 <Tab value="0">Edytor atrybutów</Tab>
                 <Tab value="1">Edytor json</Tab>
+                <Tab value="2">Kalkulator punktów</Tab>
             </TabList>
             <TabPanels>
                 <TabPanel value="0">
@@ -82,14 +110,36 @@ const save = () => {
                         v-bind="{/* local props & attrs */}"
                     />
                 </TabPanel>
+                <TabPanel value="2">
+                    <AttributePointsEditor
+                        v-model="form"
+                        :base-item="baseItem"
+                        @scale-result-changed="handleScaleResultChanged"
+                    />
+                </TabPanel>
             </TabPanels>
         </Tabs>
 
         <div class="card mt-4">
             <h3>Podgląd Attribute Points</h3>
-            <pre class="whitespace-pre-wrap break-words">{{
-                    baseItem.attribute_points
-                }}</pre>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h4 class="font-semibold">attribute_points:</h4>
+                    <pre class="text-xs bg-gray-100 p-2 rounded">{{ JSON.stringify(form.attribute_points || {}, null, 2)
+                        }}</pre>
+                </div>
+                <div>
+                    <h4 class="font-semibold">manual_attribute_points:</h4>
+                    <pre
+                        class="text-xs bg-gray-100 p-2 rounded">{{ JSON.stringify(form.manual_attribute_points || {}, null, 2)
+                        }}</pre>
+                </div>
+            </div>
+
+            <div v-if="scaleResult" class="mt-4">
+                <h4 class="font-semibold text-green-600">Przeskalowane atrybuty (do tooltipa):</h4>
+                <pre class="text-xs bg-green-50 p-2 rounded">{{ JSON.stringify(scaleResult, null, 2) }}</pre>
+            </div>
         </div>
 
     </AppLayout>
