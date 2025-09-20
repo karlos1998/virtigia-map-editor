@@ -20,6 +20,14 @@ interface AttributeData {
     manualAttributePoints: AttributePoint[];
 }
 
+interface BonusValidationResult {
+    expected: number;
+    actual: number;
+    isValid: boolean;
+    severity: 'info' | 'warn' | 'error';
+    message: string;
+}
+
 /*
 |--------------------------------------------------------------------------
 | Component Setup
@@ -79,6 +87,37 @@ const totalPointsUsed = computed(() => {
     });
 
     return total;
+});
+
+/**
+ * Validate bonus count according to item rules
+ */
+const bonusValidation = computed((): BonusValidationResult => {
+    const totalBonuses = totalPointsUsed.value;
+    const expectedBonuses = getExpectedBonusCount();
+
+    const difference = Math.abs(totalBonuses - expectedBonuses);
+    let severity: 'info' | 'warn' | 'error' = 'info';
+    let message = '';
+
+    if (totalBonuses === expectedBonuses) {
+        severity = 'info';
+        message = 'Liczba bonusów jest zgodna z konwencją';
+    } else if (difference <= 2) {
+        severity = 'warn';
+        message = `Liczba bonusów różni się od konwencji o ${difference}`;
+    } else {
+        severity = 'error';
+        message = `Liczba bonusów znacznie odbiega od konwencji (różnica: ${difference})`;
+    }
+
+    return {
+        expected: expectedBonuses,
+        actual: totalBonuses,
+        isValid: totalBonuses === expectedBonuses,
+        severity,
+        message
+    };
 });
 
 /*
@@ -156,6 +195,186 @@ function buildApiParameters(): Record<string, any> {
 function hasAttributeParameters(params: Record<string, any>): boolean {
     const baseItemKeys = ['lvl', 'itemCategory', 'itemProfessions', 'rarity'];
     return Object.keys(params).some(key => !baseItemKeys.includes(key));
+}
+
+/**
+ * Get expected bonus count
+ */
+function getExpectedBonusCount(): number {
+    const category = props.baseItem?.category;
+    const rarity = props.baseItem?.rarity;
+
+    if (!category || !rarity) {
+        return 0;
+    }
+
+    let baseBonuses = 0;
+
+    // 2.1 Zbroje, bronie jednoręczne, półtoręczne, dwuręczne, dystansowe i pomocnicze, kołczany, różdżki, orby i tarcze
+    if (['armors', 'oneHanded', 'halfHanded', 'twoHanded', 'distances', 'auxiliary', 'wands', 'shields'].includes(category)) {
+        switch (rarity) {
+            case 'common':
+                baseBonuses = 1;
+                break;
+            case 'unique':
+                baseBonuses = 3;
+                break;
+            case 'heroic':
+                baseBonuses = 6;
+                break;
+            case 'upgraded':
+                baseBonuses = 7;
+                break;
+            case 'legendary':
+                baseBonuses = 9;
+                break;
+            default:
+                baseBonuses = 1;
+                break;
+        }
+    }
+    // 2.2 Strzały
+    else if (category === 'arrows') {
+        switch (rarity) {
+            case 'common':
+                baseBonuses = 2;
+                break;
+            case 'unique':
+                baseBonuses = 4;
+                break;
+            case 'heroic':
+                baseBonuses = 8;
+                break;
+            case 'upgraded':
+                baseBonuses = 8;
+                break;
+            case 'legendary':
+                baseBonuses = 12;
+                break;
+            default:
+                baseBonuses = 2;
+                break;
+        }
+    }
+    // 2.3 Hełmy, rękawice, buty
+    else if (['helmets', 'gloves', 'boots'].includes(category)) {
+        switch (rarity) {
+            case 'common':
+                baseBonuses = 1;
+                break;
+            case 'unique':
+                baseBonuses = 4;
+                break;
+            case 'heroic':
+            case 'upgraded':
+                baseBonuses = 8;
+                break;
+            case 'legendary':
+                baseBonuses = 12;
+                break;
+            default:
+                baseBonuses = 1;
+                break;
+        }
+    }
+    // 2.4 Pierścienie
+    else if (category === 'rings') {
+        switch (rarity) {
+            case 'common':
+                baseBonuses = 5;
+                break;
+            case 'unique':
+                baseBonuses = 9;
+                break;
+            case 'heroic':
+            case 'upgraded':
+                baseBonuses = 13;
+                break;
+            case 'legendary':
+                baseBonuses = 17;
+                break;
+            default:
+                baseBonuses = 5;
+                break;
+        }
+    }
+    // 2.5 Naszyjniki
+    else if (category === 'necklaces') {
+        switch (rarity) {
+            case 'common':
+                baseBonuses = 6;
+                break;
+            case 'unique':
+                baseBonuses = 10;
+                break;
+            case 'heroic':
+            case 'upgraded':
+                baseBonuses = 14;
+                break;
+            case 'legendary':
+                baseBonuses = 18;
+                break;
+            default:
+                baseBonuses = 6;
+                break;
+        }
+    }
+    // 2.6 Błogosławieństwa
+    else if (category === 'blessings') {
+        switch (rarity) {
+            case 'common':
+                baseBonuses = 2;
+                break;
+            case 'unique':
+                baseBonuses = 3;
+                break;
+            case 'heroic':
+            case 'upgraded':
+            case 'legendary':
+                baseBonuses = 4;
+                break;
+            default:
+                baseBonuses = 2;
+                break;
+        }
+    }
+    // Other categories - use generic rules
+    else {
+        switch (rarity) {
+            case 'common':
+                baseBonuses = 1;
+                break;
+            case 'unique':
+                baseBonuses = 3;
+                break;
+            case 'heroic':
+                baseBonuses = 6;
+                break;
+            case 'upgraded':
+                baseBonuses = 7;
+                break;
+            case 'legendary':
+                baseBonuses = 9;
+                break;
+            default:
+                baseBonuses = 1;
+                break;
+        }
+    }
+
+    // 2.7 Dodatkowe modyfikatory
+    let additionalBonuses = 0;
+
+    // Check for special modifiers (these would need to be added to baseItem data)
+    // For now, we'll assume standard items without special modifiers
+    // In the future, you could add fields like:
+    // - isTitanLoot: boolean
+    // - isFromBarter: boolean
+    // - isQuestReward: boolean
+    // - isFromLimitedAuction: boolean
+    // - isCursed: boolean
+
+    return baseBonuses + additionalBonuses;
 }
 
 /*
@@ -268,21 +487,44 @@ onMounted(() => {
             </p>
 
             <!-- Summary Info -->
-            <div class="mt-4 p-3 bg-blue-50 rounded-lg flex justify-between items-center">
-                <div>
-                    <div class="font-semibold text-blue-800">
-                        Łączna suma punktów: {{ totalPointsUsed }}
+            <div class="mt-4 p-3 bg-blue-50 rounded-lg space-y-3">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="font-semibold text-blue-800">
+                            Łączna suma punktów: {{ totalPointsUsed }}
+                        </div>
+                        <div class="text-xs text-gray-600 mt-1">
+                            Poziom: {{ props.baseItem?.need_level || 'brak' }} |
+                            Kategoria: {{ props.baseItem?.category || 'brak' }} |
+                            Rzadkość: {{ props.baseItem?.rarity || 'brak' }} |
+                            Profesje: {{ props.baseItem?.need_professions?.join(', ') || 'brak' }}
+                        </div>
                     </div>
-                    <div class="text-xs text-gray-600 mt-1">
-                        Poziom: {{ props.baseItem?.need_level || 'brak' }} |
-                        Kategoria: {{ props.baseItem?.category || 'brak' }} |
-                        Rzadkość: {{ props.baseItem?.rarity || 'brak' }} |
-                        Profesje: {{ props.baseItem?.need_professions?.join(', ') || 'brak' }}
+                    <div v-if="isCalculating" class="flex items-center text-sm text-gray-600">
+                        <ProgressSpinner style="width: 16px; height: 16px;" />
+                        <span class="ml-2">Obliczanie...</span>
                     </div>
                 </div>
-                <div v-if="isCalculating" class="flex items-center text-sm text-gray-600">
-                    <ProgressSpinner style="width: 16px; height: 16px;" />
-                    <span class="ml-2">Obliczanie...</span>
+
+                <!-- Bonus Validation -->
+                <div v-if="bonusValidation.expected > 0"
+                     :class="{
+                         'bg-green-100 border border-green-200 text-green-800': bonusValidation.severity === 'info',
+                         'bg-yellow-100 border border-yellow-200 text-yellow-800': bonusValidation.severity === 'warn',
+                         'bg-red-100 border border-red-200 text-red-800': bonusValidation.severity === 'error'
+                     }"
+                     class="p-3 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i v-if="bonusValidation.severity === 'info'" class="pi pi-check-circle"></i>
+                            <i v-else-if="bonusValidation.severity === 'warn'" class="pi pi-exclamation-triangle"></i>
+                            <i v-else class="pi pi-times-circle"></i>
+                            <span class="font-medium">{{ bonusValidation.message }}</span>
+                        </div>
+                        <div class="text-sm">
+                            Oczekiwane: {{ bonusValidation.expected }} | Aktualne: {{ bonusValidation.actual }}
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
@@ -418,6 +660,14 @@ onMounted(() => {
                     </summary>
                     <pre
                         class="mt-3 text-xs bg-gray-50 p-3 rounded border overflow-auto">{{ JSON.stringify(scaleResult || {}, null, 2)
+                        }}</pre>
+                </details>
+                <details>
+                    <summary class="cursor-pointer text-sm text-gray-600 hover:text-gray-800 font-medium">
+                        🐛 Debug: Bonus Validation
+                    </summary>
+                    <pre
+                        class="mt-3 text-xs bg-gray-50 p-3 rounded border overflow-auto">{{ JSON.stringify(bonusValidation.value || {}, null, 2)
                         }}</pre>
                 </details>
             </section>
