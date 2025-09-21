@@ -70,7 +70,12 @@ class BaseItemController extends Controller
 
     public function updateAttributes(BaseItem $baseItem, UpdateItemAttributesRequest $request)
     {
-        $this->baseItemService->updateAttributes($baseItem, $request->input('attributes'));
+        $this->baseItemService->updateAttributes(
+            $baseItem,
+            $request->input('attributes'),
+            $request->input('attribute_points', []),
+            $request->input('manual_attribute_points', [])
+        );
         return to_route('base-items.show', $baseItem->id);
     }
 
