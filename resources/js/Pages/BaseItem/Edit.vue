@@ -150,28 +150,5 @@ const save = () => {
                 </TabPanel>
             </TabPanels>
         </Tabs>
-
-        <div class="card mt-4">
-            <h3>Podgląd Attribute Points</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <h4 class="font-semibold">attribute_points:</h4>
-                    <pre class="text-xs bg-gray-100 p-2 rounded">{{ JSON.stringify(form.attribute_points || {}, null, 2)
-                        }}</pre>
-                </div>
-                <div>
-                    <h4 class="font-semibold">manual_attribute_points:</h4>
-                    <pre
-                        class="text-xs bg-gray-100 p-2 rounded">{{ JSON.stringify(form.manual_attribute_points || {}, null, 2)
-                        }}</pre>
-                </div>
-            </div>
-
-            <div v-if="scaleResult" class="mt-4">
-                <h4 class="font-semibold text-green-600">Przeskalowane atrybuty (do tooltipa):</h4>
-                <pre class="text-xs bg-green-50 p-2 rounded">{{ JSON.stringify(scaleResult, null, 2) }}</pre>
-            </div>
-        </div>
-
     </AppLayout>
 </template>
