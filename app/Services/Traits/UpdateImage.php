@@ -40,7 +40,7 @@ trait UpdateImage {
 
         Storage::disk('s3')->put($filePath, $decodedImage);
 
-        $model->src = str_replace("$prefix/", '', $filePath);
+        $model->src = trim(str_replace("$prefix/", '', $filePath), '/');
         $model->save();
     }
 }
