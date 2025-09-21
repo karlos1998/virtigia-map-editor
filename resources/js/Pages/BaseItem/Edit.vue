@@ -125,7 +125,6 @@ const save = () => {
                 Wyświetlane są przeskalowane atrybuty z kalkulatora punktów
             </div>
         </div>
-{{baseItem}}
         <Tabs value="0" class="card">
             <TabList>
                 <Tab value="0">Edytor atrybutów</Tab>

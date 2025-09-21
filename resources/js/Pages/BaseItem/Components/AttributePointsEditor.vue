@@ -3,6 +3,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import axios from 'axios';
 import { useToast } from 'primevue';
 import MultiSelect from 'primevue/multiselect';
+import InputNumber from 'primevue/inputnumber';
 
 /*
 |--------------------------------------------------------------------------
@@ -73,6 +74,12 @@ const selectedProfessions = ref(
     form.value?.attributes?.needProfessions ||
     props.baseItem?.attributes?.needProfessions ||
     []
+);
+
+const selectedLevel = ref(
+    form.value?.attributes?.needLevel ||
+    props.baseItem?.attributes?.needLevel ||
+    1
 );
 
 /*
@@ -213,7 +220,7 @@ function buildApiParameters(): Record<string, any> {
 
     // Add base item parameters with proper defaults
     // Level from attributes.needLevel, default to 1 if not present
-    params.lvl = props.baseItem?.attributes?.needLevel || 1;
+    params.lvl = selectedLevel.value;
 
     // Category from main baseItem.category (not from attributes)
     if (props.baseItem?.category) {
@@ -553,6 +560,16 @@ watch(selectedProfessions, async () => {
 
     await calculateScaleAttributes();
 });
+
+watch(selectedLevel, async () => {
+    // Save to form data
+    if (!form.value.attributes) {
+        form.value.attributes = {};
+    }
+    form.value.attributes.needLevel = selectedLevel.value;
+
+    await calculateScaleAttributes();
+});
 </script>
 
 <template>
@@ -560,21 +577,16 @@ watch(selectedProfessions, async () => {
         <!-- Header Section -->
         <header class="mb-6">
             <h3 class="text-xl font-bold text-gray-800">Kalkulator Punktów Atrybutów</h3>
-            <p class="text-sm text-gray-600 mt-1">
-                Ustaw punkty atrybutów dla przedmiotu. Wartości zostaną zapisane w attribute_points i
-                manual_attribute_points.
-            </p>
 
             <!-- Summary Info -->
             <div class="mt-4 p-3 bg-blue-50 rounded-lg space-y-3">
                 <div class="flex justify-between items-center">
                     <div>
                         <div class="font-semibold text-blue-800">
-                            Punkty atrybutów: {{ totalPointsUsed }} | Manualne: {{ totalManualPointsUsed }}
+                            Punkty atrybutów: {{ totalPointsUsed }}
                         </div>
                         <div class="text-xs text-gray-600 mt-1">
-                            <span class="font-medium">Tylko punkty atrybutów liczą się do limitu bonusów</span><br>
-                            Poziom: {{ props.baseItem?.attributes?.needLevel || 'brak' }} |
+                            Poziom: {{ selectedLevel }} |
                             Kategoria: {{ props.baseItem?.category || 'brak' }} |
                             Rzadkość: {{ props.baseItem?.rarity || 'brak' }} |
                             Profesje: {{ selectedProfessionLabels }}
@@ -610,44 +622,38 @@ watch(selectedProfessions, async () => {
 
             </div>
 
-            <!-- Profession Selection -->
+            <!-- Profession Selection and Level -->
             <div class="mt-4 p-3 bg-blue-50 rounded-lg">
-                <div class="mb-2">
-                    <div class="font-semibold text-blue-800 mb-2">Profesje:</div>
-                    <MultiSelect v-model="selectedProfessions" :options="professionOptions"
-                                 optionLabel="label" optionValue="value"
-                                 placeholder="Wybierz profesje"
-                                 :class="['w-full', { 'p-invalid': !professionValidation.isValid }]" />
-                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Profession Selection -->
+                    <div>
+                        <div class="font-semibold text-blue-800 mb-2">Profesje:</div>
+                        <MultiSelect v-model="selectedProfessions" :options="professionOptions"
+                                     optionLabel="label" optionValue="value"
+                                     placeholder="Wybierz profesje"
+                                     :class="['w-full', { 'p-invalid': !professionValidation.isValid }]" />
 
-                <!-- Profession Validation -->
-                <div v-if="professionValidation.isValid"
-                     class="bg-green-100 border border-green-200 text-green-800 p-2 rounded text-sm">
-                    <div class="flex items-center gap-2">
-                        <i class="pi pi-check-circle"></i>
-                        <span class="font-medium">{{ professionValidation.message }}</span>
+                        <!-- Profession Validation -->
+                        <div v-if="!professionValidation.isValid" class="mt-2">
+                            <div class="bg-red-100 border border-red-200 text-red-800 p-2 rounded text-sm">
+                                <div class="flex items-center gap-2">
+                                    <i class="pi pi-times-circle"></i>
+                                    <span class="font-medium">{{ professionValidation.message }}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div v-else
-                     class="bg-red-100 border border-red-200 text-red-800 p-2 rounded text-sm">
-                    <div class="flex items-center gap-2">
-                        <i class="pi pi-times-circle"></i>
-                        <span class="font-medium">{{ professionValidation.message }}</span>
+
+                    <!-- Level Selection -->
+                    <div>
+                        <div class="font-semibold text-blue-800 mb-2">Poziom:</div>
+                        <InputNumber v-model="selectedLevel" showButtons buttonLayout="horizontal" :min="1" :max="1000"
+                                     class="w-full" />
                     </div>
                 </div>
             </div>
+
         </header>
-
-        <!-- Scaled Results Section -->
-        <section v-if="scaleResult" class="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
-            <h4 class="text-lg font-semibold mb-3 text-green-800">Przeskalowane Atrybuty</h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                <div v-for="(value, key) in scaleResult" :key="key" class="text-sm">
-                    <span class="font-medium">{{ key }}:</span>
-                    <span class="text-green-700">{{ value }}</span>
-                </div>
-            </div>
-        </section>
 
         <!-- Loading State -->
         <div v-if="isLoading" class="flex justify-center items-center py-12">
