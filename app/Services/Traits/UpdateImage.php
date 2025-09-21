@@ -21,7 +21,13 @@ trait UpdateImage {
         $imageData = substr($base64, strpos($base64, ',') + 1);
         $decodedImage = base64_decode($imageData);
 
-        $fileName = $name->isNotEmpty() ? Str::slug(pathinfo($name->value(), PATHINFO_FILENAME)) : Str::uuid();
+        // For new BaseItems, always use UUID for filename
+        if ($model instanceof \App\Models\BaseItem && !$currentSrc) {
+            $fileName = Str::uuid();
+        } else {
+            $fileName = $name->isNotEmpty() ? Str::slug(pathinfo($name->value(), PATHINFO_FILENAME)) : Str::uuid();
+        }
+
         $storagePath = "$prefix/{$baseFolder}";
         $filePath = "{$storagePath}{$fileName}.{$extension}";
 
