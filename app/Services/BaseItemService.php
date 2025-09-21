@@ -158,11 +158,11 @@ final class BaseItemService extends BaseService
         // This preserves things like legendary bonuses, owner binding, etc.
         $mergedAttributes = array_merge($oldAttributes, $newAttributes ?? []);
 
-        // Update the item with all three fields
+        // Update the item with all three fields, converting empty arrays to null
         $baseItem->update([
-            'attributes' => $mergedAttributes,
-            'attribute_points' => $attributePoints,
-            'manual_attribute_points' => $manualAttributePoints,
+            'attributes' => empty($mergedAttributes) ? null : $mergedAttributes,
+            'attribute_points' => empty($attributePoints) ? null : $attributePoints,
+            'manual_attribute_points' => empty($manualAttributePoints) ? null : $manualAttributePoints,
             'edited_manually' => true
         ]);
 
