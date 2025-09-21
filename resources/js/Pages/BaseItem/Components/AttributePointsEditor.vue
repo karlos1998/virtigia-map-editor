@@ -714,35 +714,20 @@ watch(selectedLevel, async () => {
                     <div
                         v-for="attr in attributeData.manualAttributePoints"
                         :key="attr.name"
-                        class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200"
+                        class="flex flex-col p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200"
                     >
-                        <div class="flex-1 min-w-0">
-                            <div class="font-medium text-sm text-gray-800 truncate">{{ attr.name }}</div>
+                        <div class="mb-3">
+                            <div class="font-medium text-sm text-gray-800">{{ attr.name }}</div>
                             <div class="text-xs text-gray-500 mt-1">{{ attr.description }}</div>
                         </div>
-                        <div class="flex items-center gap-3 ml-4">
-                            <Button
-                                @click="decrementAttribute(attr.name, true)"
-                                icon="pi pi-minus"
-                                severity="danger"
-                                size="small"
-                                text
-                                rounded
-                                class="w-8 h-8"
-                            />
-                            <div class="min-w-[2rem] text-center font-mono text-sm font-semibold">
-                                {{ getAttributeValue(attr.name, true) }}
-                            </div>
-                            <Button
-                                @click="incrementAttribute(attr.name, true)"
-                                icon="pi pi-plus"
-                                severity="success"
-                                size="small"
-                                text
-                                rounded
-                                class="w-8 h-8"
-                            />
-                        </div>
+                        <InputNumber
+                            :model-value="getAttributeValue(attr.name, true)"
+                            @update:model-value="(value) => updateAttributeValue(attr.name, value || 0, true)"
+                            @input="calculateScaleAttributes"
+                            showButtons
+                            buttonLayout="horizontal"
+                            class="w-full"
+                        />
                     </div>
                 </div>
             </section>
