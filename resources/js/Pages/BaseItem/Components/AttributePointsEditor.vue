@@ -599,167 +599,165 @@ watch(selectedLevel, async () => {
 </script>
 
 <template>
-    <div class="card">
-        <!-- Header Section -->
-        <header class="mb-6">
-            <h3 class="text-xl font-bold text-gray-800">Kalkulator Punktów Atrybutów</h3>
+    <!-- Header Section -->
+    <header class="mb-6">
+        <h3 class="text-xl font-bold text-gray-800">Kalkulator Punktów Atrybutów</h3>
 
-            <!-- Summary Info -->
-            <div class="mt-4 p-3 bg-blue-50 rounded-lg space-y-3">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <div class="font-semibold text-blue-800">
-                            Punkty atrybutów: {{ totalPointsUsed }}
-                        </div>
-                        <div class="text-xs text-gray-600 mt-1">
-                            Poziom: {{ selectedLevel }} |
-                            Kategoria: {{ props.baseItem?.category || 'brak' }} |
-                            Rzadkość: {{ props.baseItem?.rarity || 'brak' }} |
-                            Profesje: {{ selectedProfessionLabels }}
-                        </div>
+        <!-- Summary Info -->
+        <div class="mt-4 p-3 bg-blue-50 rounded-lg space-y-3">
+            <div class="flex justify-between items-center">
+                <div>
+                    <div class="font-semibold text-blue-800">
+                        Punkty atrybutów: {{ totalPointsUsed }}
                     </div>
-                    <div v-if="isCalculating" class="flex items-center text-sm text-gray-600">
-                        <ProgressSpinner style="width: 16px; height: 16px;" />
-                        <span class="ml-2">Obliczanie...</span>
+                    <div class="text-xs text-gray-600 mt-1">
+                        Poziom: {{ selectedLevel }} |
+                        Kategoria: {{ props.baseItem?.category || 'brak' }} |
+                        Rzadkość: {{ props.baseItem?.rarity || 'brak' }} |
+                        Profesje: {{ selectedProfessionLabels }}
                     </div>
                 </div>
+                <div v-if="isCalculating" class="flex items-center text-sm text-gray-600">
+                    <ProgressSpinner style="width: 16px; height: 16px;" />
+                    <span class="ml-2">Obliczanie...</span>
+                </div>
+            </div>
 
-                <!-- Bonus Validation -->
-                <div v-if="bonusValidation.expected > 0"
-                     :class="{
+            <!-- Bonus Validation -->
+            <div v-if="bonusValidation.expected > 0"
+                 :class="{
                          'bg-green-100 border border-green-200 text-green-800': bonusValidation.severity === 'info',
                          'bg-yellow-100 border border-yellow-200 text-yellow-800': bonusValidation.severity === 'warn',
                          'bg-red-100 border border-red-200 text-red-800': bonusValidation.severity === 'error'
                      }"
-                     class="p-3 rounded-lg">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <i v-if="bonusValidation.severity === 'info'" class="pi pi-check-circle"></i>
-                            <i v-else-if="bonusValidation.severity === 'warn'" class="pi pi-exclamation-triangle"></i>
-                            <i v-else class="pi pi-times-circle"></i>
-                            <span class="font-medium">{{ bonusValidation.message }}</span>
-                        </div>
-                        <div class="text-sm">
-                            Oczekiwane: {{ bonusValidation.expected }} | Aktualne: {{ bonusValidation.actual }}
-                        </div>
+                 class="p-3 rounded-lg">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i v-if="bonusValidation.severity === 'info'" class="pi pi-check-circle"></i>
+                        <i v-else-if="bonusValidation.severity === 'warn'" class="pi pi-exclamation-triangle"></i>
+                        <i v-else class="pi pi-times-circle"></i>
+                        <span class="font-medium">{{ bonusValidation.message }}</span>
                     </div>
-                </div>
-
-
-            </div>
-
-            <!-- Profession Selection and Level -->
-            <div class="mt-4 p-3 bg-blue-50 rounded-lg">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Profession Selection -->
-                    <div>
-                        <div class="font-semibold text-blue-800 mb-2">Profesje:</div>
-                        <MultiSelect v-model="selectedProfessions" :options="professionOptions"
-                                     optionLabel="label" optionValue="value"
-                                     placeholder="Wybierz profesje"
-                                     :class="['w-full', { 'p-invalid': !professionValidation.isValid }]" />
-
-                        <!-- Profession Validation -->
-                        <div v-if="!professionValidation.isValid" class="mt-2">
-                            <div class="bg-red-100 border border-red-200 text-red-800 p-2 rounded text-sm">
-                                <div class="flex items-center gap-2">
-                                    <i class="pi pi-times-circle"></i>
-                                    <span class="font-medium">{{ professionValidation.message }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Level Selection -->
-                    <div>
-                        <div class="font-semibold text-blue-800 mb-2">Poziom:</div>
-                        <InputNumber v-model="selectedLevel" showButtons buttonLayout="horizontal" :min="1" :max="1000"
-                                     class="w-full" />
+                    <div class="text-sm">
+                        Oczekiwane: {{ bonusValidation.expected }} | Aktualne: {{ bonusValidation.actual }}
                     </div>
                 </div>
             </div>
 
-        </header>
 
-        <!-- Loading State -->
-        <div v-if="isLoading" class="flex justify-center items-center py-12">
-            <ProgressSpinner />
-            <span class="ml-3 text-gray-600">Ładowanie atrybutów...</span>
         </div>
 
-        <!-- Attribute Editors -->
-        <div v-else class="space-y-8">
-            <!-- Regular Attribute Points -->
-            <section>
-                <h4 class="text-lg font-semibold mb-4 text-blue-600 border-b border-blue-200 pb-2 flex justify-between items-center">
-                    Punkty Atrybutów
-                    <Button @click="resetAttributePoints" icon="pi pi-refresh" severity="success" size="small" text
-                            rounded class="h-8 ml-2" label="Resetuj" />
-                </h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div
-                        v-for="attr in attributeData.attributePoints"
-                        :key="attr.name"
-                        class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200"
-                    >
-                        <div class="flex-1 min-w-0">
-                            <div class="font-medium text-sm text-gray-800 truncate">{{ attr.name }}</div>
-                            <div class="text-xs text-gray-500 mt-1">{{ attr.description }}</div>
-                        </div>
-                        <div class="flex items-center gap-3 ml-4">
-                            <Button
-                                @click="decrementAttribute(attr.name, false)"
-                                icon="pi pi-minus"
-                                severity="danger"
-                                size="small"
-                                text
-                                rounded
-                                class="w-8 h-8"
-                            />
-                            <div class="min-w-[2rem] text-center font-mono text-sm font-semibold">
-                                {{ getAttributeValue(attr.name, false) }}
+        <!-- Profession Selection and Level -->
+        <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Profession Selection -->
+                <div>
+                    <div class="font-semibold text-blue-800 mb-2">Profesje:</div>
+                    <MultiSelect v-model="selectedProfessions" :options="professionOptions"
+                                 optionLabel="label" optionValue="value"
+                                 placeholder="Wybierz profesje"
+                                 :class="['w-full', { 'p-invalid': !professionValidation.isValid }]" />
+
+                    <!-- Profession Validation -->
+                    <div v-if="!professionValidation.isValid" class="mt-2">
+                        <div class="bg-red-100 border border-red-200 text-red-800 p-2 rounded text-sm">
+                            <div class="flex items-center gap-2">
+                                <i class="pi pi-times-circle"></i>
+                                <span class="font-medium">{{ professionValidation.message }}</span>
                             </div>
-                            <Button
-                                @click="incrementAttribute(attr.name, false)"
-                                icon="pi pi-plus"
-                                severity="success"
-                                size="small"
-                                text
-                                rounded
-                                class="w-8 h-8"
-                            />
                         </div>
                     </div>
                 </div>
-            </section>
 
-            <!-- Manual Attribute Points -->
-            <section>
-                <h4 class="text-lg font-semibold mb-4 text-green-600 border-b border-green-200 pb-2">
-                    Manualne Punkty Atrybutów
-                </h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div
-                        v-for="attr in attributeData.manualAttributePoints"
-                        :key="attr.name"
-                        class="flex flex-col p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200"
-                    >
-                        <div class="mb-3">
-                            <div class="font-medium text-sm text-gray-800">{{ attr.name }}</div>
-                            <div class="text-xs text-gray-500 mt-1">{{ attr.description }}</div>
+                <!-- Level Selection -->
+                <div>
+                    <div class="font-semibold text-blue-800 mb-2">Poziom:</div>
+                    <InputNumber v-model="selectedLevel" showButtons buttonLayout="horizontal" :min="1" :max="1000"
+                                 class="w-full" />
+                </div>
+            </div>
+        </div>
+
+    </header>
+
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex justify-center items-center py-12">
+        <ProgressSpinner />
+        <span class="ml-3 text-gray-600">Ładowanie atrybutów...</span>
+    </div>
+
+    <!-- Attribute Editors -->
+    <div v-else class="space-y-8">
+        <!-- Regular Attribute Points -->
+        <section>
+            <h4 class="text-lg font-semibold mb-4 text-blue-600 border-b border-blue-200 pb-2 flex justify-between items-center">
+                Punkty Atrybutów
+                <Button @click="resetAttributePoints" icon="pi pi-refresh" severity="success" size="small" text
+                        rounded class="h-8 ml-2" label="Resetuj" />
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div
+                    v-for="attr in attributeData.attributePoints"
+                    :key="attr.name"
+                    class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200"
+                >
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium text-sm text-gray-800 truncate">{{ attr.name }}</div>
+                        <div class="text-xs text-gray-500 mt-1">{{ attr.description }}</div>
+                    </div>
+                    <div class="flex items-center gap-3 ml-4">
+                        <Button
+                            @click="decrementAttribute(attr.name, false)"
+                            icon="pi pi-minus"
+                            severity="danger"
+                            size="small"
+                            text
+                            rounded
+                            class="w-8 h-8"
+                        />
+                        <div class="min-w-[2rem] text-center font-mono text-sm font-semibold">
+                            {{ getAttributeValue(attr.name, false) }}
                         </div>
-                        <InputNumber
-                            :model-value="getAttributeValue(attr.name, true)"
-                            @update:model-value="(value) => updateAttributeValue(attr.name, value || 0, true)"
-                            @input="calculateScaleAttributes"
-                            showButtons
-                            buttonLayout="horizontal"
-                            class="w-full"
+                        <Button
+                            @click="incrementAttribute(attr.name, false)"
+                            icon="pi pi-plus"
+                            severity="success"
+                            size="small"
+                            text
+                            rounded
+                            class="w-8 h-8"
                         />
                     </div>
                 </div>
-            </section>
-        </div>
+            </div>
+        </section>
+
+        <!-- Manual Attribute Points -->
+        <section>
+            <h4 class="text-lg font-semibold mb-4 text-green-600 border-b border-green-200 pb-2">
+                Manualne Punkty Atrybutów
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div
+                    v-for="attr in attributeData.manualAttributePoints"
+                    :key="attr.name"
+                    class="flex flex-col p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200"
+                >
+                    <div class="mb-3">
+                        <div class="font-medium text-sm text-gray-800">{{ attr.name }}</div>
+                        <div class="text-xs text-gray-500 mt-1">{{ attr.description }}</div>
+                    </div>
+                    <InputNumber
+                        :model-value="getAttributeValue(attr.name, true)"
+                        @update:model-value="(value) => updateAttributeValue(attr.name, value || 0, true)"
+                        @input="calculateScaleAttributes"
+                        showButtons
+                        buttonLayout="horizontal"
+                        class="w-full"
+                    />
+                </div>
+            </div>
+        </section>
     </div>
 </template>
 

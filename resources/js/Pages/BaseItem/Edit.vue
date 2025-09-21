@@ -127,13 +127,17 @@ const save = () => {
         </div>
         <Tabs value="0" class="card">
             <TabList>
-                <Tab value="0">Edytor atrybutów</Tab>
+                <Tab value="0">Kalkulator punktów</Tab>
                 <Tab value="1">Edytor json</Tab>
-                <Tab value="2">Kalkulator punktów</Tab>
+<!--                <Tab value="2">Edytor atrybutów</Tab>-->
             </TabList>
             <TabPanels>
                 <TabPanel value="0">
-                    <AttributeEditor v-model:attributes="form.attributes" />
+                    <AttributePointsEditor
+                        v-model="form"
+                        :base-item="baseItem"
+                        @scale-result-changed="handleScaleResultChanged"
+                    />
                 </TabPanel>
                 <TabPanel value="1">
                     <JsonEditorVue
@@ -142,11 +146,7 @@ const save = () => {
                     />
                 </TabPanel>
                 <TabPanel value="2">
-                    <AttributePointsEditor
-                        v-model="form"
-                        :base-item="baseItem"
-                        @scale-result-changed="handleScaleResultChanged"
-                    />
+                    <AttributeEditor v-model:attributes="form.attributes" />
                 </TabPanel>
             </TabPanels>
         </Tabs>
