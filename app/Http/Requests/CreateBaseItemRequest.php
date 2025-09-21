@@ -54,13 +54,9 @@ class CreateBaseItemRequest extends FormRequest
             ],
 
             'image' => [
-                'nullable',
+                'required',
                 'string', // Base64 encoded image
                 function ($attribute, $value, $fail) {
-                    if (!$value) {
-                        return; // Skip validation if no image provided
-                    }
-
                     // Check if it's a valid base64 image format (PNG or GIF)
                     if (!preg_match('/^data:image\/(png|gif);base64,/', $value)) {
                         $fail('Obraz musi być w formacie PNG lub GIF.');

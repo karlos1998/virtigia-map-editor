@@ -183,13 +183,14 @@ const submit = () => {
 
                         <div class="space-y-2">
                             <label class="block text-sm font-medium text-gray-700">
-                                Grafika (32x32px)
+                                Grafika (32x32px) *
                             </label>
                             <input
                                 type="file"
                                 accept="image/png,image/gif"
                                 @change="onFileSelect"
                                 class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
+                                :class="{'border-red-500': form.errors.image}"
                             />
                             <small class="text-gray-500">Wymagane wymiary: 32x32 pikseli (PNG lub GIF)</small>
                             <small v-if="form.errors.image" class="p-error">{{ form.errors.image }}</small>
@@ -216,7 +217,7 @@ const submit = () => {
                         type="submit"
                         label="Utwórz przedmiot"
                         :loading="form.processing"
-                        :disabled="!form.name || !form.category || !form.rarity || !form.currency || form.price < 0"
+                        :disabled="!form.name || !form.category || !form.rarity || !form.currency || form.price < 0 || !form.image"
                     />
                 </div>
             </form>
