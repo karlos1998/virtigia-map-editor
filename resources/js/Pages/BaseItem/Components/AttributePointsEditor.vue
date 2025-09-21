@@ -4,6 +4,8 @@ import axios from 'axios';
 import { useToast } from 'primevue';
 import MultiSelect from 'primevue/multiselect';
 import InputNumber from 'primevue/inputnumber';
+import Button from 'primevue/button';
+import ProgressSpinner from 'primevue/progressspinner';
 
 /*
 |--------------------------------------------------------------------------
@@ -524,6 +526,30 @@ async function calculateScaleAttributes(): Promise<void> {
 */
 
 /**
+ * Reset all attribute points to 0
+ */
+async function resetAttributePoints(): Promise<void> {
+    if (!form.value.attribute_points) {
+        return;
+    }
+
+    // Reset all attribute points to 0
+    Object.keys(form.value.attribute_points).forEach(key => {
+        form.value.attribute_points[key] = 0;
+    });
+
+    // Recalculate after reset
+    await calculateScaleAttributes();
+
+    toast.add({
+        severity: 'success',
+        summary: 'Reset',
+        detail: 'Punkty atrybutów zostały zresetowane',
+        life: 3000
+    });
+}
+
+/**
  * Increment attribute value and recalculate
  */
 async function incrementAttribute(attributeName: string, isManual: boolean = false): Promise<void> {
@@ -665,8 +691,10 @@ watch(selectedLevel, async () => {
         <div v-else class="space-y-8">
             <!-- Regular Attribute Points -->
             <section>
-                <h4 class="text-lg font-semibold mb-4 text-blue-600 border-b border-blue-200 pb-2">
+                <h4 class="text-lg font-semibold mb-4 text-blue-600 border-b border-blue-200 pb-2 flex justify-between items-center">
                     Punkty Atrybutów
+                    <Button @click="resetAttributePoints" icon="pi pi-refresh" severity="success" size="small" text
+                            rounded class="h-8 ml-2" label="Resetuj" />
                 </h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div
