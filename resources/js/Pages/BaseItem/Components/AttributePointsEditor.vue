@@ -731,44 +731,6 @@ watch(selectedLevel, async () => {
                     </div>
                 </div>
             </section>
-
-            <!-- Debug Section (Development Only) -->
-            <section class="mt-8 pt-6 border-t border-gray-200">
-                <details class="mb-3">
-                    <summary class="cursor-pointer text-sm text-gray-600 hover:text-gray-800 font-medium">
-                        🐛 Debug: Attribute Points
-                    </summary>
-                    <pre
-                        class="mt-3 text-xs bg-gray-50 p-3 rounded border overflow-auto">{{ JSON.stringify(form?.attribute_points || {}, null, 2)
-                        }}</pre>
-                </details>
-
-                <details class="mb-3">
-                    <summary class="cursor-pointer text-sm text-gray-600 hover:text-gray-800 font-medium">
-                        🐛 Debug: Manual Attribute Points
-                    </summary>
-                    <pre
-                        class="mt-3 text-xs bg-gray-50 p-3 rounded border overflow-auto">{{ JSON.stringify(form?.manual_attribute_points || {}, null, 2)
-                        }}</pre>
-                </details>
-
-                <details>
-                    <summary class="cursor-pointer text-sm text-gray-600 hover:text-gray-800 font-medium">
-                        🐛 Debug: Scale Result
-                    </summary>
-                    <pre
-                        class="mt-3 text-xs bg-gray-50 p-3 rounded border overflow-auto">{{ JSON.stringify(scaleResult || {}, null, 2)
-                        }}</pre>
-                </details>
-                <details>
-                    <summary class="cursor-pointer text-sm text-gray-600 hover:text-gray-800 font-medium">
-                        🐛 Debug: Bonus Validation
-                    </summary>
-                    <pre
-                        class="mt-3 text-xs bg-gray-50 p-3 rounded border overflow-auto">{{ JSON.stringify(bonusValidation || {}, null, 2)
-                        }}</pre>
-                </details>
-            </section>
         </div>
     </div>
 </template>
