@@ -25,16 +25,25 @@ type Data = {
 
                     <div class="flex flex-wrap gap-2 items-center justify-between">
                         <h4 class="m-0">Lista Bazowych Przedmiotów</h4>
-                        <IconField>
-                            <InputIcon>
-                                <i class="pi pi-search" />
-                            </InputIcon>
-                            <InputText
-                                :value="globalFilterValue"
-                                @update:model-value="globalFilterUpdated"
-                                placeholder="Szukaj"
-                            />
-                        </IconField>
+                        <div class="flex items-center gap-2">
+                            <Link :href="route('base-items.create')">
+                                <Button
+                                    icon="pi pi-plus"
+                                    label="Nowy przedmiot"
+                                    severity="success"
+                                />
+                            </Link>
+                            <IconField>
+                                <InputIcon>
+                                    <i class="pi pi-search"/>
+                                </InputIcon>
+                                <InputText
+                                    :value="globalFilterValue"
+                                    @update:model-value="globalFilterUpdated"
+                                    placeholder="Szukaj"
+                                />
+                            </IconField>
+                        </div>
                     </div>
                 </template>
 

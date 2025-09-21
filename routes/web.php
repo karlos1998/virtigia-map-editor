@@ -15,7 +15,7 @@ use App\Http\Controllers\QuestController;
 use App\Http\Controllers\QuestStepController;
 use App\Http\Controllers\ShopController;
 use App\Http\Middleware\RemoveWorldTemplateNameFromRouteParameters;
-use App\Http\Middleware\SetDynamicModelConnection;;
+use App\Http\Middleware\SetDynamicModelConnection;
 use App\Models\DynamicModel;
 use App\Models\Npc;
 use Illuminate\Support\Facades\Auth;
@@ -110,6 +110,8 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('maps/{map}/copy', [MapController::class, 'copy'])->name('maps.copy');
 
                 Route::get('base-items', [BaseItemController::class, 'index'])->name('base-items.index');
+                Route::get('base-items/create', [BaseItemController::class, 'create'])->name('base-items.create');
+                Route::post('base-items', [BaseItemController::class, 'store'])->name('base-items.store');
                 Route::post('base-items/{baseItem}/copy', [BaseItemController::class, 'copy'])->name('base-items.copy');
                 Route::delete('base-items/{baseItem}', [BaseItemController::class, 'delete'])->name('base-items.delete');
                 Route::patch('base-items/{baseItem}', [BaseItemController::class, 'update'])->name('base-items.update');

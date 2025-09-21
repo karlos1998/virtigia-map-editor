@@ -11,6 +11,7 @@ use App\Models\BaseItem;
 use App\Services\Traits\UpdateImage;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Karlos3098\LaravelPrimevueTableService\Enum\TableColumnDataType;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownColumn;
@@ -186,12 +187,35 @@ final class BaseItemService extends BaseService
     public function copy(BaseItem $baseItem)
     {
         $newBaseItem = $baseItem->replicate();
+        $newBaseItem->stats = null;
         $newBaseItem->save();
         return $newBaseItem;
     }
 
     public function update(BaseItem $baseItem, array $validated)
     {
-        $baseItem->update($validated);
+        $baseItem->update([
+            ...$validated,
+            'edited_manually' => true,
+        ]);
+    }
+
+    public function create(array $validated)
+    {
+        // Extract image data before creating the item
+        $imageData = $validated['image'] ?? null;
+        unset($validated['image']);
+
+        $baseItem = $this->baseItemModel->create([
+            ...$validated,
+            'edited_manually' => true,
+        ]);
+
+        // If an image was provided, update it
+        if (!empty($imageData)) {
+            $this->updateImageFromBase64($baseItem, Str::of($imageData), Str::of($baseItem->name), 'img');
+        }
+
+        return $baseItem;
     }
 }

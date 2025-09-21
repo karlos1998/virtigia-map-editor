@@ -174,7 +174,7 @@ const isEditBaseItemDialogVisible = ref(false);
             </Panel>
         </div>
 
-        <div class="card" >
+        <div class="card" v-if="baseItem.stats">
 
             <div class="mb-4"><b>Oryginalne statystyki przedmiotu z margonem:</b></div>
             <div v-html="itemTip({ ...baseItem, stat: baseItem.stats })" />

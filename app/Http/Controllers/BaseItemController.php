@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\BaseItemCategory;
 use App\Enums\BaseItemCurrency;
 use App\Enums\BaseItemRarity;
+use App\Http\Requests\CreateBaseItemRequest;
 use App\Http\Requests\UpdateBaseItemImageRequest;
 use App\Http\Requests\UpdateBaseItemRequest;
 use App\Http\Requests\UpdateBaseNpcImageRequest;
@@ -100,5 +101,20 @@ class BaseItemController extends Controller
     public function update(BaseItem $baseItem, UpdateBaseItemRequest $request)
     {
         $this->baseItemService->update($baseItem, $request->validated());
+    }
+
+    public function create(): \Inertia\Response
+    {
+        return Inertia::render('BaseItem/Create', [
+            'baseItemCategoryList' => BaseItemCategory::toDropdownList(),
+            'baseItemRarityList' => BaseItemRarity::toDropdownList(),
+            'baseItemCurrencyList' => BaseItemCurrency::toDropdownList(),
+        ]);
+    }
+
+    public function store(CreateBaseItemRequest $request)
+    {
+        $baseItem = $this->baseItemService->create($request->validated());
+        return to_route('base-items.show', $baseItem->id);
     }
 }
