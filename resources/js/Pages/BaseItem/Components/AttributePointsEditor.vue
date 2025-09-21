@@ -19,9 +19,15 @@ interface AttributePoint {
     description: string;
 }
 
+interface AttackElement {
+    name: string;
+    description: string;
+}
+
 interface AttributeData {
     attributePoints: AttributePoint[];
     manualAttributePoints: AttributePoint[];
+    attackElements: AttackElement[];
 }
 
 interface BonusValidationResult {
@@ -59,7 +65,8 @@ const isCalculating = ref(false);
 const scaleResult = ref<any>(null);
 const attributeData = ref<AttributeData>({
     attributePoints: [],
-    manualAttributePoints: []
+    manualAttributePoints: [],
+    attackElements: []
 });
 
 // Professions options for multiselect
@@ -82,6 +89,12 @@ const selectedLevel = ref(
     form.value?.attributes?.needLevel ||
     props.baseItem?.attributes?.needLevel ||
     1
+);
+
+const selectedAttackElements = ref(
+    form.value?.attributes?.needAttackElements ||
+    props.baseItem?.attributes?.needAttackElements ||
+    []
 );
 
 /*
@@ -181,6 +194,15 @@ const professionValidation = computed(() => {
     };
 });
 
+/**
+ * Get attack element labels for display
+ */
+const selectedAttackElementLabels = computed(() => {
+    return selectedAttackElements.value
+        .map((attackElement: string) => attributeData.value.attackElements.find(option => option.name === attackElement)?.description || attackElement)
+        .join(', ') || 'brak';
+});
+
 /*
 |--------------------------------------------------------------------------
 | Helper Functions
@@ -241,6 +263,13 @@ function buildApiParameters(): Record<string, any> {
         params.itemProfessions = '';
     }
 
+    // Attack elements from selectedAttackElements, default to empty string
+    if (selectedAttackElements.value.length > 0) {
+        params.attackElements = selectedAttackElements.value.join(',');
+    } else {
+        params.attackElements = '';
+    }
+
     // Add attribute points (only values !== 0)
     [form.value?.attribute_points, form.value?.manual_attribute_points]
         .filter(Boolean)
@@ -259,7 +288,7 @@ function buildApiParameters(): Record<string, any> {
  * Check if parameters contain any attribute points (not just base item data)
  */
 function hasAttributeParameters(params: Record<string, any>): boolean {
-    const baseItemKeys = ['lvl', 'itemCategory', 'itemProfessions', 'rarity'];
+    const baseItemKeys = ['lvl', 'itemCategory', 'itemProfessions', 'attackElements', 'rarity'];
     return Object.keys(params).some(key => !baseItemKeys.includes(key));
 }
 
@@ -596,6 +625,16 @@ watch(selectedLevel, async () => {
 
     await calculateScaleAttributes();
 });
+
+watch(selectedAttackElements, async () => {
+    // Save to form data
+    if (!form.value.attributes) {
+        form.value.attributes = {};
+    }
+    form.value.attributes.needAttackElements = selectedAttackElements.value;
+
+    await calculateScaleAttributes();
+});
 </script>
 
 <template>
@@ -614,7 +653,8 @@ watch(selectedLevel, async () => {
                         Poziom: {{ selectedLevel }} |
                         Kategoria: {{ props.baseItem?.category || 'brak' }} |
                         Rzadkość: {{ props.baseItem?.rarity || 'brak' }} |
-                        Profesje: {{ selectedProfessionLabels }}
+                        Profesje: {{ selectedProfessionLabels }} |
+                        Elementy ataku: {{ selectedAttackElementLabels }}
                     </div>
                 </div>
                 <div v-if="isCalculating" class="flex items-center text-sm text-gray-600">
@@ -649,7 +689,7 @@ watch(selectedLevel, async () => {
 
         <!-- Profession Selection and Level -->
         <div class="mt-4 p-3 bg-blue-50 rounded-lg">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 <!-- Profession Selection -->
                 <div>
                     <div class="font-semibold text-blue-800 mb-2">Profesje:</div>
@@ -667,6 +707,15 @@ watch(selectedLevel, async () => {
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Attack Element Selection -->
+                <div>
+                    <div class="font-semibold text-blue-800 mb-2">Elementy ataku:</div>
+                    <MultiSelect v-model="selectedAttackElements" :options="attributeData.attackElements"
+                                 optionLabel="description" optionValue="name"
+                                 placeholder="Wybierz elementy ataku"
+                                 class="w-full"/>
                 </div>
 
                 <!-- Level Selection -->
@@ -749,7 +798,7 @@ watch(selectedLevel, async () => {
                     </div>
                     <InputNumber
                         :model-value="getAttributeValue(attr.name, true)"
-                        @update:model-value="(value) => updateAttributeValue(attr.name, value || 0, true)"
+                        @update:model-value="(value: number | null) => updateAttributeValue(attr.name, value || 0, true)"
                         @input="calculateScaleAttributes"
                         showButtons
                         buttonLayout="horizontal"
