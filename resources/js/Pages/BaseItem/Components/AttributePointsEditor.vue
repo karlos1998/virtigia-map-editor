@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import axios from 'axios';
 import { useToast } from 'primevue';
+import MultiSelect from 'primevue/multiselect';
 
 /*
 |--------------------------------------------------------------------------
@@ -57,6 +58,22 @@ const attributeData = ref<AttributeData>({
     attributePoints: [],
     manualAttributePoints: []
 });
+
+// Professions options for multiselect
+const professionOptions = [
+    { value: 'b', label: 'Tancerz ostrzy' },
+    { value: 't', label: 'Tropiciel' },
+    { value: 'w', label: 'Wojownik' },
+    { value: 'p', label: 'Paladyn' },
+    { value: 'h', label: 'Łowca' },
+    { value: 'm', label: 'Mag' }
+];
+
+const selectedProfessions = ref(
+    form.value?.attributes?.needProfessions ||
+    props.baseItem?.attributes?.needProfessions ||
+    []
+);
 
 /*
 |--------------------------------------------------------------------------
@@ -133,6 +150,28 @@ const bonusValidation = computed((): BonusValidationResult => {
     };
 });
 
+/**
+ * Get profession labels for display
+ */
+const selectedProfessionLabels = computed(() => {
+    return selectedProfessions.value
+        .map(prof => professionOptions.find(option => option.value === prof)?.label || prof)
+        .join(', ') || 'brak';
+});
+
+/**
+ * Validate profession selection - at least one profession must be selected
+ */
+const professionValidation = computed(() => {
+    const isValid = selectedProfessions.value.length > 0;
+    return {
+        isValid,
+        message: isValid
+            ? `Wybrano profesje: ${selectedProfessionLabels.value}`
+            : 'Musisz wybrać co najmniej jedną profesję'
+    };
+});
+
 /*
 |--------------------------------------------------------------------------
 | Helper Functions
@@ -186,10 +225,9 @@ function buildApiParameters(): Record<string, any> {
         params.rarity = props.baseItem.rarity;
     }
 
-    // Professions from attributes.needProfessions, default to empty string
-    const professions = props.baseItem?.attributes?.needProfessions;
-    if (Array.isArray(professions) && professions.length > 0) {
-        params.itemProfessions = professions.join(',');
+    // Professions from selectedProfessions, default to empty string
+    if (selectedProfessions.value.length > 0) {
+        params.itemProfessions = selectedProfessions.value.join(',');
     } else {
         params.itemProfessions = '';
     }
@@ -431,6 +469,19 @@ async function calculateScaleAttributes(): Promise<void> {
     try {
         isCalculating.value = true;
 
+        // Check profession validation first
+        if (!professionValidation.value.isValid) {
+            toast.add({
+                severity: 'warn',
+                summary: 'Walidacja',
+                detail: 'Musisz wybrać co najmniej jedną profesję przed obliczeniem atrybutów',
+                life: 3000
+            });
+            scaleResult.value = null;
+            emit('scaleResultChanged', null);
+            return;
+        }
+
         const params = buildApiParameters();
 
         if (hasAttributeParameters(params)) {
@@ -494,6 +545,16 @@ async function decrementAttribute(attributeName: string, isManual: boolean = fal
 onMounted(() => {
     fetchAttributePoints();
 });
+
+watch(selectedProfessions, async () => {
+    // Save to form data
+    if (!form.value.attributes) {
+        form.value.attributes = {};
+    }
+    form.value.attributes.needProfessions = selectedProfessions.value;
+
+    await calculateScaleAttributes();
+});
 </script>
 
 <template>
@@ -518,7 +579,7 @@ onMounted(() => {
                             Poziom: {{ props.baseItem?.attributes?.needLevel || 'brak' }} |
                             Kategoria: {{ props.baseItem?.category || 'brak' }} |
                             Rzadkość: {{ props.baseItem?.rarity || 'brak' }} |
-                            Profesje: {{ props.baseItem?.attributes?.needProfessions?.join(', ') || 'brak' }}
+                            Profesje: {{ selectedProfessionLabels }}
                         </div>
                     </div>
                     <div v-if="isCalculating" class="flex items-center text-sm text-gray-600">
@@ -545,6 +606,35 @@ onMounted(() => {
                         <div class="text-sm">
                             Oczekiwane: {{ bonusValidation.expected }} | Aktualne: {{ bonusValidation.actual }}
                         </div>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <!-- Profession Selection -->
+            <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                <div class="mb-2">
+                    <div class="font-semibold text-blue-800 mb-2">Profesje:</div>
+                    <MultiSelect v-model="selectedProfessions" :options="professionOptions"
+                                 optionLabel="label" optionValue="value"
+                                 placeholder="Wybierz profesje"
+                                 :class="['w-full', { 'p-invalid': !professionValidation.isValid }]" />
+                </div>
+
+                <!-- Profession Validation -->
+                <div v-if="professionValidation.isValid"
+                     class="bg-green-100 border border-green-200 text-green-800 p-2 rounded text-sm">
+                    <div class="flex items-center gap-2">
+                        <i class="pi pi-check-circle"></i>
+                        <span class="font-medium">{{ professionValidation.message }}</span>
+                    </div>
+                </div>
+                <div v-else
+                     class="bg-red-100 border border-red-200 text-red-800 p-2 rounded text-sm">
+                    <div class="flex items-center gap-2">
+                        <i class="pi pi-times-circle"></i>
+                        <span class="font-medium">{{ professionValidation.message }}</span>
                     </div>
                 </div>
             </div>
