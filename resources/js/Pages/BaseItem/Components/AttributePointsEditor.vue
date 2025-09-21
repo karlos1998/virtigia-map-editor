@@ -155,7 +155,7 @@ const bonusValidation = computed((): BonusValidationResult => {
  */
 const selectedProfessionLabels = computed(() => {
     return selectedProfessions.value
-        .map(prof => professionOptions.find(option => option.value === prof)?.label || prof)
+        .map((prof: string) => professionOptions.find(option => option.value === prof)?.label || prof)
         .join(', ') || 'brak';
 });
 
@@ -232,12 +232,12 @@ function buildApiParameters(): Record<string, any> {
         params.itemProfessions = '';
     }
 
-    // Add attribute points (only values > 0)
+    // Add attribute points (only values !== 0)
     [form.value?.attribute_points, form.value?.manual_attribute_points]
         .filter(Boolean)
         .forEach(attributeSet => {
             Object.entries(attributeSet).forEach(([key, value]) => {
-                if (typeof value === 'number' && value > 0) {
+                if (typeof value === 'number' && value !== 0) {
                     params[key] = value;
                 }
             });
@@ -530,10 +530,8 @@ async function incrementAttribute(attributeName: string, isManual: boolean = fal
  */
 async function decrementAttribute(attributeName: string, isManual: boolean = false): Promise<void> {
     const currentValue = getAttributeValue(attributeName, isManual);
-    if (currentValue > 0) {
-        updateAttributeValue(attributeName, currentValue - 1, isManual);
-        await calculateScaleAttributes();
-    }
+    updateAttributeValue(attributeName, currentValue - 1, isManual);
+    await calculateScaleAttributes();
 }
 
 /*
@@ -682,7 +680,6 @@ watch(selectedProfessions, async () => {
                                 size="small"
                                 text
                                 rounded
-                                :disabled="getAttributeValue(attr.name, false) <= 0"
                                 class="w-8 h-8"
                             />
                             <div class="min-w-[2rem] text-center font-mono text-sm font-semibold">
@@ -725,7 +722,6 @@ watch(selectedProfessions, async () => {
                                 size="small"
                                 text
                                 rounded
-                                :disabled="getAttributeValue(attr.name, true) <= 0"
                                 class="w-8 h-8"
                             />
                             <div class="min-w-[2rem] text-center font-mono text-sm font-semibold">
