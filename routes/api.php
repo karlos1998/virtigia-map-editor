@@ -1,6 +1,6 @@
 <?php
 
-use App\Services\BaseItemService;
+use App\Http\Controllers\ApiAttributePointController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -39,16 +39,8 @@ Route::middleware(['web', 'auth'])->prefix('base-items')->name('api.base-items.'
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    Route::get('/attribute-points', function (BaseItemService $baseItemService) {
-        try {
-            $attributePoints = $baseItemService->getAttributePoints();
-            return response()->json($attributePoints);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    })->name('attribute-points');
+    Route::get('/attribute-points', [ApiAttributePointController::class, 'getAttributePoints'])
+        ->name('attribute-points');
 
     /**
      * Calculate scaled attributes based on item parameters and attribute points
@@ -65,17 +57,8 @@ Route::middleware(['web', 'auth'])->prefix('base-items')->name('api.base-items.'
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    Route::get('/scale-attributes', function (Request $request, BaseItemService $baseItemService) {
-        try {
-            $parameters = $request->all();
-            $scaledAttributes = $baseItemService->getScaleAttributes($parameters);
-            return response()->json($scaledAttributes);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    })->name('scale-attributes');
+    Route::get('/scale-attributes', [ApiAttributePointController::class, 'getScaleAttributes'])
+        ->name('scale-attributes');
 
 });
 
