@@ -16,6 +16,7 @@ export interface BaseItemResource {
     rarity: string
 
     price: number
+    specific_currency_price: number | null;
     // ...
 }
 

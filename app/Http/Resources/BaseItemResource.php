@@ -41,6 +41,7 @@ class BaseItemResource extends JsonResource
             'manual_attribute_points' => $this->resource->manual_attribute_points ?? null,
 
             'in_use' => $this->resource->isInUse(),
+            'specific_currency_price' => $this->resource->specific_currency_price, // specjalna cena waluty dedykowana dla itemu
 
             $this->mergeWhen($request->routeIs('base-items.index') || $request->routeIs('base-items.show'), function() {
               return [

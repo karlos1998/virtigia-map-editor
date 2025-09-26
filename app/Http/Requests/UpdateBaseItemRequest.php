@@ -52,6 +52,7 @@ class UpdateBaseItemRequest extends FormRequest
                 'required',
                 new Enum(BaseItemCurrency::class),
             ],
+            'specific_currency_price' => ['nullable', 'integer', 'min:0', 'max:1000000'],
         ];
     }
 }

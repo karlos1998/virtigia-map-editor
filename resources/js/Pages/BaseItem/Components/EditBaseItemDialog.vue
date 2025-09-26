@@ -26,6 +26,7 @@ const form = useForm({
     rarity: '',
     price: 0,
     currency: '',
+    specific_currency_price: null
 })
 
 watch(visible, () => {
@@ -34,9 +35,12 @@ watch(visible, () => {
     form.rarity = baseItem.rarity;
     form.price = baseItem.price;
     form.currency = baseItem.currency;
+    form.specific_currency_price = baseItem.specific_currency_price;
 })
 
-
+const clearSpecificCurrencyPrice = () => {
+    form.specific_currency_price = null;
+};
 
 const confirm = () => {
     form
@@ -118,6 +122,20 @@ const confirm = () => {
                     :min="0"
                 />
                 <label for="price">Wartość</label>
+            </IftaLabel>
+
+            <IftaLabel>
+                <InputNumber
+                    v-model="form.specific_currency_price"
+                    :min="0"
+                    :max="1000000"
+                    placeholder="Cena waluty..."
+                    showButtons buttonLayout="horizontal"
+                />
+                <label for="specific_currency_price">Specyficzna cena waluty</label>
+                <Button text severity="secondary" @click="clearSpecificCurrencyPrice"
+                        v-if="form.specific_currency_price !== null">Wyczyść
+                </Button>
             </IftaLabel>
 
             <Button

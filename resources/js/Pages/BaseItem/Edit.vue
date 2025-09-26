@@ -89,6 +89,25 @@ const save = () => {
         })
 }
 
+const specificCurrencyPrice = ref(baseItem.specific_currency_price ?? null);
+
+const saveCurrency = () => {
+    router.patch(route('base-items.update', {baseItem: baseItem.id}), {
+        specific_currency_price: specificCurrencyPrice.value,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.add({severity: 'success', summary: 'Sukces', detail: 'Cena waluty zaktualizowana', life: 3000});
+        },
+        onError: (errors) => {
+            toast.add({severity: 'error', summary: 'Błąd', detail: Object.values(errors)[0], life: 5000});
+        },
+    });
+};
+const clearCurrency = () => {
+    specificCurrencyPrice.value = null;
+};
+
 </script>
 
 <template>
@@ -124,6 +143,17 @@ const save = () => {
             <div v-if="scaleResult" class="mt-2 text-sm text-green-600">
                 Wyświetlane są przeskalowane atrybuty z kalkulatora punktów
             </div>
+        </div>
+        <div class="card my-4 p-3">
+            <h4 class="font-semibold mb-2">Specyficzna cena waluty (dla tego przedmiotu, INT, opcjonalna)</h4>
+            <div class="flex items-center gap-3">
+                <InputNumber v-model="specificCurrencyPrice" :min="0" :max="1000000" placeholder="Wprowadź cenę..."/>
+                <Button label="Usuń wartość" text severity="secondary" @click="clearCurrency"
+                        v-if="specificCurrencyPrice !== null"/>
+                <Button label="Zapisz" icon="pi pi-save" class="p-button-success" @click="saveCurrency"/>
+            </div>
+            <div v-if="baseItem.specific_currency_price !== null" class="mt-2 text-xs text-gray-700">Aktualna cena
+                waluty dla tego itemu: <strong>{{ baseItem.specific_currency_price }}</strong></div>
         </div>
         <Tabs value="0" class="card">
             <TabList>

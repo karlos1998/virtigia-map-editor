@@ -48,7 +48,8 @@ class BaseItem extends DynamicModel
         'rarity',
         'category',
         'price',
-        'currency'
+        'currency',
+        'specific_currency_price',
     ];
 
     protected $casts = [
