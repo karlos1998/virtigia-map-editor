@@ -14,6 +14,7 @@ class Map extends DynamicModel
         'y',
         'col',
         'battleground',
+        'battleground2',
         'water',
         'pvp',
     ];

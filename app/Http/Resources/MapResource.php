@@ -22,6 +22,7 @@ class MapResource extends JsonResource
             ...parent::toArray($request),
             'src' => config('assets.url') . config('assets.dirs.maps') . $this->resource->src,
             'battleground' => $this->resource->battleground,
+            'battleground2' => $this->resource->battleground2,
             'respawn_point' => RespawnPointResource::make($this->resource->respawnPoint),
         ];
     }

@@ -78,8 +78,22 @@ const backgroundOptions = backgroundFiles.map((file) => ({
     src: `/Backgrounds/${file}`,
 }));
 
+const backgroundClassicFiles = [
+    '002N.jpg', '003N.jpg', '004N.jpg', '005N.jpg', '007N.jpg', '008N.jpg',
+    '009N.jpg', '010N.jpg', '011N.jpg', '012N.jpg', '013N.jpg', '014N.jpg',
+    '021N.jpg', '027N.jpg', '034N.jpg', '07nN.jpg', 'aa1N.jpg', 'aa2N.jpg',
+    'cc1N.jpg', 'dd1N.jpg', 'dd2N.jpg', 'dd3N.jpg', 'dd4N.jpg', 'eeN.jpg',
+    'fN.jpg', 'jN.jpg', 'kN.jpg',
+];
+const backgroundClassicOptions = backgroundClassicFiles.map((file) => ({
+    file,
+    src: `/BackgroundsClassic/${file}`,
+}));
+
 const selectedBattleground = ref<string | null>(props.map.battleground ?? null);
 const selectedBattlegroundObj = ref<{ file: string; src: string } | null>(null);
+const selectedBattleground2 = ref<string | null>(props.map.battleground2 ?? null);
+const selectedBattleground2Obj = ref<{ file: string; src: string } | null>(null);
 
 // Format respawn points for dropdown
 const formattedRespawnPoints = computed(() => {
@@ -98,10 +112,15 @@ onMounted(() => {
     }
     selectedBattleground.value = props.map.battleground ?? null;
     selectedBattlegroundObj.value = backgroundOptions.find(b => b.file === selectedBattleground.value) ?? null;
+    selectedBattleground2.value = props.map.battleground2 ?? null;
+    selectedBattleground2Obj.value = backgroundClassicOptions.find(b => b.file === selectedBattleground2.value) ?? null;
 });
 
 watch(selectedBattlegroundObj, (newVal) => {
     selectedBattleground.value = newVal ? newVal.file : null;
+});
+watch(selectedBattleground2Obj, (newVal) => {
+    selectedBattleground2.value = newVal ? newVal.file : null;
 });
 
 // Update map name
@@ -164,6 +183,28 @@ const updateMapBattleground = () => {
         }
     });
 };
+const updateMapBattleground2 = () => {
+    router.patch(route('maps.update.battleground2', props.map.id), {
+        battleground2: selectedBattleground2.value
+    }, {
+        onSuccess: () => {
+            toast.add({
+                severity: 'success',
+                summary: 'Sukces',
+                detail: 'Grafika mapy 2 została zaktualizowana',
+                life: 3000
+            });
+        },
+        onError: () => {
+            toast.add({
+                severity: 'error',
+                summary: 'Błąd',
+                detail: 'Nie udało się zaktualizować grafiki mapy 2',
+                life: 3000
+            });
+        }
+    });
+};
 </script>
 
 <template>
@@ -200,6 +241,33 @@ const updateMapBattleground = () => {
                             {{ selectedBattleground ?? '-' }}
                         </div>
                         <Button label="Zapisz" @click="updateMapBattleground"/>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="font-semibold mb-2">Grafika mapy 2</h3>
+                <div>
+                    <Dropdown v-model="selectedBattleground2Obj" :options="backgroundClassicOptions" optionLabel="file"
+                              class="w-full">
+                        <template #option="{option}">
+                            <div class="flex items-center gap-2">
+                                <img :src="option.src" class="w-24 h-12 object-contain"/>
+                                <div class="text-sm">{{ option.file }}</div>
+                            </div>
+                        </template>
+                        <template #value="{value}">
+                            <div class="flex items-center gap-2">
+                                <img v-if="value" :src="value.src" class="w-28 h-14 object-contain"/>
+                                <div class="text-sm">{{ value ? value.file : '-' }}</div>
+                            </div>
+                        </template>
+                    </Dropdown>
+                    <div class="flex items-center mt-2">
+                        <div class="text-sm text-gray-600 mr-4"><strong>Wybrane tło:</strong>
+                            {{ selectedBattleground2 ?? '-' }}
+                        </div>
+                        <Button label="Zapisz" @click="updateMapBattleground2"/>
                     </div>
                 </div>
             </div>

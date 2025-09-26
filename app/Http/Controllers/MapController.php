@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\PvpType;
 use App\Http\Requests\StoreMapRequest;
+use App\Http\Requests\UpdateMapBattleground2Request;
 use App\Http\Requests\UpdateMapBattlegroundRequest;
 use App\Http\Requests\UpdateMapColsRequest;
 use App\Http\Requests\UpdateMapImageRequest;
@@ -157,5 +158,10 @@ class MapController extends Controller
     public function updateBattleground(Map $map, UpdateMapBattlegroundRequest $request): void
     {
         $this->mapService->updateBattleground($map, $request->input('battleground'));
+    }
+
+    public function updateBattleground2(Map $map, UpdateMapBattleground2Request $request): void
+    {
+        $this->mapService->updateBattleground2($map, $request->input('battleground2'));
     }
 }
