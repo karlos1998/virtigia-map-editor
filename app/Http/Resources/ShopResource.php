@@ -34,6 +34,8 @@ class ShopResource extends JsonResource
             'npcs' => $this->whenLoaded('dialogs', fn() => NpcResource::collection($this->resource->dialogs->flatMap(function (Dialog $dialog) {
                 return $dialog->npcs;
             }))),
+            'currency_item_id' => $this->resource->currency_item_id, // opcjonalne id przedmiotu jako waluta
+            'currency_item' => $this->resource->currency_item_id ? new \App\Http\Resources\BaseItemResource($this->resource->currencyItem) : null, // pełny przedmiot jako waluta
         ];
     }
 }

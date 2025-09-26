@@ -1,3 +1,5 @@
+import {BaseItemResource} from "./BaseItem.resource";
+
 export interface ShopResource {
     id: number
     name: string
@@ -5,4 +7,6 @@ export interface ShopResource {
     buy_price_percent: number;
     sell_price_percent: number;
     max_buy_price: number;
+    currency_item_id: number | null;
+    currency_item: BaseItemResource | null;
 }
