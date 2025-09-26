@@ -82,4 +82,9 @@ final class ShopService extends BaseService
     {
         return $this->shopModel->create($validated);
     }
+
+    public function update(Shop $shop, array $payload): void
+    {
+        $shop->update($payload);
+    }
 }

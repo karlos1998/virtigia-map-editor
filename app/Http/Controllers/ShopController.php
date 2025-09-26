@@ -50,7 +50,7 @@ class ShopController extends Controller
     public function show(Shop $shop)
     {
         return Inertia::render('Shop/Show', [
-            'shop' => $shop->only('id', 'name', 'binds_items_permanently'),
+            'shop' => new \App\Http\Resources\ShopResource($shop),
             'items' => BaseItemResource::collection($shop->items),
         ]);
     }
@@ -66,9 +66,9 @@ class ShopController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateShopRequest $request, Shop $shop)
+    public function update(UpdateShopRequest $request, Shop $shop): void
     {
-        //
+        $this->shopService->update($shop, $request->validated());
     }
 
     /**

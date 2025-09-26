@@ -22,6 +22,10 @@ class ShopResource extends JsonResource
         return [
             'id' => $this->resource->id,
             'name' => $this->resource->name,
+            'binds_items_permanently' => $this->resource->binds_items_permanently,
+            'buy_price_percent' => $this->resource->buy_price_percent,
+            'sell_price_percent' => $this->resource->sell_price_percent,
+            'max_buy_price' => $this->resource->max_buy_price,
 
             'items_count' => $this->resource->items()->count(),
 

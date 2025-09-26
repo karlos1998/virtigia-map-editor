@@ -10,7 +10,7 @@ class Shop extends DynamicModel
     /** @use HasFactory<\Database\Factories\ShopFactory> */
     use HasFactory;
 
-    protected $fillable = ['name', 'binds_items_permanently'];
+    protected $fillable = ['name', 'binds_items_permanently', 'buy_price_percent', 'sell_price_percent', 'max_buy_price'];
 
     protected $casts = ['binds_items_permanently' => 'boolean'];
 

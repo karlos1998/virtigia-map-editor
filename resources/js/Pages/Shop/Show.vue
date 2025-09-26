@@ -16,6 +16,8 @@ import RockTip from "../../RockTip/components/rockTip.vue";
 // @ts-ignore
 import { itemTip } from "../../old-createItemTip";
 import Item from "@/Components/Item.vue";
+import InputNumber from "primevue/inputnumber";
+import Button from "primevue/button";
 const props = defineProps<{
     shop: ShopResource
     items: BaseItemWithPosition
@@ -142,6 +144,35 @@ const toggleBindsItemsPermanently = () => {
 
 const test = ref(false);
 
+const buyPricePercent = ref(props.shop.buy_price_percent);
+const sellPricePercent = ref(props.shop.sell_price_percent);
+const maxBuyPrice = ref(props.shop.max_buy_price);
+
+const savePriceSettings = () => {
+    router.patch(route('shops.update', props.shop.id), {
+        buy_price_percent: buyPricePercent.value,
+        sell_price_percent: sellPricePercent.value,
+        max_buy_price: maxBuyPrice.value
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.add({
+                severity: 'success',
+                summary: 'Zapisano ustawienia cen',
+                detail: '',
+                life: 3000
+            });
+        },
+        onError: (errors) => {
+            toast.add({
+                severity: 'error',
+                summary: 'Wystąpił błąd',
+                detail: Object.values(errors)[0],
+                life: 5000,
+            });
+        }
+    });
+};
 </script>
 <template>
 
@@ -167,6 +198,26 @@ const test = ref(false);
                     @change="toggleBindsItemsPermanently"
                 />
             </div>
+        </div>
+
+        <!-- card for shop price settings -->
+        <div class="card mb-3">
+            <h3 class="mb-2">Ustawienia cen sklepu</h3>
+            <div class="formgrid grid gap-3 mb-3">
+                <div class="field col-12 md:col-4">
+                    <label for="buy-price-percent">% ceny skupu (0-100)</label>
+                    <InputNumber id="buy-price-percent" v-model="buyPricePercent" :min="0" :max="100"/>
+                </div>
+                <div class="field col-12 md:col-4">
+                    <label for="sell-price-percent">% ceny sprzedaży (100-1000)</label>
+                    <InputNumber id="sell-price-percent" v-model="sellPricePercent" :min="100" :max="1000"/>
+                </div>
+                <div class="field col-12 md:col-4">
+                    <label for="max-buy-price">Max cena skupu za przedmiot</label>
+                    <InputNumber id="max-buy-price" v-model="maxBuyPrice" :min="0" :max="1000000"/>
+                </div>
+            </div>
+            <Button label="Zapisz" @click="savePriceSettings" icon="pi pi-save" class="p-button-success"/>
         </div>
 
         <div class="card">

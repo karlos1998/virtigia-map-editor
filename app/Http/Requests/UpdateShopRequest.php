@@ -11,7 +11,7 @@ class UpdateShopRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,9 @@ class UpdateShopRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'buy_price_percent' => 'required|integer|min:0|max:100',
+            'sell_price_percent' => 'required|integer|min:100|max:1000',
+            'max_buy_price' => 'required|integer|min:0|max:1000000',
         ];
     }
 }
