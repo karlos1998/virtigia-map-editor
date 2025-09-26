@@ -31,9 +31,11 @@ class ShopResource extends JsonResource
 
             'dialogs_count' => $this->resource->dialogs()->count(),
 
-            'npcs' => $this->whenLoaded('dialogs', fn() => NpcResource::collection($this->resource->dialogs->flatMap(function (Dialog $dialog) {
-                return $dialog->npcs;
-            }))),
+//            'npcs' => $this->whenLoaded('dialogs', fn() => NpcResource::collection($this->resource->dialogs->flatMap(function (Dialog $dialog) {
+//                return $dialog->npcs;
+//            }))),
+            'dialogs' => DialogResource::collection($this->resource->dialogs()->select('dialogs.*')->with('npcs')->get()),
+            'npcs' => NpcResource::collection(\App\Models\Npc::where('dialog_id', '!=', null)->whereIn('dialog_id', $this->resource->dialogs->pluck('id'))->get()),
             'currency_item_id' => $this->resource->currency_item_id, // opcjonalne id przedmiotu jako waluta
             'currency_item' => $this->resource->currency_item_id ? new \App\Http\Resources\BaseItemResource($this->resource->currencyItem) : null, // pełny przedmiot jako waluta
         ];

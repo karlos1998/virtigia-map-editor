@@ -158,6 +158,7 @@ const filterCurrencyItems = async ({query}: { query: string }) => {
 };
 const clearCurrencyItem = () => {
     currencyItemSelected.value = null;
+
 };
 
 const savePriceSettings = () => {
@@ -353,6 +354,37 @@ const savePriceSettings = () => {
                 </div>
             </div>
         </div>
+
+        <!-- Dialogs związane ze sklepem -->
+        <div class="card my-4 p-4">
+            <h3 class="font-bold mb-2">Dialogi powiązane ze sklepem</h3>
+            <div v-if="props.shop.dialogs.length">
+                <ul>
+                    <li v-for="dialog in props.shop.dialogs" :key="dialog.id" class="flex items-center gap-3 mb-2">
+                        <span class="font-semibold">#{{ dialog.id }} {{ dialog.name }}</span>
+                        <Button @click="router.get(route('dialogs.show', {dialog: dialog.id}))" size="small" text
+                                icon="pi pi-arrow-right" label="Przejdź" class="ml-2"/>
+                    </li>
+                </ul>
+            </div>
+            <div v-else class="text-gray-500">Brak powiązanych dialogów.</div>
+        </div>
+        <!-- NPC związane ze sklepem -->
+        <div class="card my-4 p-4">
+            <h3 class="font-bold mb-2">NPC powiązane ze sklepem</h3>
+            <div v-if="props.shop.npcs.length">
+                <ul>
+                    <li v-for="npc in props.shop.npcs" :key="npc.id" class="flex items-center gap-3 mb-2">
+                        <img :src="npc.src" class="h-8 w-8 object-cover rounded" :alt="npc.name"/>
+                        <span class="font-semibold">#{{ npc.id }} {{ npc.name }}</span>
+                        <Button @click="router.get(route('npcs.show', {npc: npc.id}))" size="small" text
+                                icon="pi pi-arrow-right" label="Przejdź" class="ml-2"/>
+                    </li>
+                </ul>
+            </div>
+            <div v-else class="text-gray-500">Brak powiązanych NPC.</div>
+        </div>
+
     </AppLayout>
 </template>
 
