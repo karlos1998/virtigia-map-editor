@@ -206,16 +206,20 @@ final class BaseItemService extends BaseService
         $imageData = $validated['image'] ?? null;
         unset($validated['image']);
 
-        $baseItem = $this->baseItemModel->create([
-            ...$validated,
-            'edited_manually' => true,
-        ]);
+        return \DB::transaction(function () use ($validated, $imageData) {
+            $baseItem = $this->baseItemModel->create([
+                ...$validated,
+                'edited_manually' => true,
+                'src' => '',
+                'stats' => '',
+            ]);
 
-        // If an image was provided, update it
-        if (!empty($imageData)) {
-            $this->updateImageFromBase64($baseItem, Str::of($imageData), Str::of($baseItem->name), 'img');
-        }
+            // If an image was provided, update it
+            if (!empty($imageData)) {
+                $this->updateImageFromBase64($baseItem, Str::of($imageData), Str::of($baseItem->name), 'img');
+            }
 
-        return $baseItem;
+            return $baseItem;
+        });
     }
 }
