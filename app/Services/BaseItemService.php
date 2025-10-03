@@ -187,7 +187,7 @@ final class BaseItemService extends BaseService
     public function copy(BaseItem $baseItem)
     {
         $newBaseItem = $baseItem->replicate();
-        $newBaseItem->stats = null;
+        $newBaseItem->stats = '';
         $newBaseItem->save();
         return $newBaseItem;
     }
