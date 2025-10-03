@@ -112,6 +112,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('maps/{map}/copy', [MapController::class, 'copy'])->name('maps.copy');
                 Route::patch('maps/{map}/clear-water', [MapController::class, 'clearWater'])->name('maps.clear.water');
                 Route::post('maps/{map}/renewable-items', [RenewableMapItemController::class, 'store'])->name('maps.renewable-items.store');
+                Route::delete('maps/{map}/renewable-items/{renewableItem}', [RenewableMapItemController::class, 'destroy'])->name('maps.renewable-items.destroy');
 
                 Route::get('base-items', [BaseItemController::class, 'index'])->name('base-items.index');
                 Route::get('base-items/create', [BaseItemController::class, 'create'])->name('base-items.create');

@@ -431,6 +431,22 @@ defineExpose({
         toast.add({ severity: 'info', summary: 'Tryb grupowania', detail: 'Kliknij na innego NPC w pobliżu (max 5 kratek) aby dodać go do grupy', life: 5000 });
     }
 });
+
+const handleRenewableItemClick = (item) => {
+    confirm.require({
+        message: `Czy na pewno chcesz usunąć przedmiot: ${item.item.name} (ID: ${item.item.id}) z mapy?`,
+        header: 'Usuń przedmiot z mapy',
+        icon: 'pi pi-exclamation-triangle',
+        acceptLabel: 'Usuń',
+        rejectLabel: 'Anuluj',
+        accept: () => {
+            // Tutaj wykonujemy zapytanie usuwające
+            router.delete(route('maps.renewable-items.destroy', {map: item.map_id, renewableItem: item.id}), {
+                preserveScroll: true,
+            });
+        },
+    });
+};
 </script>
 
 <template>
@@ -529,8 +545,8 @@ defineExpose({
             <div
                 v-for="item in renewableItems"
                 :key="`renewable-${item.id}`"
-                class="absolute"
-                v-tip.item="item.item"
+                class="absolute cursor-pointer"
+                :title="`Przedmiot: ${item.item.name} [${item.item.id}]\nOdnowienie: ${item.respawn_time_seconds}s`"
                 :style="{
                     top: `${item.y * 32 * scale}px`,
                     left: `${item.x * 32 * scale}px`,
@@ -539,6 +555,7 @@ defineExpose({
                     pointerEvents: 'auto',
                     zIndex: 2,
                 }"
+                @click="handleRenewableItemClick(item)"
             >
                 <img
                     :src="item.item.src"

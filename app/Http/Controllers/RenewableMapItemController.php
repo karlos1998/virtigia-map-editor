@@ -13,4 +13,9 @@ class RenewableMapItemController extends Controller
     {
         RenewableMapItem::create($request->validated());
     }
+
+    public function destroy($mapId, $renewableItemId): void
+    {
+        \App\Models\RenewableMapItem::where('map_id', $mapId)->where('id', $renewableItemId)->delete();
+    }
 }
