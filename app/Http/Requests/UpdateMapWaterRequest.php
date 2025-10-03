@@ -27,7 +27,7 @@ class UpdateMapWaterRequest extends FormRequest
                 'string',
                 // Water format is x1,x2,y,depth|x1,x2,y,depth|...
                 // Each segment should match the pattern: numbers,numbers,numbers,numbers
-                'regex:/^(\d+,\d+,\d+,[1-9](\|\d+,\d+,\d+,[1-9])*)$|^$/',
+                'regex:/^(\d+,\d+,\d+,\d+(\|\d+,\d+,\d+,\d+)*)$|^$/',
             ],
         ];
     }
