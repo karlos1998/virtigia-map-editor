@@ -546,7 +546,7 @@ const handleRenewableItemClick = (item) => {
                 v-for="item in renewableItems"
                 :key="`renewable-${item.id}`"
                 class="absolute cursor-pointer"
-                :title="`Przedmiot: ${item.item.name} [${item.item.id}]\nOdnowienie: ${item.respawn_time_seconds}s`"
+                v-tip.item="item.item"
                 :style="{
                     top: `${item.y * 32 * scale}px`,
                     left: `${item.x * 32 * scale}px`,
