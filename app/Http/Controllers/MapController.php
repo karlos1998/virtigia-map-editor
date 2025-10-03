@@ -16,6 +16,7 @@ use App\Http\Resources\DoorResource;
 use App\Http\Resources\MapResource;
 use App\Http\Resources\NpcResource;
 use App\Http\Resources\RespawnPointResource;
+use App\Http\Resources\RenewableMapItemResource;
 use App\Models\Map;
 use App\Models\RespawnPoint;
 use App\Services\MapService;
@@ -55,21 +56,20 @@ class MapController extends Controller
     public function show(Map $map)
     {
         // Eager load all necessary relationships to reduce database queries
-        $map->load(['respawnPoint', 'npcs.base', 'doors.requiredBaseItem', 'doors.targetMap']);
+        $map->load([
+            'respawnPoint', 'npcs.base', 'doors.requiredBaseItem', 'doors.targetMap',
+            'renewableMapItems.baseItem',
+        ]);
 
-        // Also eager load the map relationship for respawn points
         $respawnPoints = RespawnPoint::with('map')->get();
-
-        // Get dialog nodes that teleport to this map
         $dialogNodesTeleportingToMap = $this->mapService->getDialogNodesTeleportingToMap($map);
-
-        // Get items that teleport to this map
         $itemsTeleportingToMap = $this->mapService->getItemsTeleportingToMap($map);
 
         return Inertia::render('Map/Show', [
             'map' => MapResource::make($map),
             'npcs' => NpcResource::collection($map->npcs),
             'doors' => DoorResource::collection($map->doors),
+            'renewableItems' => RenewableMapItemResource::collection($map->renewableMapItems),
             'pvpTypeList' => PvpType::toDropdownList(),
             'respawnPoints' => RespawnPointResource::collection($respawnPoints),
             'doorsLeadingToMap' => $map->doorsLeadingToMap,

@@ -14,6 +14,7 @@ import {BaseNpcResource} from "@/Resources/BaseNpc.resource";
 import {NpcResource} from "@/Resources/Npc.resource";
 import { useDialog } from 'primevue/usedialog';
 import HeroSearchModal from './HeroSearchModal.vue';
+import AddRenewableItemToMapModal from './AddRenewableItemToMapModal.vue';
 
 const dialogRef = inject<Ref<DynamicDialogInstance & {
     data: {
@@ -106,6 +107,24 @@ const addHeroInstance = () => {
         }
     });
 }
+
+const addRenewableItem = () => {
+    dialogRef.value.close(); // Zamykamy obecny dialog
+    primeDialog.open(AddRenewableItemToMapModal, {
+        props: {
+            header: 'Dodawanie odnawialnego przedmiotu',
+            modal: true,
+        },
+        data: {
+            x: dialogRef.value.data.x,
+            y: dialogRef.value.data.y,
+            map: dialogRef.value.data.map,
+        },
+        onClose(closeOptions) {
+            // Tutaj można obsłużyć odświeżenie/akcje po dodaniu itemu
+        }
+    });
+}
 </script>
 
 <template>
@@ -164,6 +183,8 @@ const addHeroInstance = () => {
             <Button @click="addDoor" class="mt-2" severity="info" fluid>Lub dodaj Przejście</Button>
 
             <Button @click="addHeroInstance" class="mt-2" severity="success" fluid>Lub dodaj wystąpienie herosa</Button>
+
+            <Button @click="addRenewableItem" class="mt-2" severity="warning" fluid>Lub dodaj przedmiot</Button>
         </div>
     </div>
 </template>

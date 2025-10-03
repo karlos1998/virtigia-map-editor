@@ -39,4 +39,9 @@ class Map extends DynamicModel
     public function doorsLeadingToMap() {
         return $this->hasMany(Door::class, 'go_map_id')->with(['map', 'requiredBaseItem']);
     }
+
+    public function renewableMapItems()
+    {
+        return $this->hasMany(RenewableMapItem::class, 'map_id');
+    }
 }

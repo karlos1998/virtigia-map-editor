@@ -13,6 +13,7 @@ use App\Http\Controllers\NpcController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuestController;
 use App\Http\Controllers\QuestStepController;
+use App\Http\Controllers\RenewableMapItemController;
 use App\Http\Controllers\ShopController;
 use App\Http\Middleware\RemoveWorldTemplateNameFromRouteParameters;
 use App\Http\Middleware\SetDynamicModelConnection;
@@ -110,6 +111,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::delete('maps/{map}', [MapController::class, 'destroy'])->name('maps.destroy');
                 Route::post('maps/{map}/copy', [MapController::class, 'copy'])->name('maps.copy');
                 Route::patch('maps/{map}/clear-water', [MapController::class, 'clearWater'])->name('maps.clear.water');
+                Route::post('maps/{map}/renewable-items', [RenewableMapItemController::class, 'store'])->name('maps.renewable-items.store');
 
                 Route::get('base-items', [BaseItemController::class, 'index'])->name('base-items.index');
                 Route::get('base-items/create', [BaseItemController::class, 'create'])->name('base-items.create');

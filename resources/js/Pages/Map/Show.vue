@@ -28,6 +28,7 @@ const props = defineProps<{
     doorsLeadingToMap: DoorResource[];
     dialogNodesTeleportingToMap: any[];
     itemsTeleportingToMap: any[];
+    renewableItems: any[];
 }>();
 
 // Map state
@@ -165,6 +166,7 @@ const handleTrackerPositionChanged = (position: { x: number, y: number }) => {
             :map="map"
             :npcs="npcs"
             :doors="doors"
+            :renewable-items="renewableItems"
             :scale="scale"
             @show-npc-confirm-dialog="showNpcConfirmDialog"
             @show-door-confirm-dialog="showDoorConfirmDialog"

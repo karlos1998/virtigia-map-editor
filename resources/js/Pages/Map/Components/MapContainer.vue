@@ -20,6 +20,7 @@ const props = defineProps<{
     map: MapResource;
     npcs: NpcWithLocationResource[];
     doors: DoorResource[];
+    renewableItems: any[];
     scale: number;
 }>();
 
@@ -523,6 +524,28 @@ defineExpose({
                 :scale="scale"
                 @show-door-confirm-dialog="(event, door) => emit('showDoorConfirmDialog', event, door)"
             />
+
+            <!-- RenewableMapItems -->
+            <div
+                v-for="item in renewableItems"
+                :key="`renewable-${item.id}`"
+                class="absolute"
+                v-tip.item="item.item"
+                :style="{
+                    top: `${item.y * 32 * scale}px`,
+                    left: `${item.x * 32 * scale}px`,
+                    width: `${32 * scale}px`,
+                    height: `${32 * scale}px`,
+                    pointerEvents: 'auto',
+                    zIndex: 2,
+                }"
+            >
+                <img
+                    :src="item.item.src"
+                    :alt="item.item.name"
+                    :style="{ width: `${32 * scale}px`, height: `${32 * scale}px`, borderRadius: '6px', border: '2px solid #2196f3', background: '#eff8ff' }"
+                />
+            </div>
 
             <!-- Collisions -->
             <CollisionRenderer
