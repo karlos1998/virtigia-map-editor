@@ -120,6 +120,17 @@ class MapController extends Controller
     }
 
     /**
+     * Clear all water on the map
+     *
+     * @param Map $map
+     * @return void
+     */
+    public function clearWater(Map $map): void
+    {
+        $this->mapService->updateWater($map, '');
+    }
+
+    /**
      * Update the map image
      *
      * @param Map $map

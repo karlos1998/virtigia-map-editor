@@ -109,6 +109,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('maps/{map}/image', [MapController::class, 'updateImage'])->name('maps.update.image');
                 Route::delete('maps/{map}', [MapController::class, 'destroy'])->name('maps.destroy');
                 Route::post('maps/{map}/copy', [MapController::class, 'copy'])->name('maps.copy');
+                Route::patch('maps/{map}/clear-water', [MapController::class, 'clearWater'])->name('maps.clear.water');
 
                 Route::get('base-items', [BaseItemController::class, 'index'])->name('base-items.index');
                 Route::get('base-items/create', [BaseItemController::class, 'create'])->name('base-items.create');

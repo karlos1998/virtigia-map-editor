@@ -74,6 +74,28 @@ const confirmClearCollisions = (event) => {
         },
     });
 };
+
+const confirmClearWater = (event) => {
+    confirm.require({
+        target: event.currentTarget,
+        message: 'Czy na pewno chcesz wyczyścić wodę? Ta operacja jest nieodwracalna.',
+        icon: 'pi pi-info-circle',
+        rejectProps: {
+            label: 'Anuluj',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Wyczyść',
+            severity: 'danger'
+        },
+        accept: () => {
+            router.patch(route('maps.clear.water', {
+                map: props.map.id,
+            }));
+        },
+    });
+};
 </script>
 
 <template>
@@ -102,5 +124,6 @@ const confirmClearCollisions = (event) => {
         </div>
 
         <Button @click="confirmClearCollisions" label="Wyczyść kolizje" severity="danger" class="ml-3" />
+        <Button @click="confirmClearWater" label="Wyczyść wodę" severity="danger" class="ml-3"/>
     </div>
 </template>
