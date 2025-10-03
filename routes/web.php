@@ -205,6 +205,8 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('titan-doors', [DoorController::class, 'titanDoors'])->name('titan-doors.index');
                 Route::post('doors/update-level-restrictions', [DoorController::class, 'updateLevelRestrictions'])->name('doors.update-level-restrictions');
 
+                Route::get('renewable-items', [RenewableMapItemController::class, 'index'])->name('renewable-items.index');
+
             });
 
         Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
