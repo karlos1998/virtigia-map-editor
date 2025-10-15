@@ -157,7 +157,8 @@ final class BaseItemService extends BaseService
 
         // Merge attributes: new attributes override old ones, but unique old attributes are preserved
         // This preserves things like legendary bonuses, owner binding, etc.
-        $mergedAttributes = array_merge($oldAttributes, $newAttributes ?? []);
+//        $mergedAttributes = array_merge($oldAttributes, $newAttributes ?? []);
+        $mergedAttributes = $newAttributes;
 
         // Update the item with all three fields, converting empty arrays to null
         $baseItem->update([
