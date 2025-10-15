@@ -23,7 +23,7 @@ class DialogNode extends DynamicModel
 
     public function options(): HasMany
     {
-        return $this->hasMany(DialogNodeOption::class, 'node_id');
+        return $this->hasMany(DialogNodeOption::class, 'node_id')->orderBy('order');
     }
 
     public function dialog(): HasOne

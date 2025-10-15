@@ -10,7 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class DialogNodeOption extends DynamicModel
 {
     use HasFactory;
-    protected $fillable = ['label', 'rules', 'additional_action'];
+
+    protected $fillable = ['label', 'rules', 'additional_action', 'order'];
 
     protected $casts = [
         'rules' => 'json',

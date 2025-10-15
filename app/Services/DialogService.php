@@ -92,8 +92,12 @@ class DialogService extends BaseService
 
     public function addOption(DialogNode $dialogNode)
     {
+        $maxOrder = $dialogNode->options()->max('order');
+        $newOrder = is_null($maxOrder) ? 0 : $maxOrder + 1;
+
         return $dialogNode->options()->create([
             'label' => 'Treść odpowiedzi',
+            'order' => $newOrder,
         ]);
     }
 

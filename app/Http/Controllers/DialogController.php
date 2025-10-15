@@ -190,6 +190,25 @@ class DialogController extends Controller
     }
 
     /**
+     * Update order of options for a dialog node
+     */
+    public function updateOptionsOrder(Request $request, Dialog $dialog, DialogNode $dialogNode)
+    {
+        $ids = $request->input('ids', []);
+        if (!is_array($ids)) {
+            return response()->json(['message' => 'Invalid payload'], 422);
+        }
+
+        foreach ($ids as $i => $id) {
+            DialogNodeOption::where('id', $id)
+                ->where('node_id', $dialogNode->id)
+                ->update(['order' => $i]);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
      * Copy a dialog node with its options and connections
      *
      * @param Dialog $dialog

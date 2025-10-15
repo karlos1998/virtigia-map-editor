@@ -16,7 +16,7 @@ import {DialogNodeAdditionalActionsResource} from "../../Resources/DialogNodeAdd
 const primeDialog = useDialog();
 const showEditOption = ref(false);
 const currentOption = ref<DialogOptionResource | null>(null);
-
+import draggable from 'vuedraggable'
 
 const props = defineProps<NodeProps<{
     dialog_id: number
@@ -125,7 +125,13 @@ watch(connectionLookup, (value: ConnectionLookup) => {
     console.log('handleHasConnections', value, handleHasConnections);
 }, { deep: true, immediate: true, flush: 'post' });
 
-
+const saveOptionsOrder = async () => {
+    const ids = options.value.map(o => o.id);
+    await axios.post(route('dialogs.nodes.options.order', {
+        dialog: props.data.dialog_id,
+        dialogNode: props.id,
+    }), {ids});
+};
 </script>
 
 <script lang="ts">
@@ -154,15 +160,28 @@ export default {
         </div>
 
         <div class="options">
-            <div class="option" :class="{
-                exit: !handleHasConnections[`source-${option.id}`] && !option.additional_action
-            }" v-for="option in options" :key="option.id" @click="editOption(option)">
-                {{ option.label }}
-                <Handle v-tooltip.top="'Drag to connect to dialog, right click to remove connections'"
-                        :id="`source-${option.id}`"
-                        class="dialog-output" type="source" :position="Position.Right"
-                        @contextmenu.prevent="removeSourceConnections(option)" />
-            </div>
+            <draggable v-model="options" @end="saveOptionsOrder" @change="saveOptionsOrder" item-key="id"
+                       class="flex flex-col"
+                       handle=".drag-handle">
+                <template #item="{element: option}">
+                    <div class="option flex items-center gap-2"
+                         :class="{
+                         exit: !handleHasConnections[`source-${option.id}`] && !option.additional_action
+                     }" @click="editOption(option)">
+                        <span class="drag-handle cursor-grab select-none text-xl mr-2"
+                              @mousedown.stop
+                              @touchstart.stop
+                              @click.stop
+                              role="button"
+                              aria-hidden="true">⠿</span>
+                        <span class="option-label grow" @mousedown.stop>{{ option.label }}</span>
+                        <Handle v-tooltip.top="'Drag to connect to dialog, right click to remove connections'"
+                                :id="`source-${option.id}`"
+                                class="dialog-output" type="source" :position="Position.Right"
+                                @contextmenu.prevent="removeSourceConnections(option)"/>
+                    </div>
+                </template>
+            </draggable>
             <div class="option add-option" @click="addOption">
               <FontAwesomeIcon icon="plus" class="text-green-500 mr-2" />
                 Dodaj opcję
@@ -222,6 +241,15 @@ export default {
             &:before {
                 background-position: -12px 0;
             }
+        }
+
+        .drag-handle {
+            @apply inline-flex items-center justify-center w-8 h-8 mr-2 rounded select-none;
+            cursor: grab;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
         }
     }
 }
