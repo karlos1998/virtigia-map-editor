@@ -21,4 +21,5 @@ export interface BaseNpcResource {
 
 export interface BaseNpcWithLoots extends BaseNpcResource {
     loots: BaseItemResource[]
+    guaranteed_loot: boolean
 }

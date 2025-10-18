@@ -8,6 +8,7 @@ import AddBaseNpcLootsDialog from "../Components/AddBaseNpcLootsDialog.vue";
 import {useDialog} from "primevue/usedialog";
 import {useToast} from "primevue";
 import {BaseItemResource} from "../../../Resources/BaseItem.resource";
+import {ref} from 'vue';
 
 const { baseNpc } = defineProps<{
     baseNpc: BaseNpcWithLoots
@@ -15,6 +16,7 @@ const { baseNpc } = defineProps<{
 
 const primeDialog = useDialog();
 const toast = useToast();
+const guaranteed = ref(baseNpc.guaranteed_loot ?? false);
 const showAttachItemModal = () => {
     primeDialog.open(AddShopItemDialog, {
         props: {
@@ -80,11 +82,29 @@ const detachItem = (item: BaseItemResource) => {
         preserveScroll: true,
     });
 }
+
+const toggleGuaranteed = () => {
+    router.patch(route('base-npcs.guaranteed.toggle', {baseNpc: baseNpc.id}), {
+        guaranteed: guaranteed.value,
+    }, {
+        preserveState: true,
+        onSuccess: () => {
+            toast.add({severity: 'success', summary: 'Zapisano', detail: 'Ustawienie zapisane', life: 3000});
+        },
+        onError: (errors) => {
+            toast.add({severity: 'error', summary: 'Błąd', detail: Object.values(errors)[0], life: 5000});
+        }
+    });
+}
 </script>
 <template>
-    <div class="flex gap-2 mb-2">
+    <div class="flex gap-2 mb-2 items-center">
         <Button label="Dodaj przedmiot" @click="showAttachItemModal" />
         <Button label="Dodaj looty z innego potwora" @click="showAttachLootsFromBaseNpcModal" />
+        <div class="ml-4 flex items-center gap-2">
+            <label class="text-sm text-surface-600">Gwarantowany loot</label>
+            <InputSwitch v-model="guaranteed" @change="toggleGuaranteed"/>
+        </div>
     </div>
 
 

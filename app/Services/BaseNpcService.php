@@ -131,6 +131,18 @@ final class BaseNpcService extends BaseService
         $baseNpc->update($validated);
     }
 
+    public function setGuaranteedLoot(BaseNpc $baseNpc, bool $guaranteed)
+    {
+        $baseNpc->update(['guaranteed_loot' => $guaranteed]);
+
+        activity()
+            ->causedBy(Auth::user())
+            ->performedOn($baseNpc)
+            ->event('update-base-npc-guaranteed-loot')
+            ->withProperty('guaranteed', $guaranteed)
+            ->log('update-base-npc-guaranteed-loot');
+    }
+
     public function attachLoot(BaseNpc $baseNpc, int $baseItemId)
     {
         $baseItem = BaseItem::findOrFail($baseItemId);

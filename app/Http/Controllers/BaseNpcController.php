@@ -168,6 +168,11 @@ class BaseNpcController extends Controller
         $this->baseNpcService->updateImageFromBase64($baseNpc, $request->string('image'), $request->string('name'), 'img/npc');
     }
 
+    public function toggleGuaranteed(BaseNpc $baseNpc, Request $request)
+    {
+        $guaranteed = $request->boolean('guaranteed');
+        $this->baseNpcService->setGuaranteedLoot($baseNpc, $guaranteed);
+    }
 
     //metoda dosc tymczasowa...
     public function forumGenerator() {

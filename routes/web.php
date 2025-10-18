@@ -183,6 +183,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('base-npcs/{baseNpc}/loots', [BaseNpcController::class, 'attachLoot'])->name('base-npcs.loots.attach');
                 Route::post('base-npcs/{baseNpc}/loots/from-base-npc', [BaseNpcController::class, 'attachLootsFromBaseNpc'])->name('base-npcs.loots.attach-from-base-npc');
                 Route::delete('base-npcs/{baseNpc}/loots/{loot}', [BaseNpcController::class, 'detachLoot'])->name('base-npcs.loots.detach');
+                Route::patch('base-npcs/{baseNpc}/guaranteed', [BaseNpcController::class, 'toggleGuaranteed'])->name('base-npcs.guaranteed.toggle');
                 Route::get('web-api/base-npcs', [BaseNpcController::class, 'indexJson'])->name('web-api.base-npcs.index');
                 Route::post('base-npcs/advanced', [BaseNpcController::class, 'store'])->name('base-npcs.store');
                 Route::post('base-npcs', [BaseNpcController::class, 'storeSimple'])->name('base-npcs.store-simple');

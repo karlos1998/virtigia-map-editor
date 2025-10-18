@@ -24,6 +24,7 @@ class BaseNpc extends DynamicModel
         'profession',
         'is_aggressive',
         'divine_intervention',
+        'guaranteed_loot',
         'min_respawn_time',
         'max_respawn_time'
     ];
@@ -34,6 +35,7 @@ class BaseNpc extends DynamicModel
         'category' => BaseNpcCategory::class,
         'is_aggressive' => 'boolean',
         'divine_intervention' => 'boolean',
+        'guaranteed_loot' => 'boolean',
         'min_respawn_time' => 'integer',
         'max_respawn_time' => 'integer',
     ];
