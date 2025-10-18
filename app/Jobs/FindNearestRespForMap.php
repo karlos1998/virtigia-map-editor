@@ -18,7 +18,10 @@ class FindNearestRespForMap implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(private readonly Map $map)
+    public function __construct(
+        private readonly Map $map,
+        private readonly string $world = 'retro',
+    )
     {
     }
 
@@ -27,7 +30,7 @@ class FindNearestRespForMap implements ShouldQueue
      */
     public function handle(): void
     {
-        DynamicModel::setGlobalConnection('retro');
+        DynamicModel::setGlobalConnection($this->world);
 
         $chosenMapId = $this->map->id; // Startowa mapa
         $maxDepth = 50; // Maksymalna liczba kroków (ograniczenie głębokości)
@@ -71,7 +74,7 @@ class FindNearestRespForMap implements ShouldQueue
                         'steps' => $steps
                     ])
                     ->tap(function ($activity) {
-                        $activity->world = 'retro';
+                        $activity->world = $this->world;
                     })
                     ->log('Found nearest respawn point for map');
 

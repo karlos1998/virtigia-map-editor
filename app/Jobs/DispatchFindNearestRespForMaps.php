@@ -27,12 +27,16 @@ class DispatchFindNearestRespForMaps implements ShouldQueue
      */
     public function handle(): void
     {
-        DynamicModel::setGlobalConnection('retro');
+        $worlds = ['retro', 'legacy'];
 
-        $maps = Map::whereNull('respawn_point_id')->get();
+        foreach ($worlds as $world) {
+            DynamicModel::setGlobalConnection($world);
 
-        foreach ($maps as $map) {
-            dispatch(new FindNearestRespForMap($map));
+            $maps = Map::whereNull('respawn_point_id')->get();
+
+            foreach ($maps as $map) {
+                dispatch(new FindNearestRespForMap($map, $world));
+            }
         }
     }
 }
