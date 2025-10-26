@@ -4,6 +4,7 @@ export interface MapResource {
     id: number
     name: string
     src: string
+    thumbnail_src?: string
     x: number
     y: number
     col: string

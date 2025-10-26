@@ -45,6 +45,15 @@ type Data = {
 
                 <AdvanceColumn field="id" header="ID" style="width: 5%" />
 
+                <Column header="Miniatura" style="width: 80px">
+                    <template #body="{ data }: Data">
+                        <div class="flex items-center justify-center">
+                            <img :src="data.thumbnail_src ?? data.src" :alt="data.name"
+                                 style="width:64px; height:48px; object-fit:cover;"/>
+                        </div>
+                    </template>
+                </Column>
+
                 <Column header="Action" style="width: 20%">
                     <template #body="{data}">
                         <div style="white-space: nowrap">
