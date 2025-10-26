@@ -7,4 +7,5 @@ export enum DialogNodeOptionRule {
     questStep = 'questStep',
     questBeforeStep = 'questBeforeStep',
     questAfterStep = 'questAfterStep',
+    dragonTears = 'dragonTears',
 }

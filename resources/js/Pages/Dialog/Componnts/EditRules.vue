@@ -200,7 +200,7 @@ watch(
         />
 
         <InputNumber
-            v-if="rules[name] && typeof rules[name].value === 'number' && (name === DialogNodeOptionRule.gold || name === DialogNodeOptionRule.level)"
+            v-if="rules[name] && typeof rules[name].value === 'number' && (name === DialogNodeOptionRule.gold || name === DialogNodeOptionRule.level || name === DialogNodeOptionRule.dragonTears)"
             v-model="rules[name].value"
             :max="2000000000"
             :min="0"

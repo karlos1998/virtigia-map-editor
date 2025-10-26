@@ -41,6 +41,10 @@ enum DialogNodeOptionRule: string
     #[Description('Quest rozpoczęty, lub po kroku')]
     case QUEST_AFTER_STEP = 'questAfterStep';
 
+    #[CanBeUsed]
+    #[Description('Smocze łzy')]
+    case DRAGON_TEARS = 'dragonTears';
+
 
     public function canBeUsed(): bool
     {
