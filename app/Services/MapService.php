@@ -19,6 +19,7 @@ final class MapService extends BaseService
         private readonly Map $mapModel,
         private readonly AssetService $assetService,
         private readonly RespawnPointService $respawnPointService,
+        private readonly ThumbnailService $thumbnailService,
     )
     {
     }
@@ -89,7 +90,7 @@ final class MapService extends BaseService
         $width = $imageData['width'] / 32;
         $height = $imageData['height'] / 32;
 
-        return $this->mapModel->create([
+        $map = $this->mapModel->create([
             'name' => $name,
             'src' => session("world") . "/$fileName",
             'x' => $width,
@@ -99,6 +100,10 @@ final class MapService extends BaseService
             'water' => '',
             'pvp' => 0,
         ]);
+
+        $this->thumbnailService->generateThumbnail($map);
+
+        return $map;
     }
 
     public function updateCol(Map $map, string $col)
@@ -171,6 +176,8 @@ final class MapService extends BaseService
         $map->update([
             'src' => session("world") . "/$fileName",
         ]);
+
+        $this->thumbnailService->generateThumbnail($map);
     }
 
     /**
@@ -224,6 +231,9 @@ final class MapService extends BaseService
             $newMap->respawnPoint()->associate($map->respawn_point_id);
             $newMap->save();
         }
+
+        // Generate thumbnail for the copied map
+        $this->thumbnailService->generateThumbnail($newMap);
 
         return $newMap;
     }
