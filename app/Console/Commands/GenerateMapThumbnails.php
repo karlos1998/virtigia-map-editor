@@ -16,7 +16,7 @@ class GenerateMapThumbnails extends Command
      * img/locations/{prefix}-thumbnail/{filename}. The model stores path without the
      * `img/locations/` prefix, e.g. `retro-thumbnail/filename.png`.
      */
-    protected $signature = 'maps:generate-thumbnails {--force}';
+    protected $signature = 'maps:generate-thumbnails {--world= : The world connection name (e.g. retro)} {--force}';
 
     /**
      * The console command description.
@@ -25,7 +25,14 @@ class GenerateMapThumbnails extends Command
 
     public function handle(): int
     {
-        DynamicModel::setGlobalConnection('retro');
+        $world = $this->option('world');
+
+        if (!$world) {
+            $this->error('The --world option is required (e.g. --world=retro)');
+            return 1;
+        }
+
+        DynamicModel::setGlobalConnection($world);
 
         $force = (bool)$this->option('force');
 
