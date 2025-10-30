@@ -6,6 +6,9 @@ import MultiSelect from 'primevue/multiselect';
 import InputNumber from 'primevue/inputnumber';
 import Button from 'primevue/button';
 import ProgressSpinner from 'primevue/progressspinner';
+import Checkbox from 'primevue/checkbox';
+import InputText from 'primevue/inputtext';
+import Calendar from 'primevue/calendar';
 
 /*
 |--------------------------------------------------------------------------
@@ -36,6 +39,20 @@ interface BonusValidationResult {
     isValid: boolean;
     severity: 'info' | 'warn' | 'error';
     message: string;
+}
+
+interface BooleanAttribute {
+    key: string;
+    label: string;
+}
+
+interface AdditionalAttribute {
+    key: string;
+    label: string;
+    type: 'int' | 'string' | 'timestamp';
+    placeholder?: string;
+    showTime?: boolean;
+    dateFormat?: string;
 }
 
 /*
@@ -97,6 +114,28 @@ const selectedAttackElements = ref(
     []
 );
 
+// Boolean attributes configuration
+const booleanAttributes: BooleanAttribute[] = [
+    {key: 'isNonStoreableInClanDeposit', label: 'Przedmiotu nie można przechowywać w depozycie klanowym'},
+    {key: 'isBindPermanentlyAfterBuy', label: 'Wiąże na stałe po kupieniu'},
+    {key: 'isNonStoreableInDeposit', label: 'Przedmiotu nie można przechowywać w depozycie'},
+    {key: 'isPermanentlyBounded', label: 'Związany z właścicielem na stałe'},
+    {key: 'isBindsAfterEquip', label: 'Wiąże po założeniu'},
+    {key: 'isNotAuctionable', label: 'Tego przedmiotu nie można wystawiać na aukcję'},
+    {key: 'isBoundToOwner', label: 'Związany z włascicielem'},
+    {key: 'isRecovered', label: 'Przedmiot odzyskany, obniżona wartość'},
+    {key: 'isUnidentified', label: 'Przedmiot niezidentyfikowany'},
+    {key: 'impossibleToRemove', label: 'Czar niemożliwy do zdjęcia'}
+];
+
+const additionalAttributes: AdditionalAttribute[] = [
+    {key: 'shortenRevival', label: 'Skrócone odrodzenie', type: 'int'},
+    {key: 'description', label: 'Opis', type: 'string', placeholder: 'Podaj opis'},
+    {key: 'quantity', label: 'Ilość', type: 'int'},
+    {key: 'incrementGold', label: 'Zwiększ złoto', type: 'int'},
+    {key: 'expiresOn', label: 'Wygasa', type: 'timestamp', showTime: true, dateFormat: 'dd.mm.yy'}
+];
+
 /*
 |--------------------------------------------------------------------------
 | Computed Properties
@@ -121,22 +160,6 @@ const totalPointsUsed = computed(() => {
 
     // Manual attribute points are excluded from bonus validation
     // but we'll create a separate computed for display purposes
-
-    return total;
-});
-
-/**
- * Calculate total manual attribute points used (for display only)
- */
-const totalManualPointsUsed = computed(() => {
-    let total = 0;
-
-    attributeData.value.manualAttributePoints.forEach(attr => {
-        const value = getAttributeValue(attr.name, true);
-        if (typeof value === 'number') {
-            total += value;
-        }
-    });
 
     return total;
 });
@@ -203,6 +226,13 @@ const selectedAttackElementLabels = computed(() => {
         .join(', ') || 'brak';
 });
 
+/**
+ * Get count of enabled boolean attributes
+ */
+const enabledBooleanAttributesCount = computed(() => {
+    return booleanAttributes.filter(attr => getBooleanAttributeValue(attr.key)).length;
+});
+
 /*
 |--------------------------------------------------------------------------
 | Helper Functions
@@ -234,6 +264,79 @@ function updateAttributeValue(attributeName: string, value: number, isManual: bo
         }
         form.value.attribute_points[attributeName] = value;
     }
+}
+
+/**
+ * Get current value for a boolean attribute
+ */
+function getBooleanAttributeValue(attributeKey: string): boolean {
+    return form.value?.attributes?.[attributeKey] || false;
+}
+
+/**
+ * Update boolean attribute value in the form data
+ */
+function updateBooleanAttribute(attributeKey: string, value: boolean): void {
+    if (!form.value.attributes) {
+        form.value.attributes = {};
+    }
+    form.value.attributes[attributeKey] = value;
+}
+
+/**
+ * Update additional attribute value in the form data
+ */
+function updateAdditionalAttribute(attributeKey: string, value: number | string | Date | null): void {
+    if (!form.value.attributes) {
+        form.value.attributes = {};
+    }
+    if (value instanceof Date) {
+        form.value.attributes[attributeKey] = Math.floor(value.getTime() / 1000);
+    } else {
+        form.value.attributes[attributeKey] = value;
+    }
+    calculateScaleAttributes();
+}
+
+/**
+ * Get additional attribute value - converts unix timestamp to Date if needed
+ */
+function getAdditionalAttributeValue(attributeKey: string, type: 'int' | 'string' | 'timestamp'): number | string | Date | null {
+    const value = form.value?.attributes?.[attributeKey];
+
+    if (value === null || value === undefined) {
+        return type === 'int' ? 0 : type === 'string' ? '' : null;
+    }
+
+    if (type === 'timestamp' && typeof value === 'number') {
+        return new Date(value * 1000);
+    }
+
+    return value;
+}
+
+/**
+ * Get additional attribute value as integer
+ */
+function getAdditionalAttributeValueAsInt(attributeKey: string): number {
+    const value = getAdditionalAttributeValue(attributeKey, 'int');
+    return typeof value === 'number' ? value : 0;
+}
+
+/**
+ * Get additional attribute value as string
+ */
+function getAdditionalAttributeValueAsString(attributeKey: string): string {
+    const value = getAdditionalAttributeValue(attributeKey, 'string');
+    return typeof value === 'string' ? value : '';
+}
+
+/**
+ * Get additional attribute value as Date
+ */
+function getAdditionalAttributeValueAsDate(attributeKey: string): Date | null {
+    const value = getAdditionalAttributeValue(attributeKey, 'timestamp');
+    return value instanceof Date ? value : null;
 }
 
 /**
@@ -280,6 +383,25 @@ function buildApiParameters(): Record<string, any> {
                 }
             });
         });
+
+    // Add boolean attributes
+    booleanAttributes.forEach(attr => {
+        if (getBooleanAttributeValue(attr.key)) {
+            params[attr.key] = true;
+        }
+    });
+
+    // Add additional attributes
+    additionalAttributes.forEach(attr => {
+        const value = getAdditionalAttributeValue(attr.key, attr.type);
+        if (value !== null && value !== undefined && value !== '') {
+            if (attr.type === 'timestamp' && value instanceof Date) {
+                params[attr.key] = Math.floor(value.getTime() / 1000);
+            } else {
+                params[attr.key] = value;
+            }
+        }
+    });
 
     return params;
 }
@@ -635,6 +757,18 @@ watch(selectedAttackElements, async () => {
 
     await calculateScaleAttributes();
 });
+
+// Removed watcher for enabledBooleanAttributesCount
+
+// Add watcher for additional attributes
+// Removed deep watcher
+
+/*
+|--------------------------------------------------------------------------
+| Template
+|--------------------------------------------------------------------------
+*/
+
 </script>
 
 <template>
@@ -654,7 +788,8 @@ watch(selectedAttackElements, async () => {
                         Kategoria: {{ props.baseItem?.category || 'brak' }} |
                         Rzadkość: {{ props.baseItem?.rarity || 'brak' }} |
                         Profesje: {{ selectedProfessionLabels }} |
-                        Elementy ataku: {{ selectedAttackElementLabels }}
+                        Elementy ataku: {{ selectedAttackElementLabels }} |
+                        Atrybuty logiczne: {{ enabledBooleanAttributesCount }}
                     </div>
                 </div>
                 <div v-if="isCalculating" class="flex items-center text-sm text-gray-600">
@@ -804,6 +939,80 @@ watch(selectedAttackElements, async () => {
                         buttonLayout="horizontal"
                         class="w-full"
                     />
+                </div>
+            </div>
+        </section>
+
+        <!-- Boolean Attributes -->
+        <section>
+            <h4 class="text-lg font-semibold mb-4 text-blue-600 border-b border-blue-200 pb-2 flex justify-between items-center">
+                Atrybuty logiczne
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div
+                    v-for="attr in booleanAttributes"
+                    :key="attr.key"
+                    :class="[
+                        'flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 active:ring-2 active:ring-blue-400 cursor-pointer',
+                        {'bg-blue-100 border-blue-200': getBooleanAttributeValue(attr.key)}
+                    ]"
+                    @click="updateBooleanAttribute(attr.key, !getBooleanAttributeValue(attr.key))"
+                >
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium text-sm text-gray-800 truncate">{{ attr.label }}</div>
+                    </div>
+                    <div class="flex items-center gap-3 ml-4">
+                        <Checkbox
+                            :modelValue="getBooleanAttributeValue(attr.key)"
+                            :binary="true"
+                            class="mr-2"
+                            style="pointer-events: none"
+                        />
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Additional Attributes -->
+        <section>
+            <h4 class="text-lg font-semibold mb-4 text-blue-600 border-b border-blue-200 pb-2 flex justify-between items-center">
+                Dodatkowe Atrybuty
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div
+                    v-for="attr in additionalAttributes"
+                    :key="attr.key"
+                    class="flex flex-col p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200"
+                >
+                    <div class="mb-3">
+                        <div class="font-medium text-sm text-gray-800">{{ attr.label }}</div>
+                    </div>
+                    <template v-if="attr.type === 'int'">
+                        <InputNumber
+                            :model-value="getAdditionalAttributeValueAsInt(attr.key)"
+                            @update:model-value="(value: number | null) => updateAdditionalAttribute(attr.key, value || 0)"
+                            showButtons
+                            buttonLayout="horizontal"
+                            class="w-full"
+                        />
+                    </template>
+                    <template v-else-if="attr.type === 'string'">
+                        <InputText
+                            :model-value="getAdditionalAttributeValueAsString(attr.key)"
+                            @update:model-value="(value: string) => updateAdditionalAttribute(attr.key, value)"
+                            class="w-full"
+                            :placeholder="attr.placeholder"
+                        />
+                    </template>
+                    <template v-else-if="attr.type === 'timestamp'">
+                        <Calendar
+                            :model-value="getAdditionalAttributeValueAsDate(attr.key)"
+                            @update:model-value="(value: Date | null) => updateAdditionalAttribute(attr.key, value)"
+                            class="w-full"
+                            :showTime="attr.showTime"
+                            :dateFormat="attr.dateFormat"
+                        />
+                    </template>
                 </div>
             </div>
         </section>
