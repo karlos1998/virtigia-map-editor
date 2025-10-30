@@ -9,6 +9,7 @@ import ProgressSpinner from 'primevue/progressspinner';
 import Checkbox from 'primevue/checkbox';
 import InputText from 'primevue/inputtext';
 import Calendar from 'primevue/calendar';
+import Dropdown from 'primevue/dropdown';
 
 /*
 |--------------------------------------------------------------------------
@@ -53,6 +54,12 @@ interface AdditionalAttribute {
     placeholder?: string;
     showTime?: boolean;
     dateFormat?: string;
+}
+
+interface LegendaryBonusOption {
+    name: string;
+    label: string;
+    value: number;
 }
 
 /*
@@ -135,6 +142,34 @@ const additionalAttributes: AdditionalAttribute[] = [
     {key: 'incrementGold', label: 'Zwiększ złoto', type: 'int'},
     {key: 'expiresOn', label: 'Wygasa', type: 'timestamp', showTime: true, dateFormat: 'dd.mm.yy'}
 ];
+
+const legendaryBonuses: LegendaryBonusOption[] = [
+    {name: 'none', label: 'Brak', value: 0},
+    {
+        name: 'angelTouchHealingChance',
+        label: 'Dotknięcie anioła',
+        value: 5
+    },
+    {
+        name: 'superCriticalHitChance',
+        label: 'Cios bardzo krytyczny',
+        value: 10
+    },
+    {name: 'superMagicalReduction', label: 'Ochrona żywiołów', value: 12},
+    {name: 'superCriticalReduction', label: 'Krytyczna osłona', value: 15},
+    {name: 'superPhysicalReduction', label: 'Fizyczna osłona', value: 12},
+    {name: 'curseChanceAfterDoHit', label: 'Klątwa', value: 7},
+    {name: 'pushBack', label: 'Odrzut', value: 8},
+    {name: 'superHealOnLowHealth', label: 'Ostatni ratunek', value: 30},
+];
+
+const selectedLegendaryBonus = ref(
+    form.value?.attributes?.legendaryBon &&
+    legendaryBonuses.find(b => b.name === form.value.attributes.legendaryBon[0])?.name ||
+    props.baseItem?.attributes?.legendaryBon &&
+    legendaryBonuses.find(b => b.name === props.baseItem.attributes.legendaryBon[0])?.name ||
+    legendaryBonuses[0].name
+);
 
 /*
 |--------------------------------------------------------------------------
@@ -403,6 +438,14 @@ function buildApiParameters(): Record<string, any> {
         }
     });
 
+    // Add legendary bonus
+    if (selectedLegendaryBonus.value !== 'none') {
+        const bonus = legendaryBonuses.find(b => b.name === selectedLegendaryBonus.value);
+        if (bonus) {
+            params.legendaryBonus = [bonus.name, bonus.value];
+        }
+    }
+
     return params;
 }
 
@@ -410,7 +453,7 @@ function buildApiParameters(): Record<string, any> {
  * Check if parameters contain any attribute points (not just base item data)
  */
 function hasAttributeParameters(params: Record<string, any>): boolean {
-    const baseItemKeys = ['lvl', 'itemCategory', 'itemProfessions', 'attackElements', 'rarity'];
+    const baseItemKeys = ['lvl', 'itemCategory', 'itemProfessions', 'attackElements', 'rarity', 'legendaryBonus'];
     return Object.keys(params).some(key => !baseItemKeys.includes(key));
 }
 
@@ -758,10 +801,23 @@ watch(selectedAttackElements, async () => {
     await calculateScaleAttributes();
 });
 
-// Removed watcher for enabledBooleanAttributesCount
+watch(selectedLegendaryBonus, async () => {
+    if (!form.value.attributes) {
+        form.value.attributes = {};
+    }
+    if (selectedLegendaryBonus.value === 'none') {
+        form.value.attributes.legendaryBon = null;
+    } else {
+        const bonus = legendaryBonuses.find(b => b.name === selectedLegendaryBonus.value);
+        if (bonus) {
+            form.value.attributes.legendaryBon = [bonus.name, bonus.value];
+        } else {
+            form.value.attributes.legendaryBon = null;
+        }
+    }
 
-// Add watcher for additional attributes
-// Removed deep watcher
+    await calculateScaleAttributes();
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -818,8 +874,6 @@ watch(selectedAttackElements, async () => {
                     </div>
                 </div>
             </div>
-
-
         </div>
 
         <!-- Profession Selection and Level -->
@@ -858,6 +912,14 @@ watch(selectedAttackElements, async () => {
                     <div class="font-semibold text-blue-800 mb-2">Poziom:</div>
                     <InputNumber v-model="selectedLevel" showButtons buttonLayout="horizontal" :min="1" :max="1000"
                                  class="w-full" />
+                </div>
+
+                <!-- Legendary Bonus Selection -->
+                <div>
+                    <div class="font-semibold text-blue-800 mb-2">Bonus legendarny:</div>
+                    <Dropdown v-model="selectedLegendaryBonus" :options="legendaryBonuses" optionLabel="label"
+                              optionValue="name"
+                              placeholder="Wybierz bonus legendarny" class="w-full"/>
                 </div>
             </div>
         </div>
