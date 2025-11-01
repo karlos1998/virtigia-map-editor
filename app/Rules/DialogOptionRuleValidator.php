@@ -112,6 +112,11 @@ class DialogOptionRuleValidator implements ValidationRule
                     $fail("Dla rule: {$key}, następujące ID nie istnieją: " . $invalidItems->implode(', '));
                     return;
                 }
+            } elseif ($key === DialogNodeOptionRule::MESSAGE_CONTENT->value) {
+                if (!is_string($ruleData['value']) || mb_strlen($ruleData['value']) > 100) {
+                    $fail("Dla rule: {$key}, wartość musi być tekstem o długości max. 100 znaków.");
+                    return;
+                }
             } elseif (
                 $key === DialogNodeOptionRule::QUEST_STEP->value ||
                 $key === DialogNodeOptionRule::QUEST_BEFORE_STEP->value ||

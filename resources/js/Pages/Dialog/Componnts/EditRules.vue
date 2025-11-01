@@ -12,6 +12,7 @@ import { MultiSelectFilterEvent } from "primevue"
 import { QuestResource, QuestStepResource } from "@/Resources/Quest.resource"
 import TreeSelectAdapter from "@/Pages/Dialog/Componnts/TreeSelectAdapter.vue";
 import { useQuestStepSelection } from "@/Pages/Dialog/Composables/useQuestStepSelection";
+import InputText from 'primevue/inputtext';
 
 const rules = defineModel<DialogNodeRulesResource>("rules", {
     required: true,
@@ -64,6 +65,8 @@ const submitNewRule = () => {
         newRule.value === DialogNodeOptionRule.questAfterStep
     ) {
         value = []
+    } else if (newRule.value === DialogNodeOptionRule.messageContent) {
+        value = ''
     }
 
     const data = {
@@ -250,6 +253,14 @@ watch(
             :options="questNodes"
             :onNodeExpand="onQuestNodeExpand"
             :returnList="true"
+        />
+
+        <InputText
+            v-if="rules[name] && name === DialogNodeOptionRule.messageContent"
+            v-model="rules[name].value"
+            :maxlength="100"
+            placeholder="Podaj treść odpowiedzi (max 100 znaków)"
+            class="w-full md:w-80"
         />
 
     </InputGroup>

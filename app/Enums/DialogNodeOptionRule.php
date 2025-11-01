@@ -45,6 +45,8 @@ enum DialogNodeOptionRule: string
     #[Description('Smocze łzy')]
     case DRAGON_TEARS = 'dragonTears';
 
+    #[Description('Treść odpowiedzi')]
+    case MESSAGE_CONTENT = 'messageContent';
 
     public function canBeUsed(): bool
     {
