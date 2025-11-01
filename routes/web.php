@@ -114,6 +114,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::patch('maps/{map}/clear-water', [MapController::class, 'clearWater'])->name('maps.clear.water');
                 Route::post('maps/{map}/renewable-items', [RenewableMapItemController::class, 'store'])->name('maps.renewable-items.store');
                 Route::delete('maps/{map}/renewable-items/{renewableItem}', [RenewableMapItemController::class, 'destroy'])->name('maps.renewable-items.destroy');
+                Route::patch('maps/{map}/teleport-locked', [MapController::class, 'updateTeleportLocked'])->name('maps.update.teleport-locked');
 
                 Route::get('base-items', [BaseItemController::class, 'index'])->name('base-items.index');
                 Route::get('base-items/create', [BaseItemController::class, 'create'])->name('base-items.create');

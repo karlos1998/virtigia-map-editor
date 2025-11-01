@@ -17,10 +17,12 @@ class Map extends DynamicModel
         'battleground2',
         'water',
         'pvp',
+        'is_teleport_locked',
     ];
 
     protected $casts = [
         'pvp' => PvpType::class,
+        'is_teleport_locked' => 'boolean',
     ];
 
     public function npcs() {

@@ -5,6 +5,7 @@ import { route } from 'ziggy-js';
 import { useToast } from 'primevue';
 import { MapResource } from '@/Resources/Map.resource';
 import ReplaceMapImageModal from '@/Pages/Map/Modals/ReplaceMapImageModal.vue';
+import InputSwitch from 'primevue/inputswitch';
 
 const props = defineProps<{
     map: MapResource;
@@ -18,6 +19,7 @@ const selectedPvpType = ref<number | null>(null);
 const selectedRespawnPointId = ref<number | null>(null);
 const toast = useToast();
 const showReplaceImageModal = ref(false);
+const isTeleportLocked = ref(props.map.is_teleport_locked ?? false);
 
 // Static list of battleground images (place these files under public/img/Backgrounds)
 const backgroundFiles = [
@@ -205,6 +207,30 @@ const updateMapBattleground2 = () => {
         }
     });
 };
+
+// Patch teleport_lock
+const updateMapTeleportLocked = () => {
+    router.patch(route('maps.update.teleport-locked', props.map.id), {
+        is_teleport_locked: isTeleportLocked.value
+    }, {
+        onSuccess: () => {
+            toast.add({
+                severity: 'success',
+                summary: 'Sukces',
+                detail: 'Opcja teleportowania została zaktualizowana',
+                life: 3000
+            });
+        },
+        onError: () => {
+            toast.add({
+                severity: 'error',
+                summary: 'Błąd',
+                detail: 'Nie udało się zaktualizować opcji teleportowania',
+                life: 3000
+            });
+        }
+    });
+};
 </script>
 
 <template>
@@ -287,6 +313,21 @@ const updateMapBattleground2 = () => {
                 <div class="flex items-center">
                     <Dropdown v-model="selectedPvpType" :options="pvpTypeList" optionLabel="label" optionValue="value" class="w-full mr-2" />
                     <Button label="Zapisz" @click="updateMapPvp" />
+                </div>
+            </div>
+
+            <!-- Teleportacja z mapy dozwolona -->
+            <div>
+                <h3 class="font-semibold mb-2">Blokada teleportacji</h3>
+                <div class="flex items-center">
+                    <InputSwitch v-model="isTeleportLocked" class="mr-2"/>
+                    <Button label="Zapisz" @click="updateMapTeleportLocked"/>
+                </div>
+                <div v-if="isTeleportLocked" class="mt-2 text-red-600 text-sm">
+                    Z tej mapy nie można się teleportować.
+                </div>
+                <div v-else class="mt-2 text-green-600 text-sm">
+                    Teleportacja dozwolona.
                 </div>
             </div>
 

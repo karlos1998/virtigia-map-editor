@@ -175,4 +175,9 @@ class MapController extends Controller
     {
         $this->mapService->updateBattleground2($map, $request->input('battleground2'));
     }
+
+    public function updateTeleportLocked(Map $map, Request $request): void
+    {
+        $this->mapService->updateTeleportLocked($map, (bool)$request->input('is_teleport_locked', false));
+    }
 }

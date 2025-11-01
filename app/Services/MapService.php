@@ -180,6 +180,11 @@ final class MapService extends BaseService
         $this->thumbnailService->generateThumbnail($map);
     }
 
+    public function updateTeleportLocked(Map $map, bool $isTeleportLocked): void
+    {
+        $map->update(['is_teleport_locked' => $isTeleportLocked]);
+    }
+
     /**
      * Remove the specified map from storage.
      *

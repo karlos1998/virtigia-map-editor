@@ -13,6 +13,6 @@ export interface MapResource {
     battleground?: string
 
     // ....
-
+    is_teleport_locked?: boolean
     respawn_point?: RespawnPointResource
 }

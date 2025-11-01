@@ -25,6 +25,7 @@ class MapResource extends JsonResource
             'battleground' => $this->resource->battleground,
             'battleground2' => $this->resource->battleground2,
             'respawn_point' => RespawnPointResource::make($this->resource->respawnPoint),
+            'is_teleport_locked' => $this->resource->is_teleport_locked,
         ];
     }
 }
