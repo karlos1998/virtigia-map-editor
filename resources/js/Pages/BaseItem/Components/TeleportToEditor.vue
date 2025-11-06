@@ -189,13 +189,6 @@ watch(() => props.attributes?.cooldownTime, (newVal) => {
 
 // Auto-save when teleport fields change and are valid
 watch([mapId, xCoord, yCoord, mapName, cooldownTime], () => {
-    console.log('=== TELEPORT AUTO-SAVE TRIGGERED ===');
-    console.log('mapId:', mapId.value);
-    console.log('xCoord:', xCoord.value);
-    console.log('yCoord:', yCoord.value);
-    console.log('mapName:', mapName.value);
-    console.log('cooldownTime:', cooldownTime.value);
-    console.log('isValid:', isValid.value);
 
     // Only auto-save if valid (all required fields are filled)
     if (isValid.value) {
@@ -211,9 +204,6 @@ watch([mapId, xCoord, yCoord, mapName, cooldownTime], () => {
             teleportArray.push(mapName.value.trim());
         }
 
-        console.log('teleportArray:', teleportArray);
-        console.log('props.attributes BEFORE:', JSON.parse(JSON.stringify(props.attributes || {})));
-
         // Update the attributes
         const updatedAttributes = {
             ...props.attributes,
@@ -227,13 +217,9 @@ watch([mapId, xCoord, yCoord, mapName, cooldownTime], () => {
             delete updatedAttributes.cooldownTime;
         }
 
-        console.log('updatedAttributes:', JSON.parse(JSON.stringify(updatedAttributes)));
-        console.log('=== TELEPORT AUTO-SAVE END, EMITTING ===');
-
         emit('update:attributes', updatedAttributes);
     } else if (mapId.value === null && xCoord.value === null && yCoord.value === null) {
         // If all fields are empty, remove teleportTo
-        console.log('All fields empty, removing teleportTo');
         const updatedAttributes = { ...props.attributes };
         delete updatedAttributes.teleportTo;
 
