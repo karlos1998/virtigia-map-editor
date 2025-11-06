@@ -28,6 +28,7 @@
                 <p>ID Mapy: <strong>{{ mapId || 'Nie ustawiono' }}</strong></p>
                 <p>Pozycja: <strong>X: {{ xCoord || 0 }}, Y: {{ yCoord || 0 }}</strong></p>
                 <p v-if="mapName">Nazwa mapy: <strong>{{ mapName }}</strong></p>
+                <p v-if="cooldownTime">Czas odnowienia: <strong>{{ cooldownTime }} min</strong></p>
             </div>
         </div>
 
@@ -94,6 +95,21 @@
                 />
                 <small class="text-gray-500">Współrzędna Y na mapie docelowej</small>
             </div>
+
+            <div class="field">
+                <label for="cooldownTime" class="block font-semibold mb-2">
+                    Czas Odnowienia (opcjonalny)
+                </label>
+                <InputNumber
+                    v-model="cooldownTime"
+                    :min="0"
+                    placeholder="Czas w minutach"
+                    class="w-full"
+                    :useGrouping="false"
+                    suffix=" min"
+                />
+                <small class="text-gray-500">Czas w minutach przed ponownym użyciem teleportu</small>
+            </div>
         </div>
 
         <!-- Validation message -->
@@ -133,6 +149,8 @@ const mapId = ref<number | null>(null);
 const xCoord = ref<number | null>(null);
 const yCoord = ref<number | null>(null);
 const mapName = ref<string>('');
+// cooldownTime is stored separately in attributes
+const cooldownTime = ref<number | null>(null);
 
 // Initialize values from existing teleportTo attribute
 const initializeFromAttributes = () => {
@@ -142,6 +160,14 @@ const initializeFromAttributes = () => {
         xCoord.value = teleportTo[1] ?? null;
         yCoord.value = teleportTo[2] ?? null;
         mapName.value = teleportTo[3] ?? '';
+    }
+
+    // Initialize cooldownTime from attributes (stored as array [number])
+    const cooldown = props.attributes?.cooldownTime;
+    if (cooldown && Array.isArray(cooldown) && cooldown.length > 0) {
+        cooldownTime.value = cooldown[0] ?? null;
+    } else {
+        cooldownTime.value = null;
     }
 };
 
@@ -153,13 +179,22 @@ watch(() => props.attributes?.teleportTo, () => {
     initializeFromAttributes();
 }, { deep: true });
 
+watch(() => props.attributes?.cooldownTime, (newVal) => {
+    if (newVal && Array.isArray(newVal) && newVal.length > 0) {
+        cooldownTime.value = newVal[0] ?? null;
+    } else {
+        cooldownTime.value = null;
+    }
+});
+
 // Auto-save when teleport fields change and are valid
-watch([mapId, xCoord, yCoord, mapName], () => {
+watch([mapId, xCoord, yCoord, mapName, cooldownTime], () => {
     console.log('=== TELEPORT AUTO-SAVE TRIGGERED ===');
     console.log('mapId:', mapId.value);
     console.log('xCoord:', xCoord.value);
     console.log('yCoord:', yCoord.value);
     console.log('mapName:', mapName.value);
+    console.log('cooldownTime:', cooldownTime.value);
     console.log('isValid:', isValid.value);
 
     // Only auto-save if valid (all required fields are filled)
@@ -185,6 +220,13 @@ watch([mapId, xCoord, yCoord, mapName], () => {
             teleportTo: teleportArray
         };
 
+        // Add or remove cooldownTime (stored as array [number])
+        if (typeof cooldownTime.value === 'number' && cooldownTime.value > 0) {
+            updatedAttributes.cooldownTime = [cooldownTime.value];
+        } else {
+            delete updatedAttributes.cooldownTime;
+        }
+
         console.log('updatedAttributes:', JSON.parse(JSON.stringify(updatedAttributes)));
         console.log('=== TELEPORT AUTO-SAVE END, EMITTING ===');
 
@@ -194,6 +236,25 @@ watch([mapId, xCoord, yCoord, mapName], () => {
         console.log('All fields empty, removing teleportTo');
         const updatedAttributes = { ...props.attributes };
         delete updatedAttributes.teleportTo;
+
+        // Also handle cooldownTime when teleport is removed
+        if (typeof cooldownTime.value === 'number' && cooldownTime.value > 0) {
+            updatedAttributes.cooldownTime = [cooldownTime.value];
+        } else {
+            delete updatedAttributes.cooldownTime;
+        }
+
+        emit('update:attributes', updatedAttributes);
+    } else {
+        // Partial data - just update cooldownTime if changed
+        const updatedAttributes = { ...props.attributes };
+
+        if (typeof cooldownTime.value === 'number' && cooldownTime.value > 0) {
+            updatedAttributes.cooldownTime = [cooldownTime.value];
+        } else {
+            delete updatedAttributes.cooldownTime;
+        }
+
         emit('update:attributes', updatedAttributes);
     }
 });
@@ -217,6 +278,7 @@ const removeTeleport = () => {
     // Remove teleportTo from attributes
     const updatedAttributes = { ...props.attributes };
     delete updatedAttributes.teleportTo;
+    delete updatedAttributes.cooldownTime;
 
     emit('update:attributes', updatedAttributes);
 
@@ -225,6 +287,7 @@ const removeTeleport = () => {
     xCoord.value = null;
     yCoord.value = null;
     mapName.value = '';
+    cooldownTime.value = null;
 };
 </script>
 
