@@ -83,6 +83,17 @@ class MapController extends Controller
         return MapResource::collection($this->mapService->search($request->get('search', '')));
     }
 
+    /**
+     * Get map data as JSON (for API calls)
+     *
+     * @param Map $map
+     * @return MapResource
+     */
+    public function getMapData(Map $map): MapResource
+    {
+        return MapResource::make($map);
+    }
+
     public function updateCol(Map $map, UpdateMapColsRequest $request): void
     {
         $this->mapService->updateCol($map, $request->post('col'));

@@ -39,77 +39,31 @@
             </p>
         </div>
 
-        <!-- Teleport configuration form -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="field">
-                <label for="mapId" class="block font-semibold mb-2">
-                    ID Mapy <span class="text-red-500">*</span>
-                </label>
-                <InputNumber
-                    v-model="mapId"
-                    :min="0"
-                    placeholder="Wprowadź ID mapy docelowej"
-                    class="w-full"
-                    :useGrouping="false"
-                />
-                <small class="text-gray-500">Identyfikator mapy, do której ma prowadzić teleport</small>
-            </div>
+    <!-- Teleport configuration -->
+    <div class="mb-4">
+        <Button
+            :label="hasTeleport ? 'Zmień lokalizację teleportu' : 'Ustaw lokalizację teleportu'"
+            icon="pi pi-map-marker"
+            @click="openMapSelectionModal"
+            class="w-full"
+        />
+        <small class="text-gray-500 block mt-2">Kliknij, aby wybrać mapę i koordynaty docelowe</small>
+    </div>
 
-            <div class="field">
-                <label for="mapName" class="block font-semibold mb-2">
-                    Nazwa Mapy (opcjonalna)
-                </label>
-                <InputText
-                    id="mapName"
-                    v-model="mapName"
-                    placeholder="Wprowadź nazwę mapy"
-                    class="w-full"
-                />
-                <small class="text-gray-500">Czytelna nazwa mapy dla gracza</small>
-            </div>
-
-            <div class="field">
-                <label for="xCoord" class="block font-semibold mb-2">
-                    Pozycja X <span class="text-red-500">*</span>
-                </label>
-                <InputNumber
-                    v-model="xCoord"
-                    :min="0"
-                    placeholder="Wprowadź współrzędną X"
-                    class="w-full"
-                    :useGrouping="false"
-                />
-                <small class="text-gray-500">Współrzędna X na mapie docelowej</small>
-            </div>
-
-            <div class="field">
-                <label for="yCoord" class="block font-semibold mb-2">
-                    Pozycja Y <span class="text-red-500">*</span>
-                </label>
-                <InputNumber
-                    v-model="yCoord"
-                    :min="0"
-                    placeholder="Wprowadź współrzędną Y"
-                    class="w-full"
-                    :useGrouping="false"
-                />
-                <small class="text-gray-500">Współrzędna Y na mapie docelowej</small>
-            </div>
-
-            <div class="field">
-                <label for="cooldownTime" class="block font-semibold mb-2">
-                    Czas Odnowienia (opcjonalny)
-                </label>
-                <InputNumber
-                    v-model="cooldownTime"
-                    :min="0"
-                    placeholder="Czas w minutach"
-                    class="w-full"
-                    :useGrouping="false"
-                    suffix=" min"
-                />
-                <small class="text-gray-500">Czas w minutach przed ponownym użyciem teleportu</small>
-            </div>
+    <!-- Cooldown time configuration -->
+    <div class="field">
+        <label for="cooldownTime" class="block font-semibold mb-2">
+            Czas Odnowienia (opcjonalny)
+        </label>
+        <InputNumber
+            v-model="cooldownTime"
+            :min="0"
+            placeholder="Czas w minutach"
+            class="w-full"
+            :useGrouping="false"
+            suffix=" min"
+        />
+        <small class="text-gray-500">Czas w minutach przed ponownym użyciem teleportu</small>
         </div>
 
         <!-- Validation message -->
@@ -133,8 +87,10 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import InputNumber from 'primevue/inputnumber';
-import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
+import { useDialog } from 'primevue/usedialog';
+import { DynamicDialogCloseOptions } from 'primevue/dynamicdialogoptions';
+import MapSelectionModal from './MapSelectionModal.vue';
 
 // Props to receive and update attributes object directly
 const props = defineProps<{
@@ -142,6 +98,9 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['update:attributes']);
+
+// PrimeVue dialog service
+const primeDialog = useDialog();
 
 // Local state for teleport fields
 // teleportTo structure: [mapId, x, y, mapName?]
@@ -258,6 +217,52 @@ const isValid = computed(() => {
         typeof xCoord.value === 'number' &&
         typeof yCoord.value === 'number';
 });
+
+// Open map selection modal
+const openMapSelectionModal = () => {
+    primeDialog.open(MapSelectionModal, {
+        props: {
+            header: 'Wybierz lokalizację teleportu',
+            modal: true,
+            style: {
+                width: '90vw',
+                maxWidth: '1200px'
+            },
+            breakpoints: {
+                '960px': '95vw',
+                '640px': '100vw'
+            }
+        },
+        data: {
+            teleportData: hasTeleport.value ? {
+                mapId: mapId.value,
+                x: xCoord.value,
+                y: yCoord.value,
+                mapName: mapName.value
+            } : undefined
+        },
+        onClose(closeOptions: DynamicDialogCloseOptions & {
+            data?: {
+                teleportData?: {
+                    mapId: number;
+                    x: number;
+                    y: number;
+                    mapName?: string;
+                }
+            }
+        }) {
+            if (closeOptions.data?.teleportData) {
+                const { mapId: newMapId, x, y, mapName: newMapName } = closeOptions.data.teleportData;
+
+                // Update local state
+                mapId.value = newMapId;
+                xCoord.value = x;
+                yCoord.value = y;
+                mapName.value = newMapName || '';
+            }
+        }
+    });
+};
 
 // Remove teleport configuration
 const removeTeleport = () => {

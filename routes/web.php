@@ -86,6 +86,7 @@ Route::middleware(['auth'])->group(function () {
 
                 Route::get('maps/search', [MapController::class, 'search'])->name('maps.search');
                 Route::get('maps', [MapController::class, 'index'])->name('maps.index');
+                Route::get('maps/{map}/data', [MapController::class, 'getMapData'])->name('maps.data');
                 Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');
 
                 Route::get('respawn-points', [\App\Http\Controllers\RespawnPointController::class, 'index'])->name('respawn-points.index');
