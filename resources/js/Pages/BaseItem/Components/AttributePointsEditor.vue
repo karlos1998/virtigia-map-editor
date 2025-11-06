@@ -315,6 +315,7 @@ function updateBooleanAttribute(attributeKey: string, value: boolean): void {
     if (!form.value.attributes) {
         form.value.attributes = {};
     }
+    // Modify existing attributes object in place instead of reassigning
     form.value.attributes[attributeKey] = value;
 }
 
@@ -325,11 +326,15 @@ function updateAdditionalAttribute(attributeKey: string, value: number | string 
     if (!form.value.attributes) {
         form.value.attributes = {};
     }
+
+    let finalValue = value;
     if (value instanceof Date) {
-        form.value.attributes[attributeKey] = Math.floor(value.getTime() / 1000);
-    } else {
-        form.value.attributes[attributeKey] = value;
+        finalValue = Math.floor(value.getTime() / 1000);
     }
+
+    // Modify existing attributes object in place instead of reassigning
+    form.value.attributes[attributeKey] = finalValue;
+
     calculateScaleAttributes();
 }
 
@@ -772,49 +777,62 @@ onMounted(() => {
 });
 
 watch(selectedProfessions, async () => {
-    // Save to form data
+
+    // Save to form data - preserve existing attributes by modifying in place
     if (!form.value.attributes) {
         form.value.attributes = {};
     }
+    // Modify existing attributes object in place instead of reassigning
     form.value.attributes.needProfessions = selectedProfessions.value;
+
 
     await calculateScaleAttributes();
 });
 
 watch(selectedLevel, async () => {
-    // Save to form data
+
+    // Save to form data - preserve existing attributes by modifying in place
     if (!form.value.attributes) {
         form.value.attributes = {};
     }
+    // Modify existing attributes object in place instead of reassigning
     form.value.attributes.needLevel = selectedLevel.value;
+
 
     await calculateScaleAttributes();
 });
 
 watch(selectedAttackElements, async () => {
-    // Save to form data
+
+    // Save to form data - preserve existing attributes by modifying in place
     if (!form.value.attributes) {
         form.value.attributes = {};
     }
+    // Modify existing attributes object in place instead of reassigning
     form.value.attributes.needAttackElements = selectedAttackElements.value;
+
 
     await calculateScaleAttributes();
 });
 
 watch(selectedLegendaryBonus, async () => {
+
+    // Save to form data - preserve existing attributes by modifying in place
     if (!form.value.attributes) {
         form.value.attributes = {};
     }
-    if (selectedLegendaryBonus.value === 'none') {
-        form.value.attributes.legendaryBon = null;
-    } else {
+
+    let legendaryBonValue = null;
+    if (selectedLegendaryBonus.value !== 'none') {
         const bonus = legendaryBonuses.find(b => b.name === selectedLegendaryBonus.value);
         if (bonus) {
-            form.value.attributes.legendaryBon = [bonus.name, bonus.value];
-        } else {
-            form.value.attributes.legendaryBon = null;
+            legendaryBonValue = [bonus.name, bonus.value];
         }
     }
+
+    // Modify existing attributes object in place instead of reassigning
+    form.value.attributes.legendaryBon = legendaryBonValue;
+
 
     await calculateScaleAttributes();
 });

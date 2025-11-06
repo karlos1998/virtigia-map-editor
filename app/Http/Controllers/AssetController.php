@@ -56,5 +56,22 @@ class AssetController extends Controller
         ]));
     }
 
+    public function searchOutfits(Request $request)
+    {
+        $validatedData = $request->validate([
+            'path' => ['required', 'string', function ($attribute, $value, $fail) {
+                if (!str_starts_with($value, 'img/outfits')) {
+                    $fail('The path must start with "img/outfits".');
+                }
+            }],
+        ]);
+
+        $items = $this->assetService->search($validatedData['path']);
+
+        return response()->json(collect($items)->map(fn($item) => [
+            ...$item,
+            'path' => config('assets.url') . config('assets.dirs.outfits') . str_replace('img/outfits/', '', $item['path']),
+        ]));
+    }
 
 }
