@@ -220,8 +220,11 @@ const removeTeleport = () => {
 
     emit('update:attributes', updatedAttributes);
 
-    // Reset local state
-    initializeFromAttributes();
+    // Clear local state explicitly
+    mapId.value = null;
+    xCoord.value = null;
+    yCoord.value = null;
+    mapName.value = '';
 };
 </script>
 
