@@ -9,6 +9,7 @@ import {useToast} from "primevue";
 import AttributeEditor from "../../Components/AttributeEditor.vue";
 import AttributePointsEditor from './Components/AttributePointsEditor.vue';
 import TeleportToEditor from './Components/TeleportToEditor.vue';
+import OutfitEditor from './Components/OutfitEditor.vue';
 import JsonEditorVue from 'json-editor-vue'
 
 const { baseItem } = defineProps<{
@@ -74,12 +75,12 @@ onMounted(() => {
 // Watch for tab changes to sync JSON editor
 watch(activeTab, (newTab, oldTab) => {
     // When entering JSON editor tab, sync from form.attributes
-    if (newTab === '1') {
+    if (newTab === '3') {
         jsonEditorAttributes.value = JSON.parse(JSON.stringify(form.attributes));
     }
 
     // When leaving JSON editor tab, sync to form.attributes (with validation)
-    if (oldTab === '1' && newTab !== '1') {
+    if (oldTab === '3' && newTab !== '3') {
         syncFromJsonEditor();
     }
 });
@@ -132,12 +133,20 @@ const save = () => {
     // Scale result values take priority over current attributes, but preserve special fields
     if (scaleResult.value) {
         // Merge scale result, but preserve special attributes that shouldn't be overwritten
-        // like teleportTo, and any other non-numeric attributes
+        // like teleportTo, useOutfit, description, and any other non-numeric attributes
         const specialAttributes: any = {};
 
         // Preserve teleportTo if it exists in form.attributes
         if (form.attributes.teleportTo) {
             specialAttributes.teleportTo = form.attributes.teleportTo;
+        }
+
+        // Preserve outfit-related attributes if they exist in form.attributes
+        if (form.attributes.useOutfit) {
+            specialAttributes.useOutfit = form.attributes.useOutfit;
+        }
+        if (form.attributes.description) {
+            specialAttributes.description = form.attributes.description;
         }
 
         // First apply scaled attributes, then overlay special attributes
@@ -248,8 +257,9 @@ const clearCurrency = () => {
             <TabList>
                 <Tab value="0">Kalkulator punktów</Tab>
                 <Tab value="1">Teleport</Tab>
-                <Tab value="2">Edytor json</Tab>
-<!--                <Tab value="3">Edytor atrybutów</Tab>-->
+                <Tab value="2">Strój (Outfit)</Tab>
+                <Tab value="3">Edytor json</Tab>
+                <!--                <Tab value="4">Edytor atrybutów</Tab>-->
             </TabList>
             <TabPanels>
                 <TabPanel value="0">
@@ -259,7 +269,13 @@ const clearCurrency = () => {
                         @scale-result-changed="handleScaleResultChanged"
                     />
                 </TabPanel>
+                <TabPanel value="1">
+                    <TeleportToEditor v-model:attributes="form.attributes" />
+                </TabPanel>
                 <TabPanel value="2">
+                    <OutfitEditor v-model:attributes="form.attributes" />
+                </TabPanel>
+                <TabPanel value="3">
                     <JsonEditorVue
                         v-model="jsonEditorAttributes"
                         v-bind="{/* local props & attrs */}"
@@ -273,12 +289,9 @@ const clearCurrency = () => {
                         </p>
                     </div>
                 </TabPanel>
-                <TabPanel value="1">
-                    <TeleportToEditor v-model:attributes="form.attributes" />
-                </TabPanel>
-                <TabPanel value="3">
+                <!-- <TabPanel value="4">
                     <AttributeEditor v-model:attributes="form.attributes" />
-                </TabPanel>
+                </TabPanel> -->
             </TabPanels>
         </Tabs>
     </AppLayout>
