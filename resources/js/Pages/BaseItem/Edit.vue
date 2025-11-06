@@ -4,22 +4,44 @@ import {BaseItemWithRelations} from "@/Resources/BaseItem.resource";
 import AppLayout from "../../layout/AppLayout.vue";
 import ItemHeader from "../../Components/ItemHeader.vue";
 import {router, useForm} from "@inertiajs/vue3";
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, ref, computed, watch } from 'vue';
 import {useToast} from "primevue";
 import AttributeEditor from "../../Components/AttributeEditor.vue";
 import AttributePointsEditor from './Components/AttributePointsEditor.vue';
+import TeleportToEditor from './Components/TeleportToEditor.vue';
 import JsonEditorVue from 'json-editor-vue'
 
 const { baseItem } = defineProps<{
     baseItem: BaseItemWithRelations,
 }>();
 
-// Create form with full baseItem structure
+// Function to clean corrupted attributes (removes numeric string keys from JSON editor corruption)
+const cleanAttributes = (attrs: any): any => {
+    if (!attrs || typeof attrs !== 'object' || Array.isArray(attrs)) {
+        return {};
+    }
+
+    const cleaned: any = {};
+    for (const [key, value] of Object.entries(attrs)) {
+        // Skip numeric string keys (these are from corruption)
+        if (!/^\d+$/.test(key)) {
+            cleaned[key] = value;
+        }
+    }
+
+    return cleaned;
+};
+
+// Create form with full baseItem structure - clean attributes on init
 const form = useForm({
-    attributes: baseItem.attributes,
+    attributes: cleanAttributes(baseItem.attributes),
     attribute_points: baseItem.attribute_points || {},
     manual_attribute_points: baseItem.manual_attribute_points || {}
 })
+
+// Local copy of attributes for JSON editor to prevent corruption
+const jsonEditorAttributes = ref(JSON.parse(JSON.stringify(cleanAttributes(baseItem.attributes))));
+const activeTab = ref('0');
 
 // Store scale result from AttributePointsEditor
 const scaleResult = ref<any>(null);
@@ -49,14 +71,81 @@ onMounted(() => {
     toast.add({ severity: 'warn', summary: 'Uwaga', detail: 'W strefie pakowania jest artykuł, który nie powinien się tam znaleźć', life: 10000 });
 })
 
+// Watch for tab changes to sync JSON editor
+watch(activeTab, (newTab, oldTab) => {
+    // When entering JSON editor tab, sync from form.attributes
+    if (newTab === '1') {
+        jsonEditorAttributes.value = JSON.parse(JSON.stringify(form.attributes));
+    }
+
+    // When leaving JSON editor tab, sync to form.attributes (with validation)
+    if (oldTab === '1' && newTab !== '1') {
+        syncFromJsonEditor();
+    }
+});
+
+// Manual sync function from JSON editor
+const syncFromJsonEditor = () => {
+    try {
+        // Validate that attributes is a proper object, not corrupted
+        if (jsonEditorAttributes.value && typeof jsonEditorAttributes.value === 'object' && !Array.isArray(jsonEditorAttributes.value)) {
+            // Check if it looks corrupted (has numeric string keys like '0', '1', '2', '3')
+            const keys = Object.keys(jsonEditorAttributes.value);
+            const hasNumericKeys = keys.some(key => /^\d+$/.test(key));
+
+            if (hasNumericKeys) {
+                toast.add({
+                    severity: 'warn',
+                    summary: 'Uwaga',
+                    detail: 'Dane w edytorze JSON wyglądają na uszkodzone. Nie zsynchronizowano zmian.',
+                    life: 5000
+                });
+                return false;
+            } else {
+                form.attributes = JSON.parse(JSON.stringify(jsonEditorAttributes.value));
+                toast.add({
+                    severity: 'success',
+                    summary: 'Sukces',
+                    detail: 'Zmiany z edytora JSON zostały zsynchronizowane',
+                    life: 3000
+                });
+                return true;
+            }
+        }
+    } catch (error) {
+        console.error('Error syncing from JSON editor:', error);
+        toast.add({
+            severity: 'error',
+            summary: 'Błąd',
+            detail: 'Nie udało się zsynchronizować danych z edytora JSON',
+            life: 3000
+        });
+        return false;
+    }
+};
+
 const save = () => {
     // Prepare the final attributes by merging current attributes with scale result
     let finalAttributes = { ...form.attributes };
 
     // If we have scale result, merge it with current attributes
-    // Scale result values take priority over current attributes
+    // Scale result values take priority over current attributes, but preserve special fields
     if (scaleResult.value) {
-        finalAttributes = { ...form.attributes, ...scaleResult.value };
+        // Merge scale result, but preserve special attributes that shouldn't be overwritten
+        // like teleportTo, and any other non-numeric attributes
+        const specialAttributes: any = {};
+
+        // Preserve teleportTo if it exists in form.attributes
+        if (form.attributes.teleportTo) {
+            specialAttributes.teleportTo = form.attributes.teleportTo;
+        }
+
+        // First apply scaled attributes, then overlay special attributes
+        finalAttributes = {
+            ...form.attributes,
+            ...scaleResult.value,
+            ...specialAttributes  // Special attributes take priority
+        };
     }
 
     // Create update data with all three fields
@@ -155,11 +244,12 @@ const clearCurrency = () => {
             <div v-if="baseItem.specific_currency_price !== null" class="mt-2 text-xs text-gray-700">Aktualna cena
                 waluty dla tego itemu: <strong>{{ baseItem.specific_currency_price }}</strong></div>
         </div>
-        <Tabs value="0" class="card">
+        <Tabs v-model="activeTab" value="0" class="card">
             <TabList>
                 <Tab value="0">Kalkulator punktów</Tab>
-                <Tab value="1">Edytor json</Tab>
-<!--                <Tab value="2">Edytor atrybutów</Tab>-->
+                <Tab value="1">Teleport</Tab>
+                <Tab value="2">Edytor json</Tab>
+<!--                <Tab value="3">Edytor atrybutów</Tab>-->
             </TabList>
             <TabPanels>
                 <TabPanel value="0">
@@ -169,13 +259,24 @@ const clearCurrency = () => {
                         @scale-result-changed="handleScaleResultChanged"
                     />
                 </TabPanel>
-                <TabPanel value="1">
+                <TabPanel value="2">
                     <JsonEditorVue
-                        v-model="form.attributes"
+                        v-model="jsonEditorAttributes"
                         v-bind="{/* local props & attrs */}"
                     />
+                    <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                        <p class="text-yellow-800 text-sm">
+                            <i class="pi pi-exclamation-triangle mr-2"></i>
+                            <strong>Uwaga:</strong> Zmiany w edytorze JSON zostaną zsynchronizowane po przełączeniu na
+                            inną zakładkę lub automatycznie.
+                            Upewnij się, że edytujesz poprawny JSON (obiekt, nie tablica ani string).
+                        </p>
+                    </div>
                 </TabPanel>
-                <TabPanel value="2">
+                <TabPanel value="1">
+                    <TeleportToEditor v-model:attributes="form.attributes" />
+                </TabPanel>
+                <TabPanel value="3">
                     <AttributeEditor v-model:attributes="form.attributes" />
                 </TabPanel>
             </TabPanels>
