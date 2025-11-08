@@ -10,6 +10,7 @@ use App\Http\Controllers\DoorController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\NpcController;
+use App\Http\Controllers\ProblemAssetsController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuestController;
 use App\Http\Controllers\QuestStepController;
@@ -215,6 +216,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
         Route::get('users', [\App\Http\Controllers\UsersController::class, 'index'])->name('users.index');
         Route::get('users/{user}', [\App\Http\Controllers\UsersController::class, 'show'])->name('users.show');
+        Route::get('/problem-assets', [ProblemAssetsController::class, 'index'])->name('problem-assets.index');
+//        Route::get('/problem-assets', fn() => \Inertia\Inertia::render('ProblemAssets/Index'))->name('problem-assets.index');
 
         Route::get('/s3/{path}', function ($path) {
 
@@ -227,6 +230,7 @@ Route::middleware(['auth'])->group(function () {
 
             return Response::make($file, 200, ['Content-Type' => $mimeType]);
         })->where('path', '.*');
+
     });
 
     Route::get('user-me', function() {
