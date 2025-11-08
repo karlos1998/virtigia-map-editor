@@ -218,7 +218,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('users', [\App\Http\Controllers\UsersController::class, 'index'])->name('users.index');
         Route::get('users/{user}', [\App\Http\Controllers\UsersController::class, 'show'])->name('users.show');
         Route::get('/problem-assets', [ProblemAssetsController::class, 'index'])->name('problem-assets.index');
-//        Route::get('/problem-assets', fn() => \Inertia\Inertia::render('ProblemAssets/Index'))->name('problem-assets.index');
 
         Route::get('/s3/{path}', function ($path) {
 
