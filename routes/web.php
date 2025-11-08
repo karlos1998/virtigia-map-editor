@@ -87,6 +87,7 @@ Route::middleware(['auth'])->group(function () {
 
                 Route::get('maps/search', [MapController::class, 'search'])->name('maps.search');
                 Route::get('maps', [MapController::class, 'index'])->name('maps.index');
+                Route::get('maps/{map}/data', [MapController::class, 'getMapData'])->name('maps.data');
                 Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');
 
                 Route::get('respawn-points', [\App\Http\Controllers\RespawnPointController::class, 'index'])->name('respawn-points.index');
@@ -198,7 +199,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('base-npcs/{baseNpc}/revert-from-layer', [BaseNpcController::class, 'revertFromLayer'])->name('base-npcs.revert-from-layer');
 
                 Route::get('assets/base-npcs/search', [AssetController::class, 'searchNpcs'])->name('assets.base-npcs.search');
-
+                Route::get('assets/outfits/search', [AssetController::class, 'searchOutfits'])->name('assets.outfits.search');
 
                 Route::post('doors', [DoorController::class, 'store'])->name('doors.store');
                 Route::patch('doors/{door}/move', [DoorController::class, 'move'])->name('doors.move');
