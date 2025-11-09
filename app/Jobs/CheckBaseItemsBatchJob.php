@@ -25,6 +25,7 @@ class CheckBaseItemsBatchJob implements ShouldQueue
                 'started_at' => now()->toDateTimeString(),
                 'status' => 'started',
                 'processed_chunks' => 0,
+                'chunks' => ceil(BaseItem::on($world)->count() / $this->chunkSize),
             ]), 3600);
             BaseItem::setGlobalConnection($world);
             $total = BaseItem::on($world)->count();
@@ -33,30 +34,7 @@ class CheckBaseItemsBatchJob implements ShouldQueue
             for ($i = 0; $i < $chunks; ++$i) {
                 $chunkJobs[] = new CheckBaseItemsChunkJob($world, $i, $this->chunkSize);
             }
-            Bus::batch($chunkJobs)
-                ->progress(function ($batch) use ($world) {
-                    $status = Cache::store('redis')->get("problem_base_items_{$world}_batch_status");
-                    $decoded = json_decode($status ?? '{}', true);
-                    $decoded['processed_chunks'] = $batch->processed();
-                    $decoded['updated_at'] = now()->toDateTimeString();
-                    Cache::store('redis')->put("problem_base_items_{$world}_batch_status", json_encode($decoded), 3600);
-                })
-                ->then(function ($batch) use ($world) {
-                    $results = [];
-                    for ($i = 0; $i < count($batch->jobs); ++$i) {
-                        $partial = Cache::store('redis')->get("problem_base_items_{$world}_chunk_{$i}");
-                        $data = json_decode($partial ?? '[]', true);
-                        $results = array_merge($results, $data);
-                        Cache::store('redis')->forget("problem_base_items_{$world}_chunk_{$i}");
-                    }
-                    Cache::store('redis')->put("problem_base_items_{$world}", json_encode($results), 3600);
-                    Cache::store('redis')->put("problem_base_items_{$world}_batch_status", json_encode([
-                        'finished_at' => now()->toDateTimeString(),
-                        'status' => 'finished',
-                        'processed_chunks' => count($batch->jobs)
-                    ]), 3600);
-                })
-                ->dispatch();
+            Bus::batch($chunkJobs)->dispatch();
         }
     }
 }

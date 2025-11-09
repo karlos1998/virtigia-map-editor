@@ -65,5 +65,32 @@ class CheckBaseItemsChunkJob implements ShouldQueue
             }
         }
         Cache::store('redis')->put("problem_base_items_{$this->world}_chunk_{$this->chunkIndex}", json_encode($results), 3600);
+
+        // Aktualizacja progresu batcha
+        $statusKey = "problem_base_items_{$this->world}_batch_status";
+        $status = json_decode(Cache::store('redis')->get($statusKey) ?? '{}', true);
+        $processed = isset($status['processed_chunks']) ? $status['processed_chunks'] : 0;
+        $chunks = isset($status['chunks']) ? $status['chunks'] : null;
+        if ($chunks === null) {
+            $chunks = null;
+        }
+        $status['processed_chunks'] = $processed + 1;
+        $status['updated_at'] = now()->toDateTimeString();
+        Cache::store('redis')->put($statusKey, json_encode($status), 3600);
+
+        // Finalizacja batcha jeśli ostatni chunk
+        if (isset($chunks) && $status['processed_chunks'] >= $chunks) {
+            $results = [];
+            for ($i = 0; $i < $chunks; ++$i) {
+                $partial = Cache::store('redis')->get("problem_base_items_{$this->world}_chunk_{$i}");
+                $data = json_decode($partial ?? '[]', true);
+                $results = array_merge($results, $data);
+                Cache::store('redis')->forget("problem_base_items_{$this->world}_chunk_{$i}");
+            }
+            Cache::store('redis')->put("problem_base_items_{$this->world}", json_encode($results), 3600);
+            $status['finished_at'] = now()->toDateTimeString();
+            $status['status'] = 'finished';
+            Cache::store('redis')->put($statusKey, json_encode($status), 3600);
+        }
     }
 }
