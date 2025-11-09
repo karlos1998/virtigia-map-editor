@@ -1,10 +1,49 @@
 <template>
     <AppLayout>
+        <div class="card mb-6">
+            <h1 class="text-2xl font-bold mb-4">Status sprawdzania assetów – {{ world }}</h1>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h2 class="font-semibold text-lg mb-2 flex gap-2 items-center">
+                        Base Items
+                        <span v-if="itemsBatch.status === 'finished'"
+                              class="inline-block px-2 rounded bg-green-600 text-white text-xs">Zakończone</span>
+                        <span v-else-if="itemsBatch.status === 'started'"
+                              class="inline-block px-2 rounded bg-yellow-400 text-black text-xs animate-pulse">W trakcie</span>
+                        <span v-else class="inline-block px-2 rounded bg-gray-500 text-white text-xs">Brak danych</span>
+                    </h2>
+                    <div v-if="itemsBatch.started_at">
+                        <div><b>Start:</b> {{ itemsBatch.started_at }}</div>
+                        <div v-if="itemsBatch.updated_at"><b>Ostatni update:</b> {{ itemsBatch.updated_at }}</div>
+                        <div v-if="itemsBatch.finished_at"><b>Koniec:</b> {{ itemsBatch.finished_at }}</div>
+                        <div><b>Postęp:</b> {{ itemsBatch.processed_chunks ?? 0 }} ch.</div>
+                    </div>
+                    <div v-else class="text-gray-400"><i>Batch nie był uruchamiany dla itemów</i></div>
+                </div>
+                <div>
+                    <h2 class="font-semibold text-lg mb-2 flex gap-2 items-center">
+                        Base Npcs
+                        <span v-if="npcsBatch.status === 'finished'"
+                              class="inline-block px-2 rounded bg-green-600 text-white text-xs">Zakończone</span>
+                        <span v-else-if="npcsBatch.status === 'started'"
+                              class="inline-block px-2 rounded bg-yellow-400 text-black text-xs animate-pulse">W trakcie</span>
+                        <span v-else class="inline-block px-2 rounded bg-gray-500 text-white text-xs">Brak danych</span>
+                    </h2>
+                    <div v-if="npcsBatch.started_at">
+                        <div><b>Start:</b> {{ npcsBatch.started_at }}</div>
+                        <div v-if="npcsBatch.updated_at"><b>Ostatni update:</b> {{ npcsBatch.updated_at }}</div>
+                        <div v-if="npcsBatch.finished_at"><b>Koniec:</b> {{ npcsBatch.finished_at }}</div>
+                        <div><b>Postęp:</b> {{ npcsBatch.processed_chunks ?? 0 }} ch.</div>
+                    </div>
+                    <div v-else class="text-gray-400"><i>Batch nie był uruchamiany dla npc</i></div>
+                </div>
+            </div>
+        </div>
         <div class="card">
             <h1 class="text-3xl font-bold mb-6">Błędy assetów dla świata: <span>{{ world }}</span></h1>
             <div v-if="loading" class="text-gray-500">Ładowanie...</div>
             <div v-else>
-                <h2 class="text-xl mt-4 mb-2 font-semibold">Base Items</h2>
+                <h2 class="text-xl mt-8 mb-2 font-semibold">Base Items</h2>
                 <div v-if="items.length === 0" class="mb-4">Brak problemów z base items!</div>
                 <table v-else class="min-w-full mb-8 border mt-2">
                     <thead>
@@ -54,7 +93,9 @@ const props = defineProps({
     items: Array,
     npcs: Array,
     world: String,
-    loading: Boolean
+    loading: Boolean,
+    itemsBatch: Object,
+    npcsBatch: Object
 });
 
 const sortedItems = computed(() => {
