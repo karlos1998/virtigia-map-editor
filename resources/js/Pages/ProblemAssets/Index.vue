@@ -16,7 +16,18 @@
                         <div><b>Start:</b> {{ itemsBatch.started_at }}</div>
                         <div v-if="itemsBatch.updated_at"><b>Ostatni update:</b> {{ itemsBatch.updated_at }}</div>
                         <div v-if="itemsBatch.finished_at"><b>Koniec:</b> {{ itemsBatch.finished_at }}</div>
-                        <div><b>Postęp:</b> {{ itemsBatch.processed_chunks ?? 0 }} ch.</div>
+                        <div v-if="itemsBatch.chunks && itemsBatch.chunks > 0" class="mt-2">
+                            <b>Postęp:</b> {{ itemsBatch.processed_chunks ?? 0 }} / {{ itemsBatch.chunks }} ch.
+                            <div class="w-full h-3 mt-1 rounded bg-gray-200 overflow-hidden">
+                                <div
+                                    :style="{ width: Math.round(((itemsBatch.processed_chunks ?? 0) / itemsBatch.chunks) * 100) + '%' }"
+                                    class="h-3 bg-blue-400 transition-all duration-200"></div>
+                            </div>
+                            <div class="text-xs text-gray-600 mt-1">
+                                {{ Math.round(((itemsBatch.processed_chunks ?? 0) / itemsBatch.chunks) * 100) }}%
+                            </div>
+                        </div>
+                        <div v-else><b>Postęp:</b> {{ itemsBatch.processed_chunks ?? 0 }} ch.</div>
                     </div>
                     <div v-else class="text-gray-400"><i>Batch nie był uruchamiany dla itemów</i></div>
                 </div>
@@ -33,7 +44,18 @@
                         <div><b>Start:</b> {{ npcsBatch.started_at }}</div>
                         <div v-if="npcsBatch.updated_at"><b>Ostatni update:</b> {{ npcsBatch.updated_at }}</div>
                         <div v-if="npcsBatch.finished_at"><b>Koniec:</b> {{ npcsBatch.finished_at }}</div>
-                        <div><b>Postęp:</b> {{ npcsBatch.processed_chunks ?? 0 }} ch.</div>
+                        <div v-if="npcsBatch.chunks && npcsBatch.chunks > 0" class="mt-2">
+                            <b>Postęp:</b> {{ npcsBatch.processed_chunks ?? 0 }} / {{ npcsBatch.chunks }} ch.
+                            <div class="w-full h-3 mt-1 rounded bg-gray-200 overflow-hidden">
+                                <div
+                                    :style="{ width: Math.round(((npcsBatch.processed_chunks ?? 0) / npcsBatch.chunks) * 100) + '%' }"
+                                    class="h-3 bg-purple-400 transition-all duration-200"></div>
+                            </div>
+                            <div class="text-xs text-gray-600 mt-1">
+                                {{ Math.round(((npcsBatch.processed_chunks ?? 0) / npcsBatch.chunks) * 100) }}%
+                            </div>
+                        </div>
+                        <div v-else><b>Postęp:</b> {{ npcsBatch.processed_chunks ?? 0 }} ch.</div>
                     </div>
                     <div v-else class="text-gray-400"><i>Batch nie był uruchamiany dla npc</i></div>
                 </div>
