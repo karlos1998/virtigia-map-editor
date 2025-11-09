@@ -21,5 +21,5 @@ Schedule::job(new DispatchFindNearestRespForMaps)->everyFourHours();
 
 Schedule::job(new ResetAggressiveNpcsJob)->hourly();
 
-//Schedule::job(new CheckBaseItemsBatchJob)->hourly();
+Schedule::job(new CheckBaseItemsBatchJob)->hourly();
 Schedule::job(new CheckBaseNpcsBatchJob)->hourly();
