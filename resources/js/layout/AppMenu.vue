@@ -106,6 +106,11 @@ const model = ref([
                 icon: 'pi pi-users',
                 route: 'users.index',
             },
+            {
+                label: 'Problemy z assetami',
+                icon: 'pi pi-exclamation-triangle',
+                route: 'problem-assets.index',
+            },
         ],
     },
 ]);
