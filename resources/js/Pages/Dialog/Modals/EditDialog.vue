@@ -17,6 +17,8 @@ import {debounce} from "@/debounce";
 import TreeSelectAdapter from "../Componnts/TreeSelectAdapter.vue";
 import { useQuestStepSelection } from "../Composables/useQuestStepSelection";
 import InputSwitch from 'primevue/inputswitch';
+import InputText from 'primevue/inputtext';
+import InputNumber from 'primevue/inputnumber';
 
 const dialogRef = inject<Ref<DynamicDialogInstance & {
     data: {
@@ -277,6 +279,59 @@ watch(selectedBlessingItem, (newVal) => {
     }
 });
 
+// Modal ilości przedmiotów (analogicznie do EditRules.vue)
+const showItemsAmountModal = ref(false)
+const itemAmounts = ref<number[]>([])
+
+const openItemsAmountModal = () => {
+    const action = form.additional_actions[DialogNodeAdditionalAction.addItems]
+    if (!action || !Array.isArray(action.value)) return
+
+    itemAmounts.value = action.value.map((_: any, i: number) => action.value2?.[i] ?? 1)
+    showItemsAmountModal.value = true
+}
+
+const saveItemAmounts = () => {
+    const action = form.additional_actions[DialogNodeAdditionalAction.addItems]
+    if (action) {
+        (action as any).value2 = [...itemAmounts.value]
+    }
+    showItemsAmountModal.value = false
+}
+
+watch(
+    () => {
+        const action = form.additional_actions[DialogNodeAdditionalAction.addItems]
+        if (!action) return undefined
+        // if action itself is an array (legacy), return it
+        if (Array.isArray(action)) return action as number[]
+        // otherwise assume object with .value
+        return (action as any).value as number[] | undefined
+    },
+    (current: number[] | undefined, previous: number[] | undefined) => {
+        if (!Array.isArray(current)) return
+        // don't run on initial population where we don't have a previous value
+        if (typeof previous === 'undefined') return
+
+        const action = form.additional_actions[DialogNodeAdditionalAction.addItems]
+        if (!action) return
+
+        const oldIds = Array.isArray(previous) ? previous : []
+        const oldValue2 = Array.isArray((action as any).value2) ? (action as any).value2 : []
+
+        const newValue2: number[] = []
+
+        for (let idx = 0; idx < current.length; idx++) {
+            const id = current[idx]
+            const prevIndex = oldIds.indexOf(id)
+            newValue2[idx] = prevIndex !== -1 ? oldValue2[prevIndex] : 1
+        }
+
+        (action as any).value2 = newValue2
+    },
+    {deep: true}
+)
+
 </script>
 
 <template>
@@ -312,6 +367,53 @@ watch(selectedBlessingItem, (newVal) => {
                 @filter="itemsSearchChanged"
                 :options="itemsDropdown"
             />
+            <Button
+                v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.addItems"
+                @click="openItemsAmountModal"
+                severity="secondary"
+                icon="pi pi-pencil"
+            >
+                Ustaw ilości
+            </Button>
+
+            <Dialog
+                v-model:visible="showItemsAmountModal"
+                modal
+                header="Ilości przedmiotów"
+                :style="{ width: '36rem', maxWidth: '95vw' }"
+            >
+                <div
+                    v-if="Array.isArray(form.additional_actions[DialogNodeAdditionalAction.addItems]?.value)"
+                    class="space-y-4 max-h-[60vh] overflow-y-auto"
+                >
+                    <div
+                        v-for="(itemId, idx) in form.additional_actions[DialogNodeAdditionalAction.addItems]?.value"
+                        :key="itemId"
+                        class="border border-gray-200 rounded-xl p-4 shadow-sm"
+                    >
+                        <div class="text-sm text-gray-500 mb-1 font-medium">[#{{ itemId }}]</div>
+                        <div class="text-base font-semibold mb-3">
+                            {{ itemsDropdown.find(i => i.id === itemId)?.name ?? 'Nieznany' }}
+                        </div>
+                        <InputNumber
+                            v-model="itemAmounts[idx]"
+                            :min="1"
+                            :max="1000"
+                            showButtons
+                            buttonLayout="horizontal"
+                            suffix=" szt."
+                            class="w-full"
+                        />
+                    </div>
+                </div>
+
+                <template #footer>
+                    <div class="flex justify-end gap-2">
+                        <Button label="Anuluj" severity="secondary" @click="showItemsAmountModal = false"/>
+                        <Button label="Zapisz" icon="pi pi-check" severity="primary" @click="saveItemAmounts"/>
+                    </div>
+                </template>
+            </Dialog>
 
             <AutoComplete
                 v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.blessing"
