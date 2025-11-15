@@ -25,6 +25,8 @@ class QuestStepResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'visible_in_quest_list' => $this->visible_in_quest_list,
+            'auto_advance_next_day' => $this->auto_advance_next_day,
+            'auto_advance_to_step_id' => $this->auto_advance_to_step_id,
             'auto_progress' => $this->whenLoaded('autoProgress', fn($autoProgress) => [
                 'type' => $autoProgress->type,
                 'time_seconds' => $autoProgress->time_seconds,

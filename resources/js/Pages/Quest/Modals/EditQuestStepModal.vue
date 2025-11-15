@@ -2,7 +2,7 @@
 import {useForm} from "@inertiajs/vue3";
 import {route} from "ziggy-js";
 import {useToast} from "primevue";
-import { watch, ref } from "vue";
+import {watch, ref, computed} from "vue";
 import { QuestStepResource } from "@/Resources/Quest.resource";
 import axios from "axios";
 import { BaseNpcResource } from "@/Resources/BaseNpc.resource";
@@ -14,6 +14,7 @@ import AutoComplete from 'primevue/autocomplete';
 const props = defineProps<{
     questId: number;
     step: QuestStepResource | null;
+    steps: any[];
 }>();
 
 const visible = defineModel<boolean>('visible');
@@ -35,8 +36,16 @@ const form = useForm({
     auto_progress: false,
     progress_type: 'time',
     progress_time: 0,
-    progress_mobs: [] as { base_npc_id: number, quantity: number }[]
+    progress_mobs: [] as { base_npc_id: number, quantity: number }[],
+    auto_advance_next_day: false,
+    auto_advance_to_step_id: null
 })
+
+const stepOptions = computed(() => {
+    const stepsList = props.step ? props.steps.filter(s => s.id !== props.step?.id) : props.steps;
+    const mapped = stepsList.map(s => ({label: s.name, value: s.id}));
+    return [{label: 'Wyzeruj quest', value: null}, ...mapped];
+});
 
 watch(() => props.step, (newStep) => {
     if (newStep) {
@@ -65,6 +74,18 @@ watch(() => props.step, (newStep) => {
             progressTime.value = 0;
             selectedMobs.value = [];
         }
+        // auto advance fields
+        form.auto_advance_next_day = newStep?.auto_advance_next_day ?? false;
+        form.auto_advance_to_step_id = newStep?.auto_advance_to_step_id ?? null;
+    } else {
+        // Reset auto progress settings
+        autoProgress.value = false;
+        progressType.value = 'time';
+        progressTime.value = 0;
+        selectedMobs.value = [];
+        // auto advance fields
+        form.auto_advance_next_day = false;
+        form.auto_advance_to_step_id = null;
     }
 }, { immediate: true });
 
@@ -104,6 +125,8 @@ const updateFormData = () => {
         base_npc_id: mob.baseNpc.id,
         quantity: mob.quantity
     }));
+    form.auto_advance_next_day = form.auto_advance_next_day ?? false;
+    form.auto_advance_to_step_id = form.auto_advance_to_step_id ?? null;
 };
 
 const submit = () => {
@@ -210,6 +233,21 @@ const submit = () => {
                             </ul>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div v-if="step" class="mt-2">
+                <div class="flex items-center mb-2">
+                    <Checkbox v-model="form.auto_advance_next_day" :binary="true" inputId="autoAdvanceNextDay"/>
+                    <label for="autoAdvanceNextDay" class="ml-2 font-semibold">Automatycznie przejść następnego dnia do
+                        innego kroku</label>
+                </div>
+
+                <div class="mt-2">
+                    <label class="font-semibold block mb-2">Krok docelowy (opcjonalne)</label>
+                    <Dropdown v-model="form.auto_advance_to_step_id"
+                              :options="stepOptions" optionLabel="label" optionValue="value"
+                              class="w-full" placeholder="Wybierz krok"/>
                 </div>
             </div>
         </div>

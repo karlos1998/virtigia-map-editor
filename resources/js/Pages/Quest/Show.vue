@@ -98,11 +98,13 @@ const formatAutoProgress = (autoProgress: any) => {
         <CreateQuestStepModal
             v-model:visible="isCreateQuestStepModalVisible"
             :quest-id="quest.id"
+            :steps="quest.steps"
         />
         <EditQuestStepModal
             v-model:visible="isEditQuestStepModalVisible"
             :quest-id="quest.id"
             :step="selectedStep"
+            :steps="quest.steps"
         />
         <EditQuestNameModal
             v-model:visible="isEditQuestNameModalVisible"

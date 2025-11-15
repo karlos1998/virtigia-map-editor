@@ -22,14 +22,19 @@ class QuestStep extends DynamicModel
         'description',
         'quest_id',
         'visible_in_quest_list',
+        'auto_advance_next_day',
+        'auto_advance_to_step_id',
     ];
 
     protected $casts = [
         'visible_in_quest_list' => 'boolean',
+        'auto_advance_next_day' => 'boolean',
     ];
 
     protected $attributes = [
         'visible_in_quest_list' => true,
+        'auto_advance_next_day' => false,
+        'auto_advance_to_step_id' => null,
     ];
 
     public function quest(): BelongsTo
@@ -144,5 +149,13 @@ class QuestStep extends DynamicModel
                 $this->scopeWhereJsonContainsInPaths($query, 'rules', $rulePaths, $stepId);
             })
             ->get();
+    }
+
+    /**
+     * Optional relation to the quest step this step will auto-advance to.
+     */
+    public function autoAdvanceTo(): BelongsTo
+    {
+        return $this->belongsTo(QuestStep::class, 'auto_advance_to_step_id');
     }
 }

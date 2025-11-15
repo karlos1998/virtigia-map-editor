@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreQuestStepRequest extends FormRequest
 {
@@ -25,6 +26,17 @@ class StoreQuestStepRequest extends FormRequest
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'visible_in_quest_list' => 'boolean',
+            'auto_advance_next_day' => 'boolean',
+            'auto_advance_to_step_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('quest_steps', 'id')->where(function ($query) {
+                    $quest = $this->route('quest');
+                    if ($quest) {
+                        $query->where('quest_id', $quest->id);
+                    }
+                }),
+            ],
         ];
     }
 }

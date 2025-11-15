@@ -59,6 +59,8 @@ class QuestStepService
             'name' => $data['name'],
             'description' => $data['description'],
             'visible_in_quest_list' => $data['visible_in_quest_list'] ?? false,
+            'auto_advance_next_day' => $data['auto_advance_next_day'] ?? false,
+            'auto_advance_to_step_id' => $data['auto_advance_to_step_id'] ?? null,
         ]);
 
         // Handle auto progress
