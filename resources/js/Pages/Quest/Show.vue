@@ -89,6 +89,25 @@ const formatAutoProgress = (autoProgress: any) => {
 
     return 'Nieznany typ';
 };
+
+const isDailyQuest = computed(() => {
+    return props.quest.steps && props.quest.steps.some((s: any) => s.auto_advance_next_day === true);
+});
+
+const autoAdvanceText = (step: any) => {
+    if (!step.auto_advance_next_day) return null;
+
+    if (step.auto_advance_to_step_id === null || step.auto_advance_to_step_id === undefined) {
+        return 'Uwaga: następnego dnia ten krok wyzeruje questa (ustawi brak aktywnego kroku).';
+    }
+
+    const target = props.quest.steps.find((s: any) => s.id === step.auto_advance_to_step_id);
+    if (target) {
+        return `Uwaga: następnego dnia ten krok ustawi krok questa na: ${target.name} (ID: ${target.id}).`;
+    }
+
+    return 'Uwaga: następnego dnia ten krok ustawi krok questa na krok o podanym ID.';
+}
 </script>
 
 <template>
@@ -126,6 +145,15 @@ const formatAutoProgress = (autoProgress: any) => {
                 <p><strong>ID:</strong> {{ quest.id }}</p>
                 <p><strong>Data utworzenia:</strong> {{ new Date(quest.created_at).toLocaleString() }}</p>
                 <p><strong>Data aktualizacji:</strong> {{ new Date(quest.updated_at).toLocaleString() }}</p>
+            </div>
+
+            <div class="mb-4">
+                <Message v-if="isDailyQuest" severity="warn" :closable="false">
+                    <div class="font-bold text-lg">Uwaga — QUEST DZIENNY</div>
+                    <div>Ten quest zawiera kroki, które następnego dnia automatycznie zmieniają lub zerują aktywny
+                        krok.
+                    </div>
+                </Message>
             </div>
 
             <!-- Quest Dialogs Section -->
@@ -234,6 +262,10 @@ const formatAutoProgress = (autoProgress: any) => {
                             <Button icon="pi pi-pencil" label="Edytuj" @click="editStep(step)" />
                             <Button icon="pi pi-trash" label="Usuń" severity="danger" @click="deleteStep(step.id)" />
                         </div>
+                        <Message v-if="autoAdvanceText(step)" severity="warn" :closable="false">{{
+                                autoAdvanceText(step)
+                            }}
+                        </Message>
                     </div>
                 </AccordionPanel>
             </Accordion>
