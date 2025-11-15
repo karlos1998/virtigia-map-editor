@@ -179,9 +179,7 @@ const pathname = computed(() => window.location.pathname);
         'horizontal-menuitem': isHorizontal,
         'slim-menuitem': isSlim || isSlimPlus
     }">
-        <div v-if="root && item.visible !== false && !isSlim && !isSlimPlus" class="layout-menuitem-root-text">
-            <span>{{ item.label }}</span> <i class="layout-menuitem-root-icon"></i>
-        </div>
+        <!-- Root category label is rendered by AppMenu.vue to avoid duplicate headings -->
         <a
             v-if="(!item.to || item.items) && item.visible !== false"
             :href="item.url"
