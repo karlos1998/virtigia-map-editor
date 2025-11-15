@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Http\Resources\MapResource;
+use App\Http\Resources\DoorResource;
 use App\Models\Map;
+use App\Models\Door;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -241,5 +243,67 @@ final class MapService extends BaseService
         $this->thumbnailService->generateThumbnail($newMap);
 
         return $newMap;
+    }
+
+    /**
+     * Get all maps connected to the starting map (ID 1) through doors at the edges.
+     * This mirrors the Java logic: traverse maps by edge doors and collect unique maps and doors.
+     *
+     * @return array{maps: \Illuminate\Http\Resources\Json\AnonymousResourceCollection, doors: \Illuminate\Http\Resources\Json\AnonymousResourceCollection}
+     */
+    public function getAllConnectedMaps(): array
+    {
+        $processedMapIds = [];
+        $mapIdsToProcess = [1]; // start from map ID 1 (development use)
+
+        $collectedMaps = [];
+        $collectedDoors = collect();
+
+        while (!empty($mapIdsToProcess)) {
+            $currentMapId = array_shift($mapIdsToProcess);
+
+            if (in_array($currentMapId, $processedMapIds, true)) {
+                continue;
+            }
+
+            $processedMapIds[] = $currentMapId;
+
+            $map = $this->mapModel->find($currentMapId);
+            if (!$map) {
+                continue;
+            }
+
+            $collectedMaps[] = $map;
+
+            // Find doors located on the edges of the current map
+            $edgeDoors = Door::with(['targetMap', 'requiredBaseItem'])
+                ->where('map_id', $map->id)
+                ->where(function ($q) use ($map) {
+                    $q->where('x', 0)
+                        ->orWhere('x', $map->x - 1)
+                        ->orWhere('y', 0)
+                        ->orWhere('y', $map->y - 1);
+                })
+                ->get();
+
+            $skip = [];
+            foreach ($edgeDoors as $door) {
+                if (in_array($door->go_map_id, $skip, true)) {
+                    continue;
+                }
+
+                $skip[] = $door->go_map_id;
+                $collectedDoors->push($door);
+
+                if ($door->go_map_id) {
+                    $mapIdsToProcess[] = $door->go_map_id;
+                }
+            }
+        }
+
+        return [
+            'maps' => MapResource::collection(collect($collectedMaps)),
+            'doors' => DoorResource::collection($collectedDoors->unique('id')->values()),
+        ];
     }
 }

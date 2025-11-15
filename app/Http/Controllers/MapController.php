@@ -18,11 +18,13 @@ use App\Http\Resources\NpcResource;
 use App\Http\Resources\RespawnPointResource;
 use App\Http\Resources\RenewableMapItemResource;
 use App\Models\Map;
+use App\Models\Door;
 use App\Models\RespawnPoint;
 use App\Services\MapService;
 use App\Services\NpcService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Cache;
 
 class MapController extends Controller
 {
@@ -50,6 +52,24 @@ class MapController extends Controller
     {
         return Inertia::render('Map/Index', [
             'maps' => $this->mapService->getAll(),
+        ]);
+    }
+
+    /**
+     * Display a world minimap with all maps and doors.
+     *
+     * @return \Inertia\Response
+     */
+    public function world()
+    {
+        $mapService = $this->mapService;
+        $cached = Cache::remember('maps.world.connected_maps', 600, function () use ($mapService) {
+            return $mapService->getAllConnectedMaps();
+        });
+
+        return Inertia::render('Map/WorldMinimap', [
+            'maps' => $cached['maps'],
+            'doors' => $cached['doors'],
         ]);
     }
 

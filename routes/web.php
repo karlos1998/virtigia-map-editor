@@ -88,6 +88,7 @@ Route::middleware(['auth'])->group(function () {
 
                 Route::get('maps/search', [MapController::class, 'search'])->name('maps.search');
                 Route::get('maps', [MapController::class, 'index'])->name('maps.index');
+                Route::get('minimap', [MapController::class, 'world'])->name('maps.world');
                 Route::get('maps/{map}/data', [MapController::class, 'getMapData'])->name('maps.data');
                 Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');
 
