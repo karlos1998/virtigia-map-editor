@@ -90,6 +90,11 @@ const model = ref([
                 icon: 'pi pi-calendar',
                 route: 'calendar-days.index',
             },
+            {
+                label: 'Mapa Świata',
+                icon: 'pi pi-map',
+                route: 'maps.world',
+            },
         ],
     },
     {
