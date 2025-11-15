@@ -4,7 +4,6 @@ import AdvanceColumn from "@advance-table/Components/AdvanceColumn.vue";
 
 import { Link } from '@inertiajs/vue3';
 import { route } from "ziggy-js";
-import { ref } from "vue";
 import { QuestResource } from "@/Resources/Quest.resource";
 
 type Data = {
@@ -37,6 +36,13 @@ type Data = {
         <AdvanceColumn field="name" header="Nazwa">
             <template #body="{ data }: Data">
                 {{ data.name }}
+            </template>
+        </AdvanceColumn>
+
+        <AdvanceColumn field="is_daily" header="Dzienny" style="width: 10%">
+            <template #body="{ data }: Data">
+                <span v-if="data.is_daily">Tak</span>
+                <span v-else>Nie</span>
             </template>
         </AdvanceColumn>
 
