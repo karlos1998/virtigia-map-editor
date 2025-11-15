@@ -83,7 +83,8 @@ primevue Message = TODO . nie wiadomo czemu height ustawil sie na 100%.
 }
 
 .layout-content {
-    @apply max-w-7xl mx-auto py-6 pl-4;
+    /* Allow content to expand to full width instead of being capped at 7xl */
+    @apply w-full max-w-full mx-auto py-6 pl-4;
 }
 
 .layout-mask {

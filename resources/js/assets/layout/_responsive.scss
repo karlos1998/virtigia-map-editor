@@ -137,17 +137,28 @@
 }
 
 @media screen and (min-width: 1960px) {
+    /* Use max-width so content can still expand if needed, and center it */
     .layout-content,
     .landing-wrapper {
-        width: 1504px;
+        //max-width: 1504px;
         margin-left: auto !important;
         margin-right: auto !important;
         padding-left: 1rem;
     }
 
     .layout-topbar {
-        width: 1504px;
+        //max-width: 1504px;
         margin-left: auto !important;
         margin-right: auto !important;
+    }
+
+    /* When sidebar is static, offset topbar so it doesn't collide with the sidebar */
+    .layout-container.layout-static .layout-topbar {
+        margin-left: 16rem;
+    }
+
+    .layout-content {
+        margin-left: 40px !important;
+        padding-right: 40px;
     }
 }
