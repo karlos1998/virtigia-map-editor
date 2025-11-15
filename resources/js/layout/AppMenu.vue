@@ -85,6 +85,11 @@ const model = ref([
                 icon: 'pi pi-user-plus',
                 route: 'titan-doors.index',
             },
+            {
+                label: 'Kalendarz nagród',
+                icon: 'pi pi-calendar',
+                route: 'calendar-days.index',
+            },
         ],
     },
     {

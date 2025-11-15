@@ -4,6 +4,7 @@ use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\BaseItemController;
 use App\Http\Controllers\BaseNpcController;
+use App\Http\Controllers\CalendarDayController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DialogController;
 use App\Http\Controllers\DoorController;
@@ -162,6 +163,12 @@ Route::middleware(['auth'])->group(function () {
                 Route::patch('quests/{quest}', [QuestController::class, 'update'])->name('quests.update');
                 Route::delete('quests/{quest}', [QuestController::class, 'destroy'])->name('quests.destroy');
 
+                // Calendar days routes (single global calendar)
+                Route::get('calendar-days', [CalendarDayController::class, 'index'])->name('calendar-days.index');
+                Route::post('calendar-days', [CalendarDayController::class, 'store'])->name('calendar-days.store');
+                Route::post('calendar-days/items', [CalendarDayController::class, 'addItem'])->name('calendar-days.items.store');
+                Route::delete('calendar-days/items/{id}', [CalendarDayController::class, 'removeItem'])->name('calendar-days.items.destroy');
+                Route::delete('calendar-days/{day}', [CalendarDayController::class, 'destroy'])->name('calendar-days.destroy');
                 // Quest Step routes
                 Route::post('quests/{quest}/steps', [QuestStepController::class, 'store'])->name('quests.steps.store');
                 Route::patch('quests/{quest}/steps/{step}', [QuestStepController::class, 'update'])->name('quests.steps.update');
