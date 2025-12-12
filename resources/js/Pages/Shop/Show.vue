@@ -20,6 +20,7 @@ import InputNumber from "primevue/inputnumber";
 import Button from "primevue/button";
 import AutoComplete from "primevue/autocomplete";
 import axios from "axios";
+import Card from "primevue/card";
 
 const props = defineProps<{
     shop: ShopResource
@@ -187,6 +188,10 @@ const savePriceSettings = () => {
         }
     });
 };
+
+const openBaseItemInNewTab = (itemId: number) => {
+    window.open(route('base-items.show', itemId), '_blank');
+};
 </script>
 <template>
 
@@ -202,6 +207,27 @@ const savePriceSettings = () => {
                 #{{ shop.id }} - {{ shop.name }}
             </template>
         </ItemHeader>
+
+        <!-- Kolorowy card dla specjalnej waluty -->
+        <Card v-if="shop.currency_item" class="mb-3"
+              style="background: linear-gradient(to right, #ff7e5f, #feb47b); color: white; border: none;">
+            <template #title>
+                Przedmioty w specjalnej walucie ({{ shop.currency_item.name }})
+            </template>
+            <template #content>
+                <div v-for="item in items" :key="item.id" class="flex items-center gap-4 mb-2 p-2 rounded"
+                     :class="item.specific_currency_price === null ? 'bg-red-500 text-white' : 'bg-white bg-opacity-20'">
+                    <img :src="item.src" class="h-8 w-8 object-cover" :alt="item.name"/>
+                    <span>[{{ item.id }}] {{ item.name }}</span>
+                    <span>Cena zwykła: {{ item.price }}</span>
+                    <span v-if="item.specific_currency_price">Cena waluty: {{ item.specific_currency_price }}</span>
+                    <span v-else class="text-yellow-300 font-bold">Brak ceny waluty!</span>
+                    <Button v-if="!item.specific_currency_price" label="Ustaw"
+                            @click="openBaseItemInNewTab(item.id)" class="ml-auto"
+                            size="small" severity="danger" icon="pi pi-external-link"/>
+                </div>
+            </template>
+        </Card>
 
         <div class="card mb-3">
             <div class="flex align-items-center">
