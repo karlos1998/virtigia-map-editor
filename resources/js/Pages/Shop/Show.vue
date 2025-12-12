@@ -192,6 +192,12 @@ const savePriceSettings = () => {
 const openBaseItemInNewTab = (itemId: number) => {
     window.open(route('base-items.show', itemId), '_blank');
 };
+
+const showAllItems = ref(false);
+const toggleShowAllItems = () => {
+    showAllItems.value = !showAllItems.value;
+};
+
 </script>
 <template>
 
@@ -215,16 +221,37 @@ const openBaseItemInNewTab = (itemId: number) => {
                 Przedmioty w specjalnej walucie ({{ shop.currency_item.name }})
             </template>
             <template #content>
-                <div v-for="item in items" :key="item.id" class="flex items-center gap-4 mb-2 p-2 rounded"
-                     :class="item.specific_currency_price === null ? 'bg-red-500 text-white' : 'bg-white bg-opacity-20'">
-                    <img :src="item.src" class="h-8 w-8 object-cover" :alt="item.name"/>
-                    <span>[{{ item.id }}] {{ item.name }}</span>
-                    <span>Cena zwykła: {{ item.price }}</span>
-                    <span v-if="item.specific_currency_price">Cena waluty: {{ item.specific_currency_price }}</span>
-                    <span v-else class="text-yellow-300 font-bold">Brak ceny waluty!</span>
-                    <Button v-if="!item.specific_currency_price" label="Ustaw"
-                            @click="openBaseItemInNewTab(item.id)" class="ml-auto"
-                            size="small" severity="danger" icon="pi pi-external-link"/>
+                <!-- Przedmioty bez ceny waluty -->
+                <div v-if="items.filter(item => item.specific_currency_price === null).length > 0" class="mb-4">
+                    <h4 class="text-yellow-300 font-bold mb-2">Przedmioty bez ceny waluty:</h4>
+                    <div v-for="item in items.filter(item => item.specific_currency_price === null)" :key="item.id"
+                         class="flex items-center gap-4 mb-2 p-2 rounded bg-red-500 text-white">
+                        <img :src="item.src" class="h-8 w-8 object-cover" :alt="item.name"/>
+                        <span>[{{ item.id }}] {{ item.name }}</span>
+                        <span>Cena zwykła: {{ item.price }}</span>
+                        <Button label="Ustaw" @click="openBaseItemInNewTab(item.id)" class="ml-auto" size="small"
+                                severity="danger" icon="pi pi-external-link"/>
+                    </div>
+                </div>
+                <!-- Przycisk do pokazywania/ukrywania pełnej listy -->
+                <div class="text-center">
+                    <Button :label="showAllItems ? 'Ukryj szczegóły' : 'Pokaż wszystkie przedmioty'"
+                            @click="toggleShowAllItems" size="small" severity="info" text/>
+                </div>
+                <!-- Pełna lista wszystkich przedmiotów -->
+                <div v-show="showAllItems" class="mt-4">
+                    <h4 class="mb-2">Wszystkie przedmioty:</h4>
+                    <div v-for="item in items" :key="item.id" class="flex items-center gap-4 mb-2 p-2 rounded"
+                         :class="item.specific_currency_price === null ? 'bg-red-500 text-white' : 'bg-white bg-opacity-20'">
+                        <img :src="item.src" class="h-8 w-8 object-cover" :alt="item.name"/>
+                        <span>[{{ item.id }}] {{ item.name }}</span>
+                        <span>Cena zwykła: {{ item.price }}</span>
+                        <span v-if="item.specific_currency_price">Cena waluty: {{ item.specific_currency_price }}</span>
+                        <span v-else class="text-yellow-300 font-bold">Brak ceny waluty!</span>
+                        <Button v-if="!item.specific_currency_price" label="Ustaw"
+                                @click="openBaseItemInNewTab(item.id)" class="ml-auto" size="small" severity="danger"
+                                icon="pi pi-external-link"/>
+                    </div>
                 </div>
             </template>
         </Card>
