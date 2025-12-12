@@ -136,10 +136,12 @@ const booleanAttributes: BooleanAttribute[] = [
 ];
 
 const additionalAttributes: AdditionalAttribute[] = [
-    {key: 'shortenRevival', label: 'Skrócone odrodzenie', type: 'int'},
+    {key: 'shortenRevival', label: 'Skrócone odrodzenie (sekundy)', type: 'int'},
     {key: 'description', label: 'Opis', type: 'string', placeholder: 'Podaj opis'},
     {key: 'quantity', label: 'Ilość', type: 'int'},
     {key: 'incrementGold', label: 'Zwiększ złoto', type: 'int'},
+    {key: 'healRemaining', label: 'Pełne Uleczenie', type: 'int'},
+    {key: 'maxQuantity', label: 'Maksimum sztuk razem', type: 'int'},
     {key: 'expiresOn', label: 'Wygasa', type: 'timestamp', showTime: true, dateFormat: 'dd.mm.yy'}
 ];
 
