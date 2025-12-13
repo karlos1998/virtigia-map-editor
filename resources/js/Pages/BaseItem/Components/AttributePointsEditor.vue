@@ -142,7 +142,13 @@ const additionalAttributes: AdditionalAttribute[] = [
     {key: 'incrementGold', label: 'Zwiększ złoto', type: 'int'},
     {key: 'healRemaining', label: 'Pełne Uleczenie', type: 'int'},
     {key: 'maxQuantity', label: 'Maksimum sztuk razem', type: 'int'},
-    {key: 'expiresOn', label: 'Wygasa', type: 'timestamp', showTime: true, dateFormat: 'dd.mm.yy'}
+    {key: 'expiresOn', label: 'Wygasa', type: 'timestamp', showTime: true, dateFormat: 'dd.mm.yy'},
+    {key: 'healthRestorationPercent', label: 'Odnowienie % punktów HP', type: 'int'},
+    {key: 'bagCapacity', label: 'Pojemność torby', type: 'int'},
+    {key: 'restoreHealthPoints', label: 'Leczy punkty HP', type: 'int'},
+    {key: 'stamina', label: 'Dodaje wyczerpanie', type: 'int'},
+    {key: 'addDraconite', label: 'Dodaje smocze łzy', type: 'int'},
+    {key: 'fasterRevivalRecovery', label: 'Procentowe przyśpieszenie wracania do siebie', type: 'int'},
 ];
 
 const legendaryBonuses: LegendaryBonusOption[] = [
