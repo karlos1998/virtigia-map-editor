@@ -10,6 +10,7 @@ import Checkbox from 'primevue/checkbox';
 import InputText from 'primevue/inputtext';
 import Calendar from 'primevue/calendar';
 import Dropdown from 'primevue/dropdown';
+import Textarea from 'primevue/textarea';
 
 /*
 |--------------------------------------------------------------------------
@@ -50,7 +51,7 @@ interface BooleanAttribute {
 interface AdditionalAttribute {
     key: string;
     label: string;
-    type: 'int' | 'string' | 'timestamp';
+    type: 'int' | 'string' | 'timestamp' | 'text';
     placeholder?: string;
     showTime?: boolean;
     dateFormat?: string;
@@ -137,7 +138,7 @@ const booleanAttributes: BooleanAttribute[] = [
 
 const additionalAttributes: AdditionalAttribute[] = [
     {key: 'shortenRevival', label: 'Skrócone odrodzenie (sekundy)', type: 'int'},
-    {key: 'description', label: 'Opis', type: 'string', placeholder: 'Podaj opis'},
+    {key: 'description', label: 'Opis', type: 'text', placeholder: 'Podaj opis'},
     {key: 'quantity', label: 'Ilość', type: 'int'},
     {key: 'incrementGold', label: 'Zwiększ złoto', type: 'int'},
     {key: 'healRemaining', label: 'Pełne Uleczenie', type: 'int'},
@@ -349,11 +350,11 @@ function updateAdditionalAttribute(attributeKey: string, value: number | string 
 /**
  * Get additional attribute value - converts unix timestamp to Date if needed
  */
-function getAdditionalAttributeValue(attributeKey: string, type: 'int' | 'string' | 'timestamp'): number | string | Date | null {
+function getAdditionalAttributeValue(attributeKey: string, type: 'int' | 'string' | 'timestamp' | 'text'): number | string | Date | null {
     const value = form.value?.attributes?.[attributeKey];
 
     if (value === null || value === undefined) {
-        return type === 'int' ? 0 : type === 'string' ? '' : null;
+        return type === 'int' ? 0 : type === 'string' || type === 'text' ? '' : null;
     }
 
     if (type === 'timestamp' && typeof value === 'number') {
@@ -376,6 +377,14 @@ function getAdditionalAttributeValueAsInt(attributeKey: string): number {
  */
 function getAdditionalAttributeValueAsString(attributeKey: string): string {
     const value = getAdditionalAttributeValue(attributeKey, 'string');
+    return typeof value === 'string' ? value : '';
+}
+
+/**
+ * Get additional attribute value as text
+ */
+function getAdditionalAttributeValueAsText(attributeKey: string): string {
+    const value = getAdditionalAttributeValue(attributeKey, 'text');
     return typeof value === 'string' ? value : '';
 }
 
@@ -1087,6 +1096,14 @@ watch(selectedLegendaryBonus, async () => {
                     <template v-else-if="attr.type === 'string'">
                         <InputText
                             :model-value="getAdditionalAttributeValueAsString(attr.key)"
+                            @update:model-value="(value: string) => updateAdditionalAttribute(attr.key, value)"
+                            class="w-full"
+                            :placeholder="attr.placeholder"
+                        />
+                    </template>
+                    <template v-else-if="attr.type === 'text'">
+                        <Textarea
+                            :model-value="getAdditionalAttributeValueAsText(attr.key)"
                             @update:model-value="(value: string) => updateAdditionalAttribute(attr.key, value)"
                             class="w-full"
                             :placeholder="attr.placeholder"
