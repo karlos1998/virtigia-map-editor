@@ -150,6 +150,7 @@ const additionalAttributes: AdditionalAttribute[] = [
     {key: 'stamina', label: 'Dodaje wyczerpanie', type: 'int'},
     {key: 'addDraconite', label: 'Dodaje smocze łzy', type: 'int'},
     {key: 'fasterRevivalRecovery', label: 'Procentowe przyśpieszenie wracania do siebie', type: 'int'},
+    {key: 'timeToDisappear', label: 'Zniknie za X minut', type: 'int'},
 ];
 
 const legendaryBonuses: LegendaryBonusOption[] = [
