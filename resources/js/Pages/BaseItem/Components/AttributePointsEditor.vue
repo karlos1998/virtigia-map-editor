@@ -51,10 +51,11 @@ interface BooleanAttribute {
 interface AdditionalAttribute {
     key: string;
     label: string;
-    type: 'int' | 'string' | 'timestamp' | 'text';
+    type: 'int' | 'string' | 'timestamp' | 'text' | 'multiselect';
     placeholder?: string;
     showTime?: boolean;
     dateFormat?: string;
+    options?: Array<{ label: string; value: string }>;
 }
 
 interface LegendaryBonusOption {
@@ -155,6 +156,26 @@ const additionalAttributes: AdditionalAttribute[] = [
     {key: 'percentageUpgradeUnique', label: 'Ulepszenie przedmiotu unikatowego o %', type: 'int'},
     {key: 'percentageUpgradeHeroic', label: 'Ulepszenie przedmiotu heroicznego o %', type: 'int'},
     {key: 'percentageUpgradeLegendary', label: 'Ulepszenie przedmiotu legendarnego o %', type: 'int'},
+    {
+        key: 'upgradeableCategories', label: 'Ulepsza', type: 'multiselect', options: [
+            {label: 'Jednoręczne', value: 'oneHanded'},
+            {label: 'Zbroje', value: 'armors'},
+            {label: 'Dwuręczne', value: 'twoHanded'},
+            {label: 'Półtoraręczne', value: 'halfHanded'},
+            {label: 'Rękawice', value: 'gloves'},
+            {label: 'Hełmy', value: 'helmets'},
+            {label: 'Buty', value: 'boots'},
+            {label: 'Pierścienie', value: 'rings'},
+            {label: 'Naszyjniki', value: 'necklaces'},
+            {label: 'Tarcze', value: 'shields'},
+            {label: 'Kostury', value: 'staffs'},
+            {label: 'Pomocnicze', value: 'auxiliary'},
+            {label: 'Konsumpcyjne', value: 'consumable'},
+            {label: 'Różdżki', value: 'wands'},
+            {label: 'Dystansowe', value: 'distances'},
+            {label: 'Strzały', value: 'arrows'},
+        ]
+    },
 ];
 
 const legendaryBonuses: LegendaryBonusOption[] = [
@@ -179,8 +200,10 @@ const legendaryBonuses: LegendaryBonusOption[] = [
 
 const selectedLegendaryBonus = ref(
     form.value?.attributes?.legendaryBon &&
+    Array.isArray(form.value.attributes.legendaryBon) &&
     legendaryBonuses.find(b => b.name === form.value.attributes.legendaryBon[0])?.name ||
     props.baseItem?.attributes?.legendaryBon &&
+    Array.isArray(props.baseItem.attributes.legendaryBon) &&
     legendaryBonuses.find(b => b.name === props.baseItem.attributes.legendaryBon[0])?.name ||
     legendaryBonuses[0].name
 );
@@ -336,7 +359,7 @@ function updateBooleanAttribute(attributeKey: string, value: boolean): void {
 /**
  * Update additional attribute value in the form data
  */
-function updateAdditionalAttribute(attributeKey: string, value: number | string | Date | null): void {
+function updateAdditionalAttribute(attributeKey: string, value: number | string | Date | null | string[]): void {
     if (!form.value.attributes) {
         form.value.attributes = {};
     }
@@ -355,11 +378,11 @@ function updateAdditionalAttribute(attributeKey: string, value: number | string 
 /**
  * Get additional attribute value - converts unix timestamp to Date if needed
  */
-function getAdditionalAttributeValue(attributeKey: string, type: 'int' | 'string' | 'timestamp' | 'text'): number | string | Date | null {
+function getAdditionalAttributeValue(attributeKey: string, type: 'int' | 'string' | 'timestamp' | 'text' | 'multiselect'): number | string | Date | string[] | null {
     const value = form.value?.attributes?.[attributeKey];
 
     if (value === null || value === undefined) {
-        return type === 'int' ? 0 : type === 'string' || type === 'text' ? '' : null;
+        return type === 'int' ? 0 : type === 'string' || type === 'text' ? '' : type === 'multiselect' ? [] : null;
     }
 
     if (type === 'timestamp' && typeof value === 'number') {
@@ -1121,6 +1144,16 @@ watch(selectedLegendaryBonus, async () => {
                             class="w-full"
                             :showTime="attr.showTime"
                             :dateFormat="attr.dateFormat"
+                        />
+                    </template>
+                    <template v-else-if="attr.type === 'multiselect'">
+                        <MultiSelect
+                            :model-value="getAdditionalAttributeValue(attr.key, attr.type)"
+                            @update:model-value="(value: string[]) => updateAdditionalAttribute(attr.key, value)"
+                            :options="attr.options"
+                            optionLabel="label"
+                            optionValue="value"
+                            class="w-full"
                         />
                     </template>
                 </div>
