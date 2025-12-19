@@ -151,6 +151,10 @@ const additionalAttributes: AdditionalAttribute[] = [
     {key: 'addDraconite', label: 'Dodaje smocze łzy', type: 'int'},
     {key: 'fasterRevivalRecovery', label: 'Procentowe przyśpieszenie wracania do siebie', type: 'int'},
     {key: 'timeToDisappear', label: 'Zniknie za X minut', type: 'int'},
+    {key: 'percentageUpgradeCommon', label: 'Ulepszenie przedmiotu zwykłego o %', type: 'int'},
+    {key: 'percentageUpgradeUnique', label: 'Ulepszenie przedmiotu unikatowego o %', type: 'int'},
+    {key: 'percentageUpgradeHeroic', label: 'Ulepszenie przedmiotu heroicznego o %', type: 'int'},
+    {key: 'percentageUpgradeLegendary', label: 'Ulepszenie przedmiotu legendarnego o %', type: 'int'},
 ];
 
 const legendaryBonuses: LegendaryBonusOption[] = [
