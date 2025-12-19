@@ -176,6 +176,10 @@ const additionalAttributes: AdditionalAttribute[] = [
             {label: 'Strzały', value: 'arrows'},
         ]
     },
+    {key: 'reduceLevelRequirementCommon', label: 'Obniża wymagania zwykłego o', type: 'int'},
+    {key: 'reduceLevelRequirementUnique', label: 'Obniża wymagania unikatowego o', type: 'int'},
+    {key: 'reduceLevelRequirementHeroic', label: 'Obniża wymagania heroicznego o', type: 'int'},
+    {key: 'reduceLevelRequirementLegendary', label: 'Obniża wymagania legendarnego o', type: 'int'},
 ];
 
 const legendaryBonuses: LegendaryBonusOption[] = [
