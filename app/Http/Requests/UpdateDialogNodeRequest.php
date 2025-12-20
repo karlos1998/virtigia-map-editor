@@ -94,6 +94,25 @@ class UpdateDialogNodeRequest extends FormRequest
                                 $fail("Dla rule: {$key}, 'scale' musi być booleanem.");
                                 return;
                             }
+                        } elseif ($key === \App\Enums\DialogNodeAdditionalAction::SET_OUTFIT->value) {
+                            // For setOutfit action, value must be string (image path) and duration must be numeric
+                            $value = $ruleData['value'] ?? null;
+                            if (!is_string($value) || empty(trim($value))) {
+                                $fail("Dla rule: {$key}, wartość musi być niepustym ciągiem znaków (ścieżka do grafiki).");
+                                return;
+                            }
+
+                            // Check if duration is provided and is numeric
+                            if (!array_key_exists('duration', $ruleData) || !is_numeric($ruleData['duration'])) {
+                                $fail("Dla rule: {$key}, 'duration' musi być liczbą.");
+                                return;
+                            }
+
+                            // Duration should be non-negative
+                            if ($ruleData['duration'] < 0) {
+                                $fail("Dla rule: {$key}, 'duration' nie może być ujemna.");
+                                return;
+                            }
                         } elseif (!is_numeric($ruleData['value'])) {
                             $fail("Dla rule: {$key}, wartość musi być liczbą.");
                             return;

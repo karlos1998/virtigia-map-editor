@@ -3,7 +3,7 @@ import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
 import {computed, reactive, Ref, ref, watch} from "vue";
 
-import { inject, onMounted } from "vue";
+import {inject, onMounted} from "vue";
 import {DynamicDialogInstance} from "primevue/dynamicdialogoptions";
 import {route} from "ziggy-js";
 import axios from "axios";
@@ -19,6 +19,7 @@ import { useQuestStepSelection } from "../Composables/useQuestStepSelection";
 import InputSwitch from 'primevue/inputswitch';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
+import OutfitBrowserDialog from '../../BaseItem/Components/OutfitBrowserDialog.vue'; // Dodaj import OutfitBrowserDialog
 
 const dialogRef = inject<Ref<DynamicDialogInstance & {
     data: {
@@ -162,6 +163,15 @@ const save = () => {
         }
     }
 
+    // Validate setOutfit action: ensure src is provided
+    if (form.additional_actions[DialogNodeAdditionalAction.setOutfit]) {
+        const outfitAction = form.additional_actions[DialogNodeAdditionalAction.setOutfit] as any;
+        if (!outfitAction.value || outfitAction.value.trim() === '') {
+            toast.add({severity: 'error', summary: 'Błąd', detail: 'Podaj źródło grafiki stroju', life: 3000});
+            return;
+        }
+    }
+
     // Create a deep copy of the form data
     const formData = JSON.parse(JSON.stringify(form));
 
@@ -226,16 +236,22 @@ const addAdditionalAction = () => {
         value = {value: 0, scale: false};
     } else if(newAdditionalAction.value == DialogNodeAdditionalAction.setQuestStep) {
         value = "";
+    } else if (newAdditionalAction.value == DialogNodeAdditionalAction.setOutfit) {
+        value = "";
+        // duration will be set separately
     }
 
     form.additional_actions[newAdditionalAction.value] = {
         value,
     }
 
+    // Initialize duration for setOutfit
+    if (newAdditionalAction.value == DialogNodeAdditionalAction.setOutfit) {
+        (form.additional_actions[newAdditionalAction.value] as any).duration = 0;
+    }
+
     newAdditionalAction.value = undefined;
-}
-
-
+};
 
 /// powtarzajacy sie kod
 
@@ -332,6 +348,44 @@ watch(
     {deep: true}
 )
 
+// Outfit browser dialog
+const showOutfitBrowserModal = ref(false)
+
+const openOutfitBrowserModal = () => {
+    showOutfitBrowserModal.value = true
+}
+
+const handleOutfitSelected = (filePath: string) => {
+    currentOutfitSrc.value = filePath;
+    showOutfitBrowserModal.value = false
+}
+
+// Computed properties for outfit values to ensure reactivity
+const currentOutfitSrc = computed({
+    get: () => {
+        const outfitAction = form.additional_actions[DialogNodeAdditionalAction.setOutfit];
+        return outfitAction ? (outfitAction.value as string) || '' : '';
+    },
+    set: (value: string) => {
+        const outfitAction = form.additional_actions[DialogNodeAdditionalAction.setOutfit];
+        if (outfitAction) {
+            outfitAction.value = value;
+        }
+    }
+});
+
+const currentOutfitDuration = computed({
+    get: () => {
+        const outfitAction = form.additional_actions[DialogNodeAdditionalAction.setOutfit];
+        return outfitAction ? (outfitAction as any).duration || 0 : 0;
+    },
+    set: (value: number) => {
+        const outfitAction = form.additional_actions[DialogNodeAdditionalAction.setOutfit];
+        if (outfitAction) {
+            (outfitAction as any).duration = value;
+        }
+    }
+});
 </script>
 
 <template>
@@ -458,6 +512,47 @@ watch(
                 :onNodeExpand="onQuestNodeExpand"
             />
 
+            <!-- Input for setOutfit action -->
+            <div v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.setOutfit"
+                 class="space-y-3 p-3 bg-gray-50 rounded-lg border">
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-700">Źródło grafiki stroju</label>
+                    <div class="flex gap-2">
+                        <InputText
+                            v-model="currentOutfitSrc"
+                            placeholder="np. grzyb.gif"
+                            class="flex-1"
+                        />
+                        <Button
+                            @click="openOutfitBrowserModal"
+                            severity="secondary"
+                            icon="pi pi-folder-open"
+                            label="Przeglądaj"
+                            size="small"
+                        />
+                    </div>
+                    <!-- Preview image -->
+                    <div v-if="currentOutfitSrc" class="mt-2">
+                        <img
+                            :src="`/s3/img/outfits/${currentOutfitSrc}`"
+                            alt="Podgląd stroju"
+                            class="h-16 w-16 object-contain border border-gray-300 rounded"
+                            @error="(e: Event) => ((e.target as HTMLImageElement).style.display = 'none')"
+                        />
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-700">Czas trwania (minuty)</label>
+                    <InputNumber
+                        style="width:60px"
+                        v-model="currentOutfitDuration"
+                        :min="0"
+                        placeholder="Czas w minutach"
+                    />
+                    <small class="text-gray-500 text-xs mt-1 block">0 = permanentny strój</small>
+                </div>
+            </div>
+
         </InputGroup>
 
         <InputGroup>
@@ -481,6 +576,10 @@ watch(
             <Button :loading="processing" class="flex-1" @click="save">Zapisz</Button>
             <Button :loading="copyProcessing" severity="secondary" class="flex-1" @click="copyDialog">Kopiuj dialog</Button>
         </div>
+        <OutfitBrowserDialog
+            v-model:visible="showOutfitBrowserModal"
+            @select="handleOutfitSelected"
+        />
     </div>
 </template>
 

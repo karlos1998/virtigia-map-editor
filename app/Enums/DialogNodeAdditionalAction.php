@@ -30,4 +30,7 @@ enum DialogNodeAdditionalAction: string
 
     #[Description('Rzuć błogosławieństwo')]
     case BLESSING = 'blessing';
+
+    #[Description('Ustaw outfit')]
+    case SET_OUTFIT = 'setOutfit';
 }

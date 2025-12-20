@@ -4,4 +4,5 @@ export enum DialogNodeAdditionalAction {
     setQuestStep = 'setQuestStep',
     addExp = 'addExp',
     blessing = 'blessing',
+    setOutfit = 'setOutfit',
 }
