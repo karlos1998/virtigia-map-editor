@@ -51,11 +51,13 @@ interface BooleanAttribute {
 interface AdditionalAttribute {
     key: string;
     label: string;
-    type: 'int' | 'string' | 'timestamp' | 'text' | 'multiselect';
+    type: 'int' | 'string' | 'timestamp' | 'text' | 'multiselect' | 'array';
     placeholder?: string;
     showTime?: boolean;
     dateFormat?: string;
     options?: Array<{ label: string; value: string }>;
+    arraySize?: number;
+    arrayConstraints?: Array<{ min?: number; max?: number }>;
 }
 
 interface LegendaryBonusOption {
@@ -161,7 +163,7 @@ const additionalAttributes: AdditionalAttribute[] = [
             {label: 'Jednoręczne', value: 'oneHanded'},
             {label: 'Zbroje', value: 'armors'},
             {label: 'Dwuręczne', value: 'twoHanded'},
-            {label: 'Półtoraręczne', value: 'halfHanded'},
+            {label: 'Półtoręczne', value: 'halfHanded'},
             {label: 'Rękawice', value: 'gloves'},
             {label: 'Hełmy', value: 'helmets'},
             {label: 'Buty', value: 'boots'},
@@ -180,6 +182,16 @@ const additionalAttributes: AdditionalAttribute[] = [
     {key: 'reduceLevelRequirementUnique', label: 'Obniża wymagania unikatowego o', type: 'int'},
     {key: 'reduceLevelRequirementHeroic', label: 'Obniża wymagania heroicznego o', type: 'int'},
     {key: 'reduceLevelRequirementLegendary', label: 'Obniża wymagania legendarnego o', type: 'int'},
+    {
+        key: 'healChanceAfterFight',
+        label: 'Szansa na wyleczenie po walce',
+        type: 'array',
+        arraySize: 2,
+        arrayConstraints: [
+            {min: 1, max: 99}, // percentage chance 1-99%
+            {} // any number for the second value
+        ]
+    },
 ];
 
 const legendaryBonuses: LegendaryBonusOption[] = [
@@ -363,7 +375,7 @@ function updateBooleanAttribute(attributeKey: string, value: boolean): void {
 /**
  * Update additional attribute value in the form data
  */
-function updateAdditionalAttribute(attributeKey: string, value: number | string | Date | null | string[]): void {
+function updateAdditionalAttribute(attributeKey: string, value: number | string | Date | null | string[] | number[]): void {
     if (!form.value.attributes) {
         form.value.attributes = {};
     }
@@ -382,10 +394,14 @@ function updateAdditionalAttribute(attributeKey: string, value: number | string 
 /**
  * Get additional attribute value - converts unix timestamp to Date if needed
  */
-function getAdditionalAttributeValue(attributeKey: string, type: 'int' | 'string' | 'timestamp' | 'text' | 'multiselect'): number | string | Date | string[] | null {
+function getAdditionalAttributeValue(attributeKey: string, type: 'int' | 'string' | 'timestamp' | 'text' | 'multiselect' | 'array'): number | string | Date | string[] | number[] | null {
     const value = form.value?.attributes?.[attributeKey];
 
     if (value === null || value === undefined) {
+        if (type === 'array') {
+            const attr = additionalAttributes.find(a => a.key === attributeKey);
+            return attr?.arraySize ? new Array(attr.arraySize).fill(0) : [];
+        }
         return type === 'int' ? 0 : type === 'string' || type === 'text' ? '' : type === 'multiselect' ? [] : null;
     }
 
@@ -426,6 +442,25 @@ function getAdditionalAttributeValueAsText(attributeKey: string): string {
 function getAdditionalAttributeValueAsDate(attributeKey: string): Date | null {
     const value = getAdditionalAttributeValue(attributeKey, 'timestamp');
     return value instanceof Date ? value : null;
+}
+
+/**
+ * Get array constraints for specific array attribute and index
+ */
+function getArrayConstraint(attributeKey: string, index: number, constraint: 'min' | 'max'): number | undefined {
+    const attr = additionalAttributes.find(a => a.key === attributeKey);
+    if (!attr || !attr.arrayConstraints || index >= attr.arrayConstraints.length) {
+        return undefined;
+    }
+    return attr.arrayConstraints[index][constraint];
+}
+
+/**
+ * Get additional attribute value as array
+ */
+function getAdditionalAttributeValueAsArray(attributeKey: string): number[] {
+    const value = getAdditionalAttributeValue(attributeKey, 'array');
+    return Array.isArray(value) ? value : [];
 }
 
 /**
@@ -1159,6 +1194,26 @@ watch(selectedLegendaryBonus, async () => {
                             optionValue="value"
                             class="w-full"
                         />
+                    </template>
+                    <template v-else-if="attr.type === 'array'">
+                        <div class="flex flex-wrap gap-2">
+                            <InputNumber
+                                v-for="(item, index) in getAdditionalAttributeValueAsArray(attr.key)"
+                                :key="index"
+                                :model-value="item"
+                                @update:model-value="(value: number) => {
+                                    const arrayValue = [...getAdditionalAttributeValueAsArray(attr.key)];
+                                    arrayValue[index] = value;
+                                    updateAdditionalAttribute(attr.key, arrayValue);
+                                }"
+                                showButtons
+                                buttonLayout="horizontal"
+                                class="w-full"
+                                :min="getArrayConstraint(attr.key, index, 'min')"
+                                :max="getArrayConstraint(attr.key, index, 'max')"
+                                :placeholder="index === 0 ? 'Szansa % (1-99)' : 'Wartość'"
+                            />
+                        </div>
                     </template>
                 </div>
             </div>
