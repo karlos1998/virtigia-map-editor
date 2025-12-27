@@ -95,6 +95,11 @@ const model = ref([
                 icon: 'pi pi-map',
                 route: 'maps.world',
             },
+            {
+                label: 'Ciosy Specjalne',
+                icon: 'pi pi-map',
+                route: 'special-attacks.index',
+            },
         ],
     },
     {

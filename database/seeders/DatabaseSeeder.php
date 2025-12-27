@@ -21,5 +21,6 @@ class DatabaseSeeder extends Seeder
 //        ]);
 
 //        $this->call(DialogSeeder::class);
+//        $this->call(SpecialAttackSeeder::class);
     }
 }

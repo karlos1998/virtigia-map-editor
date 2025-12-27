@@ -17,6 +17,7 @@ use App\Http\Controllers\QuestController;
 use App\Http\Controllers\QuestStepController;
 use App\Http\Controllers\RenewableMapItemController;
 use App\Http\Controllers\ShopController;
+use App\Http\Controllers\SpecialAttackController;
 use App\Http\Middleware\RemoveWorldTemplateNameFromRouteParameters;
 use App\Http\Middleware\SetDynamicModelConnection;
 use App\Models\DynamicModel;
@@ -205,6 +206,15 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('base-npcs/{sourceBaseNpc}/transfer-npcs', [BaseNpcController::class, 'transferNpcs'])->name('base-npcs.transfer-npcs');
                 Route::post('base-npcs/{baseNpc}/convert-to-layer', [BaseNpcController::class, 'convertToLayer'])->name('base-npcs.convert-to-layer');
                 Route::post('base-npcs/{baseNpc}/revert-from-layer', [BaseNpcController::class, 'revertFromLayer'])->name('base-npcs.revert-from-layer');
+
+                Route::get('special-attacks', [SpecialAttackController::class, 'index'])->name('special-attacks.index');
+                Route::get('special-attacks/create', [SpecialAttackController::class, 'create'])->name('special-attacks.create');
+                Route::post('special-attacks', [SpecialAttackController::class, 'store'])->name('special-attacks.store');
+                Route::get('special-attacks/{specialAttack}', [SpecialAttackController::class, 'show'])->name('special-attacks.show');
+                Route::get('special-attacks/{specialAttack}/edit', [SpecialAttackController::class, 'edit'])->name('special-attacks.edit');
+                Route::patch('special-attacks/{specialAttack}', [SpecialAttackController::class, 'update'])->name('special-attacks.update');
+                Route::delete('special-attacks/{specialAttack}', [SpecialAttackController::class, 'destroy'])->name('special-attacks.destroy');
+                Route::get('web-api/special-attacks', [SpecialAttackController::class, 'indexJson'])->name('web-api.special-attacks.index');
 
                 Route::get('assets/base-npcs/search', [AssetController::class, 'searchNpcs'])->name('assets.base-npcs.search');
                 Route::get('assets/outfits/search', [AssetController::class, 'searchOutfits'])->name('assets.outfits.search');

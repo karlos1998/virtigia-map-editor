@@ -55,4 +55,9 @@ class BaseNpc extends DynamicModel
     {
         return $this->belongsToMany(BaseItem::class, 'base_npc_loots');
     }
+
+    public function specialAttacks()
+    {
+        return $this->belongsToMany(SpecialAttack::class, 'base_npc_special_attacks');
+    }
 }
