@@ -1,72 +1,73 @@
 <template>
-  <div class="attribute-editor">
-    <div class="card mb-4">
-      <h3 class="text-xl font-bold mb-2">Edytor atrybutów</h3>
-      <div class="flex flex-wrap gap-2 mb-4">
-        <div v-for="(value, key) in attributes" :key="key" class="attribute-tag p-2 bg-blue-100 rounded flex items-center">
-          <span>{{ getAttributeLabel(key, value) }}</span>
-          <button @click="removeAttribute(key)" class="ml-2 text-red-500 hover:text-red-700">
-            <i class="pi pi-times"></i>
-          </button>
-        </div>
-      </div>
+    TEN KOMPONENT JEST DO USUNIECIA!
+<!--  <div class="attribute-editor">-->
+<!--    <div class="card mb-4">-->
+<!--      <h3 class="text-xl font-bold mb-2">Edytor atrybutów</h3>-->
+<!--      <div class="flex flex-wrap gap-2 mb-4">-->
+<!--        <div v-for="(value, key) in attributes" :key="key" class="attribute-tag p-2 bg-blue-100 rounded flex items-center">-->
+<!--          <span>{{ getAttributeLabel(key, value) }}</span>-->
+<!--          <button @click="removeAttribute(key)" class="ml-2 text-red-500 hover:text-red-700">-->
+<!--            <i class="pi pi-times"></i>-->
+<!--          </button>-->
+<!--        </div>-->
+<!--      </div>-->
 
-      <div class="mb-4">
-        <AutoComplete
-          v-model="selectedAttribute"
-          :suggestions="filteredAttributes"
-          @complete="searchAttributes"
-          placeholder="Wyszukaj atrybut..."
-          class="w-full"
-          dropdown
-          forceSelection
-          optionLabel="label"
-        >
-          <template #item="slotProps">
-            <div>{{ slotProps.item.label }}</div>
-          </template>
-        </AutoComplete>
-      </div>
+<!--      <div class="mb-4">-->
+<!--        <AutoComplete-->
+<!--          v-model="selectedAttribute"-->
+<!--          :suggestions="filteredAttributes"-->
+<!--          @complete="searchAttributes"-->
+<!--          placeholder="Wyszukaj atrybut..."-->
+<!--          class="w-full"-->
+<!--          dropdown-->
+<!--          forceSelection-->
+<!--          optionLabel="label"-->
+<!--        >-->
+<!--          <template #item="slotProps">-->
+<!--            <div>{{ slotProps.item.label }}</div>-->
+<!--          </template>-->
+<!--        </AutoComplete>-->
+<!--      </div>-->
 
-      <div v-if="selectedAttribute && selectedAttribute.key" class="mb-4">
-        <div class="attribute-input">
-          <!-- Special handling for InputNumber with prefix/suffix -->
-          <div v-if="getInputComponent(selectedAttribute.key) === 'InputNumber' && (getAttributePrefix(selectedAttribute.key) || getAttributeSuffix(selectedAttribute.key))" class="p-inputgroup">
-            <span v-if="getAttributePrefix(selectedAttribute.key)" class="p-inputgroup-addon">{{ getAttributePrefix(selectedAttribute.key) }}</span>
-            <InputNumber v-model="attributeValue" class="w-full" :placeholder="'Wartość dla ' + selectedAttribute.label" />
-            <span v-if="getAttributeSuffix(selectedAttribute.key)" class="p-inputgroup-addon">{{ getAttributeSuffix(selectedAttribute.key) }}</span>
-          </div>
-          <!-- Default handling for other components -->
-          <component
-            v-else
-            :is="getInputComponent(selectedAttribute.key)"
-            v-model="attributeValue"
-            v-bind="getComponentProps(selectedAttribute)"
-            :options="getAttributeOptions(selectedAttribute.key)"
-            class="w-full"
-            :placeholder="'Wartość dla ' + selectedAttribute.label"
-            :optionLabel="getInputComponent(selectedAttribute.key) === 'Dropdown' || getInputComponent(selectedAttribute.key) === 'MultiSelect' ? 'label' : undefined"
-            :optionValue="getInputComponent(selectedAttribute.key) === 'Dropdown' || getInputComponent(selectedAttribute.key) === 'MultiSelect' ? 'value' : undefined"
-          />
-        </div>
-        <div v-if="isArrayAttribute(selectedAttribute.key)" class="mt-2">
-          <Button @click="addArrayValue" label="Dodaj wartość" class="p-button-sm" />
-          <div v-if="arrayValues.length > 0" class="mt-2">
-            <div v-for="(val, index) in arrayValues" :key="index" class="flex items-center mb-1">
-              <InputNumber v-model="arrayValues[index]" class="w-full" />
-              <Button @click="removeArrayValue(index)" icon="pi pi-times" class="p-button-danger p-button-sm ml-2" />
-            </div>
-          </div>
-        </div>
-        <Button @click="addAttribute" label="Dodaj atrybut" class="mt-2" />
-      </div>
-    </div>
+<!--      <div v-if="selectedAttribute && selectedAttribute.key" class="mb-4">-->
+<!--        <div class="attribute-input">-->
+<!--          &lt;!&ndash; Special handling for InputNumber with prefix/suffix &ndash;&gt;-->
+<!--          <div v-if="getInputComponent(selectedAttribute.key) === 'InputNumber' && (getAttributePrefix(selectedAttribute.key) || getAttributeSuffix(selectedAttribute.key))" class="p-inputgroup">-->
+<!--            <span v-if="getAttributePrefix(selectedAttribute.key)" class="p-inputgroup-addon">{{ getAttributePrefix(selectedAttribute.key) }}</span>-->
+<!--            <InputNumber v-model="attributeValue" class="w-full" :placeholder="'Wartość dla ' + selectedAttribute.label" />-->
+<!--            <span v-if="getAttributeSuffix(selectedAttribute.key)" class="p-inputgroup-addon">{{ getAttributeSuffix(selectedAttribute.key) }}</span>-->
+<!--          </div>-->
+<!--          &lt;!&ndash; Default handling for other components &ndash;&gt;-->
+<!--          <component-->
+<!--            v-else-->
+<!--            :is="getInputComponent(selectedAttribute.key)"-->
+<!--            v-model="attributeValue"-->
+<!--            v-bind="getComponentProps(selectedAttribute)"-->
+<!--            :options="getAttributeOptions(selectedAttribute.key)"-->
+<!--            class="w-full"-->
+<!--            :placeholder="'Wartość dla ' + selectedAttribute.label"-->
+<!--            :optionLabel="getInputComponent(selectedAttribute.key) === 'Dropdown' || getInputComponent(selectedAttribute.key) === 'MultiSelect' ? 'label' : undefined"-->
+<!--            :optionValue="getInputComponent(selectedAttribute.key) === 'Dropdown' || getInputComponent(selectedAttribute.key) === 'MultiSelect' ? 'value' : undefined"-->
+<!--          />-->
+<!--        </div>-->
+<!--        <div v-if="isArrayAttribute(selectedAttribute.key)" class="mt-2">-->
+<!--          <Button @click="addArrayValue" label="Dodaj wartość" class="p-button-sm" />-->
+<!--          <div v-if="arrayValues.length > 0" class="mt-2">-->
+<!--            <div v-for="(val, index) in arrayValues" :key="index" class="flex items-center mb-1">-->
+<!--              <InputNumber v-model="arrayValues[index]" class="w-full" />-->
+<!--              <Button @click="removeArrayValue(index)" icon="pi pi-times" class="p-button-danger p-button-sm ml-2" />-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--        <Button @click="addAttribute" label="Dodaj atrybut" class="mt-2" />-->
+<!--      </div>-->
+<!--    </div>-->
 
-    <div class="card">
-      <h3 class="text-xl font-bold mb-2">Podgląd JSON</h3>
-      <pre class="bg-gray-100 p-4 rounded overflow-auto max-h-96">{{ JSON.stringify(attributes, null, 2) }}</pre>
-    </div>
-  </div>
+<!--    <div class="card">-->
+<!--      <h3 class="text-xl font-bold mb-2">Podgląd JSON</h3>-->
+<!--      <pre class="bg-gray-100 p-4 rounded overflow-auto max-h-96">{{ JSON.stringify(attributes, null, 2) }}</pre>-->
+<!--    </div>-->
+<!--  </div>-->
 </template>
 
 <script setup lang="ts">
