@@ -519,6 +519,17 @@ function buildApiParameters(): Record<string, any> {
     additionalAttributes.forEach(attr => {
         const value = getAdditionalAttributeValue(attr.key, attr.type);
         if (value !== null && value !== undefined && value !== '') {
+            // For arrays, check if all elements are 0 - if so, don't include
+            if (attr.type === 'array' && Array.isArray(value)) {
+                if (value.every(v => v === 0)) {
+                    return; // Skip empty arrays (all zeros)
+                }
+            }
+            // For numbers, don't include if value is 0
+            else if (attr.type === 'int' && value === 0) {
+                return; // Skip zero values
+            }
+
             if (attr.type === 'timestamp' && value instanceof Date) {
                 params[attr.key] = Math.floor(value.getTime() / 1000);
             } else {
