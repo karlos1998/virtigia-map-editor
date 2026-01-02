@@ -34,10 +34,27 @@ class NpcService extends BaseService
             $this->npcModel->with(['locations', 'dialog', 'base']),
             new TableService(
                 columns: [
-                    'enabled' => new TableDropdownColumn(options: [
-                        new TableDropdownOptionTag('Dostępny', fn($q) => $q->whereEnabled(true), TagSeverity::SUCCESS),
-                        new TableDropdownOptionTag('Wylączony', fn($q) => $q->whereEnabled(false), TagSeverity::DANGER),
-                    ])
+                    'enabled' => new TableDropdownColumn(
+                        placeholder: 'Status',
+                        options: [
+                            new TableDropdownOptionTag('Dostępny', fn($q) => $q->whereEnabled(true), TagSeverity::SUCCESS),
+                            new TableDropdownOptionTag('Wylączony', fn($q) => $q->whereEnabled(false), TagSeverity::DANGER),
+                        ]
+                    ),
+                    'locations' => new TableDropdownColumn(
+                        placeholder: 'Lokalizacje',
+                        options: [
+                            new TableDropdownOption('Ma jedną lokalizację', fn($q) => $q->has('locations', '=', 1)),
+                            new TableDropdownOption('Ma wiele lokalizacji', fn($q) => $q->has('locations', '>', 1)),
+                        ]
+                    ),
+                    'dialog' => new TableDropdownColumn(
+                        placeholder: 'Dialog',
+                        options: [
+                            new TableDropdownOption('Ma dialog', fn($q) => $q->whereHas('dialog')),
+                            new TableDropdownOption('Nie ma dialogu', fn($q) => $q->whereDoesntHave('dialog')),
+                        ]
+                    )
                 ],
                 globalFilterColumns: ['base.name', 'base.lvl', 'base.rank', 'base.category'],
             )
