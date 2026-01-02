@@ -813,6 +813,31 @@ async function calculateScaleAttributes(): Promise<void> {
     }
 }
 
+async function loadReverseAttributes() {
+    if (!props.baseItem?.reverse_attributes) {
+        return;
+    }
+
+    const reverseData = props.baseItem.reverse_attributes;
+
+    // Set attribute points
+    if (reverseData.attributePoints) {
+        form.value.attribute_points = {...reverseData.attributePoints};
+    }
+
+    // Set manual attribute points
+    if (reverseData.manualAttributePoints) {
+        form.value.manual_attribute_points = {...reverseData.manualAttributePoints};
+    }
+
+    // Set attack elements if present
+    if (reverseData.attackElements && Array.isArray(reverseData.attackElements)) {
+        selectedAttackElements.value = [...reverseData.attackElements];
+    }
+
+    // await calculateScaleAttributes();
+}
+
 /*
 |--------------------------------------------------------------------------
 | User Actions
@@ -961,9 +986,19 @@ watch(selectedLegendaryBonus, async () => {
                         Atrybuty logiczne: {{ enabledBooleanAttributesCount }}
                     </div>
                 </div>
-                <div v-if="isCalculating" class="flex items-center text-sm text-gray-600">
-                    <ProgressSpinner style="width: 16px; height: 16px;" />
-                    <span class="ml-2">Obliczanie...</span>
+                <div class="flex gap-2">
+                    <div v-if="isCalculating" class="flex items-center text-sm text-gray-600">
+                        <ProgressSpinner style="width: 16px; height: 16px;"/>
+                        <span class="ml-2">Obliczanie...</span>
+                    </div>
+                    <Button
+                        v-if="props.baseItem?.reverse_attributes"
+                        @click="loadReverseAttributes"
+                        icon="pi pi-bolt"
+                        severity="info"
+                        size="small"
+                        label="Debug: Wczytaj reverse attributes"
+                    />
                 </div>
             </div>
 
