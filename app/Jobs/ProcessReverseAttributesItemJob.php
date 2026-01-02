@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\BaseItem;
 use App\Models\DynamicModel;
 use App\Services\ApiAttributePointService;
+use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -14,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 
 class ProcessReverseAttributesItemJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Batchable;
 
     public $timeout = 60; // 1 minute timeout
 
