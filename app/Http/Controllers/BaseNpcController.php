@@ -102,7 +102,7 @@ class BaseNpcController extends Controller
             ->get();
 
         return Inertia::render('BaseNpc/Show', [
-            'baseNpc' => BaseNpcResource::make($baseNpc->load('loots')),
+            'baseNpc' => BaseNpcResource::make($baseNpc->load(['loots', 'specialAttacks.effects', 'specialAttacks.damages'])),
             'locations' => $this->baseNpcService->getLocations($baseNpc),
             'logs' => ActivityLogResource::collection($logs),
             'similarBaseNpcs' => Inertia::lazy(fn () => $this->baseNpcService->findSimilarBaseNpcs($baseNpc)),

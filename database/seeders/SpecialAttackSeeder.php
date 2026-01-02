@@ -9,27 +9,45 @@ use App\Enums\SpecialAttackType;
 use App\Models\SpecialAttack;
 use App\Models\SpecialAttackDamage;
 use App\Models\SpecialAttackEffect;
+use App\Models\BaseNpc;
+use App\Enums\BaseNpcRank;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class SpecialAttackSeeder extends Seeder
 {
+    private array $lastBatchAttackIds = [];
+
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
+        // Czyszczenie danych
+        \DB::table('base_npc_special_attacks')->delete();
+        SpecialAttackDamage::query()->delete();
+        SpecialAttackEffect::query()->delete();
+        SpecialAttack::query()->delete();
+
         // Partia 1
         $this->seedBatch1();
+        $this->assignAttacksToNpc('Dziewicza Orlica');
 
         // Partia 2
         $this->seedBatch2();
+        $this->assignAttacksToNpc('Zabójczy Królik');
 
         // Partia 3
         $this->seedBatch3();
+        $this->assignAttacksToNpc('Renegat Baulus');
 
         // Partia 4
         $this->seedBatch4();
+        $this->assignAttacksToNpc('Versus Zoons');
+
+        // Partia 5
+        $this->seedBatch5();
+        $this->assignAttacksToNpc('Piekielny Arcymag');
     }
 
     private function seedBatch1(): void
@@ -552,8 +570,135 @@ class SpecialAttackSeeder extends Seeder
         $this->createAttacks($attacks);
     }
 
+    private function seedBatch5(): void
+    {
+        $attacks = [
+            [
+                'name' => 'Kojące uleczenie ogniem',
+                'attack_type' => SpecialAttackType::SPECIAL,
+                'charge_turns' => 0,
+                'target' => SpecialAttackTarget::SELF,
+                'effects' => [
+                    [
+                        'type' => SpecialAttackEffectType::HEALING,
+                        'value' => 10,
+                        'duration' => 0
+                    ]
+                ],
+                'attacks' => []
+            ],
+            [
+                'name' => 'Kula piekielnego ognia',
+                'attack_type' => SpecialAttackType::SPECIAL,
+                'charge_turns' => 0,
+                'target' => SpecialAttackTarget::SINGLE,
+                'effects' => [],
+                'attacks' => [
+                    [
+                        'element' => SpecialAttackElement::FIRE,
+                        'damage' => [
+                            'min' => 8757,
+                            'max' => 13135
+                        ]
+                    ]
+                ]
+            ],
+            [
+                'name' => 'Ognisty podmuch',
+                'attack_type' => SpecialAttackType::SPECIAL,
+                'charge_turns' => 0,
+                'target' => SpecialAttackTarget::ALL,
+                'effects' => [],
+                'attacks' => [
+                    [
+                        'element' => SpecialAttackElement::FIRE,
+                        'damage' => [
+                            'min' => 6903,
+                            'max' => 10354
+                        ]
+                    ]
+                ]
+            ],
+            [
+                'name' => 'Uścisk diabła',
+                'attack_type' => SpecialAttackType::SPECIAL,
+                'charge_turns' => 0,
+                'target' => SpecialAttackTarget::SINGLE,
+                'effects' => [],
+                'attacks' => [
+                    [
+                        'element' => SpecialAttackElement::PHYSICAL,
+                        'damage' => [
+                            'min' => 10340,
+                            'max' => 10340
+                        ]
+                    ]
+                ]
+            ],
+            [
+                'name' => 'Piekielna burza',
+                'attack_type' => SpecialAttackType::SPECIAL,
+                'charge_turns' => 2,
+                'target' => SpecialAttackTarget::ALL,
+                'effects' => [],
+                'attacks' => [
+                    [
+                        'element' => SpecialAttackElement::FIRE,
+                        'damage' => [
+                            'min' => 8000,
+                            'max' => 15600
+                        ]
+                    ],
+                    [
+                        'element' => SpecialAttackElement::LIGHTNING,
+                        'damage' => [
+                            'min' => 4000,
+                            'max' => 20000
+                        ]
+                    ]
+                ]
+            ],
+            [
+                'name' => 'Ściana piekielnego ognia',
+                'attack_type' => SpecialAttackType::SPECIAL,
+                'charge_turns' => 0,
+                'target' => SpecialAttackTarget::LINE,
+                'effects' => [],
+                'attacks' => [
+                    [
+                        'element' => SpecialAttackElement::FIRE,
+                        'damage' => [
+                            'min' => 9600,
+                            'max' => 14400
+                        ]
+                    ]
+                ]
+            ],
+            [
+                'name' => 'Żar piekieł',
+                'attack_type' => SpecialAttackType::SPECIAL,
+                'charge_turns' => 2,
+                'target' => SpecialAttackTarget::ALL,
+                'effects' => [],
+                'attacks' => [
+                    [
+                        'element' => SpecialAttackElement::FIRE,
+                        'damage' => [
+                            'min' => 13600,
+                            'max' => 20400
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $this->createAttacks($attacks);
+    }
+
     private function createAttacks(array $attacks): void
     {
+        $this->lastBatchAttackIds = [];
+
         foreach ($attacks as $attackData) {
             $attack = SpecialAttack::withoutEvents(function () use ($attackData) {
                 return SpecialAttack::create([
@@ -587,6 +732,17 @@ class SpecialAttackSeeder extends Seeder
                     ]);
                 });
             }
+            $this->lastBatchAttackIds[] = $attack->id;
+        }
+    }
+
+    private function assignAttacksToNpc(string $npcName): void
+    {
+        $npc = BaseNpc::where('name', $npcName)
+            ->where('rank', BaseNpcRank::TITAN)
+            ->first();
+        if ($npc) {
+            $npc->specialAttacks()->sync($this->lastBatchAttackIds);
         }
     }
 }

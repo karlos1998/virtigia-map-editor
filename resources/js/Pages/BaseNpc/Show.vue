@@ -134,6 +134,48 @@ const isEditSrcVisible = ref(false );
             <BaseNpcLootsTable  :base-npc />
         </div>
 
+        <!-- Special Attacks Section -->
+        <div v-if="baseNpc.special_attacks && baseNpc.special_attacks.length > 0" class="card">
+            <h3 class="mb-4">Ciosy Specjalne ({{ baseNpc.special_attacks.length }})</h3>
+            <div class="grid gap-4">
+                <div v-for="attack in baseNpc.special_attacks" :key="attack.id"
+                     class="border rounded-lg p-4 bg-surface-section">
+                    <div class="flex justify-between items-start mb-3">
+                        <h4 class="text-lg font-semibold text-color">{{ attack.name }}</h4>
+                        <div class="flex gap-2">
+                            <Tag :severity="attack.attack_type === 'SPECIAL' ? 'danger' : 'info'"
+                                 :value="attack.attack_type"/>
+                            <Tag severity="info" :value="attack.target"/>
+                        </div>
+                    </div>
+
+                    <div v-if="attack.charge_turns > 0" class="mb-3">
+                        <Tag severity="warning" :value="`Ładowanie: ${attack.charge_turns} tur`"/>
+                    </div>
+
+                    <!-- Effects -->
+                    <div v-if="attack.effects && attack.effects.length > 0" class="mb-3">
+                        <h5 class="font-medium mb-2 text-color-secondary">Efekty:</h5>
+                        <div class="flex flex-wrap gap-2">
+                            <Tag v-for="effect in attack.effects" :key="`${effect.type}-${effect.value}`"
+                                 severity="success"
+                                 :value="`${effect.type}: ${effect.value}${effect.duration > 0 ? ` (${effect.duration} tur)` : ''}`"/>
+                        </div>
+                    </div>
+
+                    <!-- Damages -->
+                    <div v-if="attack.damages && attack.damages.length > 0">
+                        <h5 class="font-medium mb-2 text-color-secondary">Obrażenia:</h5>
+                        <div class="flex flex-wrap gap-2">
+                            <Tag v-for="damage in attack.damages" :key="`${damage.element}-${damage.min_damage}`"
+                                 :severity="damage.element === 'FIRE' ? 'danger' : damage.element === 'LIGHTNING' ? 'warning' : 'info'"
+                                 :value="`${damage.element}: ${damage.min_damage}-${damage.max_damage}`"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card">
             <BaseNpcLocationsTable />
         </div>

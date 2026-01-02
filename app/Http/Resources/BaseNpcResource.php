@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\SpecialAttackResource;
 
 class BaseNpcResource extends JsonResource
 {
@@ -44,7 +45,7 @@ class BaseNpcResource extends JsonResource
             'loot_counts' => $lootCounts,
             'loots' => $this->whenLoaded('loots', fn() => BaseItemResource::collection($this->resource->loots)),
 //            'loots' => BaseItemResource::collection($this->resource->loots),
-
+            'special_attacks' => $this->whenLoaded('specialAttacks', fn() => SpecialAttackResource::collection($this->resource->specialAttacks)),
             'src' => config('assets.url') . config('assets.dirs.npcs') . $this->resource->src,
             'guaranteed_loot' => $this->resource->guaranteed_loot ?? false
         ];

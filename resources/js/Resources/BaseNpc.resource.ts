@@ -2,6 +2,7 @@ import {BaseNpcCategoryEnum} from "../Enums/BaseNpcCategory.enum";
 import {BaseNpcRankEnum} from "../Enums/BaseNpcRank.enum";
 import {ProfessionEnum} from "../Enums/Profession.enum";
 import {BaseItemResource} from "./BaseItem.resource";
+import {SpecialAttackResource} from "./SpecialAttack.resource";
 
 export interface BaseNpcResource {
     id: number
@@ -22,4 +23,5 @@ export interface BaseNpcResource {
 export interface BaseNpcWithLoots extends BaseNpcResource {
     loots: BaseItemResource[]
     guaranteed_loot: boolean
+    special_attacks: SpecialAttackResource[]
 }
