@@ -2,10 +2,8 @@
 
 namespace App\Services;
 
-use App\Http\Resources\MapResource;
 use App\Http\Resources\NpcResource;
 use App\Models\BaseNpc;
-use App\Models\Map;
 use App\Models\Npc;
 use App\Models\NpcGroup;
 use App\Models\NpcLocation;
@@ -27,11 +25,20 @@ class NpcService extends BaseService
     /**
      * @throws \Exception
      */
-    public function getAll(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    public function getAll(?int $mapId = null): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
+        $query = $this->npcModel->with(['locations', 'dialog', 'base']);
+
+        // Filter by map if provided
+        if ($mapId) {
+            $query->whereHas('locations', function ($q) use ($mapId) {
+                $q->where('map_id', $mapId);
+            });
+        }
+
         return $this->fetchData(
             NpcResource::class,
-            $this->npcModel->with(['locations', 'dialog', 'base']),
+            $query,
             new TableService(
                 columns: [
                     'enabled' => new TableDropdownColumn(
@@ -54,7 +61,7 @@ class NpcService extends BaseService
                             new TableDropdownOption('Ma dialog', fn($q) => $q->whereHas('dialog')),
                             new TableDropdownOption('Nie ma dialogu', fn($q) => $q->whereDoesntHave('dialog')),
                         ]
-                    )
+                    ),
                 ],
                 globalFilterColumns: ['base.name', 'base.lvl', 'base.rank', 'base.category'],
             )

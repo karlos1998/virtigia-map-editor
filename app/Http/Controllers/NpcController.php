@@ -23,10 +23,10 @@ class NpcController extends Controller
     {
     }
 
-    public function index(): \Inertia\Response
+    public function index(Request $request): \Inertia\Response
     {
         return Inertia::render('Npc/Index', [
-            'npcs' => $this->npcService->getAll(),
+            'npcs' => $this->npcService->getAll($request->get('map_id')),
         ]);
     }
 

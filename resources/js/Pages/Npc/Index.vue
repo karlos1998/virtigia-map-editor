@@ -7,15 +7,101 @@ import {NpcResource, NpcWithLocationsResource} from "@/Resources/Npc.resource";
 import { Link } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
 import NpcLocationsColumnTemplate from "@/Components/TableColumnTemplates/NpcLocationsColumnTemplate.vue";
+import {ref, onMounted} from "vue";
+import {router} from "@inertiajs/vue3";
+import {MapResource} from "@/Resources/Map.resource";
+import AutoComplete from 'primevue/autocomplete';
+import Column from 'primevue/column';
+import Badge from 'primevue/badge';
+import Button from 'primevue/button';
+import Fieldset from 'primevue/fieldset';
+import IconField from 'primevue/iconfield';
+import InputIcon from 'primevue/inputicon';
+import InputText from 'primevue/inputtext';
 
 type Data = {
     data: NpcWithLocationsResource
 }
+
+// Reactive state for map search
+const selectedMap = ref<MapResource | null>(null);
+const mapSuggestions = ref<MapResource[]>([]);
+const isFiltersExpanded = ref(false);
+
+// Search maps function
+const searchMaps = async (event: any) => {
+    if (event.query.length < 2) {
+        mapSuggestions.value = [];
+        return;
+    }
+
+    try {
+        const response = await fetch(route('maps.search') + '?search=' + encodeURIComponent(event.query));
+        const data = await response.json();
+        mapSuggestions.value = data || [];
+    } catch (error) {
+        console.error('Error searching maps:', error);
+        mapSuggestions.value = [];
+    }
+};
+
+// Apply filters function
+const applyFilters = () => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (selectedMap.value) {
+        params.set('map_id', selectedMap.value.id.toString());
+    } else {
+        params.delete('map_id');
+    }
+
+    const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+    window.history.replaceState({}, '', newUrl);
+
+    // Reload the page with new filter
+    router.reload({
+        data: {
+            map_id: selectedMap.value?.id || null
+        }
+    });
+};
+
+// Initialize selected map from URL on page load
+onMounted(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const mapId = urlParams.get('map_id');
+    if (mapId) {
+        // Fetch the map details to display in the autocomplete
+        fetch(route('maps.data', mapId))
+            .then(response => response.json())
+            .then(data => {
+                selectedMap.value = data;
+            })
+            .catch(error => {
+                console.error('Error fetching map details:', error);
+            });
+    }
+});
+
 </script>
 
 <template>
     <AppLayout>
         <div class="card">
+            <Fieldset legend="Filtry zaawansowane" :toggleable="true" v-model:collapsed="isFiltersExpanded"
+                      class="mb-4">
+                <div class="flex flex-wrap gap-2 items-center">
+                    <AutoComplete
+                        v-model="selectedMap"
+                        :suggestions="mapSuggestions"
+                        @complete="searchMaps($event)"
+                        option-label="name"
+                        placeholder="Wyszukaj mapę"
+                        style="min-width: 300px"
+                    />
+                    <Button @click="applyFilters" label="Zastosuj" severity="success"/>
+                </div>
+            </Fieldset>
             <AdvanceTable
                 prop-name="npcs"
             >
