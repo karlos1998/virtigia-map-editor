@@ -45,6 +45,7 @@ class BaseItem extends DynamicModel
         'attributes',
         'attribute_points',
         'manual_attribute_points',
+        'reverse_attributes',
         'rarity',
         'category',
         'price',
@@ -56,6 +57,7 @@ class BaseItem extends DynamicModel
         'attributes' => 'json',
         'attribute_points' => 'json',
         'manual_attribute_points' => 'json',
+        'reverse_attributes' => 'json',
         'category' => BaseItemCategory::class,
         'edited_manually' => 'boolean',
         'currency' => \App\Enums\BaseItemCurrency::class

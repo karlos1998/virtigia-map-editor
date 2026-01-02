@@ -39,6 +39,7 @@ class BaseItemResource extends JsonResource
             'attributes' => $this->resource->attributes != null ? $this->resource->attributes : [],
             'attribute_points' => $this->resource->attribute_points ?? null,
             'manual_attribute_points' => $this->resource->manual_attribute_points ?? null,
+            'reverse_attributes' => $this->resource->reverse_attributes ?? null,
 
             'in_use' => $this->resource->isInUse(),
             'specific_currency_price' => $this->resource->specific_currency_price, // specjalna cena waluty dedykowana dla itemu
