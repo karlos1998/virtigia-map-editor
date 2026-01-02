@@ -60,12 +60,7 @@ class ProcessReverseAttributesItemJob implements ShouldQueue
             $rarity = $baseItem->rarity ?? 'common';
 
             // Extract scaled attributes (remove non-attribute fields)
-            $scaledAttributes = $this->extractScaledAttributes($baseItem->attributes);
-
-            if (empty($scaledAttributes)) {
-                Log::info("BaseItem {$this->baseItemId} has no scaled attributes to process");
-                return;
-            }
+            $scaledAttributes = $baseItem->attributes;
 
             // Call the reverse scaling API
             $reverseAttributes = $apiService->getReverseScaleAttributes(
@@ -91,24 +86,5 @@ class ProcessReverseAttributesItemJob implements ShouldQueue
 
             throw $e; // Re-throw to mark job as failed
         }
-    }
-
-    /**
-     * Extract scaled attributes from base item attributes
-     *
-     * Removes non-attribute fields like needLevel, needProfessions, etc.
-     */
-    private function extractScaledAttributes(array $attributes): array
-    {
-        $excludeFields = [
-            'needLevel',
-            'needProfessions',
-            'itemCategory',
-            'rarity'
-        ];
-
-        return array_filter($attributes, function ($key) use ($excludeFields) {
-            return !in_array($key, $excludeFields);
-        }, ARRAY_FILTER_USE_KEY);
     }
 }
