@@ -8,7 +8,7 @@ import AddBaseNpcLootsDialog from "../Components/AddBaseNpcLootsDialog.vue";
 import {useDialog} from "primevue/usedialog";
 import {useToast} from "primevue";
 import {BaseItemResource} from "../../../Resources/BaseItem.resource";
-import {ref} from 'vue';
+import {computed, ref} from 'vue';
 
 const { baseNpc } = defineProps<{
     baseNpc: BaseNpcWithLoots
@@ -17,6 +17,31 @@ const { baseNpc } = defineProps<{
 const primeDialog = useDialog();
 const toast = useToast();
 const guaranteed = ref(baseNpc.guaranteed_loot ?? false);
+
+// Grupowanie przedmiotów według rarity
+const groupedLoots = computed(() => {
+    const groups: Record<string, BaseItemResource[]> = {
+        common: [],
+        unique: [],
+        heroic: [],
+        legendary: [],
+        upgraded: [],
+        artefact: []
+    };
+
+    baseNpc.loots.forEach(item => {
+        const rarity = item.rarity || 'common'; // fallback na common jeśli rarity nie istnieje
+        if (groups[rarity]) {
+            groups[rarity].push(item);
+        }
+    });
+
+    return groups;
+});
+
+// Lista rarity w odpowiedniej kolejności
+const rarityOrder = ['common', 'unique', 'heroic', 'legendary', 'upgraded', 'artefact'];
+
 const showAttachItemModal = () => {
     primeDialog.open(AddShopItemDialog, {
         props: {
@@ -25,7 +50,7 @@ const showAttachItemModal = () => {
         },
         onClose(options) {
 
-            if (options.data?.item) {
+            if (options?.data?.item) {
                 const baseItemId = options.data.item.id;
                 router.post(route('base-npcs.loots.attach', {
                     baseNpc: baseNpc.id
@@ -35,7 +60,7 @@ const showAttachItemModal = () => {
                     onError: (errors) =>  {
                         toast.add({
                             severity: 'error',
-                            summary: 'Wystąpił bład',
+                            summary: 'Wystąpił błąd',
                             detail: Object.values(errors)[0],
                             life: 5000,
                         })
@@ -53,7 +78,7 @@ const showAttachLootsFromBaseNpcModal = () => {
             modal: true,
         },
         onClose(options) {
-            if (options.data?.baseNpc) {
+            if (options?.data?.baseNpc) {
                 const sourceBaseNpcId = options.data.baseNpc.id;
                 router.post(route('base-npcs.loots.attach-from-base-npc', {
                     baseNpc: baseNpc.id
@@ -63,7 +88,7 @@ const showAttachLootsFromBaseNpcModal = () => {
                     onError: (errors) =>  {
                         toast.add({
                             severity: 'error',
-                            summary: 'Wystąpił bład',
+                            summary: 'Wystąpił błąd',
                             detail: Object.values(errors)[0],
                             life: 5000,
                         })
@@ -96,6 +121,32 @@ const toggleGuaranteed = () => {
         }
     });
 }
+
+// Funkcja zwracająca polską nazwę rarity
+const getRarityDisplayName = (rarity: string): string => {
+    const names: Record<string, string> = {
+        common: 'Zwykłe',
+        unique: 'Unikatowe',
+        heroic: 'Heroiczne',
+        legendary: 'Legendarne',
+        upgraded: 'Ulepszone',
+        artefact: 'Artefakty'
+    };
+    return names[rarity] || rarity;
+}
+
+// Funkcja zwracająca kolor dla rarity
+const getRarityColor = (rarity: string): string => {
+    const colors: Record<string, string> = {
+        common: 'text-gray-600',
+        unique: 'text-blue-600',
+        heroic: 'text-purple-600',
+        legendary: 'text-yellow-600',
+        upgraded: 'text-green-600',
+        artefact: 'text-red-600'
+    };
+    return colors[rarity] || 'text-gray-600';
+}
 </script>
 <template>
     <div class="flex gap-2 mb-2 items-center">
@@ -107,49 +158,42 @@ const toggleGuaranteed = () => {
         </div>
     </div>
 
+    <!-- Grupowane przedmioty według rarity -->
+    <div v-if="baseNpc.loots.length > 0" class="space-y-6">
+        <div v-for="rarity in rarityOrder" :key="rarity"
+             v-show="groupedLoots[rarity].length > 0">
+            <div class="flex items-center gap-3 mb-3">
+                <h4 :class="['text-lg font-semibold', getRarityColor(rarity)]">
+                    {{ getRarityDisplayName(rarity) }}
+                </h4>
+                <Tag :value="`${groupedLoots[rarity].length} przedmiotów`" severity="info"/>
+            </div>
 
-    <DataView data-key="id" :value="baseNpc.loots">
-        <template #list="slotProps: {items: BaseItemResource[]}">
-            <div class="flex flex-col">
-                <div v-for="(item, index) in slotProps.items" :key="index">
-                    <div class="flex flex-col sm:flex-row sm:items-center p-6 gap-4" :class="{ 'border-t border-surface-200 dark:border-surface-700': index !== 0 }">
-                        <div class="md:w-40 relative">
-                            <img
-                                class="block xl:block mx-auto rounded"
-                                :src="item.src" :alt="item.name"
-                                v-tip.item.top.show-id="item"
-                            />
-                            <div class="absolute bg-black/70 rounded-border" style="left: 4px; top: 4px">
-<!--                                <Tag :value="item.inventoryStatus" :severity="getSeverity(item)"></Tag>-->
-                            </div>
-                        </div>
-                        <div class="flex flex-col md:flex-row justify-between md:items-center flex-1 gap-6">
-                            <div class="flex flex-row md:flex-col justify-between items-start gap-2">
-                                <div>
-<!--                                    <span class="font-medium text-surface-500 dark:text-surface-400 text-sm">{{ item.category }}</span>-->
-                                    <div class="text-lg font-medium mt-2">{{ item.name }}</div>
-                                </div>
-                                <div  v-if="item.rarity != 'common'" class="bg-surface-100 p-1" style="border-radius: 30px">
-                                    <div class="bg-surface-0 flex items-center gap-2 justify-center py-1 px-2" style="border-radius: 30px; box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.04), 0px 1px 2px 0px rgba(0, 0, 0, 0.06)">
-                                        <span  class="text-surface-900 font-medium text-sm">{{ item.rarity }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex flex-col md:items-end gap-8">
-<!--                                <span class="text-xl font-semibold">${{ item.price }}</span>-->
-                                <div class="flex flex-row-reverse md:flex-row gap-2">
-                                    <Button severity="danger" icon="pi pi-times" outlined @click="detachItem(item)" />
-<!--                                    <Button icon="pi pi-shopping-cart" label="Buy Now" :disabled="item.inventoryStatus === 'OUTOFSTOCK'" class="flex-auto md:flex-initial whitespace-nowrap"></Button>-->
-                                </div>
-                            </div>
-                        </div>
+            <div class="grid gap-4"
+                 :class="groupedLoots[rarity].length > 1 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'">
+                <div v-for="item in groupedLoots[rarity]" :key="item.id"
+                     class="border rounded-lg p-4 bg-surface-section flex items-center gap-4">
+                    <div class="w-12 h-12 flex-shrink-0 flex items-center justify-center bg-surface-100 rounded">
+                        <img
+                            class="w-8 h-8 object-contain"
+                            :src="item.src"
+                            :alt="item.name"
+                            v-tip.item.top.show-id="item"
+                        />
                     </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium text-color truncate">{{ item.name }}</div>
+                        <div class="text-sm text-color-secondary">{{ item.category }}</div>
+                    </div>
+                    <Button severity="danger" icon="pi pi-times" outlined size="small" @click="detachItem(item)"/>
                 </div>
             </div>
-        </template>
-    </DataView>
+        </div>
+    </div>
+
+    <!-- Brak lootów -->
+    <div v-else class="text-center py-8 text-color-secondary">
+        Brak przedmiotów do zdobycia
+    </div>
 
 </template>
-<style scoped>
-
-</style>
