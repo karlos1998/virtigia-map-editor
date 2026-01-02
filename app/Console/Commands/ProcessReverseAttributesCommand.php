@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Jobs\ProcessReverseAttributesBatchJob;
 use App\Models\BaseItem;
+use App\Models\DynamicModel;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Bus;
 
@@ -28,6 +29,7 @@ class ProcessReverseAttributesCommand extends Command
      */
     public function handle()
     {
+        DynamicModel::setGlobalConnection('retro');
         $this->info('Finding BaseItems that need reverse attribute processing...');
 
         $query = BaseItem::whereNull('attribute_points')
