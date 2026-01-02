@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\BaseItem;
+use App\Models\DynamicModel;
 use App\Services\ApiAttributePointService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -31,6 +32,8 @@ class ProcessReverseAttributesItemJob implements ShouldQueue
      */
     public function handle(ApiAttributePointService $apiService): void
     {
+        DynamicModel::setGlobalConnection('retro');
+
         $baseItem = BaseItem::find($this->baseItemId);
 
         if (!$baseItem) {

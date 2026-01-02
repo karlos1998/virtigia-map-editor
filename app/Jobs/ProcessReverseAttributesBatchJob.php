@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Jobs\ProcessReverseAttributesItemJob;
 use Illuminate\Bus\Batchable;
+use App\Models\DynamicModel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -32,6 +33,8 @@ class ProcessReverseAttributesBatchJob implements ShouldQueue
      */
     public function handle(): void
     {
+        DynamicModel::setGlobalConnection('retro');
+
         // Create individual jobs for each base item
         $itemJobs = $this->baseItems->map(function ($baseItem) {
             return new ProcessReverseAttributesItemJob($baseItem->id);
