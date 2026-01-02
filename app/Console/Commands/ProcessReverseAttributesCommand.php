@@ -34,6 +34,7 @@ class ProcessReverseAttributesCommand extends Command
 
         $query = BaseItem::whereNull('attribute_points')
             ->whereNull('manual_attribute_points')
+            ->whereNull('reverse_attributes')
             ->whereNotNull('attributes');
 
         $count = $query->count();
