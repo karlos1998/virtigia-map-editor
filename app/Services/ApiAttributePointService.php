@@ -103,6 +103,61 @@ final class ApiAttributePointService
         }
     }
 
+    /**
+     * Reverse scale attributes to get attribute points
+     *
+     * Sends scaled attribute values to external API to calculate the original
+     * attribute point allocations that would produce those scaled values.
+     *
+     * @param int $lvl Item level requirement
+     * @param string $category Item category (armors, weapons, etc.)
+     * @param array $itemProfessions Required professions
+     * @param string $rarity Item rarity (common, unique, etc.)
+     * @param array $scaledAttributes Scaled attribute values as key-value pairs
+     *
+     * @return object The attribute points and attack elements from external API
+     * @throws \Exception When API call fails or returns invalid data
+     */
+    public function getReverseScaleAttributes(int $lvl, string $category, array $itemProfessions, string $rarity, array $scaledAttributes): object
+    {
+        try {
+            // Prepare request payload
+            $payload = [
+                'lvl' => $lvl,
+                'itemCategory' => $category,
+                'itemProfessions' => $itemProfessions,
+                'rarity' => $rarity,
+                'scaledAttributes' => $scaledAttributes
+            ];
+
+            // Build the API request URL
+            $apiUrl = config('services.margatron_api.base_url') . '/reverse-scale-attributes';
+
+            // Log the request for debugging
+            $this->logApiRequest($apiUrl, $payload);
+
+            // Make the API call (POST with JSON)
+            $response = Http::timeout(config('services.margatron_api.timeout', 30))
+                ->post($apiUrl, $payload);
+
+            // Handle the response
+            return $this->handleApiResponse($response, 'reverse-scale-attributes', $payload);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch reverse scale attributes from external API', [
+                'lvl' => $lvl,
+                'category' => $category,
+                'itemProfessions' => $itemProfessions,
+                'rarity' => $rarity,
+                'scaledAttributes' => $scaledAttributes,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            throw new \Exception('Error fetching reverse scale attributes: ' . $e->getMessage());
+        }
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Private Helper Methods for API Integration
