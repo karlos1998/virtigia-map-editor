@@ -52,6 +52,14 @@ type Data = {
                     </template>
                 </AdvanceColumn>
 
+                <AdvanceColumn field="enabled" header="Enabled">
+                    <template #body="{ data }: Data">
+                        <Badge :severity="data.enabled ? 'success' : 'danger'">
+                            {{ data.enabled ? 'Yes' : 'No' }}
+                        </Badge>
+                    </template>
+                </AdvanceColumn>
+
                 <AdvanceColumn field="locations" header="Lokalizacja/a">
                     <template #body="{ data }: Data">
                         <NpcLocationsColumnTemplate :npc="data" />

@@ -7,12 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class Npc extends DynamicModel
 {
 
-    protected $fillable = ['group_id', 'manually_group_detached'];
+    protected $fillable = ['group_id', 'manually_group_detached', 'enabled'];
 
-    protected $casts = ['manually_group_detached' => 'boolean'];
+    protected $casts = ['manually_group_detached' => 'boolean', 'enabled' => 'boolean'];
 
     protected $attributes = [
-        'manually_group_detached' => false
+        'manually_group_detached' => false,
+        'enabled' => true
     ];
 
     public function base()

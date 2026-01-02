@@ -95,4 +95,10 @@ class NpcController extends Controller
 
         $this->npcService->storeLocation($npc, $request->validated());;
     }
+
+    public function toggleEnabled(Npc $npc): void
+    {
+        $npc->enabled = !$npc->enabled;
+        $npc->save();
+    }
 }

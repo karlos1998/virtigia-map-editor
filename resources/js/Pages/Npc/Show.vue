@@ -10,11 +10,27 @@ import DetailsCardList from "@/Components/DetailsCardList.vue";
 import DetailsCardListItem from "@/Components/DetailsCardListItem.vue";
 import { Link } from '@inertiajs/vue3';
 import NpcAdvanceCard from "./Partials/NpcAdvanceCard.vue";
+import InputSwitch from 'primevue/inputswitch';
+import {ref, defineProps} from 'vue';
 
-defineProps<{
+const props = defineProps<{
     baseNpc: BaseNpcResource
     npc: NpcWithDetails
 }>()
+
+const npcData = ref(props.npc);
+
+const updateEnabled = async (enabled: boolean) => {
+    try {
+        await router.patch(route('npcs.toggle-enabled', npcData.value.id));
+        // Update local state
+        npcData.value.enabled = enabled;
+    } catch (error) {
+        console.error('Failed to update enabled status:', error);
+        // Revert on error
+        npcData.value.enabled = !enabled;
+    }
+}
 
 </script>
 <template>
@@ -25,7 +41,7 @@ defineProps<{
         >
             <template #header>
                 <img v-tooltip="baseNpc.src" :src="baseNpc.src"  alt=""/>
-                #{{ npc.id }} - {{ npc.name }}
+                #{{ npcData.id }} - {{ npcData.name }}
             </template>
         </ItemHeader>
 
@@ -34,11 +50,16 @@ defineProps<{
         </Message>
 
         <DetailsCardList title="Informacje Podstawowe" >
-            <DetailsCardListItem label="Nazwa" :value="npc.name" />
+            <DetailsCardListItem label="Nazwa" :value="npcData.name"/>
 <!--            <DetailsCardListItem label="Link do grafiki" :value="'https://s3.letscode.it/virtigia-assets/img/npc/' + baseNpc.src" />-->
-            <DetailsCardListItem label="Lvl" :value="npc.lvl" />
+            <DetailsCardListItem label="Lvl" :value="npcData.lvl"/>
 <!--            <DetailsCardListItem label="Type" :value="npc.type" />-->
-            <DetailsCardListItem label="W Grupie" :value="npc.in_group" />
+            <DetailsCardListItem label="W Grupie" :value="npcData.in_group"/>
+            <DetailsCardListItem label="Enabled">
+                <template #value>
+                    <InputSwitch v-model="npcData.enabled" @update:model-value="updateEnabled"/>
+                </template>
+            </DetailsCardListItem>
             <DetailsCardListItem label="Bazowy NPC">
                 <template #value>
                     <Link :href="route('base-npcs.show', baseNpc.id)">
@@ -48,11 +69,11 @@ defineProps<{
             </DetailsCardListItem>
         </DetailsCardList>
 
-        <NpcAdvanceCard :npc :baseNpc />
+        <NpcAdvanceCard :npc="npcData" :baseNpc="baseNpc"/>
 
         <DetailsCardList title="Miejsce/a wystąpienia" >
             <DetailsCardListItem
-                v-for="location in npc.locations"
+                v-for="location in npcData.locations"
                 :value="`(${location.x}, ${location.y})`"
             >
                 <template #label>

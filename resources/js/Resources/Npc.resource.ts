@@ -10,6 +10,7 @@ export interface NpcResource {
     lvl: string
     group_id?: number
     in_group: boolean
+    enabled: boolean
     //...
 }
 

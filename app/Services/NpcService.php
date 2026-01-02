@@ -11,8 +11,12 @@ use App\Models\NpcGroup;
 use App\Models\NpcLocation;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
+use Karlos3098\LaravelPrimevueTableService\Enum\TagSeverity;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
+use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownOptions\TableDropdownOptionTag;
 use Karlos3098\LaravelPrimevueTableService\Services\TableService;
+use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownColumn;
+use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownOptions\TableDropdownOption;
 
 class NpcService extends BaseService
 {
@@ -29,6 +33,12 @@ class NpcService extends BaseService
             NpcResource::class,
             $this->npcModel->with(['locations', 'dialog', 'base']),
             new TableService(
+                columns: [
+                    'enabled' => new TableDropdownColumn(options: [
+                        new TableDropdownOptionTag('Dostępny', fn($q) => $q->whereEnabled(true), TagSeverity::SUCCESS),
+                        new TableDropdownOptionTag('Wylączony', fn($q) => $q->whereEnabled(false), TagSeverity::DANGER),
+                    ])
+                ],
                 globalFilterColumns: ['base.name', 'base.lvl', 'base.rank', 'base.category'],
             )
         );

@@ -28,6 +28,7 @@ class NpcResource extends JsonResource
             'type' => $this->resource->base->type,
             'group_id' => $this->resource->group_id,
             'in_group' => $this->resource->group_id > 0,
+            'enabled' => $this->resource->enabled,
 
             $this->mergeWhen($this->resource->pivot?->x !== null && $this->resource->pivot?->y !== null, fn() => [
                 'location' => [
