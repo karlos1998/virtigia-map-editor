@@ -820,6 +820,10 @@ async function loadReverseAttributes() {
 
     const reverseData = props.baseItem.reverse_attributes;
 
+    if(reverseData.needProfessions) {
+        selectedProfessions.value = {...reverseData.needProfessions}
+    }
+
     // Set attribute points
     if (reverseData.attributePoints) {
         form.value.attribute_points = {...reverseData.attributePoints};
