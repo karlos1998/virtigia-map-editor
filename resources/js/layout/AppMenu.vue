@@ -126,6 +126,11 @@ const model = ref([
                 icon: 'pi pi-exclamation-triangle',
                 route: 'problem-assets.index',
             },
+            {
+                label: 'Batchy',
+                icon: 'pi pi-play-circle',
+                route: 'batches.index',
+            },
         ],
     },
 ]);
