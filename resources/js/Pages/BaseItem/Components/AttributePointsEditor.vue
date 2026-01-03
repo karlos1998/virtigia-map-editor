@@ -789,8 +789,8 @@ async function calculateScaleAttributes(): Promise<void> {
 
         if (hasAttributeParameters(params)) {
             const response = await axios.get('/api/base-items/scale-attributes', { params });
-            scaleResult.value = response.data;
-            emit('scaleResultChanged', response.data);
+            scaleResult.value = {...response.data, needProfessions: selectedProfessions.value, needLevel: selectedLevel.value};
+            emit('scaleResultChanged', scaleResult.value);
 
             console.log('Scale attributes request:', params);
             console.log('Scale attributes response:', response.data);
@@ -821,7 +821,7 @@ async function loadReverseAttributes() {
     const reverseData = props.baseItem.reverse_attributes;
 
     if(reverseData.needProfessions) {
-        selectedProfessions.value = {...reverseData.needProfessions}
+        selectedProfessions.value = reverseData.needProfessions
     }
 
     if(reverseData.needLevel) {
