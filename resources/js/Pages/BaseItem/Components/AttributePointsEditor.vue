@@ -824,6 +824,10 @@ async function loadReverseAttributes() {
         selectedProfessions.value = {...reverseData.needProfessions}
     }
 
+    if(reverseData.needLevel) {
+        selectedLevel.value = reverseData.needLevel
+    }
+
     // Set attribute points
     if (reverseData.attributePoints) {
         form.value.attribute_points = {...reverseData.attributePoints};
