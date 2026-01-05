@@ -4,6 +4,7 @@ export interface SpecialAttackResource {
     attack_type: string
     charge_turns: number
     target: string
+    random_target: boolean
     base_npcs_count: number
 
     effects?: {

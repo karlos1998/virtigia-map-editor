@@ -58,6 +58,12 @@ defineProps<{
                     <Tag v-else severity="secondary" :value="specialAttack.target"/>
                 </template>
             </DetailsCardListItem>
+            <DetailsCardListItem label="Losowy cel">
+                <template #value>
+                    <Tag v-if="specialAttack.random_target" severity="warning" value="Tak"/>
+                    <Tag v-else severity="info" value="Nie"/>
+                </template>
+            </DetailsCardListItem>
             <DetailsCardListItem label="Ilość Base NPC" :value="specialAttack.base_npcs_count"/>
         </DetailsCardList>
 

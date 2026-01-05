@@ -53,6 +53,7 @@ class SpecialAttackController extends Controller
             'attack_type' => 'required|in:special,normal',
             'charge_turns' => 'required|integer|min:0',
             'target' => 'required|in:single,all,self,line',
+            'random_target' => 'required|boolean',
         ]);
 
         $model = $this->specialAttackService->store($validated);
@@ -93,6 +94,7 @@ class SpecialAttackController extends Controller
             'attack_type' => 'required|in:special,normal',
             'charge_turns' => 'required|integer|min:0',
             'target' => 'required|in:single,all,self,line',
+            'random_target' => 'required|boolean',
         ]);
 
         $this->specialAttackService->update($specialAttack, $validated);
