@@ -36,5 +36,11 @@ export interface SpecialAttackWithRelations extends SpecialAttackResource {
     baseNpcs: {
         id: number
         name: string
+        lvl: number
+        profession: string
+        rank: string
+        category: string
+        is_aggressive: boolean
+        location_count: number
     }[]
 }

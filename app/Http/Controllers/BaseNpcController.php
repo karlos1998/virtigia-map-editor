@@ -216,4 +216,21 @@ class BaseNpcController extends Controller
         $this->baseNpcService->update($baseNpc, ['type' => 0]);
         return back();
     }
+
+    public function attachSpecialAttack(BaseNpc $baseNpc, Request $request)
+    {
+        $this->baseNpcService->attachSpecialAttack($baseNpc, $request->get('specialAttackId'));
+    }
+
+    public function detachSpecialAttack(BaseNpc $baseNpc, int $specialAttackId)
+    {
+        $this->baseNpcService->detachSpecialAttack($baseNpc, $specialAttackId);
+    }
+
+    public function listSpecialAttacks(BaseNpc $baseNpc)
+    {
+        return response()->json([
+            'specialAttacks' => $baseNpc->specialAttacks()->with(['effects', 'damages'])->get()
+        ]);
+    }
 }

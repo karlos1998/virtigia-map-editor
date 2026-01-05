@@ -19,7 +19,7 @@ enum SpecialAttackTarget: string
     #[Description('Wszyscy')]
     case ALL = 'all';
 
-    #[Description('Własny')]
+    #[Description('Na siebie')]
     case SELF = 'self';
 
     #[Description('Linia')]

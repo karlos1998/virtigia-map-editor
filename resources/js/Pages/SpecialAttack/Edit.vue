@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import {useForm} from "@inertiajs/vue3";
+import {useForm, usePage} from "@inertiajs/vue3";
 import {route} from "ziggy-js";
 import {useToast} from "primevue";
-import AppLayout from "../../layout/AppLayout.vue";
 import ItemHeader from "../../Components/ItemHeader.vue";
 import {DropdownListType} from "@/Resources/DropdownList.type";
 import {SpecialAttackWithRelations} from "@/Resources/SpecialAttack.resource";
+import AppLayout from "@/layout/AppLayout.vue";
 
 const toast = useToast();
 

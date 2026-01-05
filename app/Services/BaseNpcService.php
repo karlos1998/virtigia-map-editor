@@ -290,4 +290,44 @@ final class BaseNpcService extends BaseService
         }
 
     }
+
+    public function attachSpecialAttack(BaseNpc $baseNpc, int $specialAttackId)
+    {
+        $specialAttack = \App\Models\SpecialAttack::findOrFail($specialAttackId);
+        $baseNpc->specialAttacks()->attach($specialAttack);
+
+        activity()
+            ->causedBy(Auth::user())
+            ->performedOn($specialAttack)
+            ->event('attach-to-base-npc-special-attacks')
+            ->withProperty('base_npc', $baseNpc)
+            ->log('attach-to-base-npc-special-attacks');
+
+        activity()
+            ->causedBy(Auth::user())
+            ->performedOn($baseNpc)
+            ->event('attach-base-npc-special-attacks')
+            ->withProperty('special_attack', $specialAttack)
+            ->log('attach-base-npc-special-attacks');
+    }
+
+    public function detachSpecialAttack(BaseNpc $baseNpc, int $specialAttackId)
+    {
+        $specialAttack = $baseNpc->specialAttacks()->findOrFail($specialAttackId);
+        $baseNpc->specialAttacks()->detach($specialAttackId);
+
+        activity()
+            ->causedBy(Auth::user())
+            ->performedOn($specialAttack)
+            ->event('detach-from-base-npc-special-attacks')
+            ->withProperty('base_npc', $baseNpc)
+            ->log('detach-from-base-npc-special-attacks');
+
+        activity()
+            ->causedBy(Auth::user())
+            ->performedOn($baseNpc)
+            ->event('detach-base-npc-special-attacks')
+            ->withProperty('special_attack', $specialAttack)
+            ->log('detach-base-npc-special-attacks');
+    }
 }

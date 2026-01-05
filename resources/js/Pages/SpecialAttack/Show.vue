@@ -54,6 +54,8 @@ defineProps<{
                          :value="specialAttack.target"/>
                     <Tag v-else-if="specialAttack.target === 'Własny'" severity="success"
                          :value="specialAttack.target"/>
+                    <Tag v-else-if="specialAttack.target === 'Na siebie'" severity="success"
+                         :value="specialAttack.target"/>
                     <Tag v-else-if="specialAttack.target === 'Linia'" severity="info" :value="specialAttack.target"/>
                     <Tag v-else severity="secondary" :value="specialAttack.target"/>
                 </template>
@@ -107,14 +109,52 @@ defineProps<{
 
         <div class="card" v-if="specialAttack.baseNpcs && specialAttack.baseNpcs.length > 0">
             <h5>Base NPC używające tego ciosu</h5>
-            <DataTable :value="specialAttack.baseNpcs" class="p-datatable-sm">
-                <Column field="id" header="ID" style="width: 20%">
+            <DataTable :value="specialAttack.baseNpcs" class="p-datatable-sm" scrollable scrollHeight="400px">
+                <Column field="id" header="ID" style="width: 60px" frozen>
                     <template #body="{ data }">
                         <Badge :value="`#${data.id}`" severity="info"/>
                     </template>
                 </Column>
-                <Column field="name" header="Nazwa" style="width: 60%"/>
-                <Column header="Akcje" style="width: 20%">
+                <Column field="name" header="Nazwa" style="width: 200px" frozen>
+                    <template #body="{ data }">
+                        <Link :href="route('base-npcs.show', {baseNpc: data.id})"
+                              class="text-blue-600 hover:text-blue-800 font-medium">
+                            {{ data.name }}
+                        </Link>
+                    </template>
+                </Column>
+                <Column field="lvl" header="Poziom" style="width: 80px">
+                    <template #body="{ data }">
+                        <Badge :value="data.lvl" severity="primary"/>
+                    </template>
+                </Column>
+                <Column field="profession" header="Profesja" style="width: 120px">
+                    <template #body="{ data }">
+                        <Tag :value="data.profession" severity="info"/>
+                    </template>
+                </Column>
+                <Column field="rank" header="Ranga" style="width: 100px">
+                    <template #body="{ data }">
+                        <Tag :value="data.rank" severity="warning"/>
+                    </template>
+                </Column>
+                <Column field="category" header="Kategoria" style="width: 120px">
+                    <template #body="{ data }">
+                        <Tag :value="data.category" severity="success"/>
+                    </template>
+                </Column>
+                <Column field="is_aggressive" header="Agresywny" style="width: 100px">
+                    <template #body="{ data }">
+                        <Tag v-if="data.is_aggressive" severity="danger" value="Tak"/>
+                        <Tag v-else severity="secondary" value="Nie"/>
+                    </template>
+                </Column>
+                <Column field="location_count" header="Lokalizacje" style="width: 100px">
+                    <template #body="{ data }">
+                        <Badge :value="data.location_count" severity="help"/>
+                    </template>
+                </Column>
+                <Column header="Akcje" style="width: 100px">
                     <template #body="{ data }">
                         <Link :href="route('base-npcs.show', {baseNpc: data.id})">
                             <Button icon="pi pi-eye" severity="info" size="small" label="Zobacz"/>

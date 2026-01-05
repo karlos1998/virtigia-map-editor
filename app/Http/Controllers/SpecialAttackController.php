@@ -109,4 +109,9 @@ class SpecialAttackController extends Controller
         $this->specialAttackService->destroy($specialAttack);
         return to_route('special-attacks.index');
     }
+
+    public function search(Request $request)
+    {
+        return response()->json($this->specialAttackService->search($request->get('query', '')));
+    }
 }

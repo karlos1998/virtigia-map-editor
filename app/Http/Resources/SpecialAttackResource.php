@@ -41,6 +41,21 @@ class SpecialAttackResource extends JsonResource
             }),
 
             'base_npcs_count' => $this->resource->baseNpcs()->count(),
+
+            'baseNpcs' => $this->whenLoaded('baseNpcs', function () {
+                return $this->resource->baseNpcs->map(function ($baseNpc) {
+                    return [
+                        'id' => $baseNpc->id,
+                        'name' => $baseNpc->name,
+                        'lvl' => $baseNpc->lvl,
+                        'profession' => $baseNpc->profession->description(),
+                        'rank' => $baseNpc->rank->description(),
+                        'category' => $baseNpc->category->description(),
+                        'is_aggressive' => $baseNpc->is_aggressive,
+                        'location_count' => $baseNpc->locations()->count(),
+                    ];
+                });
+            }),
         ];
     }
 }

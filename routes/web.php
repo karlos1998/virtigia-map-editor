@@ -203,6 +203,11 @@ Route::middleware(['auth'])->group(function () {
                 Route::delete('base-npcs/{baseNpc}', [BaseNpcController::class, 'destroy'])->name('base-npcs.destroy');
                 Route::patch('base-npcs/{baseNpc}', [BaseNpcController::class, 'update'])->name('base-npcs.update');
 
+                // Special Attacks routes for base-npcs
+                Route::get('base-npcs/{baseNpc}/special-attacks', [BaseNpcController::class, 'listSpecialAttacks'])->name('base-npcs.special-attacks.index');
+                Route::post('base-npcs/{baseNpc}/special-attacks', [BaseNpcController::class, 'attachSpecialAttack'])->name('base-npcs.special-attacks.attach');
+                Route::delete('base-npcs/{baseNpc}/special-attacks/{specialAttack}', [BaseNpcController::class, 'detachSpecialAttack'])->name('base-npcs.special-attacks.detach');
+
                 // Routes for merging base NPCs
                 Route::post('base-npcs/{sourceBaseNpc}/transfer-npcs', [BaseNpcController::class, 'transferNpcs'])->name('base-npcs.transfer-npcs');
                 Route::post('base-npcs/{baseNpc}/convert-to-layer', [BaseNpcController::class, 'convertToLayer'])->name('base-npcs.convert-to-layer');
@@ -216,6 +221,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::patch('special-attacks/{specialAttack}', [SpecialAttackController::class, 'update'])->name('special-attacks.update');
                 Route::delete('special-attacks/{specialAttack}', [SpecialAttackController::class, 'destroy'])->name('special-attacks.destroy');
                 Route::get('web-api/special-attacks', [SpecialAttackController::class, 'indexJson'])->name('web-api.special-attacks.index');
+                Route::get('web-api/special-attacks/search', [SpecialAttackController::class, 'search'])->name('web-api.special-attacks.search');
 
                 Route::get('assets/base-npcs/search', [AssetController::class, 'searchNpcs'])->name('assets.base-npcs.search');
                 Route::get('assets/outfits/search', [AssetController::class, 'searchOutfits'])->name('assets.outfits.search');

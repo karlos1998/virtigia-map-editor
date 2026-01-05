@@ -71,4 +71,15 @@ final class SpecialAttackService extends BaseService
     {
         $specialAttack->update($validated);
     }
+
+    public function search(string $search)
+    {
+        return \App\Http\Resources\SpecialAttackResource::collection(
+            $this->specialAttackModel
+                ->where('name', 'like', '%' . $search . '%')
+                ->with(['effects', 'damages'])
+                ->limit(25)
+                ->get()
+        );
+    }
 }

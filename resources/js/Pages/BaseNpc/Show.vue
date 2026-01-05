@@ -18,6 +18,17 @@ import BaseNpcLootsTable from "./Partials/BaseNpcLootsTable.vue";
 import EditBaseNpcSrcDialog from "./Components/EditBaseNpcSrcDialog.vue";
 import BaseNpcActivityLogsTable from "./Partials/BaseNpcActivityLogsTable.vue";
 import ConvertBaseNpcToLayer from "./Partials/ConvertBaseNpcToLayer.vue";
+import AddBaseNpcSpecialAttacksDialog from "./Components/AddBaseNpcSpecialAttacksDialog.vue";
+import {useConfirm} from "primevue/useconfirm";
+import {useToast} from "primevue";
+import {router} from "@inertiajs/vue3";
+import {useDialog} from "primevue/usedialog";
+
+const {baseNpc, locations, logs} = defineProps<{
+    baseNpc: BaseNpcWithLoots
+    locations: NpcLocationResource[]
+    logs?: any[]
+}>()
 
 // Function to format time from seconds to a human-readable format
 const formatTimeFromSeconds = (seconds: number): string => {
@@ -41,14 +52,97 @@ const formatTimeFromSeconds = (seconds: number): string => {
   return parts.join(' ');
 };
 
-defineProps<{
-    baseNpc: BaseNpcWithLoots
-    locations: NpcLocationResource[]
-    logs?: any[]
-}>()
+const isEditBaseNpcDialogVisible = ref(false);
+const isEditSrcVisible = ref(false);
+const isAddSpecialAttackDialogVisible = ref(false);
 
-const isEditBaseNpcDialogVisible = ref(false );
-const isEditSrcVisible = ref(false );
+const confirm = useConfirm();
+const toast = useToast();
+const primeDialog = useDialog();
+
+const showAttachSpecialAttackModal = () => {
+    primeDialog.open(AddBaseNpcSpecialAttacksDialog, {
+        props: {
+            header: 'Dodaj cios specjalny',
+            modal: true,
+            style: {
+                width: '600px'
+            }
+        },
+        data: {
+            baseNpc: baseNpc
+        },
+        onClose: (options) => {
+            if (options?.data?.specialAttack) {
+                const specialAttackId = options.data.specialAttack.id;
+                router.post(route('base-npcs.special-attacks.attach', {
+                    baseNpc: baseNpc.id
+                }), {
+                    specialAttackId,
+                }, {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        toast.add({
+                            severity: 'success',
+                            summary: 'Sukces',
+                            detail: `Cios specjalny "${options.data.specialAttack.name}" został dodany`,
+                            life: 3000
+                        });
+                    },
+                    onError: (errors) => {
+                        toast.add({
+                            severity: 'error',
+                            summary: 'Błąd',
+                            detail: Object.values(errors)[0] || 'Nie udało się dodać ciosu specjalnego',
+                            life: 5000
+                        });
+                    }
+                });
+            }
+        }
+    });
+}
+
+const confirmDetachSpecialAttack = (attack: any) => {
+    confirm.require({
+        message: `Czy na pewno chcesz odłączyć cios specjalny "${attack.name}" od tego Base NPC?`,
+        header: 'Potwierdź odłączenie',
+        icon: 'pi pi-exclamation-triangle',
+        acceptClass: 'p-button-danger',
+        accept: () => {
+            router.delete(route('base-npcs.special-attacks.detach', {
+                baseNpc: baseNpc.id,
+                specialAttack: attack.id
+            }), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast.add({
+                        severity: 'success',
+                        summary: 'Sukces',
+                        detail: `Cios specjalny "${attack.name}" został odłączony`,
+                        life: 3000
+                    });
+                },
+                onError: (errors) => {
+                    toast.add({
+                        severity: 'error',
+                        summary: 'Błąd',
+                        detail: Object.values(errors)[0] || 'Nie udało się odłączyć ciosu specjalnego',
+                        life: 5000
+                    });
+                }
+            });
+        },
+        reject: () => {
+            // Optional: you can add a toast for rejection if needed
+        }
+    });
+}
+
+const handleSpecialAttackDialogClose = () => {
+    isAddSpecialAttackDialogVisible.value = false;
+}
+
 </script>
 <template>
     <AppLayout>
@@ -137,6 +231,9 @@ const isEditSrcVisible = ref(false );
         <!-- Special Attacks Section -->
         <div v-if="baseNpc.special_attacks && baseNpc.special_attacks.length > 0" class="card">
             <h3 class="mb-4">Ciosy Specjalne ({{ baseNpc.special_attacks.length }})</h3>
+            <div class="flex gap-2 mb-4">
+                <Button label="Dodaj cios specjalny" @click="showAttachSpecialAttackModal"/>
+            </div>
             <div class="grid gap-4">
                 <div v-for="attack in baseNpc.special_attacks" :key="attack.id"
                      class="border rounded-lg p-4 bg-surface-section">
@@ -146,6 +243,8 @@ const isEditSrcVisible = ref(false );
                             <Tag :severity="attack.attack_type === 'SPECIAL' ? 'danger' : 'info'"
                                  :value="attack.attack_type"/>
                             <Tag severity="info" :value="attack.target"/>
+                            <Button severity="danger" icon="pi pi-times" size="small"
+                                    @click="confirmDetachSpecialAttack(attack)"/>
                         </div>
                     </div>
 
@@ -174,6 +273,14 @@ const isEditSrcVisible = ref(false );
                     </div>
                 </div>
             </div>
+        </div>
+
+        <div class="card" v-else>
+            <div class="flex justify-between items-center mb-4">
+                <h3>Ciosy Specjalne</h3>
+                <Button label="Dodaj cios specjalny" @click="showAttachSpecialAttackModal"/>
+            </div>
+            <p class="text-gray-600">Ten Base NPC nie ma przypisanych żadnych ciosów specjalnych.</p>
         </div>
 
         <div class="card">
