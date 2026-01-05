@@ -17,12 +17,14 @@ class SpecialAttack extends DynamicModel
         'attack_type',
         'charge_turns',
         'target',
+        'random_target',
     ];
 
     protected $casts = [
         'attack_type' => SpecialAttackType::class,
         'target' => SpecialAttackTarget::class,
         'charge_turns' => 'integer',
+        'random_target' => 'boolean',
     ];
 
     public function effects(): HasMany

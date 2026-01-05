@@ -38,6 +38,15 @@ enum SpecialAttackEffectType: string
     #[Description('Głęboka rana')]
     case DEEP_WOUND = 'deepWound';
 
+    #[Description('Leczenie na turę')]
+    case HEALING_PER_TURN = 'healingPerTurn';
+
+    #[Description('Dodanie pancerza')]
+    case ADD_ARMOR = 'addArmor';
+
+    #[Description('Dodanie odporności procentowej')]
+    case ADD_RESISTANCE_PERCENT = 'addResistancePercent';
+
     public static function values(): array
     {
         return array_column(self::cases(), 'value');

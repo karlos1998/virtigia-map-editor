@@ -20,7 +20,7 @@ class SpecialAttackEffect extends DynamicModel
 
     protected $casts = [
         'type' => SpecialAttackEffectType::class,
-        'value' => 'integer',
+        'value' => 'float',
         'duration' => 'integer',
     ];
 

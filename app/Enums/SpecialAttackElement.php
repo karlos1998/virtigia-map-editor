@@ -26,6 +26,9 @@ enum SpecialAttackElement: string
     #[Description('Dystansowe')]
     case RANGED = 'ranged';
 
+    #[Description('Zimno')]
+    case FROST = 'frost';
+
     public static function values(): array
     {
         return array_column(self::cases(), 'value');
