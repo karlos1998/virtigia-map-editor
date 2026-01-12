@@ -55,7 +55,7 @@ class SpecialAttackSeeder extends Seeder
 
         // Partia 7
         $this->seedBatch7();
-        $this->assignAttacksToNpc('Przyzwacz Demonów');
+        $this->assignAttacksToNpc('Przyzwacz demonów');
 
         // Partia 8
         $this->seedBatch8();

@@ -178,6 +178,9 @@ final class ApiAttributePointService
             // Convert null values to empty strings for API compatibility
             if ($value === null) {
                 $sanitized[$key] = '';
+            } elseif (is_array($value)) {
+                // JSON encode arrays to send as strings in query parameters
+                $sanitized[$key] = json_encode($value);
             } else {
                 $sanitized[$key] = $value;
             }
