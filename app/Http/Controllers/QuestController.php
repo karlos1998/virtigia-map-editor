@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\QuestResource;
+use App\Http\Resources\QuestSearchResource;
 use App\Models\Quest;
 use App\Services\QuestService;
 use Illuminate\Http\Request;
@@ -91,9 +92,11 @@ class QuestController extends Controller
     {
         $query = $request->get('query', '');
 
-        $quests = Quest::where('name', 'like', "%{$query}%")->get();
+        $quests = Quest::where('name', 'like', "%{$query}%")
+            ->select(['id', 'name'])
+            ->get();
 
-        return response()->json(QuestResource::collection($quests));
+        return response()->json(QuestSearchResource::collection($quests));
     }
 
     /**
