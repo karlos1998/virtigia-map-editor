@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Http\Resources\QuestResource;
+use App\Http\Resources\QuestListResource;
 use App\Models\Quest;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownColumn;
@@ -20,7 +20,7 @@ final class QuestService extends BaseService
     public function findAll()
     {
         return $this->fetchData(
-            QuestResource::class,
+            QuestListResource::class,
             $this->questModel,
             new TableService(
                 columns: [
