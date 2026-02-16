@@ -5,6 +5,7 @@ import { debounce } from "@/debounce"
 import { DialogNodeOptionRule } from "@/types/DialogNodeOptionRule"
 import { DropdownListType } from "@/Resources/DropdownList.type"
 import { BaseItemResource } from "@/Resources/BaseItem.resource"
+import { DialogCounterResource } from "@/Resources/DialogCounter.resource"
 import { DialogNodeRulesResource } from "@/Resources/DialogNodeRules.resource"
 import { route } from "ziggy-js"
 import axios from "axios"
@@ -34,6 +35,14 @@ const availableRules = computed(() =>
 
 const itemsDropdown = ref<BaseItemResource[]>([])
 
+// Dialog counters
+const dialogCounters = ref<DialogCounterResource[]>([])
+
+const loadDialogCounters = async () => {
+    const { data } = await axios.get<DialogCounterResource[]>(route("web-api.dialog-counters.index"))
+    dialogCounters.value = data
+}
+
 // Use the quest step selection composable
 const { questNodes, loading, loadQuests, loadQuestStepById, onQuestNodeExpand } = useQuestStepSelection()
 
@@ -56,7 +65,8 @@ const submitNewRule = () => {
 
     if (!newRule.value) return
 
-    let value: number | number[] | string | string[] = 0
+    let value: number | number[] | string | string[] | null = 0
+    let value2: any = null
     if (newRule.value === DialogNodeOptionRule.items) {
         value = []
     } else if (
@@ -67,12 +77,15 @@ const submitNewRule = () => {
         value = []
     } else if (newRule.value === DialogNodeOptionRule.messageContent) {
         value = ''
+    } else if (newRule.value === DialogNodeOptionRule.dialogCounter) {
+        value = null
+        value2 = ['=', 0]
     }
 
     const data = {
         value,
         consume: false,
-        value2: null
+        value2,
     }
 
     if(Object.values(rules.value).length == 0) {
@@ -129,6 +142,9 @@ onMounted(() => {
 
     // Load quests for the TreeSelect
     loadQuests()
+
+    // Load dialog counters
+    loadDialogCounters()
 
     // Check if quest steps are already selected and load their details
     if (rules.value[DialogNodeOptionRule.questStep]) {
@@ -262,6 +278,34 @@ watch(
             placeholder="Podaj treść odpowiedzi (max 100 znaków)"
             class="w-full md:w-80"
         />
+
+        <!-- Dialog Counter UI -->
+        <template v-if="rules[name] && name === DialogNodeOptionRule.dialogCounter">
+            <Select
+                v-model="rules[name].value"
+                :options="dialogCounters"
+                optionLabel="name"
+                optionValue="id"
+                placeholder="Wybierz licznik"
+                class="w-full md:w-56"
+            />
+            <Select
+                v-if="rules[name].value2"
+                v-model="rules[name].value2[0]"
+                :options="[{value: '>', label: '>'}, {value: '=', label: '='}, {value: '<', label: '<'}]"
+                optionLabel="label"
+                optionValue="value"
+                class="w-full md:w-24"
+            />
+            <InputNumber
+                v-if="rules[name].value2"
+                v-model="rules[name].value2[1]"
+                :min="0"
+                :max="2000000000"
+                placeholder="Wartość"
+                class="w-full md:w-32"
+            />
+        </template>
 
     </InputGroup>
 

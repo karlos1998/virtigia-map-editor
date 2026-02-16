@@ -48,6 +48,9 @@ enum DialogNodeOptionRule: string
     #[Description('Treść odpowiedzi')]
     case MESSAGE_CONTENT = 'messageContent';
 
+    #[Description('Licznik dialogowy')]
+    case DIALOG_COUNTER = 'dialogCounter';
+
     public function canBeUsed(): bool
     {
         $ref = new ReflectionClassConstant(self::class, $this->name);

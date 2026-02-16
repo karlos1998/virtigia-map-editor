@@ -84,6 +84,14 @@ Route::middleware(['auth'])->group(function () {
                 Route::patch('dialogs/{dialog}/nodes/{dialogNode}/start-edges', [DialogController::class, 'updateStartNodeEdges'])->name('dialogs.nodes.start-edges.update');
                 Route::post('dialogs/{dialog}/nodes/{dialogNode}/copy', [DialogController::class, 'copyNode'])->name('dialogs.nodes.copy');
 
+                Route::get('web-api/dialog-counters', [\App\Http\Controllers\DialogCounterController::class, 'indexJson'])->name('web-api.dialog-counters.index');
+                Route::get('dialog-counters', [\App\Http\Controllers\DialogCounterController::class, 'index'])->name('dialog-counters.index');
+                Route::get('dialog-counters/create', [\App\Http\Controllers\DialogCounterController::class, 'create'])->name('dialog-counters.create');
+                Route::post('dialog-counters', [\App\Http\Controllers\DialogCounterController::class, 'store'])->name('dialog-counters.store');
+                Route::get('dialog-counters/{dialogCounter}/edit', [\App\Http\Controllers\DialogCounterController::class, 'edit'])->name('dialog-counters.edit');
+                Route::patch('dialog-counters/{dialogCounter}', [\App\Http\Controllers\DialogCounterController::class, 'update'])->name('dialog-counters.update');
+                Route::delete('dialog-counters/{dialogCounter}', [\App\Http\Controllers\DialogCounterController::class, 'destroy'])->name('dialog-counters.destroy');
+
                 Route::get('maps/create', [MapController::class, 'create'])->name('maps.create');
                 Route::post('maps', [MapController::class, 'store'])->name('maps.store');
 

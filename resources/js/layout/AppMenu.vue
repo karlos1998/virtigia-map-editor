@@ -100,6 +100,11 @@ const model = ref([
                 icon: 'pi pi-map',
                 route: 'special-attacks.index',
             },
+            {
+                label: 'Liczniki Dialogowe',
+                icon: 'pi pi-hashtag',
+                route: 'dialog-counters.index',
+            },
         ],
     },
     {

@@ -4,6 +4,7 @@ namespace App\Rules;
 
 use App\Enums\DialogNodeOptionRule;
 use App\Models\BaseItem;
+use App\Models\DialogCounter;
 use App\Models\Quest;
 use App\Models\QuestStep;
 use Closure;
@@ -115,6 +116,29 @@ class DialogOptionRuleValidator implements ValidationRule
             } elseif ($key === DialogNodeOptionRule::MESSAGE_CONTENT->value) {
                 if (!is_string($ruleData['value']) || mb_strlen($ruleData['value']) > 100) {
                     $fail("Dla rule: {$key}, wartość musi być tekstem o długości max. 100 znaków.");
+                    return;
+                }
+            } elseif ($key === DialogNodeOptionRule::DIALOG_COUNTER->value) {
+                // Dla dialogCounter: value to ID licznika, value2 to tablica [operator, wartość]
+                if (!is_int($ruleData['value']) || !DialogCounter::where('id', $ruleData['value'])->exists()) {
+                    $fail("Dla rule: {$key}, wartość musi być istniejącym ID licznika dialogowego.");
+                    return;
+                }
+
+                if (!isset($ruleData['value2']) || !is_array($ruleData['value2']) || count($ruleData['value2']) !== 2) {
+                    $fail("Dla rule: {$key}, value2 musi być tablicą [operator, wartość].");
+                    return;
+                }
+
+                [$operator, $counterValue] = $ruleData['value2'];
+
+                if (!in_array($operator, ['>', '=', '<'], true)) {
+                    $fail("Dla rule: {$key}, operator musi być jednym z: >, =, <.");
+                    return;
+                }
+
+                if (!is_int($counterValue)) {
+                    $fail("Dla rule: {$key}, wartość licznika musi być liczbą całkowitą.");
                     return;
                 }
             } elseif (
