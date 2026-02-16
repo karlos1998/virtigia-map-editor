@@ -33,4 +33,7 @@ enum DialogNodeAdditionalAction: string
 
     #[Description('Ustaw outfit')]
     case SET_OUTFIT = 'setOutfit';
+
+    #[Description('Dodaj licznik')]
+    case ADD_DIALOG_COUNTER = 'addDialogCounter';
 }

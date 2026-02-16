@@ -19,7 +19,8 @@ import { useQuestStepSelection } from "../Composables/useQuestStepSelection";
 import InputSwitch from 'primevue/inputswitch';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
-import OutfitBrowserDialog from '../../BaseItem/Components/OutfitBrowserDialog.vue'; // Dodaj import OutfitBrowserDialog
+import OutfitBrowserDialog from '../../BaseItem/Components/OutfitBrowserDialog.vue';
+import { DialogCounterResource } from "@/Resources/DialogCounter.resource";
 
 const dialogRef = inject<Ref<DynamicDialogInstance & {
     data: {
@@ -74,6 +75,9 @@ onMounted(async () => {
     // Load quests for the TreeSelect
     loadQuests();
 
+    // Load dialog counters
+    loadDialogCounters();
+
     // Check if a quest step is already selected and load its details
     if (form.additional_actions[DialogNodeAdditionalAction.setQuestStep]) {
         const questStepValue = form.additional_actions[DialogNodeAdditionalAction.setQuestStep].value;
@@ -99,6 +103,14 @@ const toast = useToast();
 
 // Use the quest step selection composable
 const { questNodes, loading, loadQuests, loadQuestStepById, onQuestNodeExpand } = useQuestStepSelection();
+
+// Dialog counters
+const dialogCounters = ref<DialogCounterResource[]>([]);
+
+const loadDialogCounters = async () => {
+    const { data } = await axios.get<DialogCounterResource[]>(route("web-api.dialog-counters.index"));
+    dialogCounters.value = data;
+};
 
 const processing = ref(false);
 const copyProcessing = ref(false);
@@ -172,6 +184,15 @@ const save = () => {
         }
     }
 
+    // Validate addDialogCounter action: ensure counter is selected
+    if (form.additional_actions[DialogNodeAdditionalAction.addDialogCounter]) {
+        const counterAction = form.additional_actions[DialogNodeAdditionalAction.addDialogCounter];
+        if (!counterAction.value) {
+            toast.add({severity: 'error', summary: 'Błąd', detail: 'Wybierz licznik dialogowy', life: 3000});
+            return;
+        }
+    }
+
     // Create a deep copy of the form data
     const formData = JSON.parse(JSON.stringify(form));
 
@@ -239,6 +260,8 @@ const addAdditionalAction = () => {
     } else if (newAdditionalAction.value == DialogNodeAdditionalAction.setOutfit) {
         value = "";
         // duration will be set separately
+    } else if (newAdditionalAction.value == DialogNodeAdditionalAction.addDialogCounter) {
+        value = null;
     }
 
     form.additional_actions[newAdditionalAction.value] = {
@@ -510,6 +533,17 @@ const currentOutfitDuration = computed({
                 :loading="loading"
                 :options="questNodes"
                 :onNodeExpand="onQuestNodeExpand"
+            />
+
+            <!-- Select for addDialogCounter action -->
+            <Select
+                v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.addDialogCounter"
+                v-model="form.additional_actions[name].value"
+                :options="dialogCounters"
+                optionLabel="name"
+                optionValue="id"
+                placeholder="Wybierz licznik dialogowy"
+                class="w-full md:w-80"
             />
 
             <!-- Input for setOutfit action -->
