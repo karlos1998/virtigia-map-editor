@@ -39,6 +39,11 @@ class UpdateDialogNodeOptionRequest extends FormRequest
                 'nullable',
                 new Enum(DialogNodeOptionAdditionalAction::class)
             ],
+            'cooldown' => [
+                'nullable',
+                'integer',
+                'min:1',
+            ],
             'rules' => [
                 'nullable',
                 'array',

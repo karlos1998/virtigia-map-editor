@@ -11,11 +11,12 @@ class DialogNodeOption extends DynamicModel
 {
     use HasFactory;
 
-    protected $fillable = ['label', 'rules', 'additional_action', 'order'];
+    protected $fillable = ['label', 'rules', 'additional_action', 'order', 'cooldown'];
 
     protected $casts = [
         'rules' => 'json',
-        'additional_action' => DialogNodeOptionAdditionalAction::class
+        'additional_action' => DialogNodeOptionAdditionalAction::class,
+        'cooldown' => 'integer',
     ];
 
     public function dialog(): BelongsTo

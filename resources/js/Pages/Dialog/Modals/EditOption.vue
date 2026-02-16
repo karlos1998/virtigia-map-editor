@@ -7,6 +7,8 @@ import Select from 'primevue/dropdown';
 import Message from 'primevue/message';
 import Accordion from 'primevue/accordion';
 import AccordionPanel from 'primevue/accordionpanel';
+import Checkbox from 'primevue/checkbox';
+import InputNumber from 'primevue/inputnumber';
 import {computed, Ref, ref, watch} from "vue";
 
 import { inject, onMounted } from "vue";
@@ -44,6 +46,7 @@ type FormOptionData = {
     label: string
     additional_action: any// todo
     additional_action_data?: string
+    cooldown: number|null
     rules: DialogNodeRulesResource
     edges: DialogNodeOptionEdgeWithRules[]
 }
@@ -52,6 +55,7 @@ const form = useForm<FormOptionData>({
     label: '',
     additional_action: null,
     additional_action_data: '',
+    cooldown: null,
     rules: {},
     edges: [],
 })
@@ -88,6 +92,7 @@ watch(() => props.visible, () => {
     form.label = props.option?.label ?? '';
     form.additional_action = props.option?.additional_action ?? '';
     form.additional_action_data = props.option?.additional_action_data ?? '';
+    form.cooldown = props.option?.cooldown ?? null;
     form.rules = Object.keys(props.option?.rules || {}).length > 0 ? props.option?.rules : {};
 
     console.log('form.rules', form.rules)
@@ -113,6 +118,31 @@ watch(() => props.visible, () => {
 })
 
 const processing = ref(false);
+
+// Computed property to format cooldown time
+const formattedCooldown = computed(() => {
+    const seconds = form.cooldown;
+    if (!seconds || seconds <= 0) return '';
+
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+
+    const parts = [];
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+    if (remainingSeconds > 0 || parts.length === 0) parts.push(`${remainingSeconds}s`);
+
+    return parts.join(' ');
+});
+
+// Computed for checkbox state
+const hasCooldown = computed({
+    get: () => form.cooldown !== null && form.cooldown > 0,
+    set: (value: boolean) => {
+        form.cooldown = value ? (form.cooldown || 60) : null;
+    }
+});
 
 const save = () => {
     //axios zeby form inertia nie przeladowywal strony
@@ -146,6 +176,11 @@ const save = () => {
         // If additional_action is not setQuestStep, remove additional_action_data
         if (d.additional_action !== 'setQuestStep') {
             d.additional_action_data = undefined;
+        }
+
+        // If cooldown is not set (checkbox unchecked), send null
+        if (!hasCooldown.value) {
+            d.cooldown = null;
         }
 
         return d;
@@ -267,6 +302,30 @@ const remove = () => {
                         class="w-full"
                     />
                     <small class="text-gray-500 mt-1 block">Uwaga: Można wybrać tylko krok questa (s-X), nie cały quest (q-X).</small>
+                </div>
+
+                <!-- Cooldown section -->
+                <div class="mb-3">
+                    <div class="flex items-center gap-2 mb-2">
+                        <Checkbox v-model="hasCooldown" :binary="true" input-id="cooldown-check" />
+                        <label for="cooldown-check" class="font-medium cursor-pointer">Ustaw cooldown</label>
+                    </div>
+
+                    <div v-if="hasCooldown" class="flex items-center gap-3 ml-6">
+                        <div class="flex-1">
+                            <label class="block mb-1 text-sm text-gray-600">Czas w sekundach:</label>
+                            <InputNumber
+                                v-model="form.cooldown"
+                                :min="1"
+                                :max="999999"
+                                class="w-full"
+                                placeholder="Wpisz czas w sekundach"
+                            />
+                        </div>
+                        <div v-if="formattedCooldown" class="text-sm text-green-600 font-medium">
+                            = {{ formattedCooldown }}
+                        </div>
+                    </div>
                 </div>
             </div>
 

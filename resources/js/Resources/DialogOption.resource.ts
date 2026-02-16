@@ -5,6 +5,7 @@ export interface DialogOptionResource {
     label: string
     node_id: number
     additional_action: string|null; //todo ? moze enum
+    cooldown: number|null;
     rules: DialogNodeRulesResource
     edges: DialogNodeOptionEdgeWithRules[]
 }
