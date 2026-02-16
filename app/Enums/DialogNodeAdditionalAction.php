@@ -36,4 +36,7 @@ enum DialogNodeAdditionalAction: string
 
     #[Description('Dodaj licznik')]
     case ADD_DIALOG_COUNTER = 'addDialogCounter';
+
+    #[Description('Wyzeruj licznik')]
+    case RESET_DIALOG_COUNTER = 'resetDialogCounter';
 }

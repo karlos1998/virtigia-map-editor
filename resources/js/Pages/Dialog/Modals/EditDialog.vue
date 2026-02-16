@@ -193,6 +193,15 @@ const save = () => {
         }
     }
 
+    // Validate resetDialogCounter action: ensure counter is selected
+    if (form.additional_actions[DialogNodeAdditionalAction.resetDialogCounter]) {
+        const counterAction = form.additional_actions[DialogNodeAdditionalAction.resetDialogCounter];
+        if (!counterAction.value) {
+            toast.add({severity: 'error', summary: 'Błąd', detail: 'Wybierz licznik dialogowy do wyczyszczenia', life: 3000});
+            return;
+        }
+    }
+
     // Create a deep copy of the form data
     const formData = JSON.parse(JSON.stringify(form));
 
@@ -245,7 +254,7 @@ const addAdditionalAction = () => {
 
     if(form.additional_actions[newAdditionalAction.value]) return;
 
-    let value: number|number[]|string = 1;
+    let value: number|number[]|string|null = 1;
 
     if(newAdditionalAction.value == DialogNodeAdditionalAction.addItems) {
         value = [];
@@ -543,6 +552,17 @@ const currentOutfitDuration = computed({
                 optionLabel="name"
                 optionValue="id"
                 placeholder="Wybierz licznik dialogowy"
+                class="w-full md:w-80"
+            />
+
+            <!-- Select for resetDialogCounter action -->
+            <Select
+                v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.resetDialogCounter"
+                v-model="form.additional_actions[name].value"
+                :options="dialogCounters"
+                optionLabel="name"
+                optionValue="id"
+                placeholder="Wybierz licznik do wyczyszczenia"
                 class="w-full md:w-80"
             />
 

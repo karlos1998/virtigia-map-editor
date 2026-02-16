@@ -6,4 +6,5 @@ export enum DialogNodeAdditionalAction {
     blessing = 'blessing',
     setOutfit = 'setOutfit',
     addDialogCounter = 'addDialogCounter',
+    resetDialogCounter = 'resetDialogCounter',
 }
