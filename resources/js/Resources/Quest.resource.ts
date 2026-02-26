@@ -20,7 +20,8 @@ export interface SimpleDialogEdgeResource {
     id: number;
     rules: any;
     source_dialog_id: number;
-    source_option_id: number;
+    source_node_id: number | null;
+    source_option_id: number | null;
     target_node_id: number;
 }
 

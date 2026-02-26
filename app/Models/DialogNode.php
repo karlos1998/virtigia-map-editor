@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Traits\JsonQueryHelpers;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
@@ -31,38 +30,54 @@ class DialogNode extends DynamicModel
         return $this->hasOne(Dialog::class, 'id', 'source_dialog_id');
     }
 
-    public function shop() {
+    public function shop()
+    {
         return $this->hasOne(Shop::class, 'id', 'shop_id');
     }
 
-    public function sourceEdges(): HasMany {
+    public function sourceEdges(): HasMany
+    {
         return $this->hasMany(DialogEdge::class, 'target_node_id');
     }
 
-
-
-    //tylko dla type start
-    public function getEdges()
+    public function directOutputEdges(): HasMany
     {
-        if($this->type != 'start') throw new \Exception('Próbowano pobrać edges do node który nie jest startoway');
+        return $this->hasMany(DialogEdge::class, 'source_node_id');
+    }
 
-        return DialogEdge::where('source_dialog_id', $this->source_dialog_id)->whereNull('source_option_id')->with('targetNode')->get();
+    // tylko dla type start / randomizer
+    public function getEdges(): Collection
+    {
+        if (! in_array($this->type, ['start', 'randomizer'], true)) {
+            throw new \Exception('Próbowano pobrać edges do node, który nie wspiera bezpośrednich wyjść.');
+        }
+
+        return DialogEdge::where('source_dialog_id', $this->source_dialog_id)
+            ->whereNull('source_option_id')
+            ->where(function ($query) {
+                $query->where('source_node_id', $this->id);
+
+                if ($this->type === 'start') {
+                    $query->orWhereNull('source_node_id');
+                }
+            })
+            ->with('targetNode')
+            ->get();
     }
 
     /**
      * Get all dialog edges where a quest or its steps are used in rules.
      *
-     * @param Quest|null $quest The quest to search for
-     * @return Collection
+     * @param  Quest|null  $quest  The quest to search for
      */
-    public function getQuestEdges(Quest $quest = null): Collection
+    public function getQuestEdges(?Quest $quest = null): Collection
     {
-        if ($quest === null || !$quest->id) {
+        if ($quest === null || ! $quest->id) {
             return collect();
         }
 
-        $questId = 'q-' . $quest->id;
-        $questStepIds = $quest->steps->map(function($value) {
+        $questId = 'q-'.$quest->id;
+        $questStepIds = $quest->steps->map(function ($value) {
             return "s-$value->id";
         });
 
@@ -70,12 +85,12 @@ class DialogNode extends DynamicModel
         $rulePaths = [
             '$.questBeforeStep.value',
             '$.questAfterStep.value',
-            '$.questStep.value'
+            '$.questStep.value',
         ];
 
         return DialogEdge::distinct()
             ->where('source_dialog_id', $this->source_dialog_id)
-            ->where(function($query) use ($allIds, $rulePaths) {
+            ->where(function ($query) use ($allIds, $rulePaths) {
                 $this->scopeWhereJsonContainsAnyInPaths($query, 'rules', $rulePaths, $allIds->all());
             })
             ->get();

@@ -8,6 +8,7 @@ import SpecialNode from '@/Pages/Dialog/SpecialNode.vue';
 import { Controls } from '@vue-flow/controls';
 import StartNode from '@/Pages/Dialog/StartNode.vue';
 import ShopNode from '@/Pages/Dialog/ShopNode.vue';
+import RandomizerNode from '@/Pages/Dialog/RandomizerNode.vue';
 import { DialogResource } from '@/Resources/Dialog.resource';
 // import { DialogConnectionResource } from '@/Resources/DialogConnection.resource';
 import { computed, ref } from 'vue';
@@ -80,6 +81,8 @@ function nodeStroke(n: NodeProps) {
             return '#213e5e';
         case 'start':
             return '#6bc965';
+        case 'randomizer':
+            return '#f59e0b';
         case 'shop':
             return '#7a1a10';
         default:
@@ -93,12 +96,18 @@ function nodeColor(n: NodeProps) {
             return '#112e4e';
         case 'start':
             return '#6bc965';
+        case 'randomizer':
+            return '#f59e0b';
         case 'shop':
             return '#7a1a10';
         default:
             return '#888';
     }
 }
+
+const isDirectOutputNode = (type?: string): boolean => {
+    return type === 'start' || type === 'randomizer';
+};
 
 const addNode = (type?: string) => {
     axios.post(route('dialogs.nodes.store', { dialog: props.dialog.id }), {
@@ -162,9 +171,9 @@ onEdgesChange(async (changes) => {
             axios.post(route('dialogs.edges.store', {
                 dialog: props.dialog.id
             }), {
-                sourceNodeIsInput: change.item.sourceNode.type == 'start',
+                sourceNodeIsInput: isDirectOutputNode(change.item.sourceNode.type),
                 sourceNodeId: change.item.sourceNode.id,
-                sourceOptionId: change.item.sourceNode.type != 'start' ? change.item.sourceHandle.substring(7) : null,
+                sourceOptionId: !isDirectOutputNode(change.item.sourceNode.type) ? change.item.sourceHandle.substring(7) : null,
                 targetNodeId: change.item.targetNode.id
             }).then(({ data: { edge } }) => {
                 console.log(' add edge from backend ---<', edge, props.dialog)
@@ -172,11 +181,33 @@ onEdgesChange(async (changes) => {
                 edgeTmp.item.id = edge.id;
                 applyEdgeChanges([edgeTmp]);
 
+                const targetNodeId = change.item.targetNode.id;
+
                 // Update the option's edges list
-                if (change.item.sourceNode.type !== 'start' && change.item.sourceHandle) {
+                if (isDirectOutputNode(change.item.sourceNode.type)) {
+                    const sourceNodeId = change.item.sourceNode.id;
+                    const sourceNode = nodes.value.find((node) => node.id === sourceNodeId);
+
+                    if (sourceNode?.data) {
+                        const directEdges = Array.isArray(sourceNode.data.edges) ? [...sourceNode.data.edges] : [];
+
+                        directEdges.push({
+                            edge_id: edge.id,
+                            node: {
+                                id: targetNodeId,
+                                type: change.item.targetNode.type,
+                                content: change.item.targetNode.data?.content || ''
+                            },
+                            rules: {}
+                        });
+
+                        updateNodeData(sourceNodeId, {
+                            edges: directEdges
+                        });
+                    }
+                } else if (change.item.sourceHandle) {
                     const sourceNodeId = change.item.sourceNode.id;
                     const sourceOptionId = change.item.sourceHandle.substring(7);
-                    const targetNodeId = change.item.targetNode.id;
 
                     // Find the source node
                     const sourceNode = nodes.value.find(node => node.id === sourceNodeId);
@@ -232,7 +263,7 @@ onEdgesChange(async (changes) => {
 const toast = useToast();
 const removeEdge = (edgeChange: EdgeRemoveChange) => {
     // Find the edge in the edges array
-    const edge = props.edges.find(e => e.id === edgeChange.id);
+    const edge = edges.value.find(e => e.id === edgeChange.id) ?? props.edges.find(e => e.id === edgeChange.id);
 
     if (edge && edge.source && edge.sourceHandle) {
         // Extract the source node ID and option ID from the edge
@@ -272,6 +303,13 @@ const removeEdge = (edgeChange: EdgeRemoveChange) => {
                 });
             }
         }
+    } else if (edge?.source) {
+        const sourceNode = nodes.value.find((node) => node.id === edge.source);
+        if (sourceNode?.data?.edges) {
+            updateNodeData(edge.source, {
+                edges: sourceNode.data.edges.filter((item) => item.edge_id != edgeChange.id)
+            });
+        }
     }
 
     axios.delete(route('dialogs.edges.destroy', {
@@ -309,6 +347,13 @@ const items = ref([
         icon: 'pi pi-forward',
         command: () => {
             addNode('teleportation');
+        }
+    },
+    {
+        label: 'Losowanie',
+        icon: 'pi pi-percentage',
+        command: () => {
+            addNode('randomizer');
         }
     }
 ]);
@@ -364,6 +409,10 @@ const items = ref([
                 <template #node-shop="shopNodeProps">
                     <!--suppress RequiredAttributes -->
                     <ShopNode v-bind="shopNodeProps" />
+                </template>
+                <template #node-randomizer="randomizerNodeProps">
+                    <!--suppress RequiredAttributes -->
+                    <RandomizerNode v-bind="randomizerNodeProps" />
                 </template>
                 <template #node-teleportation="teleportationNodeProps">
                     <!--suppress RequiredAttributes -->

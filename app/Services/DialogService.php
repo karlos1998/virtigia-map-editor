@@ -10,10 +10,7 @@ use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 
 class DialogService extends BaseService
 {
-
-    public function __construct(private readonly Dialog $dialogModel)
-    {
-    }
+    public function __construct(private readonly Dialog $dialogModel) {}
 
     public function getAll()
     {
@@ -30,9 +27,11 @@ class DialogService extends BaseService
     {
         $node = $dialog->nodes()->create($data);
 
-        $node->options()->create([
-            'label' => 'Zakończ.',
-        ]);
+        if (($data['type'] ?? 'special') === 'special') {
+            $node->options()->create([
+                'label' => 'Zakończ.',
+            ]);
+        }
 
         return $node->fresh();
     }
@@ -51,42 +50,64 @@ class DialogService extends BaseService
             ->edges()->make()
             ->targetNode()->associate($targetNode);
 
-        if(!$data['sourceNodeIsInput']) {
+        if (! $data['sourceNodeIsInput']) {
             /**
              * @var DialogNode $sourceNode
              */
             $sourceNode = $dialog->nodes()->find($data['sourceNodeId']);
+            if (! $sourceNode) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'message' => 'Nie znaleziono źródłowego węzła.',
+                ]);
+            }
 
             /**
              * @var DialogNodeOption $sourceOption
              */
             $sourceOption = $sourceNode->options()->find($data['sourceOptionId']);
+            if (! $sourceOption) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'message' => 'Nie znaleziono źródłowej opcji połączenia.',
+                ]);
+            }
 
-//            if ($sourceOption->edges()->count() > 1)
-//            {
-//                throw \Illuminate\Validation\ValidationException::withMessages([
-//                    'message' => 'Opcja może mieć NA TEN MOMENT tylko 2 połączenia',
-//                ]);
-//            }
+            //            if ($sourceOption->edges()->count() > 1)
+            //            {
+            //                throw \Illuminate\Validation\ValidationException::withMessages([
+            //                    'message' => 'Opcja może mieć NA TEN MOMENT tylko 2 połączenia',
+            //                ]);
+            //            }
 
             $edge->sourceOption()->associate($sourceOption);
         } else {
-//            if ($dialog->edges()->whereNull('source_option_id')->count() >= 1)
-//            {
-//                throw \Illuminate\Validation\ValidationException::withMessages([
-//                    'message' => 'Node wejściowy może mieć NA TEN MOMENT tylko jedno połączenie',
-//                ]);
-//            }
+            /**
+             * @var DialogNode $sourceNode
+             */
+            $sourceNode = $dialog->nodes()->find($data['sourceNodeId']);
+            if (! $sourceNode || ! in_array($sourceNode->type, ['start', 'randomizer'], true)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'message' => 'Wybrane źródło połączenia nie obsługuje bezpośrednich wyjść.',
+                ]);
+            }
 
-//            if($targetNode->type != 'special')
-//            {
-//                throw \Illuminate\Validation\ValidationException::withMessages([
-//                    'message' => 'Node wejściowy może być połączony tylko z normalnymi dialogami (nie sklepami czy teleportacją)',
-//                ]);
-//            }
+            $edge->sourceNode()->associate($sourceNode);
+            //            if ($dialog->edges()->whereNull('source_option_id')->count() >= 1)
+            //            {
+            //                throw \Illuminate\Validation\ValidationException::withMessages([
+            //                    'message' => 'Node wejściowy może mieć NA TEN MOMENT tylko jedno połączenie',
+            //                ]);
+            //            }
+
+            //            if($targetNode->type != 'special')
+            //            {
+            //                throw \Illuminate\Validation\ValidationException::withMessages([
+            //                    'message' => 'Node wejściowy może być połączony tylko z normalnymi dialogami (nie sklepami czy teleportacją)',
+            //                ]);
+            //            }
         }
 
         $edge->save();
+
         return $edge->fresh();
     }
 
@@ -121,7 +142,7 @@ class DialogService extends BaseService
             'position' => [
                 'x' => 0,
                 'y' => 0,
-            ]
+            ],
         ]);
 
         $node = $dialog->nodes()->create([
@@ -129,12 +150,13 @@ class DialogService extends BaseService
                 'x' => 200,
                 'y' => 100,
             ],
-            'content' => 'Oto przykładowa kwestia dialogowa'
+            'content' => 'Oto przykładowa kwestia dialogowa',
         ]);
         $node->options()->create(['label' => 'Zakończ rozmowę']);
 
         $dialog
             ->edges()->make()
+            ->sourceNode()->associate($defaultNode)
             ->targetNode()->associate($node)
             ->save();
 
@@ -160,11 +182,12 @@ class DialogService extends BaseService
         $dialogNodeOption->update($validated);
 
         $edgesData = $validated['edges'];
-//        dump($edgesData, $dialogNodeOption->edges->pluck('id'));
-        foreach($edgesData as $edgeData)
-        {
+        //        dump($edgesData, $dialogNodeOption->edges->pluck('id'));
+        foreach ($edgesData as $edgeData) {
             $foundEdge = $dialogNodeOption->edges->where('id', $edgeData['edge_id'])->first();
-            if(!$foundEdge) continue;
+            if (! $foundEdge) {
+                continue;
+            }
 
             $foundEdge->update(['rules' => $edgeData['rules']]);
         }
@@ -174,13 +197,13 @@ class DialogService extends BaseService
 
     public function destroyOption(Dialog $dialog, DialogNode $dialogNode, DialogNodeOption $dialogNodeOption)
     {
-        if(!$dialogNodeOption->node()->is($dialogNode)) {
+        if (! $dialogNodeOption->node()->is($dialogNode)) {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'message' => 'Błąd niespodzianka :)',
             ]);
         }
 
-        if($dialogNode->options()->count() <= 1) {
+        if ($dialogNode->options()->count() <= 1) {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'message' => 'Nie możesz usunąć jedynej opcji dialogowej',
             ]);
@@ -192,19 +215,19 @@ class DialogService extends BaseService
 
     public function destroyNode(Dialog $dialog, DialogNode $dialogNode)
     {
-        if(!$dialogNode->dialog()->is($dialog)) {
+        if (! $dialogNode->dialog()->is($dialog)) {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'message' => 'Błąd niespodzianka :)',
             ]);
         }
 
-        if($dialogNode->type == 'start' ) {
+        if ($dialogNode->type == 'start') {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'message' => 'Nie możesz usunąć startowej kwesti dialogowej',
             ]);
         }
 
-        if($dialogNode->type == 'special' && $dialog->nodes()->where('type', 'special')->count() <= 1) {
+        if ($dialogNode->type == 'special' && $dialog->nodes()->where('type', 'special')->count() <= 1) {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'message' => 'Nie możesz usunąć jedynej kwesti dialogowej',
             ]);
@@ -214,6 +237,8 @@ class DialogService extends BaseService
         foreach ($dialogNode->options as $option) {
             $option->edges()->delete();
         }
+
+        $dialogNode->directOutputEdges()->delete();
 
         // Then delete the options
         $dialogNode->options()->delete();
@@ -226,16 +251,33 @@ class DialogService extends BaseService
 
     public function destroyEdge(Dialog $dialog, \App\Models\DialogEdge $dialogEdge)
     {
-        if(!$dialogEdge->sourceDialog()->is($dialog)) {
+        if (! $dialogEdge->sourceDialog()->is($dialog)) {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'message' => 'Błąd niespodzianka :)',
             ]);
         }
 
-        if($dialogEdge->source_option_id === null && $dialog->edges()->whereNull('source_option_id')->count() <= 1) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'message' => 'Nie możesz usunąć jedynego połączenia ze startowym dialogiem',
-            ]);
+        if ($dialogEdge->source_option_id === null) {
+            $startNodeId = $dialog->nodes()->where('type', 'start')->value('id');
+
+            if (
+                $startNodeId &&
+                (
+                    (int) $dialogEdge->source_node_id === (int) $startNodeId ||
+                    $dialogEdge->source_node_id === null
+                ) &&
+                $dialog->edges()
+                    ->whereNull('source_option_id')
+                    ->where(function ($query) use ($startNodeId) {
+                        $query->where('source_node_id', $startNodeId)
+                            ->orWhereNull('source_node_id');
+                    })
+                    ->count() <= 1
+            ) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'message' => 'Nie możesz usunąć jedynego połączenia ze startowym dialogiem',
+                ]);
+            }
         }
 
         $dialogEdge->delete();
@@ -243,7 +285,7 @@ class DialogService extends BaseService
 
     public function assignShop(Dialog $dialog, DialogNode $dialogNode, int $shopId)
     {
-        if($dialogNode->type != 'shop') {
+        if ($dialogNode->type != 'shop') {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'message' => 'Sklep może zostac podpięty wyłącznie do kwesti dialogowej typu "sklep"',
             ]);
@@ -257,24 +299,25 @@ class DialogService extends BaseService
 
     public function search(string $query = '')
     {
-        return $this->dialogModel->where('name', 'like', '%' . $query . '%')->limit(10)->get();
+        return $this->dialogModel->where('name', 'like', '%'.$query.'%')->limit(10)->get();
     }
 
     public function updateStartNodeEdges(Dialog $dialog, DialogNode $dialogNode, array $validated)
     {
-        if ($dialogNode->type !== 'start') {
+        if ($dialogNode->type !== 'start' && $dialogNode->type !== 'randomizer') {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'message' => 'Tylko węzeł startowy może mieć reguły przejścia do kolejnych dialogów',
+                'message' => 'Tylko węzeł startowy lub losowania może mieć reguły przejścia do kolejnych dialogów.',
             ]);
         }
 
         $edgesData = $validated['edges'];
         $edges = $dialogNode->getEdges();
 
-        foreach($edgesData as $edgeData)
-        {
+        foreach ($edgesData as $edgeData) {
             $foundEdge = $edges->where('id', $edgeData['edge_id'])->first();
-            if(!$foundEdge) continue;
+            if (! $foundEdge) {
+                continue;
+            }
 
             $foundEdge->update(['rules' => $edgeData['rules']]);
         }
@@ -285,8 +328,6 @@ class DialogService extends BaseService
     /**
      * Copy a dialog node with its options and connections
      *
-     * @param Dialog $dialog
-     * @param DialogNode $dialogNode
      * @return DialogNode The newly created node
      */
     public function copyNode(Dialog $dialog, DialogNode $dialogNode)
@@ -321,31 +362,45 @@ class DialogService extends BaseService
             }
         }
 
+        if (in_array($dialogNode->type, ['start', 'randomizer'], true)) {
+            $directEdges = $dialogNode->getEdges();
+            foreach ($directEdges as $edge) {
+                $newEdge = $dialog->edges()->make();
+                $newEdge->sourceNode()->associate($newNode);
+                $newEdge->targetNode()->associate($edge->targetNode);
+                $newEdge->rules = $edge->rules;
+                $newEdge->save();
+            }
+        }
+
         return $newNode->fresh(['options.edges.targetNode']);
     }
 
     /**
      * Copy an entire dialog with all its nodes, options, and connections
      *
-     * @param Dialog $dialog The dialog to copy
+     * @param  Dialog  $dialog  The dialog to copy
      * @return Dialog The newly created dialog
      */
     public function copyDialog(Dialog $dialog)
     {
         // Create a new dialog with the same name + " - kopia"
         $newDialog = Dialog::create([
-            'name' => $dialog->name . ' - kopia',
+            'name' => $dialog->name.' - kopia',
         ]);
 
         // Load all nodes with their options and edges
         $dialog->load([
-            'nodes' => function($query) {
-                $query->with(['options' => function($query) {
-                    $query->with(['edges' => function($query) {
+            'nodes' => function ($query) {
+                $query->with(['options' => function ($query) {
+                    $query->with(['edges' => function ($query) {
                         $query->with('targetNode');
                     }]);
                 }]);
-            }
+            },
+            'edges' => function ($query) {
+                $query->whereNull('source_option_id')->with('targetNode');
+            },
         ]);
 
         // Map of original node IDs to new node IDs
@@ -396,6 +451,28 @@ class DialogService extends BaseService
                     }
                 }
             }
+        }
+
+        foreach ($dialog->edges as $edge) {
+            $legacyStartSourceNodeId = null;
+            if ($edge->source_node_id === null) {
+                $legacyStartSourceNodeId = $dialog->nodes->firstWhere('type', 'start')?->id;
+            }
+
+            $sourceNodeId = $edge->source_node_id
+                ? ($nodeMap[$edge->source_node_id] ?? null)
+                : ($legacyStartSourceNodeId ? ($nodeMap[$legacyStartSourceNodeId] ?? null) : null);
+            $targetNodeId = $nodeMap[$edge->target_node_id] ?? null;
+
+            if (! $sourceNodeId || ! $targetNodeId) {
+                continue;
+            }
+
+            $newEdge = $newDialog->edges()->make();
+            $newEdge->source_node_id = $sourceNodeId;
+            $newEdge->target_node_id = $targetNodeId;
+            $newEdge->rules = $edge->rules;
+            $newEdge->save();
         }
 
         return $newDialog->fresh(['nodes.options.edges.targetNode']);

@@ -3,17 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DialogEdge extends DynamicModel
 {
     use HasFactory;
 
-    protected $fillable = ['rules'];
+    protected $fillable = ['rules', 'source_node_id'];
 
     protected $casts = [
-        'rules' => 'json'
+        'rules' => 'json',
     ];
 
     public function sourceDialog(): BelongsTo
@@ -24,6 +23,11 @@ class DialogEdge extends DynamicModel
     public function sourceOption(): BelongsTo
     {
         return $this->belongsTo(DialogNodeOption::class, 'source_option_id');
+    }
+
+    public function sourceNode(): BelongsTo
+    {
+        return $this->belongsTo(DialogNode::class, 'source_node_id');
     }
 
     public function targetNode(): BelongsTo

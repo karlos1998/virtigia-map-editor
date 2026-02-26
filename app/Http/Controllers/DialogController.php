@@ -31,9 +31,7 @@ use Inertia\Inertia;
 
 class DialogController extends Controller
 {
-    public function __construct(private readonly DialogService $dialogService)
-    {
-    }
+    public function __construct(private readonly DialogService $dialogService) {}
 
     public function index()
     {
@@ -58,18 +56,18 @@ class DialogController extends Controller
     {
         // Eager load all relationships to improve performance
         $dialog->load([
-            'nodes' => function($query) {
-                $query->with(['options' => function($query) {
-                    $query->with(['edges' => function($query) {
+            'nodes' => function ($query) {
+                $query->with(['options' => function ($query) {
+                    $query->with(['edges' => function ($query) {
                         $query->with('targetNode');
                     }]);
                 }, 'shop']);
             },
-            'edges' => function($query) {
-                $query->with(['sourceOption' => function($query) {
+            'edges' => function ($query) {
+                $query->with(['sourceOption' => function ($query) {
                     $query->with('node');
-                }, 'targetNode']);
-            }
+                }, 'sourceNode', 'targetNode']);
+            },
         ]);
 
         // Preload maps for teleportation nodes to avoid N+1 queries
@@ -84,7 +82,7 @@ class DialogController extends Controller
 
         // If there are any map IDs, preload those maps
         $maps = [];
-        if (!empty($mapIds)) {
+        if (! empty($mapIds)) {
             $maps = \App\Models\Map::whereIn('id', $mapIds)->get()->keyBy('id');
         }
 
@@ -104,6 +102,7 @@ class DialogController extends Controller
     public function addNode(Dialog $dialog, StoreDialogNodeRequest $request)
     {
         $node = $this->dialogService->addNode($dialog, $request->validated());
+
         return response()->json([
             'node' => DialogNodeResource::make($node),
         ]);
@@ -117,6 +116,7 @@ class DialogController extends Controller
     public function addEdge(Dialog $dialog, StoreDialogEdgeRequest $request)
     {
         $edge = $this->dialogService->addEdge($dialog, $request->validated());
+
         return response()->json([
             'edge' => DialogEdgeResource::make($edge),
         ]);
@@ -148,15 +148,16 @@ class DialogController extends Controller
         $this->dialogService->updateNode($dialog, $dialogNode, $request->validated());
     }
 
-    public function updateOption(Dialog $dialog, DialogNode $dialogNode, DialogNodeOption $dialogNodeOption, UpdateDialogNodeOptionRequest $request)//: JsonResponse
+    public function updateOption(Dialog $dialog, DialogNode $dialogNode, DialogNodeOption $dialogNodeOption, UpdateDialogNodeOptionRequest $request)// : JsonResponse
     {
         return response()->json(DialogNodeOptionResource::make($this->dialogService->updateOption($dialog, $dialogNode, $dialogNodeOption, $request->validated())));
-//        $this->dialogService->updateOption($dialog, $dialogNode, $dialogNodeOption, $request->validated());
+        //        $this->dialogService->updateOption($dialog, $dialogNode, $dialogNodeOption, $request->validated());
     }
 
     public function destroyOption(Dialog $dialog, DialogNode $dialogNode, DialogNodeOption $dialogNodeOption): \Illuminate\Http\Response
     {
         $this->dialogService->destroyOption($dialog, $dialogNode, $dialogNodeOption);
+
         return response()->noContent();
     }
 
@@ -171,6 +172,7 @@ class DialogController extends Controller
     public function assignShop(Dialog $dialog, DialogNode $dialogNode, AssignShopToDialogNodeRequest $request)
     {
         $node = $this->dialogService->assignShop($dialog, $dialogNode, $request->get('shop_id'));
+
         return response()->json([
             'dialogNode' => DialogNodeResource::make($node),
         ]);
@@ -184,6 +186,7 @@ class DialogController extends Controller
     public function updateStartNodeEdges(Dialog $dialog, DialogNode $dialogNode, UpdateStartNodeEdgesRequest $request)
     {
         $node = $this->dialogService->updateStartNodeEdges($dialog, $dialogNode, $request->validated());
+
         return response()->json([
             'dialogNode' => DialogNodeResource::make($node),
         ]);
@@ -195,7 +198,7 @@ class DialogController extends Controller
     public function updateOptionsOrder(Request $request, Dialog $dialog, DialogNode $dialogNode)
     {
         $ids = $request->input('ids', []);
-        if (!is_array($ids)) {
+        if (! is_array($ids)) {
             return response()->json(['message' => 'Invalid payload'], 422);
         }
 
@@ -211,13 +214,12 @@ class DialogController extends Controller
     /**
      * Copy a dialog node with its options and connections
      *
-     * @param Dialog $dialog
-     * @param DialogNode $dialogNode
      * @return \Illuminate\Http\JsonResponse
      */
     public function copyNode(Dialog $dialog, DialogNode $dialogNode)
     {
         $newNode = $this->dialogService->copyNode($dialog, $dialogNode);
+
         return response()->json([
             'node' => DialogNodeResource::make($newNode),
         ]);
@@ -226,12 +228,12 @@ class DialogController extends Controller
     /**
      * Copy an entire dialog with all its nodes, options, and connections
      *
-     * @param Dialog $dialog
      * @return \Illuminate\Http\JsonResponse
      */
     public function copyDialog(Dialog $dialog)
     {
         $newDialog = $this->dialogService->copyDialog($dialog);
+
         return to_route('dialogs.show', $newDialog->id);
     }
 }

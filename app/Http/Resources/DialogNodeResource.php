@@ -24,7 +24,7 @@ class DialogNodeResource extends JsonResource
             'id' => $this->resource->id,
             'type' => $this->resource->type,
             'position' => $this->resource->position,
-            $this->mergeWhen($this->resource->type == 'special', fn() => [
+            $this->mergeWhen($this->resource->type == 'special', fn () => [
                 'data' => [
                     'dialog_id' => $this->resource->source_dialog_id,
                     'label' => 'Nazwa Npc',
@@ -32,24 +32,24 @@ class DialogNodeResource extends JsonResource
                     'options' => DialogNodeOptionResource::collection($this->resource->options),
                     'action_data' => $this->resource->action_data,
                     'additional_actions' => $this->resource->additional_actions,
-                ]
+                ],
             ]),
 
-            $this->mergeWhen($this->resource->type == 'shop', fn() => [
+            $this->mergeWhen($this->resource->type == 'shop', fn () => [
                 'data' => [
                     'dialog_id' => $this->resource->source_dialog_id,
-                    'shop' => $this->when($this->resource->shop()->exists(), fn() => [
+                    'shop' => $this->when($this->resource->shop()->exists(), fn () => [
                         'id' => $this->resource->shop->id,
                         'name' => $this->resource->shop->name,
                         'items_count' => $this->resource->shop->items()->count(),
                     ]),
-                ]
+                ],
             ]),
 
-            $this->mergeWhen($this->resource->type == 'teleportation', function(){
+            $this->mergeWhen($this->resource->type == 'teleportation', function () {
                 $teleportation = $this->resource->action_data['teleportation'] ?? null;
 
-                if($teleportation && isset($teleportation['mapId'])){
+                if ($teleportation && isset($teleportation['mapId'])) {
                     // Use preloaded maps if available, otherwise fall back to Map::find
                     if (isset(self::$maps[$teleportation['mapId']])) {
                         $teleportation['mapName'] = self::$maps[$teleportation['mapId']]->name;
@@ -64,18 +64,18 @@ class DialogNodeResource extends JsonResource
                         'action_data' => [
                             'teleportation' => $teleportation,
                         ],
-                    ]
+                    ],
                 ];
             }),
 
-            $this->mergeWhen($this->resource->type == 'start', function() {
+            $this->mergeWhen($this->resource->type == 'start', function () {
                 return [
                     'data' => [
                         'dialog_id' => $this->resource->source_dialog_id,
-                        'edges' => $this->resource->getEdges()->map(function($edge) {
+                        'edges' => $this->resource->getEdges()->map(function ($edge) {
                             return [
                                 'edge_id' => $edge->id,
-                                'node' => $this->when($edge->targetNode, function() use ($edge) {
+                                'node' => $this->when($edge->targetNode, function () use ($edge) {
                                     return [
                                         'id' => $edge->targetNode->id,
                                         'type' => $edge->targetNode->type,
@@ -85,9 +85,31 @@ class DialogNodeResource extends JsonResource
                                 'rules' => $edge->rules,
                             ];
                         }),
-                    ]
+                    ],
                 ];
-            })
+            }),
+
+            $this->mergeWhen($this->resource->type == 'randomizer', function () {
+                return [
+                    'dragHandle' => '.node-drag-handle',
+                    'data' => [
+                        'dialog_id' => $this->resource->source_dialog_id,
+                        'edges' => $this->resource->getEdges()->map(function ($edge) {
+                            return [
+                                'edge_id' => $edge->id,
+                                'node' => $this->when($edge->targetNode, function () use ($edge) {
+                                    return [
+                                        'id' => $edge->targetNode->id,
+                                        'type' => $edge->targetNode->type,
+                                        'content' => $edge->targetNode->content,
+                                    ];
+                                }),
+                                'rules' => $edge->rules,
+                            ];
+                        }),
+                    ],
+                ];
+            }),
         ];
     }
 }
