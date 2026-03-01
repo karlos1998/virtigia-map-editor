@@ -2,13 +2,14 @@
 import AppLayout from '../../layout/AppLayout.vue';
 
 import { MiniMap } from '@vue-flow/minimap';
-import {ConnectionMode, EdgeRemoveChange, NodeProps, BezierEdge, useVueFlow, VueFlow} from '@vue-flow/core';
+import { ConnectionMode, EdgeRemoveChange, NodeProps, useVueFlow, VueFlow } from '@vue-flow/core';
 
 import SpecialNode from '@/Pages/Dialog/SpecialNode.vue';
 import { Controls } from '@vue-flow/controls';
 import StartNode from '@/Pages/Dialog/StartNode.vue';
 import ShopNode from '@/Pages/Dialog/ShopNode.vue';
 import RandomizerNode from '@/Pages/Dialog/RandomizerNode.vue';
+import DialogEdge from '@/Pages/Dialog/DialogEdge.vue';
 import { DialogResource } from '@/Resources/Dialog.resource';
 // import { DialogConnectionResource } from '@/Resources/DialogConnection.resource';
 import { computed, ref } from 'vue';
@@ -38,6 +39,7 @@ const copyForm = useForm({});
 // Function to copy the dialog
 const copyDialog = () => {
     confirm.require({
+        group: 'dialog-show-modal',
         message: 'Czy na pewno chcesz skopiować ten dialog? Utworzy to nowy dialog z nazwą "' + props.dialog.name + ' - kopia"',
         header: 'Potwierdzenie',
         icon: 'pi pi-exclamation-triangle',
@@ -49,6 +51,7 @@ const copyDialog = () => {
 };
 
 const {
+    edges,
     nodes,
     onConnect,
     addEdges,
@@ -59,7 +62,6 @@ const {
     applyEdgeChanges,
     onNodesChange,
     applyNodeChanges,
-    removeEdges,
     updateNodeData,
 } = useVueFlow();
 
@@ -179,6 +181,7 @@ onEdgesChange(async (changes) => {
                 console.log(' add edge from backend ---<', edge, props.dialog)
                 let edgeTmp = change;
                 edgeTmp.item.id = edge.id;
+                edgeTmp.item.data = edge.data;
                 applyEdgeChanges([edgeTmp]);
 
                 const targetNodeId = change.item.targetNode.id;
@@ -262,6 +265,27 @@ onEdgesChange(async (changes) => {
 
 const toast = useToast();
 const removeEdge = (edgeChange: EdgeRemoveChange) => {
+    confirm.require({
+        group: 'dialog-show-modal',
+        message: 'Usunąć to połączenie między nodeami?',
+        header: 'Potwierdzenie',
+        icon: 'pi pi-exclamation-triangle',
+        rejectProps: {
+            label: 'Anuluj',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Usuń',
+            severity: 'danger'
+        },
+        accept: () => {
+            executeRemoveEdge(edgeChange);
+        }
+    });
+}
+
+const executeRemoveEdge = (edgeChange: EdgeRemoveChange) => {
     // Find the edge in the edges array
     const edge = edges.value.find(e => e.id === edgeChange.id) ?? props.edges.find(e => e.id === edgeChange.id);
 
@@ -361,6 +385,7 @@ const items = ref([
 
 <template>
     <AppLayout>
+        <ConfirmDialog group="dialog-show-modal" />
 
         <EditDialogNameDialog :dialog="props.dialog" v-model:visible="isEditDialogNameVisible" />
 
@@ -388,6 +413,9 @@ const items = ref([
                 :edges="startEdges"
                 :connection-mode="ConnectionMode.Strict"
                 :max-zoom="1"
+                :delete-key-code="'Backspace'"
+                :elements-selectable="true"
+                :edges-focusable="true"
                 fit-view-on-init
                 :apply-default="false"
                 :default-edge-options="{
@@ -420,19 +448,7 @@ const items = ref([
                 </template>
 
                 <template #edge-default="customEdgeProps">
-                    <BezierEdge
-                        :id="customEdgeProps.id"
-                        :source-x="customEdgeProps.sourceX"
-                        :source-y="customEdgeProps.sourceY"
-                        :target-x="customEdgeProps.targetX"
-                        :target-y="customEdgeProps.targetY"
-                        :source-position="customEdgeProps.sourcePosition"
-                        :target-position="customEdgeProps.targetPosition"
-                        :data="customEdgeProps.data"
-                        :marker-end="customEdgeProps.markerEnd"
-                        :style="{ strokeWidth: '2px', stroke: '#6366f1' }"
-                        :path-options="{ curvature: 0.5 }"
-                    />
+                    <DialogEdge v-bind="customEdgeProps" />
                 </template>
 
                 <Controls position="top-left">

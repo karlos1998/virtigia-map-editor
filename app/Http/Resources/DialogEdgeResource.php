@@ -4,7 +4,6 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use stdClass;
 
 class DialogEdgeResource extends JsonResource
 {
@@ -33,7 +32,9 @@ class DialogEdgeResource extends JsonResource
             $this->mergeWhen($sourceOptionExists, fn () => [
                 'sourceHandle' => "source-{$this->resource->sourceOption->id}",
             ]),
-            'data' => new StdClass,
+            'data' => (object) [
+                'dialog_id' => $this->resource->source_dialog_id,
+            ],
             'label' => '',
 
         ];
