@@ -15,6 +15,14 @@ type Data = {
 }
 
 const expandedRows = ref();
+
+const formatDate = (value: string | null): string => {
+    if (! value) {
+        return 'Brak historii zmian';
+    }
+
+    return new Date(value).toLocaleString();
+};
 </script>
 <template>
     <AdvanceTable
@@ -39,14 +47,29 @@ const expandedRows = ref();
             </div>
         </template>
 
-        <AdvanceColumn field="id" header="ID" style="width: 5%" />
+        <AdvanceColumn field="id" header="ID" style="width: 5%" sortable />
 
         <Column expander style="width: 5rem" />
 
 
-        <AdvanceColumn field="name" header="Name">
+        <AdvanceColumn field="name" header="Nazwa" sortable>
             <template #body="{ data }: Data">
                 {{ data.name }}
+            </template>
+        </AdvanceColumn>
+
+        <AdvanceColumn field="last_activity_at" header="Ostatnia edycja" sortable>
+            <template #body="{ data }: Data">
+                <div class="text-sm font-medium">
+                    {{ formatDate(data.last_activity_at) }}
+                </div>
+            </template>
+        </AdvanceColumn>
+
+        <AdvanceColumn field="last_editor_id" header="Ostatnio edytował">
+            <template #body="{ data }: Data">
+                <span v-if="data.last_editor_name">{{ data.last_editor_name }}</span>
+                <span v-else class="text-surface-500">Brak danych</span>
             </template>
         </AdvanceColumn>
 

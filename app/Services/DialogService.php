@@ -4,23 +4,257 @@ namespace App\Services;
 
 use App\Http\Resources\DialogResource;
 use App\Models\Dialog;
+use App\Models\DialogEdge;
 use App\Models\DialogNode;
 use App\Models\DialogNodeOption;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
+use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownColumn;
+use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownOptions\TableDropdownOption;
+use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableTextColumn;
+use Karlos3098\LaravelPrimevueTableService\Services\TableService;
+use Spatie\Activitylog\Models\Activity;
 
 class DialogService extends BaseService
 {
-    public function __construct(private readonly Dialog $dialogModel) {}
+    public function __construct(
+        private readonly Dialog $dialogModel,
+        private readonly Activity $activityModel,
+    ) {}
 
-    public function getAll()
+    public function getAll(): AnonymousResourceCollection
     {
-        return $this->fetchData(
-            DialogResource::class,
-            $this->dialogModel->with(['npcs', 'npcs.locations']),
-            new \Karlos3098\LaravelPrimevueTableService\Services\TableService(
-                globalFilterColumns: ['name'],
-            )
+        $users = User::query()
+            ->orderBy('name')
+            ->get()
+            ->map(function (User $user) {
+                return new TableDropdownOption($user->name, fn () => null);
+            });
+
+        $tableService = new TableService(
+            propName: 'dialogs',
+            columns: [
+                'id' => new TableTextColumn(sortable: true),
+                'name' => new TableTextColumn(sortable: true),
+                'last_activity_at' => new TableTextColumn(
+                    placeholder: 'Ostatnia edycja',
+                    sortable: true,
+                ),
+                'last_editor_id' => new TableDropdownColumn(
+                    placeholder: 'Ostatni edytujący',
+                    options: $users->toArray(),
+                ),
+            ],
+            globalFilterColumns: ['name'],
         );
+
+        $filters = $this->normalizeTableFilters(request('tables.dialogs.filters'));
+        $tableService->setActiveFilters($filters);
+
+        $globalFilter = request('tables.dialogs.globalFilter');
+        if (is_string($globalFilter) && $globalFilter !== '') {
+            $tableService->setGlobalFilter($globalFilter);
+        }
+
+        $sortField = request('tables.dialogs.sortField');
+        $sortOrder = request('tables.dialogs.sortOrder') === 'DESC' ? 'DESC' : 'ASC';
+        if (is_string($sortField) && $tableService->hasColumnExist($sortField)) {
+            $tableService->setSortData($sortField, $sortOrder);
+        } else {
+            $tableService->setSortData('last_activity_at', 'DESC');
+        }
+
+        $dialogs = $this->dialogModel->query()
+            ->with(['npcs', 'npcs.locations'])
+            ->withCount('npcs')
+            ->get();
+
+        $dialogs = $this->appendLastActivityMetadata($dialogs);
+        $dialogs = $this->applyDialogListFilters($dialogs, $filters, $globalFilter);
+        $dialogs = $this->applyDialogListSorting($dialogs, $tableService->sortField, $tableService->sortOrder);
+
+        $perPage = $tableService->getRowsPerPage();
+        $page = max(1, (int) request($tableService->getPageParameterName(), 1));
+
+        $paginator = new LengthAwarePaginator(
+            items: $dialogs->forPage($page, $perPage)->values(),
+            total: $dialogs->count(),
+            perPage: $perPage,
+            currentPage: $page,
+            options: [
+                'path' => request()->url(),
+                'pageName' => $tableService->getPageParameterName(),
+            ],
+        );
+
+        $resource = DialogResource::collection($paginator);
+        $resource->additional(['tableData' => $tableService]);
+
+        return $resource;
+    }
+
+    private function appendLastActivityMetadata(Collection $dialogs): Collection
+    {
+        if ($dialogs->isEmpty()) {
+            return $dialogs;
+        }
+
+        $dialogIds = $dialogs->pluck('id');
+        $dialogIdLookup = $dialogIds->flip();
+
+        $nodes = DialogNode::query()
+            ->select(['id', 'source_dialog_id'])
+            ->whereIn('source_dialog_id', $dialogIds)
+            ->get();
+
+        $nodeToDialog = $nodes->pluck('source_dialog_id', 'id');
+
+        $options = DialogNodeOption::query()
+            ->select(['id', 'node_id'])
+            ->whereIn('node_id', $nodes->pluck('id'))
+            ->get();
+
+        $optionToDialog = $options
+            ->mapWithKeys(function (DialogNodeOption $option) use ($nodeToDialog) {
+                return [$option->id => $nodeToDialog->get($option->node_id)];
+            })
+            ->filter();
+
+        $edgeToDialog = DialogEdge::query()
+            ->select(['id', 'source_dialog_id'])
+            ->whereIn('source_dialog_id', $dialogIds)
+            ->get()
+            ->pluck('source_dialog_id', 'id');
+
+        $activities = $this->activityModel->newQuery()
+            ->with('causer:id,name')
+            ->whereIn('subject_type', [
+                DialogNode::class,
+                DialogNodeOption::class,
+                DialogEdge::class,
+            ])
+            ->orderByDesc('created_at')
+            ->get();
+
+        $latestActivityByDialogId = [];
+
+        foreach ($activities as $activity) {
+            $dialogId = match ($activity->subject_type) {
+                DialogNode::class => $nodeToDialog->get($activity->subject_id)
+                    ?? data_get($activity->properties, 'attributes.source_dialog_id')
+                    ?? data_get($activity->properties, 'old.source_dialog_id'),
+                DialogNodeOption::class => $optionToDialog->get($activity->subject_id)
+                    ?? $nodeToDialog->get((int) (data_get($activity->properties, 'attributes.node_id') ?? 0))
+                    ?? $nodeToDialog->get((int) (data_get($activity->properties, 'old.node_id') ?? 0)),
+                DialogEdge::class => $edgeToDialog->get($activity->subject_id)
+                    ?? data_get($activity->properties, 'attributes.source_dialog_id')
+                    ?? data_get($activity->properties, 'old.source_dialog_id'),
+                default => null,
+            };
+
+            if ($dialogId === null) {
+                continue;
+            }
+
+            $dialogId = (int) $dialogId;
+
+            if (! $dialogIdLookup->has($dialogId) || array_key_exists($dialogId, $latestActivityByDialogId)) {
+                continue;
+            }
+
+            $latestActivityByDialogId[$dialogId] = $activity;
+        }
+
+        return $dialogs->map(function (Dialog $dialog) use ($latestActivityByDialogId) {
+            $lastActivity = $latestActivityByDialogId[$dialog->id] ?? null;
+
+            $dialog->setAttribute('last_activity_at', $lastActivity?->created_at?->toISOString());
+            $dialog->setAttribute('last_editor_id', $lastActivity?->causer_id ? (int) $lastActivity->causer_id : null);
+            $dialog->setAttribute('last_editor_name', $lastActivity?->causer?->name);
+
+            return $dialog;
+        });
+    }
+
+    private function applyDialogListFilters(Collection $dialogs, \stdClass $filters, ?string $globalFilter): Collection
+    {
+        if (is_string($globalFilter) && trim($globalFilter) !== '') {
+            $searchTerms = preg_split('/\s+/', trim($globalFilter), -1, PREG_SPLIT_NO_EMPTY);
+
+            $dialogs = $dialogs->filter(function (Dialog $dialog) use ($searchTerms) {
+                $name = mb_strtolower($dialog->name);
+
+                foreach ($searchTerms as $term) {
+                    if (! str_contains($name, mb_strtolower($term))) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+        }
+
+        $selectedLastEditor = data_get($filters, 'last_editor_id.constraints.0.value.label');
+        if (is_string($selectedLastEditor) && $selectedLastEditor !== '') {
+            $dialogs = $dialogs->filter(function (Dialog $dialog) use ($selectedLastEditor) {
+                return $dialog->last_editor_name === $selectedLastEditor;
+            });
+        }
+
+        $selectedLastActivityDate = data_get($filters, 'last_activity_at.constraints.0.value');
+        if (is_string($selectedLastActivityDate) && $selectedLastActivityDate !== '') {
+            $selectedDate = Carbon::parse($selectedLastActivityDate)->toDateString();
+
+            $dialogs = $dialogs->filter(function (Dialog $dialog) use ($selectedDate) {
+                if (! $dialog->last_activity_at) {
+                    return false;
+                }
+
+                return Carbon::parse($dialog->last_activity_at)->toDateString() === $selectedDate;
+            });
+        }
+
+        return $dialogs->values();
+    }
+
+    private function applyDialogListSorting(Collection $dialogs, string $sortField, string $sortOrder): Collection
+    {
+        $sorted = match ($sortField) {
+            'name' => $dialogs->sortBy(fn (Dialog $dialog) => mb_strtolower($dialog->name)),
+            'last_activity_at' => $dialogs->sortBy(fn (Dialog $dialog) => $dialog->last_activity_at ?? ''),
+            default => $dialogs->sortBy(fn (Dialog $dialog) => $dialog->id),
+        };
+
+        if ($sortOrder === 'DESC') {
+            $sorted = $sorted->reverse();
+        }
+
+        return $sorted->values();
+    }
+
+    private function normalizeTableFilters(mixed $filtersInput): \stdClass
+    {
+        if ($filtersInput instanceof \stdClass) {
+            return $filtersInput;
+        }
+
+        if (is_string($filtersInput) && $filtersInput !== '') {
+            $decoded = json_decode($filtersInput);
+
+            return $decoded instanceof \stdClass ? $decoded : new \stdClass;
+        }
+
+        if (is_array($filtersInput)) {
+            $decoded = json_decode(json_encode($filtersInput));
+
+            return $decoded instanceof \stdClass ? $decoded : new \stdClass;
+        }
+
+        return new \stdClass;
     }
 
     public function addNode(Dialog $dialog, array $data)
