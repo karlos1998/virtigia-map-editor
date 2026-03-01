@@ -32,6 +32,12 @@ export interface QuestResource {
     updated_at: string;
 }
 
+export interface SimpleQuestResource {
+    id: number;
+    name: string;
+    is_daily: boolean;
+}
+
 export interface QuestWithStepsResource extends QuestResource {
     steps: QuestStepResource[];
     dialogs: SimpleDialogResource[];

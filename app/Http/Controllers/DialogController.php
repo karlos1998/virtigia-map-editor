@@ -19,6 +19,8 @@ use App\Http\Requests\UpdateStartNodeEdgesRequest;
 use App\Http\Resources\DialogEdgeResource;
 use App\Http\Resources\DialogNodeOptionResource;
 use App\Http\Resources\DialogNodeResource;
+use App\Http\Resources\NpcResource;
+use App\Http\Resources\SimpleQuestResource;
 use App\Models\Dialog;
 use App\Models\DialogEdge;
 use App\Models\DialogNode;
@@ -56,6 +58,8 @@ class DialogController extends Controller
     {
         // Eager load all relationships to improve performance
         $dialog->load([
+            'npcs.base',
+            'npcs.locations.map',
             'nodes' => function ($query) {
                 $query->with(['options' => function ($query) {
                     $query->with(['edges' => function ($query) {
@@ -93,6 +97,8 @@ class DialogController extends Controller
             'dialog' => $dialog->only(['id', 'name']),
             'nodes' => DialogNodeResource::collection($dialog->nodes),
             'edges' => DialogEdgeResource::collection($dialog->edges),
+            'npcs' => NpcResource::collection($dialog->npcs),
+            'quests' => SimpleQuestResource::collection($dialog->getRelatedQuests()),
             'dialogNodeOptionAdditionalActionsList' => DialogNodeOptionAdditionalAction::toDropdownList(),
             'availableRules' => DialogNodeOptionRule::list(),
             'dialogNodeAdditionalActionsList' => DialogNodeAdditionalAction::toDropdownList(),

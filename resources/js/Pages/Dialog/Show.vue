@@ -11,6 +11,8 @@ import ShopNode from '@/Pages/Dialog/ShopNode.vue';
 import RandomizerNode from '@/Pages/Dialog/RandomizerNode.vue';
 import DialogEdge from '@/Pages/Dialog/DialogEdge.vue';
 import { DialogResource } from '@/Resources/Dialog.resource';
+import { NpcWithLocationsResource } from '@/Resources/Npc.resource';
+import { SimpleQuestResource } from '@/Resources/Quest.resource';
 // import { DialogConnectionResource } from '@/Resources/DialogConnection.resource';
 import { computed, ref } from 'vue';
 import axios from 'axios';
@@ -20,7 +22,7 @@ import {useToast} from "primevue";
 import EditDialogNameDialog from '@/Pages/Dialog/Modals/EditDialogNameDialog.vue';
 import DetailsCardList from "@/Components/DetailsCardList.vue";
 import DetailsCardListItem from "@/Components/DetailsCardListItem.vue";
-import { useForm } from '@inertiajs/vue3';
+import { Link, useForm } from '@inertiajs/vue3';
 import ConfirmDialog from 'primevue/confirmdialog';
 import { useConfirm } from 'primevue/useconfirm';
 
@@ -28,6 +30,8 @@ const props = defineProps<{
     dialog: DialogResource,
     nodes: any[], //todo
     edges: any[],
+    npcs: NpcWithLocationsResource[],
+    quests: SimpleQuestResource[],
 }>();
 
 const isEditDialogNameVisible = ref(false);
@@ -403,6 +407,72 @@ const items = ref([
             </DetailsCardListItem>
         </DetailsCardList>
 
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4">
+            <div class="card">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-semibold">Powiązane NPC</h2>
+                    <Tag :value="String(props.npcs.length)" severity="info" />
+                </div>
+
+                <Message v-if="props.npcs.length === 0" severity="secondary">
+                    Ten dialog nie jest jeszcze przypisany do żadnego NPC.
+                </Message>
+
+                <div v-else class="flex flex-col gap-3">
+                    <Link
+                        v-for="npc in props.npcs"
+                        :key="npc.id"
+                        :href="route('npcs.show', { npc: npc.id })"
+                        class="related-card"
+                    >
+                        <img :src="npc.src" :alt="npc.name" class="w-12 h-12 rounded-md object-cover bg-surface-100" />
+                        <div class="min-w-0 grow">
+                            <div class="font-semibold truncate">#{{ npc.id }} - {{ npc.name }}</div>
+                            <div class="text-sm text-surface-500">Poziom {{ npc.lvl }}</div>
+                            <div v-if="npc.locations?.length" class="text-sm text-surface-500 truncate">
+                                [{{ npc.locations[0].map_id }}] {{ npc.locations[0].map_name }} ({{ npc.locations[0].x }},{{ npc.locations[0].y }})
+                            </div>
+                            <div v-else class="text-sm text-surface-400">
+                                Brak lokalizacji
+                            </div>
+                        </div>
+                        <Tag :value="npc.enabled ? 'Aktywny' : 'Wyłączony'" :severity="npc.enabled ? 'success' : 'danger'" />
+                    </Link>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-semibold">Powiązane Questy</h2>
+                    <Tag :value="String(props.quests.length)" severity="contrast" />
+                </div>
+
+                <Message v-if="props.quests.length === 0" severity="secondary">
+                    W tym dialogu nie wykryto powiązań questowych.
+                </Message>
+
+                <div v-else class="flex flex-col gap-3">
+                    <Link
+                        v-for="quest in props.quests"
+                        :key="quest.id"
+                        :href="route('quests.show', { quest: quest.id })"
+                        class="related-card"
+                    >
+                        <div class="quest-icon">
+                            <i class="pi pi-book" />
+                        </div>
+                        <div class="min-w-0 grow">
+                            <div class="font-semibold truncate">#{{ quest.id }} - {{ quest.name }}</div>
+                            <div class="text-sm text-surface-500">
+                                {{ quest.is_daily ? 'Quest dzienny' : 'Quest standardowy' }}
+                            </div>
+                        </div>
+                        <Tag :value="quest.is_daily ? 'Daily' : 'Quest'" :severity="quest.is_daily ? 'warn' : 'info'" />
+                    </Link>
+                </div>
+            </div>
+        </div>
+
 <!--        <pre v-text="startEdges" />-->
 <!--        <pre v-text="edges" />-->
         <div class="">
@@ -498,5 +568,41 @@ const items = ref([
     from {
         stroke-dashoffset: 10;
     }
+}
+
+.card {
+    background-color: var(--surface-card);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.related-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem;
+    border: 1px solid var(--surface-border);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--surface-card) 92%, white 8%);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.related-card:hover {
+    border-color: var(--primary-300);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    transform: translateY(-1px);
+}
+
+.quest-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+    color: #6d28d9;
+    flex-shrink: 0;
 }
 </style>

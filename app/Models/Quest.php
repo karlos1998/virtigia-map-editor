@@ -2,13 +2,8 @@
 
 namespace App\Models;
 
-use App\Models\Dialog;
-use App\Models\DialogEdge;
-use App\Models\DialogNode;
-use App\Models\DialogNodeOption;
 use App\Traits\JsonQueryHelpers;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
@@ -25,6 +20,15 @@ class Quest extends DynamicModel
         return $this->hasMany(QuestStep::class);
     }
 
+    public function isDaily(): bool
+    {
+        if ($this->relationLoaded('steps')) {
+            return $this->steps->contains(fn ($step) => ($step->auto_advance_next_day ?? false) === true);
+        }
+
+        return $this->steps()->where('auto_advance_next_day', true)->exists();
+    }
+
     /**
      * Get all dialogs where this quest is used in dialog node options or additional actions.
      *
@@ -32,12 +36,12 @@ class Quest extends DynamicModel
      */
     public function getDialogs()
     {
-        if (!$this->id) {
+        if (! $this->id) {
             return collect();
         }
 
-        $questId = 'q-' . $this->id;
-        $questStepIds = $this->steps->map(function($value){
+        $questId = 'q-'.$this->id;
+        $questStepIds = $this->steps->map(function ($value) {
             return "s-$value->id";
         });
 
@@ -45,7 +49,7 @@ class Quest extends DynamicModel
         $rulePaths = [
             '$.questBeforeStep.value',
             '$.questAfterStep.value',
-            '$.questStep.value'
+            '$.questStep.value',
         ];
 
         $query = Dialog::distinct()
@@ -57,7 +61,7 @@ class Quest extends DynamicModel
         if ($questStepIds->isNotEmpty()) {
             $query->orWhereHas('nodes', function ($query) use ($questStepIds) {
                 // Handle matches for quest step IDs in additional_actions
-                $query->where(function($subQuery) use ($questStepIds) {
+                $query->where(function ($subQuery) use ($questStepIds) {
                     foreach ($questStepIds as $stepId) {
                         $this->scopeWhereJsonContains($subQuery, 'additional_actions', '$.setQuestStep.value', $stepId, 'or');
                     }
@@ -67,6 +71,7 @@ class Quest extends DynamicModel
 
         return $query->get();
     }
+
     /**
      * Get all dialog nodes where this quest or its steps are used in additional actions.
      *
@@ -74,11 +79,11 @@ class Quest extends DynamicModel
      */
     public function getNodes()
     {
-        if (!$this->id) {
+        if (! $this->id) {
             return collect();
         }
 
-        $questStepIds = $this->steps->map(function($value){
+        $questStepIds = $this->steps->map(function ($value) {
             return "s-$value->id";
         });
 
@@ -88,7 +93,7 @@ class Quest extends DynamicModel
         }
 
         return DialogNode::distinct()
-            ->where(function($query) use ($questStepIds) {
+            ->where(function ($query) use ($questStepIds) {
                 // Handle matches for quest step IDs in additional_actions
                 foreach ($questStepIds as $stepId) {
                     $this->scopeWhereJsonContains($query, 'additional_actions', '$.setQuestStep.value', $stepId, 'or');
@@ -104,12 +109,12 @@ class Quest extends DynamicModel
      */
     public function getNodeOptions()
     {
-        if (!$this->id) {
+        if (! $this->id) {
             return collect();
         }
 
-        $questId = 'q-' . $this->id;
-        $questStepIds = $this->steps->map(function($value){
+        $questId = 'q-'.$this->id;
+        $questStepIds = $this->steps->map(function ($value) {
             return "s-$value->id";
         });
 
@@ -117,11 +122,11 @@ class Quest extends DynamicModel
         $rulePaths = [
             '$.questBeforeStep.value',
             '$.questAfterStep.value',
-            '$.questStep.value'
+            '$.questStep.value',
         ];
 
         return DialogNodeOption::distinct()
-            ->where(function($query) use ($allIds, $rulePaths) {
+            ->where(function ($query) use ($allIds, $rulePaths) {
                 $this->scopeWhereJsonContainsAnyInPaths($query, 'rules', $rulePaths, $allIds->all());
             })
             ->get();
@@ -134,12 +139,12 @@ class Quest extends DynamicModel
      */
     public function getEdges()
     {
-        if (!$this->id) {
+        if (! $this->id) {
             return collect();
         }
 
-        $questId = 'q-' . $this->id;
-        $questStepIds = $this->steps->map(function($value){
+        $questId = 'q-'.$this->id;
+        $questStepIds = $this->steps->map(function ($value) {
             return "s-$value->id";
         });
 
@@ -147,11 +152,11 @@ class Quest extends DynamicModel
         $rulePaths = [
             '$.questBeforeStep.value',
             '$.questAfterStep.value',
-            '$.questStep.value'
+            '$.questStep.value',
         ];
 
         return DialogEdge::distinct()
-            ->where(function($query) use ($allIds, $rulePaths) {
+            ->where(function ($query) use ($allIds, $rulePaths) {
                 $this->scopeWhereJsonContainsAnyInPaths($query, 'rules', $rulePaths, $allIds->all());
             })
             ->get();
