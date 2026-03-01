@@ -25,6 +25,7 @@ use App\Models\Dialog;
 use App\Models\DialogEdge;
 use App\Models\DialogNode;
 use App\Models\DialogNodeOption;
+use App\Services\DialogActivityLogService;
 use App\Services\DialogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -33,7 +34,10 @@ use Inertia\Inertia;
 
 class DialogController extends Controller
 {
-    public function __construct(private readonly DialogService $dialogService) {}
+    public function __construct(
+        private readonly DialogService $dialogService,
+        private readonly DialogActivityLogService $dialogActivityLogService,
+    ) {}
 
     public function index()
     {
@@ -99,6 +103,7 @@ class DialogController extends Controller
             'edges' => DialogEdgeResource::collection($dialog->edges),
             'npcs' => NpcResource::collection($dialog->npcs),
             'quests' => SimpleQuestResource::collection($dialog->getRelatedQuests()),
+            'logs' => $this->dialogActivityLogService->getForDialog($dialog),
             'dialogNodeOptionAdditionalActionsList' => DialogNodeOptionAdditionalAction::toDropdownList(),
             'availableRules' => DialogNodeOptionRule::list(),
             'dialogNodeAdditionalActionsList' => DialogNodeAdditionalAction::toDropdownList(),

@@ -10,9 +10,11 @@ import StartNode from '@/Pages/Dialog/StartNode.vue';
 import ShopNode from '@/Pages/Dialog/ShopNode.vue';
 import RandomizerNode from '@/Pages/Dialog/RandomizerNode.vue';
 import DialogEdge from '@/Pages/Dialog/DialogEdge.vue';
+import DialogActivityLogsTable from '@/Pages/Dialog/Partials/DialogActivityLogsTable.vue';
 import { DialogResource } from '@/Resources/Dialog.resource';
 import { NpcWithLocationsResource } from '@/Resources/Npc.resource';
 import { SimpleQuestResource } from '@/Resources/Quest.resource';
+import type { AdvanceTableResponse } from '@/karlos3098-LaravelPrimevueTable/Services/tableService';
 // import { DialogConnectionResource } from '@/Resources/DialogConnection.resource';
 import { computed, ref } from 'vue';
 import axios from 'axios';
@@ -32,6 +34,7 @@ const props = defineProps<{
     edges: any[],
     npcs: NpcWithLocationsResource[],
     quests: SimpleQuestResource[],
+    logs: AdvanceTableResponse<any>,
 }>();
 
 const isEditDialogNameVisible = ref(false);
@@ -536,6 +539,8 @@ const items = ref([
                 <MiniMap :node-stroke-color="nodeStroke" :node-color="nodeColor" />
             </VueFlow>
         </div>
+
+        <DialogActivityLogsTable :logs="props.logs" />
     </AppLayout>
 </template>
 
