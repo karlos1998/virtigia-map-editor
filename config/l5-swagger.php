@@ -47,6 +47,7 @@ return [
                     base_path('app/OpenApi'),
                     base_path('app/Http/Controllers/Api'),
                     base_path('app/Http/Resources'),
+                    base_path('app/Http/Requests'),
                 ],
             ],
         ],
@@ -178,6 +179,12 @@ return [
                     'bearerFormat' => 'API Token',
                     'description' => 'Token do autoryzacji wygenerujesz w panelu użytkownika: Profil -> Tokeny API.',
                 ],
+                'worldHeader' => [
+                    'type' => 'apiKey',
+                    'description' => 'Wymagany nagłówek świata. Dostępne wartości: retro, classic, legacy, demo.',
+                    'name' => 'X-World',
+                    'in' => 'header',
+                ],
                 /*
                  * Examples of Security schemes
                  */
@@ -230,6 +237,7 @@ return [
                  */
                 [
                     'bearerAuth' => [],
+                    'worldHeader' => [],
                 ],
             ],
         ],

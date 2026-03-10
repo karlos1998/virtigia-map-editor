@@ -15,7 +15,7 @@ class ProfileController extends Controller
         operationId: 'getProfile',
         summary: 'Pobranie profilu aktualnego użytkownika',
         tags: ['Profile'],
-        security: [['bearerAuth' => []]],
+        security: [['bearerAuth' => [], 'worldHeader' => []]],
         responses: [
             new OA\Response(
                 response: 200,

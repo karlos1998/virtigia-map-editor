@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\V1\MapController as ApiMapController;
 use App\Http\Controllers\Api\V1\ProfileController as ApiProfileController;
 use App\Http\Controllers\ApiAttributePointController;
 use App\Http\Middleware\AuthenticateWithApiToken;
+use App\Http\Middleware\SetApiWorldConnection;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,9 +20,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')
     ->name('api.v1.')
-    ->middleware(AuthenticateWithApiToken::class)
+    ->middleware([AuthenticateWithApiToken::class, SetApiWorldConnection::class])
     ->group(function () {
         Route::get('/profile', [ApiProfileController::class, 'show'])->name('profile.show');
+        Route::get('/maps', [ApiMapController::class, 'index'])->name('maps.index');
+        Route::get('/maps/{mapId}', [ApiMapController::class, 'show'])->name('maps.show');
     });
 
 /*

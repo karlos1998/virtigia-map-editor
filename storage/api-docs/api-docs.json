@@ -6,6 +6,97 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/v1/maps": {
+            "get": {
+                "tags": [
+                    "Maps"
+                ],
+                "summary": "Pobranie listy map (bez ciężkiego pola col)",
+                "operationId": "getMapsList",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Liczba rekordów na stronę (1-100)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 50
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginowana lista map",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/App\\Http\\Resources\\MapListCollection"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Brak lub nieprawidłowy token"
+                    },
+                    "422": {
+                        "description": "Błąd walidacji"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "worldHeader": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/maps/{mapId}": {
+            "get": {
+                "tags": [
+                    "Maps"
+                ],
+                "summary": "Pobranie pojedynczej mapy",
+                "operationId": "getMapById",
+                "parameters": [
+                    {
+                        "name": "mapId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Szczegóły mapy",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/App\\Http\\Resources\\MapDetailResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Brak lub nieprawidłowy token"
+                    },
+                    "404": {
+                        "description": "Mapa nie została znaleziona"
+                    },
+                    "422": {
+                        "description": "Błąd walidacji"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "worldHeader": []
+                    }
+                ]
+            }
+        },
         "/api/v1/profile": {
             "get": {
                 "tags": [
@@ -30,7 +121,8 @@
                 },
                 "security": [
                     {
-                        "bearerAuth": []
+                        "bearerAuth": [],
+                        "worldHeader": []
                     }
                 ]
             }
@@ -38,6 +130,108 @@
     },
     "components": {
         "schemas": {
+            "App\\Http\\Resources\\MapDetailResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "x": {
+                        "type": "integer"
+                    },
+                    "y": {
+                        "type": "integer"
+                    },
+                    "src": {
+                        "type": "string"
+                    },
+                    "thumbnail_src": {
+                        "type": "string"
+                    },
+                    "pvp": {
+                        "type": "integer"
+                    },
+                    "battleground": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "battleground2": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_teleport_locked": {
+                        "type": "boolean"
+                    },
+                    "respawn_point_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "water": {
+                        "type": "string"
+                    },
+                    "col": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "App\\Http\\Resources\\MapListCollection": {
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/App\\Http\\Resources\\MapListResource"
+                        }
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/App\\OpenApi\\PaginationMeta"
+                    }
+                },
+                "type": "object"
+            },
+            "App\\Http\\Resources\\MapListResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "x": {
+                        "type": "integer"
+                    },
+                    "y": {
+                        "type": "integer"
+                    },
+                    "src": {
+                        "type": "string"
+                    },
+                    "thumbnail_src": {
+                        "type": "string"
+                    },
+                    "pvp": {
+                        "type": "integer"
+                    },
+                    "battleground": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "battleground2": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_teleport_locked": {
+                        "type": "boolean"
+                    },
+                    "respawn_point_id": {
+                        "type": "integer",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "App\\Http\\Resources\\PermissionResource": {
                 "properties": {
                     "id": {
@@ -116,6 +310,34 @@
                     }
                 },
                 "type": "object"
+            },
+            "App\\OpenApi\\PaginationMeta": {
+                "properties": {
+                    "current_page": {
+                        "type": "integer"
+                    },
+                    "last_page": {
+                        "type": "integer"
+                    },
+                    "per_page": {
+                        "type": "integer"
+                    },
+                    "total": {
+                        "type": "integer"
+                    },
+                    "from": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "to": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "world": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -124,10 +346,20 @@
                 "scheme": "bearer",
                 "bearerFormat": "API Token",
                 "description": "Token do autoryzacji wygenerujesz w panelu użytkownika: Profil -> Tokeny API."
+            },
+            "worldHeader": {
+                "type": "apiKey",
+                "description": "Wymagany nagłówek świata. Dostępne wartości: retro, classic, legacy, demo.",
+                "name": "X-World",
+                "in": "header"
             }
         }
     },
     "tags": [
+        {
+            "name": "Maps",
+            "description": "Maps"
+        },
         {
             "name": "Profile",
             "description": "Profile"
@@ -135,7 +367,8 @@
     ],
     "security": [
         {
-            "bearerAuth": []
+            "bearerAuth": [],
+            "worldHeader": []
         }
     ]
 }
