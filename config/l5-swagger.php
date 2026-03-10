@@ -290,7 +290,13 @@ return [
                  * 'full' (expands the tags and operations),
                  * 'none' (expands nothing).
                  */
-                'doc_expansion' => env('L5_SWAGGER_UI_DOC_EXPANSION', 'none'),
+                'doc_expansion' => env('L5_SWAGGER_UI_DOC_EXPANSION', 'list'),
+
+                /*
+                 * Controls how many levels are expanded by default in schemas.
+                 * -1 hides schemas section, which gives more space for routes list.
+                 */
+                'default_models_expand_depth' => env('L5_SWAGGER_UI_DEFAULT_MODELS_EXPAND_DEPTH', -1),
 
                 /**
                  * If set, enables filtering. The top bar will show an edit box that
