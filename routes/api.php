@@ -1,8 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\V1\ProfileController as ApiProfileController;
 use App\Http\Controllers\ApiAttributePointController;
-use App\Http\Controllers\MapController;
-use Illuminate\Http\Request;
+use App\Http\Middleware\AuthenticateWithApiToken;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,9 +16,12 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+Route::prefix('v1')
+    ->name('api.v1.')
+    ->middleware(AuthenticateWithApiToken::class)
+    ->group(function () {
+        Route::get('/profile', [ApiProfileController::class, 'show'])->name('profile.show');
+    });
 
 /*
 |--------------------------------------------------------------------------

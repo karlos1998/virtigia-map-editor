@@ -259,6 +259,21 @@ onUnmounted(() => {
                             </Link>
                         </li>
                         <li role="menuitem" class="!m-0 !mb-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200">
+                            <Link
+                                :href="route('api-tokens.index')"
+                                class="flex items-center text-gray-700 dark:text-gray-200"
+                            >
+                                <i class="pi pi-fw pi-key mr-2 text-primary-500"></i>
+                                <span>Tokeny API</span>
+                            </Link>
+                        </li>
+                        <li role="menuitem" class="!m-0 !mb-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200">
+                            <a href="/api/docs" class="flex items-center text-gray-700 dark:text-gray-200">
+                                <i class="pi pi-fw pi-book mr-2 text-primary-500"></i>
+                                <span>Swagger API</span>
+                            </a>
+                        </li>
+                        <li role="menuitem" class="!m-0 !mb-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200">
                             <a href="#" class="flex items-center text-gray-700 dark:text-gray-200">
                                 <i class="pi pi-fw pi-cog mr-2 text-primary-500"></i>
                                 <span>Ustawienia</span>

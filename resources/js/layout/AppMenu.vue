@@ -117,6 +117,16 @@ const model = ref([
                 route: 'activity-logs.index',
             },
             {
+                label: 'Tokeny API',
+                icon: 'pi pi-key',
+                route: 'api-tokens.index',
+            },
+            {
+                label: 'Swagger API',
+                icon: 'pi pi-book',
+                url: '/api/docs',
+            },
+            {
                 label: 'Informacje o świecie',
                 icon: 'pi pi-info-circle',
                 route: 'world-info.index',
