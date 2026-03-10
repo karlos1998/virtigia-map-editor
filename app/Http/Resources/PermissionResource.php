@@ -8,7 +8,7 @@ use Illuminate\Support\Arr;
 use OpenApi\Attributes as OA;
 
 #[OA\Schema(
-    schema: 'PermissionResource',
+    schema: PermissionResource::class,
     type: 'object',
     properties: [
         new OA\Property(property: 'id', type: 'integer', nullable: true),

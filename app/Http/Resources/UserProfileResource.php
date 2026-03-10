@@ -7,6 +7,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use OpenApi\Attributes as OA;
 
 #[OA\Schema(
+    schema: UserProfileResource::class,
     type: 'object',
     properties: [
         new OA\Property(property: 'id', type: 'integer'),

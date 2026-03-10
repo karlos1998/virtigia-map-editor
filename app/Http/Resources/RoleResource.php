@@ -8,7 +8,7 @@ use Illuminate\Support\Arr;
 use OpenApi\Attributes as OA;
 
 #[OA\Schema(
-    schema: 'RoleResource',
+    schema: RoleResource::class,
     type: 'object',
     properties: [
         new OA\Property(property: 'id', type: 'integer', nullable: true),

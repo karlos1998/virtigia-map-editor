@@ -19,7 +19,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/UserProfileResource"
+                                    "$ref": "#/components/schemas/App\\Http\\Resources\\UserProfileResource"
                                 }
                             }
                         }
@@ -38,7 +38,7 @@
     },
     "components": {
         "schemas": {
-            "PermissionResource": {
+            "App\\Http\\Resources\\PermissionResource": {
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -59,7 +59,7 @@
                 },
                 "type": "object"
             },
-            "RoleResource": {
+            "App\\Http\\Resources\\RoleResource": {
                 "properties": {
                     "id": {
                         "type": "integer",
@@ -80,7 +80,7 @@
                 },
                 "type": "object"
             },
-            "UserProfileResource": {
+            "App\\Http\\Resources\\UserProfileResource": {
                 "properties": {
                     "id": {
                         "type": "integer"
@@ -98,13 +98,13 @@
                     "roles": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/RoleResource"
+                            "$ref": "#/components/schemas/App\\Http\\Resources\\RoleResource"
                         }
                     },
                     "permissions": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/PermissionResource"
+                            "$ref": "#/components/schemas/App\\Http\\Resources\\PermissionResource"
                         }
                     },
                     "forum_background_src": {
