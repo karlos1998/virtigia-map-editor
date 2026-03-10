@@ -93,6 +93,196 @@
                 ]
             }
         },
+        "/api/v1/dialogs": {
+            "get": {
+                "tags": [
+                    "Dialogs"
+                ],
+                "summary": "Pobranie listy dialogów",
+                "operationId": "getDialogsList",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "npc_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "npc_base_npc_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "node_type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "has_npcs",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "has_nodes",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "has_edges",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "updated_from",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "updated_to",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 50
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "id",
+                                "name",
+                                "created_at",
+                                "updated_at",
+                                "npcs_count",
+                                "nodes_count",
+                                "edges_count"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginowana lista dialogów",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/App\\Http\\Resources\\ApiDialogListCollection"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Brak lub nieprawidłowy token"
+                    },
+                    "422": {
+                        "description": "Błąd walidacji"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "worldHeader": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/dialogs/{dialogId}": {
+            "get": {
+                "tags": [
+                    "Dialogs"
+                ],
+                "summary": "Pobranie pojedynczego dialogu razem z grafem (nodes/options/edges)",
+                "operationId": "getDialogById",
+                "parameters": [
+                    {
+                        "name": "dialogId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Szczegóły dialogu",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/App\\Http\\Resources\\ApiDialogDetailResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Brak lub nieprawidłowy token"
+                    },
+                    "404": {
+                        "description": "Dialog nie został znaleziony"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "worldHeader": []
+                    }
+                ]
+            }
+        },
         "/api/v1/maps": {
             "get": {
                 "tags": [
@@ -702,6 +892,101 @@
                     }
                 ]
             }
+        },
+        "/api/v1/quests": {
+            "get": {
+                "tags": [
+                    "Quests"
+                ],
+                "summary": "Pobranie listy questów",
+                "operationId": "getQuestsList",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "is_daily",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "has_steps",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 50
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "id",
+                                "name",
+                                "created_at",
+                                "updated_at",
+                                "steps_count"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginowana lista questów",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/App\\Http\\Resources\\ApiQuestListCollection"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Brak lub nieprawidłowy token"
+                    },
+                    "422": {
+                        "description": "Błąd walidacji"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "worldHeader": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -793,6 +1078,230 @@
                     },
                     "is_aggressive": {
                         "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "App\\Http\\Resources\\ApiDialogDetailResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "npcs": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/App\\Http\\Resources\\ApiDialogNpcResource"
+                        }
+                    },
+                    "nodes": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/App\\Http\\Resources\\ApiDialogNodeResource"
+                        }
+                    },
+                    "edges": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/App\\Http\\Resources\\ApiDialogEdgeResource"
+                        }
+                    },
+                    "related_quests": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "App\\Http\\Resources\\ApiDialogEdgeResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "source_option_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "source_node_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "target_node_id": {
+                        "type": "integer"
+                    },
+                    "rules": {
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "App\\Http\\Resources\\ApiDialogListCollection": {
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/App\\Http\\Resources\\ApiDialogListResource"
+                        }
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/App\\OpenApi\\PaginationMeta"
+                    }
+                },
+                "type": "object"
+            },
+            "App\\Http\\Resources\\ApiDialogListResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "npcs_count": {
+                        "type": "integer"
+                    },
+                    "nodes_count": {
+                        "type": "integer"
+                    },
+                    "edges_count": {
+                        "type": "integer"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "App\\Http\\Resources\\ApiDialogNodeOptionResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "label": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "rules": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "additional_action": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "cooldown": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "order": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "edges": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/App\\Http\\Resources\\ApiDialogEdgeResource"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "App\\Http\\Resources\\ApiDialogNodeResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "content": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "position": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "action_data": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "additional_actions": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "shop_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "shop_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "options": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/App\\Http\\Resources\\ApiDialogNodeOptionResource"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "App\\Http\\Resources\\ApiDialogNpcResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "base_npc_id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "lvl": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "rank": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "locations_count": {
+                        "type": "integer"
                     }
                 },
                 "type": "object"
@@ -923,6 +1432,47 @@
                     },
                     "y": {
                         "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "App\\Http\\Resources\\ApiQuestListCollection": {
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/App\\Http\\Resources\\ApiQuestListResource"
+                        }
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/App\\OpenApi\\PaginationMeta"
+                    }
+                },
+                "type": "object"
+            },
+            "App\\Http\\Resources\\ApiQuestListResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "is_daily": {
+                        "type": "boolean"
+                    },
+                    "steps_count": {
+                        "type": "integer"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -1158,6 +1708,10 @@
             "description": "Base NPC"
         },
         {
+            "name": "Dialogs",
+            "description": "Dialogs"
+        },
+        {
             "name": "Maps",
             "description": "Maps"
         },
@@ -1172,6 +1726,10 @@
         {
             "name": "Profile",
             "description": "Profile"
+        },
+        {
+            "name": "Quests",
+            "description": "Quests"
         }
     ],
     "security": [

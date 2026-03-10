@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\V1\BaseNpcController as ApiBaseNpcController;
+use App\Http\Controllers\Api\V1\DialogController as ApiDialogController;
 use App\Http\Controllers\Api\V1\MapController as ApiMapController;
 use App\Http\Controllers\Api\V1\NpcController as ApiNpcController;
 use App\Http\Controllers\Api\V1\ProfileController as ApiProfileController;
+use App\Http\Controllers\Api\V1\QuestController as ApiQuestController;
 use App\Http\Controllers\ApiAttributePointController;
 use App\Http\Middleware\AuthenticateWithApiToken;
 use App\Http\Middleware\SetApiWorldConnection;
@@ -25,6 +27,7 @@ Route::prefix('v1')
     ->middleware([AuthenticateWithApiToken::class, SetApiWorldConnection::class])
     ->group(function () {
         Route::get('/profile', [ApiProfileController::class, 'show'])->name('profile.show');
+        Route::get('/quests', [ApiQuestController::class, 'index'])->name('quests.index');
 
         Route::get('/maps', [ApiMapController::class, 'index'])->name('maps.index');
         Route::get('/maps/{mapId}', [ApiMapController::class, 'show'])->name('maps.show');
@@ -42,6 +45,9 @@ Route::prefix('v1')
         Route::get('/npcs/{npcId}/locations', [ApiNpcController::class, 'indexLocations'])->name('npcs.locations.index');
         Route::post('/npcs/{npcId}/locations', [ApiNpcController::class, 'storeLocation'])->name('npcs.locations.store');
         Route::delete('/npcs/{npcId}/locations/{locationId}', [ApiNpcController::class, 'destroyLocation'])->name('npcs.locations.destroy');
+
+        Route::get('/dialogs', [ApiDialogController::class, 'index'])->name('dialogs.index');
+        Route::get('/dialogs/{dialogId}', [ApiDialogController::class, 'show'])->name('dialogs.show');
     });
 
 /*
