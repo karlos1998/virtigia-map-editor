@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\UpdateApiMapRequest;
 use App\Http\Requests\MapIndexRequest;
 use App\Http\Resources\MapDetailResource;
 use App\Http\Resources\MapListCollection;
 use App\Models\Map;
-use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 
 class MapController extends Controller
@@ -84,9 +84,55 @@ class MapController extends Controller
             new OA\Response(response: 422, description: 'Błąd walidacji'),
         ],
     )]
-    public function show(Request $request, int $mapId): MapDetailResource
+    public function show(int $mapId): MapDetailResource
     {
         $map = Map::query()->findOrFail($mapId);
+
+        return new MapDetailResource($map);
+    }
+
+    #[OA\Patch(
+        path: '/api/v1/maps/{mapId}',
+        operationId: 'updateMap',
+        summary: 'Edycja mapy (name, col, pvp)',
+        tags: ['Maps'],
+        security: [['bearerAuth' => [], 'worldHeader' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'mapId',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer')
+            ),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                type: 'object',
+                properties: [
+                    new OA\Property(property: 'name', type: 'string'),
+                    new OA\Property(property: 'pvp', type: 'integer'),
+                    new OA\Property(property: 'col', type: 'string'),
+                ],
+            ),
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Mapa została zaktualizowana',
+                content: new OA\JsonContent(ref: MapDetailResource::class),
+            ),
+            new OA\Response(response: 401, description: 'Brak lub nieprawidłowy token'),
+            new OA\Response(response: 404, description: 'Mapa nie została znaleziona'),
+            new OA\Response(response: 422, description: 'Błąd walidacji'),
+        ],
+    )]
+    public function update(UpdateApiMapRequest $request, int $mapId): MapDetailResource
+    {
+        $map = Map::query()->findOrFail($mapId);
+
+        $map->update($request->validated());
+        $map->refresh();
 
         return new MapDetailResource($map);
     }

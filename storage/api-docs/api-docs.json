@@ -6,6 +6,93 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/v1/base-npcs": {
+            "get": {
+                "tags": [
+                    "Base NPC"
+                ],
+                "summary": "Pobranie listy bazowych NPC",
+                "operationId": "getBaseNpcsList",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 50
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginowana lista bazowych NPC",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/App\\Http\\Resources\\ApiBaseNpcListCollection"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Brak lub nieprawidłowy token"
+                    },
+                    "422": {
+                        "description": "Błąd walidacji"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "worldHeader": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/base-npcs/{baseNpcId}": {
+            "get": {
+                "tags": [
+                    "Base NPC"
+                ],
+                "summary": "Pobranie pojedynczego bazowego NPC",
+                "operationId": "getBaseNpcById",
+                "parameters": [
+                    {
+                        "name": "baseNpcId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Szczegóły bazowego NPC",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/App\\Http\\Resources\\ApiBaseNpcDetailResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Brak lub nieprawidłowy token"
+                    },
+                    "404": {
+                        "description": "Bazowy NPC nie został znaleziony"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "worldHeader": []
+                    }
+                ]
+            }
+        },
         "/api/v1/maps": {
             "get": {
                 "tags": [
@@ -95,6 +182,495 @@
                         "worldHeader": []
                     }
                 ]
+            },
+            "patch": {
+                "tags": [
+                    "Maps"
+                ],
+                "summary": "Edycja mapy (name, col, pvp)",
+                "operationId": "updateMap",
+                "parameters": [
+                    {
+                        "name": "mapId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "pvp": {
+                                        "type": "integer"
+                                    },
+                                    "col": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mapa została zaktualizowana",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/App\\Http\\Resources\\MapDetailResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Brak lub nieprawidłowy token"
+                    },
+                    "404": {
+                        "description": "Mapa nie została znaleziona"
+                    },
+                    "422": {
+                        "description": "Błąd walidacji"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "worldHeader": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/npcs": {
+            "get": {
+                "tags": [
+                    "NPC"
+                ],
+                "summary": "Pobranie listy NPC",
+                "operationId": "getNpcsList",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 50
+                        }
+                    },
+                    {
+                        "name": "base_npc_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginowana lista NPC",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/App\\Http\\Resources\\ApiNpcListCollection"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Brak lub nieprawidłowy token"
+                    },
+                    "422": {
+                        "description": "Błąd walidacji"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "worldHeader": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "NPC"
+                ],
+                "summary": "Dodanie nowego NPC z pierwszą lokalizacją",
+                "operationId": "storeNpc",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "base_npc_id",
+                                    "map_id",
+                                    "x",
+                                    "y"
+                                ],
+                                "properties": {
+                                    "base_npc_id": {
+                                        "type": "integer"
+                                    },
+                                    "map_id": {
+                                        "type": "integer"
+                                    },
+                                    "x": {
+                                        "type": "integer"
+                                    },
+                                    "y": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "NPC został dodany",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/App\\Http\\Resources\\ApiNpcDetailResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Brak lub nieprawidłowy token"
+                    },
+                    "422": {
+                        "description": "Błąd walidacji"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "worldHeader": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/npcs/{npcId}": {
+            "get": {
+                "tags": [
+                    "NPC"
+                ],
+                "summary": "Pobranie pojedynczego NPC",
+                "operationId": "getNpcById",
+                "parameters": [
+                    {
+                        "name": "npcId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Szczegóły NPC",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/App\\Http\\Resources\\ApiNpcDetailResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Brak lub nieprawidłowy token"
+                    },
+                    "404": {
+                        "description": "NPC nie został znaleziony"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "worldHeader": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "NPC"
+                ],
+                "summary": "Usunięcie NPC",
+                "operationId": "destroyNpc",
+                "parameters": [
+                    {
+                        "name": "npcId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "NPC został usunięty"
+                    },
+                    "401": {
+                        "description": "Brak lub nieprawidłowy token"
+                    },
+                    "404": {
+                        "description": "NPC nie został znaleziony"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "worldHeader": []
+                    }
+                ]
+            },
+            "patch": {
+                "tags": [
+                    "NPC"
+                ],
+                "summary": "Edycja NPC (name, lvl, rank na powiązanym base NPC)",
+                "operationId": "updateNpc",
+                "parameters": [
+                    {
+                        "name": "npcId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "lvl": {
+                                        "type": "integer"
+                                    },
+                                    "rank": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "NPC został zaktualizowany",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/App\\Http\\Resources\\ApiNpcDetailResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Brak lub nieprawidłowy token"
+                    },
+                    "404": {
+                        "description": "NPC nie został znaleziony"
+                    },
+                    "422": {
+                        "description": "Błąd walidacji"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "worldHeader": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/npcs/{npcId}/locations": {
+            "get": {
+                "tags": [
+                    "NPC Locations"
+                ],
+                "summary": "Pobranie paginowanej listy lokalizacji NPC",
+                "operationId": "getNpcLocationsList",
+                "parameters": [
+                    {
+                        "name": "npcId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 50
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginowana lista lokalizacji NPC",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/App\\Http\\Resources\\ApiNpcLocationListCollection"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Brak lub nieprawidłowy token"
+                    },
+                    "404": {
+                        "description": "NPC nie został znaleziony"
+                    },
+                    "422": {
+                        "description": "Błąd walidacji"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "worldHeader": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "NPC Locations"
+                ],
+                "summary": "Dodanie nowej lokalizacji NPC",
+                "operationId": "storeNpcLocation",
+                "parameters": [
+                    {
+                        "name": "npcId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "map_id",
+                                    "x",
+                                    "y"
+                                ],
+                                "properties": {
+                                    "map_id": {
+                                        "type": "integer"
+                                    },
+                                    "x": {
+                                        "type": "integer"
+                                    },
+                                    "y": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Lokalizacja została dodana",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/App\\Http\\Resources\\ApiNpcLocationResource"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Brak lub nieprawidłowy token"
+                    },
+                    "404": {
+                        "description": "NPC nie został znaleziony"
+                    },
+                    "422": {
+                        "description": "Błąd walidacji"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "worldHeader": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/npcs/{npcId}/locations/{locationId}": {
+            "delete": {
+                "tags": [
+                    "NPC Locations"
+                ],
+                "summary": "Usunięcie lokalizacji NPC",
+                "operationId": "destroyNpcLocation",
+                "parameters": [
+                    {
+                        "name": "npcId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "locationId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Lokalizacja została usunięta"
+                    },
+                    "401": {
+                        "description": "Brak lub nieprawidłowy token"
+                    },
+                    "404": {
+                        "description": "NPC lub lokalizacja nie zostały znalezione"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": [],
+                        "worldHeader": []
+                    }
+                ]
             }
         },
         "/api/v1/profile": {
@@ -130,6 +706,227 @@
     },
     "components": {
         "schemas": {
+            "App\\Http\\Resources\\ApiBaseNpcDetailResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "src": {
+                        "type": "string"
+                    },
+                    "lvl": {
+                        "type": "integer"
+                    },
+                    "rank": {
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "profession": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "type": {
+                        "type": "integer"
+                    },
+                    "is_aggressive": {
+                        "type": "boolean"
+                    },
+                    "divine_intervention": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "guaranteed_loot": {
+                        "type": "boolean"
+                    },
+                    "min_respawn_time": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "max_respawn_time": {
+                        "type": "integer",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "App\\Http\\Resources\\ApiBaseNpcListCollection": {
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/App\\Http\\Resources\\ApiBaseNpcListResource"
+                        }
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/App\\OpenApi\\PaginationMeta"
+                    }
+                },
+                "type": "object"
+            },
+            "App\\Http\\Resources\\ApiBaseNpcListResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "src": {
+                        "type": "string"
+                    },
+                    "lvl": {
+                        "type": "integer"
+                    },
+                    "rank": {
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "integer"
+                    },
+                    "is_aggressive": {
+                        "type": "boolean"
+                    }
+                },
+                "type": "object"
+            },
+            "App\\Http\\Resources\\ApiNpcDetailResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "base_npc_id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "src": {
+                        "type": "string"
+                    },
+                    "lvl": {
+                        "type": "integer"
+                    },
+                    "rank": {
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "group_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "in_group": {
+                        "type": "boolean"
+                    },
+                    "locations": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/App\\Http\\Resources\\ApiNpcLocationResource"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "App\\Http\\Resources\\ApiNpcListCollection": {
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/App\\Http\\Resources\\ApiNpcListResource"
+                        }
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/App\\OpenApi\\PaginationMeta"
+                    }
+                },
+                "type": "object"
+            },
+            "App\\Http\\Resources\\ApiNpcListResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "base_npc_id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "src": {
+                        "type": "string"
+                    },
+                    "lvl": {
+                        "type": "integer"
+                    },
+                    "rank": {
+                        "type": "string"
+                    },
+                    "category": {
+                        "type": "string"
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "group_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "in_group": {
+                        "type": "boolean"
+                    },
+                    "location_count": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "App\\Http\\Resources\\ApiNpcLocationListCollection": {
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/App\\Http\\Resources\\ApiNpcLocationResource"
+                        }
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/App\\OpenApi\\PaginationMeta"
+                    }
+                },
+                "type": "object"
+            },
+            "App\\Http\\Resources\\ApiNpcLocationResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "map_id": {
+                        "type": "integer"
+                    },
+                    "map_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "x": {
+                        "type": "integer"
+                    },
+                    "y": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
             "App\\Http\\Resources\\MapDetailResource": {
                 "properties": {
                     "id": {
@@ -357,8 +1154,20 @@
     },
     "tags": [
         {
+            "name": "Base NPC",
+            "description": "Base NPC"
+        },
+        {
             "name": "Maps",
             "description": "Maps"
+        },
+        {
+            "name": "NPC",
+            "description": "NPC"
+        },
+        {
+            "name": "NPC Locations",
+            "description": "NPC Locations"
         },
         {
             "name": "Profile",

@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\V1\BaseNpcController as ApiBaseNpcController;
 use App\Http\Controllers\Api\V1\MapController as ApiMapController;
+use App\Http\Controllers\Api\V1\NpcController as ApiNpcController;
 use App\Http\Controllers\Api\V1\ProfileController as ApiProfileController;
 use App\Http\Controllers\ApiAttributePointController;
 use App\Http\Middleware\AuthenticateWithApiToken;
@@ -23,8 +25,23 @@ Route::prefix('v1')
     ->middleware([AuthenticateWithApiToken::class, SetApiWorldConnection::class])
     ->group(function () {
         Route::get('/profile', [ApiProfileController::class, 'show'])->name('profile.show');
+
         Route::get('/maps', [ApiMapController::class, 'index'])->name('maps.index');
         Route::get('/maps/{mapId}', [ApiMapController::class, 'show'])->name('maps.show');
+        Route::patch('/maps/{mapId}', [ApiMapController::class, 'update'])->name('maps.update');
+
+        Route::get('/base-npcs', [ApiBaseNpcController::class, 'index'])->name('base-npcs.index');
+        Route::get('/base-npcs/{baseNpcId}', [ApiBaseNpcController::class, 'show'])->name('base-npcs.show');
+
+        Route::get('/npcs', [ApiNpcController::class, 'index'])->name('npcs.index');
+        Route::get('/npcs/{npcId}', [ApiNpcController::class, 'show'])->name('npcs.show');
+        Route::post('/npcs', [ApiNpcController::class, 'store'])->name('npcs.store');
+        Route::patch('/npcs/{npcId}', [ApiNpcController::class, 'update'])->name('npcs.update');
+        Route::delete('/npcs/{npcId}', [ApiNpcController::class, 'destroy'])->name('npcs.destroy');
+
+        Route::get('/npcs/{npcId}/locations', [ApiNpcController::class, 'indexLocations'])->name('npcs.locations.index');
+        Route::post('/npcs/{npcId}/locations', [ApiNpcController::class, 'storeLocation'])->name('npcs.locations.store');
+        Route::delete('/npcs/{npcId}/locations/{locationId}', [ApiNpcController::class, 'destroyLocation'])->name('npcs.locations.destroy');
     });
 
 /*

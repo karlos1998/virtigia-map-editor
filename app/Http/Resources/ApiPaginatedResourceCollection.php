@@ -22,7 +22,7 @@ abstract class ApiPaginatedResourceCollection extends ResourceCollection
                 'total' => $paginated['total'] ?? 0,
                 'from' => $paginated['from'] ?? null,
                 'to' => $paginated['to'] ?? null,
-                'world' => $request->attributes->get('world', 'retro'),
+                'world' => $request->attributes->get('world'),
             ],
         ];
     }
