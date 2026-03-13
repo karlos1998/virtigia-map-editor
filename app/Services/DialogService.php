@@ -49,7 +49,8 @@ class DialogService extends BaseService
                 ),
             ],
             globalFilterColumns: ['name'],
-            propName: 'dialogs',
+            rowsPerPage: [30,60,200,1],
+            propName: 'dialogs'
         );
 
         $filters = $this->normalizeTableFilters(request('tables.dialogs.filters'));
