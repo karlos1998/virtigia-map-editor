@@ -22,7 +22,7 @@ class DialogResource extends JsonResource
             'last_editor_id' => $this->resource->last_editor_id ? (int) $this->resource->last_editor_id : null,
             'last_editor_name' => $this->resource->last_editor_name,
 
-            'npcs' => $this->whenLoaded('npcs', fn () => NpcResource::collection($this->resource->npcs)),
+            'npcs' => $this->whenLoaded('npcs', fn () => NpcLiteResource::collection($this->resource->npcs)),
         ];
     }
 }

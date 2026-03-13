@@ -36,7 +36,6 @@ class DialogService extends BaseService
             });
 
         $tableService = new TableService(
-            propName: 'dialogs',
             columns: [
                 'id' => new TableTextColumn(sortable: true),
                 'name' => new TableTextColumn(sortable: true),
@@ -50,6 +49,7 @@ class DialogService extends BaseService
                 ),
             ],
             globalFilterColumns: ['name'],
+            propName: 'dialogs',
         );
 
         $filters = $this->normalizeTableFilters(request('tables.dialogs.filters'));
