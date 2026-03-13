@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Http\Resources\DialogResource;
 use App\Models\Dialog;
+use App\Models\DialogNode;
+use App\Models\DialogNodeOption;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableTextColumn;
