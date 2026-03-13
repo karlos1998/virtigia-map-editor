@@ -17,10 +17,7 @@ class DialogResource extends JsonResource
         return [
             'id' => $this->resource->id,
             'name' => $this->resource->name,
-            'npcs_count' => $this->resource->npcs_count ?? $this->resource->npcs()->count(),
-            'last_activity_at' => $this->resource->last_activity_at,
-            'last_editor_id' => $this->resource->last_editor_id ? (int) $this->resource->last_editor_id : null,
-            'last_editor_name' => $this->resource->last_editor_name,
+            'npcs_count' => $this->resource->npcs_count ?? 0,
 
             'npcs' => $this->whenLoaded('npcs', fn () => NpcLiteResource::collection($this->resource->npcs)),
         ];
