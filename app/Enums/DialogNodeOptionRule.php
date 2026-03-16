@@ -7,13 +7,14 @@ use App\Enums\Attributes\DialogNodeOption\CanBeUsed;
 use App\Enums\Attributes\GetAttributes;
 use App\Enums\Traits\ToDropdownList;
 use App\Enums\Traits\ValuesToList;
+use Illuminate\Support\Str;
 use ReflectionClassConstant;
 
 enum DialogNodeOptionRule: string
 {
-    use GetAttributes;
-    use ToDropdownList;
     use ValuesToList;
+    use ToDropdownList;
+    use GetAttributes;
     #[CanBeUsed]
     #[Description('Złoto')]
     case GOLD = 'gold';
@@ -44,10 +45,6 @@ enum DialogNodeOptionRule: string
     #[Description('Smocze łzy')]
     case DRAGON_TEARS = 'dragonTears';
 
-    #[CanBeUsed]
-    #[Description('Doświadczenie (%)')]
-    case EXP_PERCENT = 'expPercent';
-
     #[Description('Treść odpowiedzi')]
     case MESSAGE_CONTENT = 'messageContent';
 
@@ -64,9 +61,9 @@ enum DialogNodeOptionRule: string
 
     public static function list()
     {
-        return self::toDropdownList(function ($case) {
+        return self::toDropdownList(function($case) {
             return [
-                'canBeUsed' => $case->canBeUsed(),
+                'canBeUsed' => $case->canBeUsed()
             ];
         });
     }
