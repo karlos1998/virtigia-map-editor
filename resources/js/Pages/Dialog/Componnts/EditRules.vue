@@ -226,6 +226,17 @@ watch(
         />
 
         <InputNumber
+            v-if="rules[name] && typeof rules[name].value === 'number' && name === DialogNodeOptionRule.expPercent"
+            v-model="rules[name].value"
+            :step="0.01"
+            :minFractionDigits="0"
+            :maxFractionDigits="2"
+            :max="100"
+            :min="0"
+            suffix="%"
+        />
+
+        <InputNumber
             v-if="rules[name] && typeof rules[name].value === 'number' && name === DialogNodeOptionRule.percentageChance"
             v-model="rules[name].value"
             showButtons
