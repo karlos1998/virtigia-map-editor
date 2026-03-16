@@ -3,6 +3,7 @@ export enum DialogNodeAdditionalAction {
     addGold = 'addGold',
     setQuestStep = 'setQuestStep',
     addExp = 'addExp',
+    addExpPercent = 'addExpPercent',
     blessing = 'blessing',
     setOutfit = 'setOutfit',
     addDialogCounter = 'addDialogCounter',

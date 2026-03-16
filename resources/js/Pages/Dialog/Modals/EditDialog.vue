@@ -262,6 +262,8 @@ const addAdditionalAction = () => {
         value = 1;
     } else if (newAdditionalAction.value == DialogNodeAdditionalAction.addExp) {
         value = 1;
+    } else if (newAdditionalAction.value == DialogNodeAdditionalAction.addExpPercent) {
+        value = 1;
     } else if (newAdditionalAction.value == DialogNodeAdditionalAction.blessing) {
         value = {value: 0, scale: false};
     } else if(newAdditionalAction.value == DialogNodeAdditionalAction.setQuestStep) {
@@ -438,6 +440,17 @@ const currentOutfitDuration = computed({
                 v-model="form.additional_actions[name].value"
                 :max="2000000000"
                 :min="0"
+            />
+
+            <InputNumber
+                v-if="form.additional_actions[name] && typeof form.additional_actions[name].value == 'number' && name == DialogNodeAdditionalAction.addExpPercent"
+                v-model="form.additional_actions[name].value"
+                :step="0.01"
+                :minFractionDigits="0"
+                :maxFractionDigits="2"
+                :max="100"
+                :min="0"
+                suffix="%"
             />
 
             <MultiSelect

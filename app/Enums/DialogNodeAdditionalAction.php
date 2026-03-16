@@ -12,9 +12,9 @@ use App\Enums\Traits\ValuesToList;
  */
 enum DialogNodeAdditionalAction: string
 {
-    use ValuesToList;
-    use ToDropdownList;
     use GetAttributes;
+    use ToDropdownList;
+    use ValuesToList;
 
     #[Description('Dodaj przedmioty')]
     case ADD_ITEMS = 'addItems';
@@ -24,6 +24,9 @@ enum DialogNodeAdditionalAction: string
 
     #[Description('Dodaj doświadczenie')]
     case ADD_EXP = 'addExp';
+
+    #[Description('Dodaj doświadczenie (%)')]
+    case ADD_EXP_PERCENT = 'addExpPercent';
 
     #[Description('Ustaw postęp questa')]
     case SET_QUEST_STEP = 'setQuestStep';
