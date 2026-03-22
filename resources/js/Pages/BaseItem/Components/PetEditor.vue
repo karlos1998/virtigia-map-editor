@@ -348,6 +348,11 @@ onMounted(() => {
                     na 4 warstwy zamiast 5 i źle dopasował obrazek.
                 </Message>
 
+                <Message severity="info" class="mb-3">
+                    <strong>Wskazówka:</strong> Jeśli zwierzak w animacji chodzenia przesuwa się jakby w prawo, to znaczy,
+                    że dodałeś za dużo akcji. Jeśli w lewo, to znak, że ich brakuje.
+                </Message>
+
                 <!-- Display existing actions -->
                 <div v-if="petActions.length > 0" class="mb-3 flex flex-wrap gap-2">
                     <Chip
