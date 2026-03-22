@@ -223,4 +223,53 @@ final class BaseItemService extends BaseService
             return $baseItem;
         });
     }
+
+    /**
+     * Update pet image from base64 string
+     * Stores in img/pets/ folder on S3 and updates petSrc in attributes
+     *
+     * @param BaseItem $baseItem The item to update
+     * @param \Illuminate\Support\Stringable $base64 Base64 encoded image
+     * @param \Illuminate\Support\Stringable $name Filename
+     * @return string The petSrc filename
+     */
+    public function updatePetImageFromBase64(BaseItem $baseItem, \Illuminate\Support\Stringable $base64, \Illuminate\Support\Stringable $name): string
+    {
+        preg_match('/^data:image\/(png|gif);base64,/', $base64, $matches);
+        $extension = $matches[1] ?? 'png';
+
+        $imageData = substr($base64, strpos($base64, ',') + 1);
+        $decodedImage = base64_decode($imageData);
+
+        $fileName = $name->isNotEmpty() ? Str::slug(pathinfo($name->value(), PATHINFO_FILENAME)) : Str::uuid();
+
+        $storagePath = "img/pets/";
+        $filePath = "{$storagePath}{$fileName}.{$extension}";
+
+        // Check if file exists and add UUID if needed
+        if (\Storage::disk('s3')->exists($filePath)) {
+            $fileName = Str::uuid() . "-{$fileName}";
+            $filePath = "{$storagePath}{$fileName}.{$extension}";
+        }
+
+        \Storage::disk('s3')->put($filePath, $decodedImage);
+
+        // Update petSrc in attributes
+        $attributes = $baseItem->attributes ?? [];
+        $petSrc = "{$fileName}.{$extension}";
+        $attributes['petSrc'] = $petSrc;
+
+        $baseItem->update([
+            'attributes' => $attributes,
+            'edited_manually' => true
+        ]);
+
+        Log::info('Pet image updated', [
+            'item_id' => $baseItem->id,
+            'file_path' => $filePath,
+            'pet_src' => $petSrc
+        ]);
+
+        return $petSrc;
+    }
 }

@@ -10,6 +10,7 @@ import AttributeEditor from "../../Components/AttributeEditor.vue";
 import AttributePointsEditor from './Components/AttributePointsEditor.vue';
 import TeleportToEditor from './Components/TeleportToEditor.vue';
 import OutfitEditor from './Components/OutfitEditor.vue';
+import PetEditor from './Components/PetEditor.vue';
 import JsonEditorVue from 'json-editor-vue'
 
 const { baseItem } = defineProps<{
@@ -42,7 +43,12 @@ const form = useForm({
 
 // Local copy of attributes for JSON editor to prevent corruption
 const jsonEditorAttributes = ref(JSON.parse(JSON.stringify(cleanAttributes(baseItem.attributes))));
-const activeTab = ref('0');
+
+// Check if this is a pet item
+const isPet = computed(() => baseItem.category === 'pets');
+
+// Set default active tab based on category
+const activeTab = ref(isPet.value ? '4' : '0');
 
 // Store scale result from AttributePointsEditor
 const scaleResult = ref<any>(null);
@@ -149,6 +155,14 @@ const save = () => {
             specialAttributes.description = form.attributes.description;
         }
 
+        // Preserve pet-related attributes if they exist in form.attributes
+        if (form.attributes.petSrc) {
+            specialAttributes.petSrc = form.attributes.petSrc;
+        }
+        if (form.attributes.petActions) {
+            specialAttributes.petActions = form.attributes.petActions;
+        }
+
         // First apply scaled attributes, then overlay special attributes
         finalAttributes = {
             ...form.attributes,
@@ -253,27 +267,31 @@ const clearCurrency = () => {
             <div v-if="baseItem.specific_currency_price !== null" class="mt-2 text-xs text-gray-700">Aktualna cena
                 waluty dla tego itemu: <strong>{{ baseItem.specific_currency_price }}</strong></div>
         </div>
-        <Tabs v-model="activeTab" value="0" class="card">
+        <Tabs v-model:value="activeTab" class="card">
             <TabList>
-                <Tab value="0">Kalkulator punktów</Tab>
-                <Tab value="1">Teleport</Tab>
-                <Tab value="2">Strój (Outfit)</Tab>
+                <Tab v-if="!isPet" value="0">Kalkulator punktów</Tab>
+                <Tab v-if="!isPet" value="1">Teleport</Tab>
+                <Tab v-if="!isPet" value="2">Strój (Outfit)</Tab>
+                <Tab v-if="isPet" value="4">Edycja zwierzaka</Tab>
                 <Tab value="3">Edytor json</Tab>
-                <!--                <Tab value="4">Edytor atrybutów</Tab>-->
+                <!--                <Tab value="5">Edytor atrybutów</Tab>-->
             </TabList>
             <TabPanels>
-                <TabPanel value="0">
+                <TabPanel v-if="!isPet" value="0">
                     <AttributePointsEditor
                         v-model="form"
                         :base-item="baseItem"
                         @scale-result-changed="handleScaleResultChanged"
                     />
                 </TabPanel>
-                <TabPanel value="1">
+                <TabPanel v-if="!isPet" value="1">
                     <TeleportToEditor v-model:attributes="form.attributes" />
                 </TabPanel>
-                <TabPanel value="2">
+                <TabPanel v-if="!isPet" value="2">
                     <OutfitEditor v-model:attributes="form.attributes" />
+                </TabPanel>
+                <TabPanel v-if="isPet" value="4">
+                    <PetEditor v-model:attributes="form.attributes" :base-item="baseItem" />
                 </TabPanel>
                 <TabPanel value="3">
                     <JsonEditorVue
@@ -289,7 +307,7 @@ const clearCurrency = () => {
                         </p>
                     </div>
                 </TabPanel>
-                <!-- <TabPanel value="4">
+                <!-- <TabPanel value="5">
                     <AttributeEditor v-model:attributes="form.attributes" />
                 </TabPanel> -->
             </TabPanels>

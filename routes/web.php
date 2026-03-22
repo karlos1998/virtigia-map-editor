@@ -141,6 +141,7 @@ Route::middleware(['auth'])->group(function () {
                     Route::delete('base-items/{baseItem}', [BaseItemController::class, 'delete'])->name('base-items.delete');
                     Route::patch('base-items/{baseItem}', [BaseItemController::class, 'update'])->name('base-items.update');
                     Route::patch('base-items/{baseItem}/image', [BaseItemController::class, 'updateImage'])->name('base-items.image.update');
+                    Route::patch('base-items/{baseItem}/pet-image', [BaseItemController::class, 'updatePetImage'])->name('base-items.pet-image.update');
                     Route::get('base-items/search', [BaseItemController::class, 'search'])->name('base-items.search');
                     Route::get('base-items/{baseItem}', [BaseItemController::class, 'show'])->name('base-items.show');
                     Route::get('base-items/{baseItem}/edit', [BaseItemController::class, 'edit'])->name('base-items.edit');

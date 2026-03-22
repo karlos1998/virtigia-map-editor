@@ -10,6 +10,7 @@ use App\Http\Requests\UpdateBaseItemImageRequest;
 use App\Http\Requests\UpdateBaseItemRequest;
 use App\Http\Requests\UpdateBaseNpcImageRequest;
 use App\Http\Requests\UpdateItemAttributesRequest;
+use App\Http\Requests\UpdatePetImageRequest;
 use App\Http\Resources\BaseItemResource;
 use App\Models\BaseItem;
 use App\Models\BaseNpc;
@@ -91,6 +92,16 @@ class BaseItemController extends Controller
         $this->baseItemService->updateImageFromBase64($baseItem, $request->string('image'), $request->string('name'), 'img');
     }
 
+    public function updatePetImage(BaseItem $baseItem, UpdatePetImageRequest $request)
+    {
+        $petSrc = $this->baseItemService->updatePetImageFromBase64($baseItem, $request->string('image'), $request->string('name'));
+
+        // Return the updated petSrc so frontend can update without reload
+        return response()->json([
+            'success' => true,
+            'petSrc' => $petSrc
+        ]);
+    }
 
     public function copy(BaseItem $baseItem)
     {
