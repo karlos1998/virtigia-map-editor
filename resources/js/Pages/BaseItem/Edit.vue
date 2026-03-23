@@ -13,7 +13,7 @@ import OutfitEditor from './Components/OutfitEditor.vue';
 import PetEditor from './Components/PetEditor.vue';
 import JsonEditorVue from 'json-editor-vue'
 
-const { baseItem } = defineProps<{
+const props = defineProps<{
     baseItem: BaseItemWithRelations,
 }>();
 
@@ -36,16 +36,17 @@ const cleanAttributes = (attrs: any): any => {
 
 // Create form with full baseItem structure - clean attributes on init
 const form = useForm({
-    attributes: cleanAttributes(baseItem.attributes),
-    attribute_points: baseItem.attribute_points || {},
-    manual_attribute_points: baseItem.manual_attribute_points || {}
+    attributes: cleanAttributes(props.baseItem.attributes),
+    attribute_points: props.baseItem.attribute_points || {},
+    manual_attribute_points: props.baseItem.manual_attribute_points || {}
 })
 
 // Local copy of attributes for JSON editor to prevent corruption
-const jsonEditorAttributes = ref(JSON.parse(JSON.stringify(cleanAttributes(baseItem.attributes))));
+const jsonEditorAttributes = ref(JSON.parse(JSON.stringify(cleanAttributes(props.baseItem.attributes))));
 
 // Check if this is a pet item
-const isPet = computed(() => baseItem.category === 'pets');
+const isPet = computed(() => props.baseItem.category === 'pets');
+const baseItem = computed(() => props.baseItem);
 
 // Set default active tab based on category
 const activeTab = ref(isPet.value ? '4' : '0');
@@ -181,7 +182,7 @@ const save = () => {
     // Send the update
     form
         .transform(() => updateData)
-        .patch(route('base-items.attributes.update', {baseItem}), {
+        .patch(route('base-items.attributes.update', { baseItem: baseItem.value }), {
             onSuccess: () => {
                 toast.add({
                     severity: 'success',
@@ -201,10 +202,25 @@ const save = () => {
         })
 }
 
-const specificCurrencyPrice = ref(baseItem.specific_currency_price ?? null);
+const specificCurrencyPrice = ref(props.baseItem.specific_currency_price ?? null);
+
+watch(
+    () => props.baseItem,
+    (updatedBaseItem) => {
+        form.attributes = cleanAttributes(updatedBaseItem.attributes);
+        form.attribute_points = updatedBaseItem.attribute_points || {};
+        form.manual_attribute_points = updatedBaseItem.manual_attribute_points || {};
+        specificCurrencyPrice.value = updatedBaseItem.specific_currency_price ?? null;
+
+        if (activeTab.value === '3') {
+            jsonEditorAttributes.value = JSON.parse(JSON.stringify(cleanAttributes(updatedBaseItem.attributes)));
+        }
+    },
+    { deep: true }
+);
 
 const saveCurrency = () => {
-    router.patch(route('base-items.update', {baseItem: baseItem.id}), {
+    router.patch(route('base-items.update', { baseItem: baseItem.value.id }), {
         specific_currency_price: specificCurrencyPrice.value,
     }, {
         preserveScroll: true,

@@ -8,25 +8,20 @@ use App\Enums\BaseItemRarity;
 use App\Http\Requests\CreateBaseItemRequest;
 use App\Http\Requests\UpdateBaseItemImageRequest;
 use App\Http\Requests\UpdateBaseItemRequest;
-use App\Http\Requests\UpdateBaseNpcImageRequest;
 use App\Http\Requests\UpdateItemAttributesRequest;
 use App\Http\Requests\UpdatePetImageRequest;
+use App\Http\Resources\ActivityLogResource;
 use App\Http\Resources\BaseItemResource;
 use App\Models\BaseItem;
-use App\Models\BaseNpc;
 use App\Services\BaseItemService;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Inertia\Inertia;
-use App\Http\Resources\ActivityLogResource;
 use Spatie\Activitylog\Models\Activity;
 
 class BaseItemController extends Controller
 {
-
-
-    public function __construct(private readonly BaseItemService $baseItemService)
-    {
-    }
+    public function __construct(private readonly BaseItemService $baseItemService) {}
 
     /**
      * @throws \Exception
@@ -41,6 +36,7 @@ class BaseItemController extends Controller
     public function search(Request $request): \Illuminate\Http\JsonResponse
     {
         $category = $request->string('category', null);
+
         return response()->json(BaseItemResource::collection(
             $this->baseItemService->search($request->string('query', ''), $request->collect('ids'), $category)
         ));
@@ -78,38 +74,35 @@ class BaseItemController extends Controller
             $request->input('attribute_points'),
             $request->input('manual_attribute_points')
         );
+
         return to_route('base-items.show', $baseItem->id);
     }
 
-    public function delete(BaseItem $baseItem)
+    public function delete(BaseItem $baseItem): \Illuminate\Http\RedirectResponse
     {
         $this->baseItemService->delete($baseItem);
+
         return to_route('base-items.index');
     }
 
-    public function updateImage(BaseItem $baseItem, UpdateBaseItemImageRequest $request)
+    public function updateImage(BaseItem $baseItem, UpdateBaseItemImageRequest $request): void
     {
         $this->baseItemService->updateImageFromBase64($baseItem, $request->string('image'), $request->string('name'), 'img');
     }
 
-    public function updatePetImage(BaseItem $baseItem, UpdatePetImageRequest $request)
+    public function updatePetImage(BaseItem $baseItem, UpdatePetImageRequest $request): void
     {
-        $petSrc = $this->baseItemService->updatePetImageFromBase64($baseItem, $request->string('image'), $request->string('name'));
-
-        // Return the updated petSrc so frontend can update without reload
-        return response()->json([
-            'success' => true,
-            'petSrc' => $petSrc
-        ]);
+        $this->baseItemService->updatePetImageFromBase64($baseItem, $request->string('image'), $request->string('name'));
     }
 
-    public function copy(BaseItem $baseItem)
+    public function copy(BaseItem $baseItem): \Illuminate\Http\RedirectResponse
     {
         $newBaseItem = $this->baseItemService->copy($baseItem);
+
         return to_route('base-items.show', $newBaseItem->id);
     }
 
-    public function update(BaseItem $baseItem, UpdateBaseItemRequest $request)
+    public function update(BaseItem $baseItem, UpdateBaseItemRequest $request): void
     {
         $this->baseItemService->update($baseItem, $request->validated());
     }
@@ -123,9 +116,10 @@ class BaseItemController extends Controller
         ]);
     }
 
-    public function store(CreateBaseItemRequest $request)
+    public function store(CreateBaseItemRequest $request): \Illuminate\Http\RedirectResponse
     {
         $baseItem = $this->baseItemService->create($request->validated());
+
         return to_route('base-items.show', $baseItem->id);
     }
 }

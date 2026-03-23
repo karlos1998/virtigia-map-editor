@@ -6,9 +6,10 @@ import Textarea from 'primevue/textarea';
 import FileUpload from 'primevue/fileupload';
 import Chip from 'primevue/chip';
 import Message from 'primevue/message';
-import {useToast} from "primevue";
-import {useForm} from "@inertiajs/vue3";
-import {route} from "ziggy-js";
+import { useToast } from 'primevue';
+import { router, useForm } from '@inertiajs/vue3';
+import { route } from 'ziggy-js';
+import axios from 'axios';
 
 // Props to receive and update attributes object directly
 const props = defineProps<{
@@ -24,6 +25,9 @@ const petSrc = ref<string>('');
 const petActions = ref<string[]>([]);
 const description = ref<string>('');
 const newActionName = ref<string>('');
+const isSyncingFromProps = ref(false);
+const isUploadingImage = ref(false);
+const petImageCacheKey = ref(Date.now());
 
 // Image upload form
 const imageForm = useForm({
@@ -33,46 +37,81 @@ const imageForm = useForm({
 
 // Initialize values from existing attributes
 const initializeFromAttributes = () => {
+    isSyncingFromProps.value = true;
     petSrc.value = props.attributes?.petSrc ?? '';
-    petActions.value = props.attributes?.petActions ?? [];
+    petActions.value = [...(props.attributes?.petActions ?? [])];
     description.value = props.attributes?.description ?? '';
+    isSyncingFromProps.value = false;
 };
 
 // Initialize on mount
 initializeFromAttributes();
 
-// Watch for external changes to attributes
-watch(() => props.attributes, () => {
-    initializeFromAttributes();
-}, { deep: true });
+const buildNormalizedAttributes = (source: {
+    petSrc?: string | null;
+    petActions?: string[] | null;
+    description?: string | null;
+}) => {
+    const normalizedAttributes: Record<string, string | string[]> = {};
+    const normalizedPetSrc = source.petSrc?.trim() ?? '';
+    const normalizedDescription = source.description?.trim() ?? '';
+    const normalizedPetActions = [...(source.petActions ?? [])];
+
+    if (normalizedPetSrc !== '') {
+        normalizedAttributes.petSrc = normalizedPetSrc;
+    }
+
+    if (normalizedPetActions.length > 0) {
+        normalizedAttributes.petActions = normalizedPetActions;
+    }
+
+    if (normalizedDescription !== '') {
+        normalizedAttributes.description = normalizedDescription;
+    }
+
+    return normalizedAttributes;
+};
+
+const normalizedPropsPetState = computed(() => JSON.stringify(buildNormalizedAttributes({
+    petSrc: props.attributes?.petSrc,
+    petActions: props.attributes?.petActions ?? [],
+    description: props.attributes?.description,
+})));
+
+const normalizedLocalPetState = computed(() => JSON.stringify(buildNormalizedAttributes({
+    petSrc: petSrc.value,
+    petActions: petActions.value,
+    description: description.value,
+})));
+
+watch(normalizedPropsPetState, (newValue) => {
+    if (newValue !== normalizedLocalPetState.value) {
+        initializeFromAttributes();
+    }
+});
 
 // Auto-save when pet fields change
-watch([petSrc, petActions, description], () => {
-    const updatedAttributes = { ...props.attributes };
-
-    // Handle petSrc
-    if (petSrc.value && petSrc.value.trim() !== '') {
-        updatedAttributes.petSrc = petSrc.value.trim();
-    } else {
-        delete updatedAttributes.petSrc;
+watch(normalizedLocalPetState, () => {
+    if (isSyncingFromProps.value || normalizedLocalPetState.value === normalizedPropsPetState.value) {
+        return;
     }
 
-    // Handle petActions
-    if (petActions.value && petActions.value.length > 0) {
-        updatedAttributes.petActions = [...petActions.value];
-    } else {
-        delete updatedAttributes.petActions;
-    }
+    const {
+        petSrc: _petSrc,
+        petActions: _petActions,
+        description: _description,
+        ...remainingAttributes
+    } = props.attributes ?? {};
 
-    // Handle description
-    if (description.value && description.value.trim() !== '') {
-        updatedAttributes.description = description.value.trim();
-    } else {
-        delete updatedAttributes.description;
-    }
-
-    emit('update:attributes', updatedAttributes);
-}, { deep: true });
+    emit('update:attributes', {
+        ...remainingAttributes,
+        ...buildNormalizedAttributes({
+            petSrc: petSrc.value,
+            petActions: petActions.value,
+            description: description.value,
+        }),
+    });
+});
 
 // Add new action
 const addAction = () => {
@@ -90,7 +129,7 @@ const removeAction = (index: number) => {
 // Preview the pet image
 const previewImageSrc = computed(() => {
     if (petSrc.value && petSrc.value.trim() !== '') {
-        return `/s3/img/pets/${petSrc.value.trim()}`;
+        return `/s3/img/pets/${petSrc.value.trim()}?v=${petImageCacheKey.value}`;
     }
     return '';
 });
@@ -112,38 +151,45 @@ const onFileSelect = (event: any) => {
 };
 
 // Upload image
-const uploadImage = () => {
-    imageForm.patch(route('base-items.pet-image.update', {baseItem: props.baseItem}), {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: (page: any) => {
-            toast.add({
-                severity: 'success',
-                summary: 'Sukces',
-                detail: 'Grafika zwierzaka została przesłana i zapisana na S3',
-                life: 3000
-            });
+const uploadImage = async () => {
+    isUploadingImage.value = true;
+    imageForm.clearErrors();
 
-            // The backend returns petSrc in the response
-            // Update the local petSrc value
-            const responseData = page?.props?.jetstream?.flash;
+    try {
+        await axios.patch(route('base-items.pet-image.update', { baseItem: props.baseItem }), {
+            image: imageForm.image,
+            name: imageForm.name,
+        });
 
-            // Clear the form
-            imageForm.reset();
+        imageForm.reset();
 
-            // Reload to get the updated attributes
-            window.location.reload();
-        },
-        onError: (errors: any) => {
-            const errorMessage = errors.image || 'Nie udało się przesłać grafiki';
-            toast.add({
-                severity: 'error',
-                summary: 'Błąd',
-                detail: errorMessage,
-                life: 5000
-            });
-        }
-    });
+        router.reload({
+            only: ['baseItem'],
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => {
+                petImageCacheKey.value = Date.now();
+                toast.add({
+                    severity: 'success',
+                    summary: 'Sukces',
+                    detail: 'Grafika zwierzaka została przesłana i zapisana na S3',
+                    life: 3000
+                });
+            }
+        });
+    } catch (error: any) {
+        const errorMessage = error.response?.data?.errors?.image?.[0] || 'Nie udało się przesłać grafiki';
+        imageForm.setError('image', errorMessage);
+
+        toast.add({
+            severity: 'error',
+            summary: 'Błąd',
+            detail: errorMessage,
+            life: 5000
+        });
+    } finally {
+        isUploadingImage.value = false;
+    }
 };
 
 // Check if pet is configured
@@ -219,6 +265,10 @@ watch(previewImageSrc, (newSrc) => {
     }
 });
 
+watch(() => props.attributes?.petSrc, () => {
+    petImageCacheKey.value = Date.now();
+});
+
 // Cleanup on unmount
 onUnmounted(() => {
     stopAnimation();
@@ -289,11 +339,13 @@ onMounted(() => {
                         class="p-button-outlined"
                         accept="image/*"
                         :maxFileSize="5000000"
+                        :disabled="isUploadingImage"
                     >
                         <template #uploadicon>
                             <i class="pi pi-upload mr-2"></i>
                         </template>
                     </FileUpload>
+                    <small v-if="isUploadingImage" class="mt-2 block text-gray-500">Przesyłanie grafiki...</small>
                 </div>
             </div>
 
