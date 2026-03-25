@@ -6,7 +6,6 @@ import AdvanceColumn from "@advance-table/Components/AdvanceColumn.vue";
 import {BaseItemResource} from "@/Resources/BaseItem.resource";
 import { Link } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
-import RockAdapter from "../../RockTip/components/rockAdapter.vue";
 
 type Data = {
     data: BaseItemResource
@@ -101,7 +100,7 @@ type Data = {
                     <template #body="{ data }: Data">
                         <Tag
                             v-if="data.in_use"
-                            value="W użuciu"
+                            value="W użyciu"
                             severity="success"
                         />
                         <Tag
@@ -109,6 +108,78 @@ type Data = {
                             value="Nie używany"
                             severity="info"
                         />
+                    </template>
+                </AdvanceColumn>
+
+                <AdvanceColumn header="Gdzie zdobyć" style="min-width: 28rem;">
+                    <template #body="{ data }: Data">
+                        <div v-if="data.usage_sources.length" class="flex flex-col gap-2">
+                            <div
+                                v-for="source in data.usage_sources.slice(0, 3)"
+                                :key="`${data.id}-${source.type}-${source.shop?.id ?? 'no-shop'}-${source.npc?.id ?? 'no-npc'}-${source.location?.map_id ?? 'no-map'}-${source.location?.x ?? 'x'}-${source.location?.y ?? 'y'}`"
+                                class="flex items-center gap-3 rounded border border-surface-200 px-3 py-2 dark:border-surface-700"
+                            >
+                                <Link
+                                    v-if="source.npc?.src"
+                                    :href="route('base-npcs.show', source.npc.id)"
+                                >
+                                    <img
+                                        :src="source.npc.src"
+                                        :alt="source.npc.name"
+                                        class="h-10 w-10 rounded object-cover"
+                                    />
+                                </Link>
+
+                                <div class="flex flex-col gap-1 text-sm">
+                                    <div class="font-medium">
+                                        <span v-if="source.location">
+                                            {{ source.location.label }}
+                                        </span>
+                                        <Link
+                                            v-else-if="source.shop"
+                                            :href="route('shops.show', source.shop.id)"
+                                            class="font-medium text-primary no-underline hover:underline"
+                                        >
+                                            Shop #{{ source.shop.id }} bez przypisanej lokalizacji NPC
+                                        </Link>
+                                        <span v-else>
+                                            Brak lokalizacji
+                                        </span>
+                                    </div>
+
+                                    <div class="flex flex-wrap items-center gap-1 text-surface-500 dark:text-surface-400">
+                                        <Link
+                                            v-if="source.shop"
+                                            :href="route('shops.show', source.shop.id)"
+                                            class="no-underline hover:underline"
+                                        >
+                                            {{ source.shop.name }} (#{{ source.shop.id }})
+                                        </Link>
+
+                                        <span v-if="source.shop && source.npc">•</span>
+
+                                        <Link
+                                            v-if="source.npc"
+                                            :href="route('base-npcs.show', source.npc.id)"
+                                            class="no-underline hover:underline"
+                                        >
+                                            {{ source.type === 'loot' ? 'Loot: ' : '' }}{{ source.npc.name }}
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div
+                                v-if="data.usage_source_count > 3"
+                                class="text-xs text-surface-500 dark:text-surface-400"
+                            >
+                                +{{ data.usage_source_count - 3 }} kolejnych lokalizacji
+                            </div>
+                        </div>
+
+                        <span v-else class="text-sm text-surface-500 dark:text-surface-400">
+                            -
+                        </span>
                     </template>
                 </AdvanceColumn>
 

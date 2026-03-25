@@ -3,23 +3,23 @@
 namespace App\Models;
 
 use App\Enums\BaseItemCategory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Laravel\Scout\Engines\MeilisearchEngine;
-//use Laravel\Scout\Searchable;
+
+// use Laravel\Scout\Searchable;
 
 class BaseItem extends DynamicModel
 {
-
     use SoftDeletes;
-//    use Searchable;
+    //    use Searchable;
 
     /**
      * Get the name of the index associated with the model.
      */
     public function searchableAs(): string
     {
-        return 'base_items_' . $this->getConnectionName();
+        return 'base_items_'.$this->getConnectionName();
     }
 
     public function toSearchableArray(): array
@@ -30,10 +30,10 @@ class BaseItem extends DynamicModel
         ];
     }
 
-//    public function searchableUsing()
-//    {
-//        return app(MeiliSearchEngine::class)->setConnection('retro');
-//    }
+    //    public function searchableUsing()
+    //    {
+    //        return app(MeiliSearchEngine::class)->setConnection('retro');
+    //    }
 
     protected $fillable = [
         'name',
@@ -60,7 +60,7 @@ class BaseItem extends DynamicModel
         'reverse_attributes' => 'json',
         'category' => BaseItemCategory::class,
         'edited_manually' => 'boolean',
-        'currency' => \App\Enums\BaseItemCurrency::class
+        'currency' => \App\Enums\BaseItemCurrency::class,
     ];
 
     public function shops()
@@ -72,6 +72,11 @@ class BaseItem extends DynamicModel
     public function baseNpcs()
     {
         return $this->belongsToMany(BaseNpc::class, BaseNpcLoot::class, 'base_item_id', 'base_npc_id');
+    }
+
+    public function usageView(): HasOne
+    {
+        return $this->hasOne(BaseItemUsageView::class, 'base_item_id');
     }
 
     public function isInUse()

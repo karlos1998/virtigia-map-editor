@@ -21,47 +21,45 @@ use Karlos3098\LaravelPrimevueTableService\Services\TableService;
 
 final class BaseItemService extends BaseService
 {
-
     use UpdateImage;
 
-    public function __construct(private readonly BaseItem $baseItemModel)
-    {
-    }
+    public function __construct(private readonly BaseItem $baseItemModel) {}
 
     /**§
      * @throws \Exception
      */
     public function getAll(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
-//        dd(array_map(function($rarity){
-//            return new TableDropdownOption($rarity->description(), fn($query) => $query->whereJsonContains('attributes->rarity', $rarity->value));
-//        }, BaseItemRarity::cases()), array_map(function($category){
-//            return new TableDropdownOption($category->description(), fn($query) => $query->where('category', $category->value));
-//        }, BaseItemCategory::cases()));
+        $baseItemsQuery = $this->baseItemModel
+            ->newQuery()
+            ->select('base_items.*')
+            ->leftJoin('base_item_usage_views as usage_view', 'usage_view.base_item_id', '=', 'base_items.id')
+            ->with('usageView');
+
         return $this->fetchData(
             BaseItemResource::class,
-            $this->baseItemModel->with(['shops', 'baseNpcs']),
+            $baseItemsQuery,
             new TableService(
                 columns: [
 
                     'category_name' => new TableDropdownColumn(
                         placeholder: 'Kategoria',
-                        options: array_map(function($category){
-                            return new TableDropdownOption($category->description(), fn($query) => $query->where('category', $category->value));
+                        options: array_map(function ($category) {
+                            return new TableDropdownOption($category->description(), fn ($query) => $query->where('category', $category->value));
                         }, BaseItemCategory::cases())
                     ),
 
                     'currency_name' => new TableDropdownColumn(
                         placeholder: 'Waluta',
-                        options: array_map(function($currency){
-                            return new TableDropdownOption($currency->description(), fn($query) => $query->where('currency', $currency->value));
+                        options: array_map(function ($currency) {
+                            return new TableDropdownOption($currency->description(), fn ($query) => $query->where('currency', $currency->value));
                         }, BaseItemCurrency::cases())
                     ),
 
                     'need_professions' => new TableDropdownColumn(
                         placeholder: 'Profesja',
-                        options: array_map(function($profession){
-                            return new TableDropdownOption($profession->description(), fn($query) => $query->whereJsonContains('attributes->needProfessions', $profession->value));
+                        options: array_map(function ($profession) {
+                            return new TableDropdownOption($profession->description(), fn ($query) => $query->whereJsonContains('attributes->needProfessions', $profession->value));
                         }, Profession::cases())
                     ),
 
@@ -77,41 +75,39 @@ final class BaseItemService extends BaseService
                     ),
                     'rarity' => new TableDropdownColumn(
                         placeholder: 'Rzadkość',
-                        options: array_map(function($rarity){
-                            return new TableDropdownOption($rarity->description(), fn($query) => $query->where('rarity', $rarity->value));
+                        options: array_map(function ($rarity) {
+                            return new TableDropdownOption($rarity->description(), fn ($query) => $query->where('rarity', $rarity->value));
                         }, BaseItemRarity::cases())
                     ),
 
                     'in_use' => new TableDropdownColumn(
                         placeholder: 'W Użyciu',
                         options: [
-                            new TableDropdownOption('W użyciu', function($query) {
-                                return $query->where(function($q) {
-                                    $q->whereHas('shops')
-                                      ->orWhereHas('baseNpcs')
-                                      ->orWhereHas('dialogs');
-                                });
+                            new TableDropdownOption('W użyciu', function ($query) {
+                                return $query->where('usage_view.is_in_use', true);
                             }),
-                            new TableDropdownOption('Nie używany', function($query) {
-                                return $query->whereDoesntHave('shops')
-                                    ->whereDoesntHave('baseNpcs')
-                                    ->whereDoesntHave('dialogs');
+                            new TableDropdownOption('Nie używany', function ($query) {
+                                return $query->where(function ($innerQuery) {
+                                    $innerQuery
+                                        ->whereNull('usage_view.is_in_use')
+                                        ->orWhere('usage_view.is_in_use', false);
+                                });
                             }),
                         ]
                     ),
                 ],
-                globalFilterColumns: ['name', 'src'],
+                globalFilterColumns: ['base_items.name', 'base_items.src'],
                 rowsPerPage: [100, 300, 500]
             )
         );
     }
 
-    public function search(string $search = '', Collection $ids = null, ?string $category = null)
+    public function search(string $search = '', ?Collection $ids = null, ?string $category = null)
     {
         $idsArray = $ids?->toArray() ?? [];
 
         // If ids are provided and search is empty, return only those ids (respecting category if set)
-        if (!empty($idsArray) && $search === '') {
+        if (! empty($idsArray) && $search === '') {
             $query = $this->baseItemModel->newQuery()->whereIn('id', $idsArray);
             if ($category) {
                 $query->where('category', $category);
@@ -122,7 +118,7 @@ final class BaseItemService extends BaseService
 
         // Otherwise, return idsResults (items for given ids) on top of regular search results
         $idsQuery = $this->baseItemModel->newQuery();
-        if (!empty($idsArray)) {
+        if (! empty($idsArray)) {
             $idsQuery->whereIn('id', $idsArray);
             if ($category) {
                 $idsQuery->where('category', $category);
@@ -136,7 +132,7 @@ final class BaseItemService extends BaseService
         if ($category) {
             $searchQuery->where('category', $category);
         }
-        $searchItems = $searchQuery->where('name', 'like', '%' . $search . '%')->limit(30)->get();
+        $searchItems = $searchQuery->where('name', 'like', '%'.$search.'%')->limit(30)->get();
 
         return $idsResults->merge($searchItems)->unique('id')->values();
     }
@@ -144,11 +140,10 @@ final class BaseItemService extends BaseService
     /**
      * Update item attributes with proper merging and save separate point allocations
      *
-     * @param BaseItem $baseItem The item to update
-     * @param mixed $newAttributes New attributes from scale calculation
-     * @param array $attributePoints Regular attribute points allocation
-     * @param array $manualAttributePoints Manual attribute points allocation
-     * @return void
+     * @param  BaseItem  $baseItem  The item to update
+     * @param  mixed  $newAttributes  New attributes from scale calculation
+     * @param  array  $attributePoints  Regular attribute points allocation
+     * @param  array  $manualAttributePoints  Manual attribute points allocation
      */
     public function updateAttributes(BaseItem $baseItem, mixed $newAttributes, array $attributePoints = [], array $manualAttributePoints = []): void
     {
@@ -157,7 +152,7 @@ final class BaseItemService extends BaseService
 
         // Merge attributes: new attributes override old ones, but unique old attributes are preserved
         // This preserves things like legendary bonuses, owner binding, etc.
-//        $mergedAttributes = array_merge($oldAttributes, $newAttributes ?? []);
+        //        $mergedAttributes = array_merge($oldAttributes, $newAttributes ?? []);
         $mergedAttributes = $newAttributes;
 
         // Update the item with all three fields, converting empty arrays to null
@@ -165,7 +160,7 @@ final class BaseItemService extends BaseService
             'attributes' => empty($mergedAttributes) ? null : $mergedAttributes,
             'attribute_points' => empty($attributePoints) ? null : $attributePoints,
             'manual_attribute_points' => empty($manualAttributePoints) ? null : $manualAttributePoints,
-            'edited_manually' => true
+            'edited_manually' => true,
         ]);
 
         // Log the update for auditing
@@ -175,7 +170,7 @@ final class BaseItemService extends BaseService
             'new_attributes_count' => count($newAttributes ?? []),
             'merged_attributes_count' => count($mergedAttributes),
             'attribute_points_count' => count($attributePoints),
-            'manual_attribute_points_count' => count($manualAttributePoints)
+            'manual_attribute_points_count' => count($manualAttributePoints),
         ]);
     }
 
@@ -190,6 +185,7 @@ final class BaseItemService extends BaseService
         $newBaseItem = $baseItem->replicate();
         $newBaseItem->stats = '';
         $newBaseItem->save();
+
         return $newBaseItem;
     }
 
@@ -216,7 +212,7 @@ final class BaseItemService extends BaseService
             ]);
 
             // If an image was provided, update it
-            if (!empty($imageData)) {
+            if (! empty($imageData)) {
                 $this->updateImageFromBase64($baseItem, Str::of($imageData), Str::of($baseItem->name), 'img');
             }
 
@@ -228,9 +224,9 @@ final class BaseItemService extends BaseService
      * Update pet image from base64 string
      * Stores in img/pets/ folder on S3 and updates petSrc in attributes
      *
-     * @param BaseItem $baseItem The item to update
-     * @param \Illuminate\Support\Stringable $base64 Base64 encoded image
-     * @param \Illuminate\Support\Stringable $name Filename
+     * @param  BaseItem  $baseItem  The item to update
+     * @param  \Illuminate\Support\Stringable  $base64  Base64 encoded image
+     * @param  \Illuminate\Support\Stringable  $name  Filename
      * @return string The petSrc filename
      */
     public function updatePetImageFromBase64(BaseItem $baseItem, \Illuminate\Support\Stringable $base64, \Illuminate\Support\Stringable $name): string
@@ -243,12 +239,12 @@ final class BaseItemService extends BaseService
 
         $fileName = $name->isNotEmpty() ? Str::slug(pathinfo($name->value(), PATHINFO_FILENAME)) : Str::uuid();
 
-        $storagePath = "img/pets/";
+        $storagePath = 'img/pets/';
         $filePath = "{$storagePath}{$fileName}.{$extension}";
 
         // Check if file exists and add UUID if needed
         if (\Storage::disk('s3')->exists($filePath)) {
-            $fileName = Str::uuid() . "-{$fileName}";
+            $fileName = Str::uuid()."-{$fileName}";
             $filePath = "{$storagePath}{$fileName}.{$extension}";
         }
 
@@ -261,13 +257,13 @@ final class BaseItemService extends BaseService
 
         $baseItem->update([
             'attributes' => $attributes,
-            'edited_manually' => true
+            'edited_manually' => true,
         ]);
 
         Log::info('Pet image updated', [
             'item_id' => $baseItem->id,
             'file_path' => $filePath,
-            'pet_src' => $petSrc
+            'pet_src' => $petSrc,
         ]);
 
         return $petSrc;

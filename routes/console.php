@@ -1,10 +1,11 @@
 <?php
 
-use App\Jobs\CombineNpcsIntoGroupsJob;
-use App\Jobs\DispatchFindNearestRespForMaps;
-use App\Jobs\ResetAggressiveNpcsJob;
 use App\Jobs\CheckBaseItemsBatchJob;
 use App\Jobs\CheckBaseNpcsBatchJob;
+use App\Jobs\CombineNpcsIntoGroupsJob;
+use App\Jobs\DispatchFindNearestRespForMaps;
+use App\Jobs\RefreshBaseItemUsageViewBatchJob;
+use App\Jobs\ResetAggressiveNpcsJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -23,3 +24,5 @@ Schedule::job(new ResetAggressiveNpcsJob)->hourly();
 
 Schedule::job(new CheckBaseItemsBatchJob)->hourly();
 Schedule::job(new CheckBaseNpcsBatchJob)->hourly();
+Schedule::job(new RefreshBaseItemUsageViewBatchJob('retro'))->hourly();
+Schedule::job(new RefreshBaseItemUsageViewBatchJob('legacy'))->hourly();
