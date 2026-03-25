@@ -314,8 +314,6 @@ import TableFooter from './TableFooter.vue';
 import TableHeader from './TableHeader.vue';
 import HelperSet from './HelperSet.js';
 
-console.log('helper ser')
-
 export default {
     name: 'DataTable',
     extends: BaseDataTable,

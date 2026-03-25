@@ -64,6 +64,10 @@ provide('service', service.value)
             <slot name="loading"></slot>
         </template>
 
+        <template #expansion>
+            <slot name="expansion"></slot>
+        </template>
+
         <slot />
 
     </OwnDataTable>
