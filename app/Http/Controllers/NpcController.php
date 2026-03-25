@@ -19,9 +19,7 @@ use Inertia\Inertia;
 
 class NpcController extends Controller
 {
-    public function __construct(private readonly NpcService $npcService)
-    {
-    }
+    public function __construct(private readonly NpcService $npcService) {}
 
     public function index(Request $request): \Inertia\Response
     {
@@ -34,7 +32,7 @@ class NpcController extends Controller
     {
         return Inertia::render('Npc/Show', [
             'baseNpc' => BaseNpcResource::make($npc->base),
-            'npc' => NpcResource::make($npc->load(['locations', 'dialog'])),
+            'npc' => NpcResource::make($npc->load(['locations.map', 'dialog'])),
         ]);
     }
 
@@ -93,12 +91,12 @@ class NpcController extends Controller
     public function storeLocation(Npc $npc, StoreNpcLocationRequest $request): void
     {
 
-        $this->npcService->storeLocation($npc, $request->validated());;
+        $this->npcService->storeLocation($npc, $request->validated());
     }
 
     public function toggleEnabled(Npc $npc): void
     {
-        $npc->enabled = !$npc->enabled;
+        $npc->enabled = ! $npc->enabled;
         $npc->save();
     }
 }

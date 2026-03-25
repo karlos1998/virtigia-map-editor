@@ -12,6 +12,7 @@ import { Link } from '@inertiajs/vue3';
 import NpcAdvanceCard from "./Partials/NpcAdvanceCard.vue";
 import InputSwitch from 'primevue/inputswitch';
 import {ref, defineProps} from 'vue';
+import NpcLocationMapPreview from "@/Components/NpcLocationMapPreview.vue";
 
 const props = defineProps<{
     baseNpc: BaseNpcResource
@@ -74,13 +75,13 @@ const updateEnabled = async (enabled: boolean) => {
         <DetailsCardList title="Miejsce/a wystąpienia" >
             <DetailsCardListItem
                 v-for="location in npcData.locations"
-                :value="`(${location.x}, ${location.y})`"
+                :key="location.id"
             >
                 <template #label>
-                    <Link :href="route('maps.show', location.map_id)">
-                        <Button label="Pokaż mapę" size="small" />
-                    </Link>
-                    <span class="ml-4 font-bold">{{location.map_name}}</span>
+                    <span class="font-bold">Resp #{{ location.id }}</span>
+                </template>
+                <template #value>
+                    <NpcLocationMapPreview :location="location" :npc-src="baseNpc.src" />
                 </template>
             </DetailsCardListItem>
         </DetailsCardList>

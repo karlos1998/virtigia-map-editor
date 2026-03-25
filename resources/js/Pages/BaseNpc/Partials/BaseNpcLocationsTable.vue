@@ -5,7 +5,11 @@ import AdvanceTable from "@advance-table/Components/AdvanceTable.vue";
 import AdvanceColumn from "@advance-table/Components/AdvanceColumn.vue";
 import {PureNpcWithOnlyLocationsResource} from "@/Resources/Npc.resource";
 import {Link} from "@inertiajs/vue3";
-import NpcLocationsColumnTemplate from "@/Components/TableColumnTemplates/NpcLocationsColumnTemplate.vue";
+import NpcLocationMapPreview from "@/Components/NpcLocationMapPreview.vue";
+
+defineProps<{
+    npcSrc: string
+}>()
 
 type Data = {
     data: PureNpcWithOnlyLocationsResource
@@ -40,12 +44,25 @@ type Data = {
 <!--            </div>-->
 <!--        </template>-->
 
-        <AdvanceColumn field="id" header="ID" style="width: 5%" />
+        <AdvanceColumn field="id" header="ID instancji NPC" style="width: 10%" />
 
 
-        <AdvanceColumn field="name" header="Lokalizacja" style="width: 25%">
+        <AdvanceColumn field="name" header="Lokalizacja" style="width: 55%">
             <template #body="{ data }: Data">
-                <NpcLocationsColumnTemplate :npc="data" />
+                <div v-if="data.locations.length > 0" class="flex flex-col gap-3">
+                    <NpcLocationMapPreview
+                        v-for="location in data.locations"
+                        :key="location.id"
+                        :location="location"
+                        :npc-src="npcSrc"
+                        compact
+                    />
+                </div>
+                <Tag
+                    v-else
+                    value="Wykryto problem! Ten mob nie ma respow!"
+                    severity="danger"
+                />
             </template>
         </AdvanceColumn>
 

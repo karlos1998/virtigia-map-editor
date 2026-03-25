@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use App\Enums\BaseNpcCategory;
@@ -12,7 +13,6 @@ use App\Services\Traits\UpdateImage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Support\Stringable;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownOptions\TableDropdownOption;
@@ -23,9 +23,7 @@ final class BaseNpcService extends BaseService
 {
     use UpdateImage;
 
-    public function __construct(private readonly BaseNpc $baseNpcModel)
-    {
-    }
+    public function __construct(private readonly BaseNpc $baseNpcModel) {}
 
     /**
      * @throws \Exception
@@ -37,51 +35,51 @@ final class BaseNpcService extends BaseService
             $this->baseNpcModel,
             new TableService(
                 columns: [
-                  'id' => new TableTextColumn(sortable: true),
-                  'name' => new TableTextColumn(sortable: true),
-                  'src' => new TableTextColumn(sortable: true),
-                  'lvl' => new TableTextColumn(sortable: true),
+                    'id' => new TableTextColumn(sortable: true),
+                    'name' => new TableTextColumn(sortable: true),
+                    'src' => new TableTextColumn(sortable: true),
+                    'lvl' => new TableTextColumn(sortable: true),
 
-                  'rank' => new TableDropdownColumn(
-                      placeholder: 'Rank',
-                      options: array_map(function($rank) {
-                          return new TableDropdownOption($rank->description(), fn($query) => $query->where('rank', $rank->value));
-                      }, BaseNpcRank::cases())
-                  ),
+                    'rank' => new TableDropdownColumn(
+                        placeholder: 'Rank',
+                        options: array_map(function ($rank) {
+                            return new TableDropdownOption($rank->description(), fn ($query) => $query->where('rank', $rank->value));
+                        }, BaseNpcRank::cases())
+                    ),
 
-                  'category' => new TableDropdownColumn(
-                      placeholder: 'Category',
-                      options: array_map(function($category) {
-                          return new TableDropdownOption($category->description(), fn($query) => $query->where('category', $category->value));
-                      }, BaseNpcCategory::cases())
-                  ),
+                    'category' => new TableDropdownColumn(
+                        placeholder: 'Category',
+                        options: array_map(function ($category) {
+                            return new TableDropdownOption($category->description(), fn ($query) => $query->where('category', $category->value));
+                        }, BaseNpcCategory::cases())
+                    ),
 
-                  'profession' => new TableDropdownColumn(
-                      placeholder: 'Profession',
-                      options: array_map(function($profession) {
-                          return new TableDropdownOption($profession->description(), fn($query) => $query->where('profession', $profession->value));
-                      }, Profession::cases())
-                  ),
+                    'profession' => new TableDropdownColumn(
+                        placeholder: 'Profession',
+                        options: array_map(function ($profession) {
+                            return new TableDropdownOption($profession->description(), fn ($query) => $query->where('profession', $profession->value));
+                        }, Profession::cases())
+                    ),
 
-                  'type' => new TableTextColumn(sortable: true),
+                    'type' => new TableTextColumn(sortable: true),
 
-                  'loot_counts.total' => new TableTextColumn(
-                      placeholder: 'Ilość lootów',
-                      sortable: true,
-                      sortPath: 'loots_count'
-                  ),
+                    'loot_counts.total' => new TableTextColumn(
+                        placeholder: 'Ilość lootów',
+                        sortable: true,
+                        sortPath: 'loots_count'
+                    ),
 
-                  'is_aggressive' => new TableDropdownColumn(
-                      placeholder: 'Agresywny',
-                      sortable: true,
-                      options: [
-                          new TableDropdownOption('Tak', fn($query) => $query->where('is_aggressive', true)),
-                          new TableDropdownOption('Nie', fn($query) => $query->where('is_aggressive', false)),
-                      ]
-                  ),
+                    'is_aggressive' => new TableDropdownColumn(
+                        placeholder: 'Agresywny',
+                        sortable: true,
+                        options: [
+                            new TableDropdownOption('Tak', fn ($query) => $query->where('is_aggressive', true)),
+                            new TableDropdownOption('Nie', fn ($query) => $query->where('is_aggressive', false)),
+                        ]
+                    ),
                 ],
                 globalFilterColumns: ['name', 'rank', 'category', 'profession', 'type', 'is_aggressive'],
-//                withCount: ['loots'],
+                //                withCount: ['loots'],
             )
         );
     }
@@ -93,23 +91,23 @@ final class BaseNpcService extends BaseService
     {
         return $this->fetchData(
             PureNpcWithOnlyLocationsResource::class,
-            $baseNpc->locations(),
+            $baseNpc->locations()->with(['locations.map']),
             new TableService(
-                globalFilterColumns: [] //todo - szukanie po relacji. moja libka chyba tego nie obsluguje
+                globalFilterColumns: [] // todo - szukanie po relacji. moja libka chyba tego nie obsluguje
             )
         );
     }
 
     public function search(string $search)
     {
-        return BaseNpcResource::collection($this->baseNpcModel->where('name', 'like', '%' . $search . '%')->limit(25)->get());
+        return BaseNpcResource::collection($this->baseNpcModel->where('name', 'like', '%'.$search.'%')->limit(25)->get());
     }
 
     public function searchHero(string $search)
     {
         return BaseNpcResource::collection(
             $this->baseNpcModel
-                ->where('name', 'like', '%' . $search . '%')
+                ->where('name', 'like', '%'.$search.'%')
                 ->where('rank', BaseNpcRank::HERO->value)
                 ->limit(25)
                 ->get()
@@ -190,7 +188,7 @@ final class BaseNpcService extends BaseService
 
         foreach ($sourceLoots as $loot) {
             // Check if the loot is already attached to the target base NPC
-            if (!$targetBaseNpc->loots()->where('base_item_id', $loot->id)->exists()) {
+            if (! $targetBaseNpc->loots()->where('base_item_id', $loot->id)->exists()) {
                 $targetBaseNpc->loots()->attach($loot);
 
                 activity()
@@ -227,12 +225,12 @@ final class BaseNpcService extends BaseService
         }
 
         // Set the storage path to retro/new
-        $storagePath = 'img/npc/' . session("world"). '/new/';
+        $storagePath = 'img/npc/'.session('world').'/new/';
         $filePath = "{$storagePath}{$fileName}.{$extension}";
 
         // Check if file exists and generate a unique name if needed
         if (Storage::disk('s3')->exists($filePath)) {
-            $fileName = Str::uuid() . "-{$fileName}";
+            $fileName = Str::uuid()."-{$fileName}";
             $filePath = "{$storagePath}{$fileName}.{$extension}";
         }
 
@@ -240,12 +238,12 @@ final class BaseNpcService extends BaseService
         Storage::disk('s3')->put($filePath, $decodedImage);
 
         // Create and save the BaseNpc with the correct src
-        $baseNpc = new BaseNpc();
+        $baseNpc = new BaseNpc;
         $baseNpc->name = $validated['name'];
         $baseNpc->lvl = $validated['lvl'];
         $baseNpc->rank = $validated['rank'];
         $baseNpc->category = $validated['category'];
-        $baseNpc->src = session("world") . "/new/{$fileName}.{$extension}";
+        $baseNpc->src = session('world')."/new/{$fileName}.{$extension}";
         $baseNpc->save();
 
         return $baseNpc;
@@ -284,7 +282,7 @@ final class BaseNpcService extends BaseService
                 ->event('transfer-npc')
                 ->withProperties([
                     'source_base_npc_id' => $sourceBaseNpc->id,
-                    'target_base_npc_id' => $targetBaseNpc->id
+                    'target_base_npc_id' => $targetBaseNpc->id,
                 ])
                 ->log('transfer-npc');
         }

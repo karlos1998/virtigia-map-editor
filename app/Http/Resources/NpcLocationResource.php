@@ -18,11 +18,15 @@ class NpcLocationResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-//        return parent::toArray($request);
+        $map = $this->resource->map;
+
         return [
             'id' => $this->resource->id,
             'map_id' => $this->resource->map_id,
-            'map_name' => $this->resource->map->name,
+            'map_name' => $map->name,
+            'map_src' => config('assets.url').config('assets.dirs.maps').$map->src,
+            'map_width' => $map->x,
+            'map_height' => $map->y,
             'x' => $this->resource->x,
             'y' => $this->resource->y,
         ];

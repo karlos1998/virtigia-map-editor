@@ -284,7 +284,7 @@ const handleSpecialAttackDialogClose = () => {
         </div>
 
         <div class="card">
-            <BaseNpcLocationsTable />
+            <BaseNpcLocationsTable :npc-src="baseNpc.src" />
         </div>
 
         <BaseNpcActivityLogsTable v-if="logs" :logs="logs" :base-npc-id="baseNpc.id" />
