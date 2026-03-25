@@ -11,12 +11,9 @@ use Inertia\Inertia;
 
 class QuestController extends Controller
 {
-
     public function __construct(
         private readonly QuestService $questService,
-    )
-    {
-    }
+    ) {}
 
     /**
      * Display a listing of the quests.
@@ -47,7 +44,7 @@ class QuestController extends Controller
      */
     public function show(Quest $quest)
     {
-        $quest->load(['steps', 'steps.autoProgress']);
+        $quest->load(['steps', 'steps.autoProgress', 'steps.guideView']);
 
         return Inertia::render('Quest/Show', [
             'quest' => QuestResource::make($quest),
@@ -74,9 +71,9 @@ class QuestController extends Controller
     public function destroy(Quest $quest)
     {
         // Check if the quest can be deleted
-        if (!$quest->getDialogs()->isEmpty()) {
+        if (! $quest->getDialogs()->isEmpty()) {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'message' => 'Nie można usunąć questa, ponieważ jest używany w dialogach.'
+                'message' => 'Nie można usunąć questa, ponieważ jest używany w dialogach.',
             ]);
         }
 
@@ -105,7 +102,7 @@ class QuestController extends Controller
     public function getSteps(Quest $quest)
     {
         return response()->json([
-            'steps' => $quest->steps()->get()
+            'steps' => $quest->steps()->get(),
         ]);
     }
 }

@@ -2,10 +2,6 @@
 
 namespace App\Http\Resources;
 
-use App\Http\Resources\SimpleDialogResource;
-use App\Http\Resources\SimpleDialogEdgeResource;
-use App\Http\Resources\SimpleDialogNodeResource;
-use App\Http\Resources\SimpleDialogNodeOptionResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -27,7 +23,7 @@ class QuestStepResource extends JsonResource
             'visible_in_quest_list' => $this->visible_in_quest_list,
             'auto_advance_next_day' => $this->auto_advance_next_day,
             'auto_advance_to_step_id' => $this->auto_advance_to_step_id,
-            'auto_progress' => $this->whenLoaded('autoProgress', fn($autoProgress) => [
+            'auto_progress' => $this->whenLoaded('autoProgress', fn ($autoProgress) => [
                 'type' => $autoProgress->type,
                 'time_seconds' => $autoProgress->time_seconds,
                 'mobs' => $autoProgress->mobs->map(function ($mob) {
@@ -38,6 +34,8 @@ class QuestStepResource extends JsonResource
                     ];
                 }),
             ]),
+            'guides' => $this->guideView?->guides ?? [],
+            'guide_count' => $this->guideView?->guide_count ?? 0,
             'dialogs' => SimpleDialogResource::collection($this->getDialogs()),
             'nodes' => SimpleDialogNodeResource::collection($this->getNodes()),
             'nodeOptions' => SimpleDialogNodeOptionResource::collection($this->getNodeOptions()),

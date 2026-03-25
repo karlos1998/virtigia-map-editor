@@ -3,17 +3,13 @@ import AppLayout from "@/layout/AppLayout.vue";
 import { ref, computed } from "vue";
 import { route } from "ziggy-js";
 import { useToast, useConfirm } from "primevue";
-import { useForm, router } from "@inertiajs/vue3";
+import { Link, router } from "@inertiajs/vue3";
 import CreateQuestStepModal from "@/Pages/Quest/Modals/CreateQuestStepModal.vue";
 import EditQuestStepModal from "@/Pages/Quest/Modals/EditQuestStepModal.vue";
 import EditQuestNameModal from "@/Pages/Quest/Modals/EditQuestNameModal.vue";
 import {
     QuestWithStepsResource,
     QuestStepResource,
-    SimpleDialogResource,
-    SimpleDialogNodeResource,
-    SimpleDialogNodeOptionResource,
-    SimpleDialogEdgeResource
 } from "@/Resources/Quest.resource";
 
 const props = defineProps<{
@@ -107,6 +103,14 @@ const autoAdvanceText = (step: any) => {
     }
 
     return 'Uwaga: następnego dnia ten krok ustawi krok questa na krok o podanym ID.';
+}
+
+const formatNodeContent = (content?: string | null) => {
+    if (!content || content.trim() === '') {
+        return 'Brak treści';
+    }
+
+    return content;
 }
 </script>
 
@@ -217,6 +221,144 @@ const autoAdvanceText = (step: any) => {
                             </div>
 
                             <div>
+                                <div class="mb-4">
+                                    <h3 class="text-lg font-semibold mb-2">Jak osiągnąć ten krok</h3>
+
+                                    <div v-if="step.guides && step.guides.length > 0" class="flex flex-col gap-3">
+                                        <div v-for="(guide, guideIndex) in step.guides" :key="`${step.id}-${guideIndex}`" class="rounded-xl border border-surface-200 p-4 dark:border-surface-700">
+                                            <div class="mb-3 flex items-center justify-between gap-3">
+                                                <div>
+                                                    <div class="font-semibold">
+                                                        Dialog: {{ guide.dialog.name }} (ID: {{ guide.dialog.id }})
+                                                    </div>
+                                                    <div class="text-sm text-surface-500 dark:text-surface-400">
+                                                        <span v-if="guide.starts_on_dialog_open">
+                                                            Krok ustawia się od razu po rozpoczęciu rozmowy.
+                                                        </span>
+                                                        <span v-else>
+                                                            Aby dojść do tego kroku, kliknij kolejne opcje poniżej.
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <Link :href="route('dialogs.show', { dialog: guide.dialog.id })" class="no-underline">
+                                                    <Button label="Otwórz dialog" size="small" severity="secondary" />
+                                                </Link>
+                                            </div>
+
+                                            <div v-if="guide.npcs.length" class="mb-4 flex flex-col gap-3">
+                                                <div v-for="npc in guide.npcs" :key="npc.id" class="flex gap-3 rounded-lg bg-surface-50 p-3 dark:bg-surface-900/40">
+                                                    <Link :href="route('npcs.show', { npc: npc.id })" class="shrink-0">
+                                                        <img v-if="npc.src" :src="npc.src" :alt="npc.name" class="h-14 w-14 rounded object-cover" />
+                                                    </Link>
+
+                                                    <div class="min-w-0 flex-1">
+                                                        <div class="font-medium">
+                                                            <Link :href="route('npcs.show', { npc: npc.id })" class="no-underline hover:underline">
+                                                                {{ npc.name }} (NPC ID: {{ npc.id }})
+                                                            </Link>
+                                                        </div>
+
+                                                        <div v-if="npc.locations.length" class="mt-1 flex flex-col gap-1 text-sm text-surface-600 dark:text-surface-300">
+                                                            <div v-for="location in npc.locations" :key="location.id">
+                                                                {{ location.label }}
+                                                            </div>
+                                                        </div>
+
+                                                        <div v-else class="mt-1 text-sm text-surface-500 dark:text-surface-400">
+                                                            Brak przypisanej lokalizacji.
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div v-if="guide.click_steps.length" class="flex flex-col gap-3">
+                                                <div v-for="(clickStep, clickIndex) in guide.click_steps" :key="`${step.id}-${guideIndex}-${clickIndex}`" class="rounded-lg border border-surface-200 p-3 dark:border-surface-700">
+                                                    <div class="font-medium">
+                                                        {{ clickIndex + 1 }}.
+                                                    </div>
+
+                                                    <div class="mt-2 flex flex-col gap-2">
+                                                        <div class="rounded border border-sky-200 bg-sky-50 p-3 text-sm dark:border-sky-900/60 dark:bg-sky-950/30">
+                                                            <div class="text-xs font-medium uppercase tracking-wide text-sky-700 dark:text-sky-300">
+                                                                NPC mówi
+                                                            </div>
+                                                            <div class="mt-1 whitespace-pre-wrap text-surface-800 dark:text-surface-100">
+                                                                {{ formatNodeContent(clickStep.node?.content) }}
+                                                            </div>
+                                                        </div>
+
+                                                        <div v-if="clickStep.type === 'option'" class="rounded border border-emerald-200 bg-emerald-50 p-3 text-sm dark:border-emerald-900/60 dark:bg-emerald-950/30">
+                                                            <div class="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                                                                Kliknij odpowiedź
+                                                            </div>
+                                                            <div class="mt-1 whitespace-pre-wrap font-medium text-surface-800 dark:text-surface-100">
+                                                                {{ clickStep.option?.label }}
+                                                            </div>
+                                                        </div>
+
+                                                        <div v-else class="rounded border border-amber-200 bg-amber-50 p-3 text-sm dark:border-amber-900/60 dark:bg-amber-950/30">
+                                                            <div class="text-xs font-medium uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                                                                Co dalej
+                                                            </div>
+                                                            <div class="mt-1 text-surface-800 dark:text-surface-100">
+                                                                Rozmowa przechodzi dalej automatycznie.
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div v-if="clickStep.option_requirements.length" class="mt-2 flex flex-col gap-2">
+                                                        <div class="text-sm font-medium">Warunki opcji:</div>
+                                                        <div v-for="(requirement, requirementIndex) in clickStep.option_requirements" :key="`${step.id}-${guideIndex}-${clickIndex}-option-${requirementIndex}`" class="rounded bg-surface-50 p-2 text-sm dark:bg-surface-900/40">
+                                                            <div>{{ requirement.text }}</div>
+
+                                                            <div v-if="requirement.item?.usage_sources?.length" class="mt-2 flex flex-col gap-2">
+                                                                <div class="text-xs font-medium text-surface-500 dark:text-surface-400">Skąd wziąć ten item:</div>
+                                                                <div v-for="(source, sourceIndex) in requirement.item.usage_sources.slice(0, 2)" :key="`${requirement.item.id}-${sourceIndex}`" class="text-xs text-surface-600 dark:text-surface-300">
+                                                                    <span v-if="source.location">{{ source.location.label }}</span>
+                                                                    <span v-else-if="source.shop">Shop #{{ source.shop.id }}</span>
+                                                                    <span v-else>Brak lokalizacji</span>
+                                                                    <span v-if="source.shop">
+                                                                        •
+                                                                        <Link :href="route('shops.show', { shop: source.shop.id })" class="no-underline hover:underline">
+                                                                            {{ source.shop.name }} (#{{ source.shop.id }})
+                                                                        </Link>
+                                                                    </span>
+                                                                    <span v-if="source.npc">
+                                                                        •
+                                                                        <Link :href="route('base-npcs.show', { baseNpc: source.npc.id })" class="no-underline hover:underline">
+                                                                            {{ source.npc.name }}
+                                                                        </Link>
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div v-if="clickStep.edge_requirements.length" class="mt-2 flex flex-col gap-2">
+                                                        <div class="text-sm font-medium">Warunki przejścia:</div>
+                                                        <div v-for="(requirement, requirementIndex) in clickStep.edge_requirements" :key="`${step.id}-${guideIndex}-${clickIndex}-edge-${requirementIndex}`" class="rounded bg-surface-50 p-2 text-sm dark:bg-surface-900/40">
+                                                            <div>{{ requirement.text }}</div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mt-2 text-sm text-surface-500 dark:text-surface-400">
+                                                        Następna wypowiedź NPC: "{{ formatNodeContent(clickStep.to_node?.content) }}"
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="mt-3 text-sm text-surface-500 dark:text-surface-400">
+                                                Wypowiedź ustawiająca krok: "{{ formatNodeContent(guide.target_node?.content) }}" (ID: {{ guide.target_node?.id }})
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <Message v-else severity="secondary" :closable="false">
+                                        Brak wygenerowanej instrukcji dla tego kroku.
+                                    </Message>
+                                </div>
+
                                 <!-- Step Dialogs Section -->
                                 <div v-if="step.dialogs && step.dialogs.length > 0" class="mb-4">
                                     <h3 class="text-lg font-semibold mb-2">Dialogi powiązane z krokiem:</h3>

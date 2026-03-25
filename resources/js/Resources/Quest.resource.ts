@@ -65,10 +65,80 @@ export interface QuestStepResource {
     description: string;
     visible_in_quest_list: boolean;
     auto_progress?: QuestStepAutoProgress | null;
+    guides: QuestStepGuide[];
+    guide_count: number;
     dialogs: SimpleDialogResource[];
     nodes: SimpleDialogNodeResource[];
     nodeOptions: SimpleDialogNodeOptionResource[];
     edges: SimpleDialogEdgeResource[];
     created_at: string;
     updated_at: string;
+}
+
+export interface QuestStepGuideRuleItem {
+    id: number;
+    name: string;
+    src: string | null;
+    usage_sources: any[];
+}
+
+export interface QuestStepGuideRule {
+    type: string;
+    text: string;
+    consume?: boolean;
+    item?: QuestStepGuideRuleItem;
+}
+
+export interface QuestStepGuideClickStep {
+    type: 'auto' | 'option';
+    node: {
+        id: number;
+        type: string;
+        content: string | null;
+    } | null;
+    option?: {
+        id: number;
+        label: string;
+    };
+    to_node: {
+        id: number;
+        type: string;
+        content: string | null;
+    } | null;
+    option_requirements: QuestStepGuideRule[];
+    edge_requirements: QuestStepGuideRule[];
+}
+
+export interface QuestStepGuideNpc {
+    id: number;
+    base_npc_id: number | null;
+    name: string;
+    src: string | null;
+    locations: {
+        id: number;
+        map_id: number;
+        map_name: string;
+        x: number;
+        y: number;
+        label: string;
+    }[];
+}
+
+export interface QuestStepGuide {
+    dialog: {
+        id: number;
+        name: string;
+    };
+    target_node: {
+        id: number;
+        type: string;
+        content: string | null;
+    } | null;
+    step: {
+        id: number;
+        name: string;
+    };
+    npcs: QuestStepGuideNpc[];
+    click_steps: QuestStepGuideClickStep[];
+    starts_on_dialog_open: boolean;
 }
