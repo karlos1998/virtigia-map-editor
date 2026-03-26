@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Facades\AssetUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use OpenApi\Attributes as OA;
@@ -37,10 +38,10 @@ class MapListResource extends JsonResource
             'name' => $this->name,
             'x' => $this->x,
             'y' => $this->y,
-            'src' => config('assets.url').config('assets.dirs.maps').$this->src,
+            'src' => AssetUrl::map($this->src),
             'thumbnail_src' => $this->thumbnail_src
-                ? config('assets.url').config('assets.dirs.maps').$this->thumbnail_src
-                : config('assets.url').config('assets.dirs.maps').$this->src,
+                ? AssetUrl::map($this->thumbnail_src)
+                : AssetUrl::map($this->src),
             'pvp' => $this->pvp?->value ?? $this->pvp,
             'battleground' => $this->battleground,
             'battleground2' => $this->battleground2,

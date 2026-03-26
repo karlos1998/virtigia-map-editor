@@ -25,9 +25,7 @@ use App\Models\DynamicModel;
 use App\Models\Npc;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
 
 // Route::get('/test', function () {
 //    $mapModel = (new \App\Models\Map())->setConnectionName('retro');
@@ -239,6 +237,7 @@ Route::middleware(['auth'])->group(function () {
 
                     Route::get('assets/base-npcs/search', [AssetController::class, 'searchNpcs'])->name('assets.base-npcs.search');
                     Route::get('assets/outfits/search', [AssetController::class, 'searchOutfits'])->name('assets.outfits.search');
+                    Route::get('assets/sign-url', [AssetController::class, 'signUrl'])->name('assets.sign-url');
 
                     Route::post('doors', [DoorController::class, 'store'])->name('doors.store');
                     Route::patch('doors/{door}/move', [DoorController::class, 'move'])->name('doors.move');
@@ -258,18 +257,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('users/{user}', [\App\Http\Controllers\UsersController::class, 'show'])->name('users.show');
         Route::get('/problem-assets', [ProblemAssetsController::class, 'index'])->name('problem-assets.index');
         Route::get('/batches', [\App\Http\Controllers\BatchesController::class, 'index'])->name('batches.index');
-
-        Route::get('/s3/{path}', function ($path) {
-
-            if (! Storage::disk('s3')->exists($path)) {
-                abort(404);
-            }
-
-            $file = Storage::disk('s3')->get($path);
-            $mimeType = Storage::disk('s3')->mimeType($path);
-
-            return Response::make($file, 200, ['Content-Type' => $mimeType]);
-        })->where('path', '.*');
 
     });
 

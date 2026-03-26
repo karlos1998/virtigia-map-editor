@@ -26,6 +26,7 @@ const treeError = ref<string>('');
 // Type for asset items
 type AssetItem = {
     path: string;
+    url?: string | null;
     type: 'file' | 'dir';
 };
 
@@ -49,6 +50,7 @@ const loadTreeNodes = async (path: string) => {
             return {
                 key: item.path,
                 label: item.path,
+                url: item.url,
                 leaf: item.type === 'file',
                 loading: false
             };
@@ -162,12 +164,12 @@ const selectOutfit = (filePath: string) => {
                     class="outfit-item w-full"
                 >
                     <img
-                        :src="node.label"
+                        :src="node.url"
                         alt="Grafika"
                         class="outfit-img"
                     />
                     <a
-                        :href="node.label"
+                        :href="node.url"
                         target="_blank"
                         class="outfit-link min-w-96"
                     >
@@ -175,7 +177,7 @@ const selectOutfit = (filePath: string) => {
                     </a>
                     <Button
                         label="Wybierz"
-                        @click="selectOutfit(node.label)"
+                        @click="selectOutfit(node.key)"
                         severity="success"
                         size="small"
                         class="outfit-btn"

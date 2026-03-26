@@ -14,29 +14,29 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
      */
     public function register(): void
     {
-         Telescope::night();
+        Telescope::night();
 
         $this->hideSensitiveRequestDetails();
 
         $isLocal = $this->app->environment('local');
 
-        Telescope::filter(function (IncomingEntry $entry) use ($isLocal) {
-            if ($entry->type === 'request' && str_contains($entry->content['uri'] ?? '', '/s3/')) {
+        Telescope::filter(function (IncomingEntry $entry) {
+            if ($entry->type === 'request' && str_contains($entry->content['uri'] ?? '', '/assets/sign-url')) {
                 return false;
             }
 
             return true;
         });
 
-//        Telescope::filter(function (IncomingEntry $entry) use ($isLocal) {
-//            return true;
-////            return $isLocal ||
-////                   $entry->isReportableException() ||
-////                   $entry->isFailedRequest() ||
-////                   $entry->isFailedJob() ||
-////                   $entry->isScheduledTask() ||
-////                   $entry->hasMonitoredTag();
-//        });
+        //        Telescope::filter(function (IncomingEntry $entry) use ($isLocal) {
+        //            return true;
+        // //            return $isLocal ||
+        // //                   $entry->isReportableException() ||
+        // //                   $entry->isFailedRequest() ||
+        // //                   $entry->isFailedJob() ||
+        // //                   $entry->isScheduledTask() ||
+        // //                   $entry->hasMonitoredTag();
+        //        });
     }
 
     /**
@@ -44,9 +44,9 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
      */
     protected function hideSensitiveRequestDetails(): void
     {
-//        if ($this->app->environment('local')) {
-//            return;
-//        }
+        //        if ($this->app->environment('local')) {
+        //            return;
+        //        }
 
         Telescope::hideRequestParameters(['_token']);
 

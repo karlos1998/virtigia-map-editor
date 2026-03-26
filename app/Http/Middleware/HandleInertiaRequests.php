@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Facades\AssetUrl;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -39,7 +40,8 @@ class HandleInertiaRequests extends Middleware
             'auth' => $request->user() ? [
                 'user' => [
                     ...$request->user()->only('id', 'name', 'email', 'src', 'forum_background_src'),
-                    'src' => str_replace('imgimg', 'img', config('assets.url').$request->user()->src), // todo - drut
+                    'src' => AssetUrl::fromPath($request->user()->src),
+                    'forum_background_src' => AssetUrl::fromPath($request->user()->forum_background_src),
                 ],
                 'roles' => $request->user()->roles,
                 'permissions' => $request->user()->permissions,

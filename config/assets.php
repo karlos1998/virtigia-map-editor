@@ -1,11 +1,11 @@
 <?php
 
 return [
-    'url' => env('ASSETS_URL') . '/img',
+    'temporary_url_lifetime' => env('ASSETS_TEMPORARY_URL_LIFETIME', 60),
     'dirs' => [
-        'npcs' => '/npc/',
-        'maps' => '/locations/',
-        'items' => '/',
-        'outfits' => '/outfits/',
-    ]
+        'npcs' => 'img/npc',
+        'maps' => 'img/locations',
+        'items' => 'img',
+        'outfits' => 'img/outfits',
+    ],
 ];

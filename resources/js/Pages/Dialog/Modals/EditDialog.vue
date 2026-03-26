@@ -106,6 +106,7 @@ const { questNodes, loading, loadQuests, loadQuestStepById, onQuestNodeExpand } 
 
 // Dialog counters
 const dialogCounters = ref<DialogCounterResource[]>([]);
+const currentOutfitPreviewUrl = ref('');
 
 const loadDialogCounters = async () => {
     const { data } = await axios.get<DialogCounterResource[]>(route("web-api.dialog-counters.index"));
@@ -420,6 +421,20 @@ const currentOutfitDuration = computed({
         }
     }
 });
+
+watch(currentOutfitSrc, async (value) => {
+    if (! value || value.trim() === '') {
+        currentOutfitPreviewUrl.value = '';
+
+        return;
+    }
+
+    const { data } = await axios.get<{ url: string }>(route('assets.sign-url', {
+        path: `img/outfits/${value.trim()}`,
+    }));
+
+    currentOutfitPreviewUrl.value = data.url;
+}, { immediate: true });
 </script>
 
 <template>
@@ -601,7 +616,7 @@ const currentOutfitDuration = computed({
                     <!-- Preview image -->
                     <div v-if="currentOutfitSrc" class="mt-2">
                         <img
-                            :src="`/s3/img/outfits/${currentOutfitSrc}`"
+                            :src="currentOutfitPreviewUrl"
                             alt="Podgląd stroju"
                             class="h-16 w-16 object-contain border border-gray-300 rounded"
                             @error="(e: Event) => ((e.target as HTMLImageElement).style.display = 'none')"

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Facades\AssetUrl;
 use App\Models\Map;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -20,8 +21,8 @@ class MapResource extends JsonResource
     {
         return [
             ...parent::toArray($request),
-            'src' => config('assets.url') . config('assets.dirs.maps') . $this->resource->src,
-            'thumbnail_src' => $this->resource->thumbnail_src ? (config('assets.url') . config('assets.dirs.maps') . $this->resource->thumbnail_src) : (config('assets.url') . config('assets.dirs.maps') . $this->resource->src),
+            'src' => AssetUrl::map($this->resource->src),
+            'thumbnail_src' => $this->resource->thumbnail_src ? AssetUrl::map($this->resource->thumbnail_src) : AssetUrl::map($this->resource->src),
             'battleground' => $this->resource->battleground,
             'battleground2' => $this->resource->battleground2,
             'respawn_point' => RespawnPointResource::make($this->resource->respawnPoint),

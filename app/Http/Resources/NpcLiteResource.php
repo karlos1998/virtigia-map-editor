@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Facades\AssetUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -17,7 +18,7 @@ class NpcLiteResource extends JsonResource
         return [
             'id' => $this->resource->id,
             'name' => $this->resource->base->name,
-            'src' => config('assets.url') . config('assets.dirs.npcs') . $this->resource->base->src,
+            'src' => AssetUrl::npc($this->resource->base->src),
             'lvl' => $this->resource->base->lvl,
             'type' => $this->resource->base->type,
         ];

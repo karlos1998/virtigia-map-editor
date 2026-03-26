@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Facades\AssetUrl;
 use App\Models\BaseNpc;
 use App\Services\AssetService;
 use Illuminate\Http\Request;
 
 class AssetController extends Controller
 {
-    public function __construct(private readonly AssetService $assetService)
-    {
-    }
+    public function __construct(private readonly AssetService $assetService) {}
 
     public function searchNpcs(Request $request)
     {
@@ -18,10 +17,9 @@ class AssetController extends Controller
         /**
          * Todo: Do refaktoryzacji...
          */
-
         $validatedData = $request->validate([
             'path' => ['required', 'string', function ($attribute, $value, $fail) {
-                if (!str_starts_with($value, 'img/npc')) {
+                if (! str_starts_with($value, 'img/npc')) {
                     $fail('The path must start with "img/npc".');
                 }
             }],
@@ -31,9 +29,9 @@ class AssetController extends Controller
 
         $items = $this->assetService->search($validatedData['path']);
 
-        if($onlyUnused) {
+        if ($onlyUnused) {
 
-            $filePaths = collect($items)->where('type', 'file')->map(fn($item) => str_replace('img/npc/', '', $item['path']))->toArray();
+            $filePaths = collect($items)->where('type', 'file')->map(fn ($item) => str_replace('img/npc/', '', $item['path']))->toArray();
 
             $existingPaths = BaseNpc::whereIn('src', $filePaths)->pluck('src')->toArray();
 
@@ -41,18 +39,19 @@ class AssetController extends Controller
                 if ($item['type'] === 'dir') {
                     return true;
                 }
-                return !in_array(str_replace('img/npc/', '', $item['path']), $existingPaths);
-            })->map(fn($item) => [
+
+                return ! in_array(str_replace('img/npc/', '', $item['path']), $existingPaths);
+            })->map(fn ($item) => [
                 ...$item,
-                'path' => config('assets.url') . config('assets.dirs.npcs') . str_replace('img/npc/', '', $item['path']),
+                'url' => $item['type'] === 'file' ? AssetUrl::fromPath($item['path']) : null,
             ]);
 
             return response()->json($filteredItems->values());
         }
 
-        return response()->json(collect($items)->map(fn($item) => [
+        return response()->json(collect($items)->map(fn ($item) => [
             ...$item,
-            'path' => config('assets.url') . config('assets.dirs.npcs') . str_replace('img/npc/', '', $item['path']),
+            'url' => $item['type'] === 'file' ? AssetUrl::fromPath($item['path']) : null,
         ]));
     }
 
@@ -60,7 +59,7 @@ class AssetController extends Controller
     {
         $validatedData = $request->validate([
             'path' => ['required', 'string', function ($attribute, $value, $fail) {
-                if (!str_starts_with($value, 'img/outfits')) {
+                if (! str_starts_with($value, 'img/outfits')) {
                     $fail('The path must start with "img/outfits".');
                 }
             }],
@@ -68,10 +67,24 @@ class AssetController extends Controller
 
         $items = $this->assetService->search($validatedData['path']);
 
-        return response()->json(collect($items)->map(fn($item) => [
+        return response()->json(collect($items)->map(fn ($item) => [
             ...$item,
-            'path' => config('assets.url') . config('assets.dirs.outfits') . str_replace('img/outfits/', '', $item['path']),
+            'url' => $item['type'] === 'file' ? AssetUrl::fromPath($item['path']) : null,
         ]));
     }
 
+    public function signUrl(Request $request)
+    {
+        $validatedData = $request->validate([
+            'path' => ['required', 'string', function ($attribute, $value, $fail) {
+                if (! str_starts_with($value, 'img/')) {
+                    $fail('The path must start with "img/".');
+                }
+            }],
+        ]);
+
+        return response()->json([
+            'url' => AssetUrl::fromPath($validatedData['path']),
+        ]);
+    }
 }

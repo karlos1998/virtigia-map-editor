@@ -5,6 +5,8 @@ import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
 import Textarea from 'primevue/textarea';
 import OutfitBrowserDialog from './OutfitBrowserDialog.vue';
+import axios from 'axios';
+import { route } from 'ziggy-js';
 
 // Props to receive and update attributes object directly
 const props = defineProps<{
@@ -123,13 +125,21 @@ const removeOutfit = () => {
 };
 
 // Preview the outfit image
-const previewImageSrc = computed(() => {
-    if (useOutfitSrc.value && useOutfitSrc.value.trim() !== '') {
-        // Construct full URL using the same pattern as API response
-        return `/s3/img/outfits/${useOutfitSrc.value.trim()}`;
+const previewImageSrc = ref('');
+
+watch(useOutfitSrc, async (value) => {
+    if (! value || value.trim() === '') {
+        previewImageSrc.value = '';
+
+        return;
     }
-    return '';
-});
+
+    const { data } = await axios.get<{ url: string }>(route('assets.sign-url', {
+        path: `img/outfits/${value.trim()}`,
+    }));
+
+    previewImageSrc.value = data.url;
+}, { immediate: true });
 
 // Open browser dialog
 const openBrowser = () => {

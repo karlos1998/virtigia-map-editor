@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Facades\AssetUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use OpenApi\Attributes as OA;
@@ -47,8 +48,8 @@ class UserProfileResource extends JsonResource
                 $request->user() && $request->user()->id === $this->id,
                 fn (): array => PermissionResource::collection(collect($this->permissions)->values())->resolve()
             ),
-            'forum_background_src' => $this->forum_background_src,
-            'src' => str_replace('imgimg', 'img', config('assets.url').$this->src),
+            'forum_background_src' => AssetUrl::fromPath($this->forum_background_src),
+            'src' => AssetUrl::fromPath($this->src),
         ];
     }
 }

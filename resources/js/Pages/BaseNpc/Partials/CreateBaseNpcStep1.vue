@@ -31,6 +31,7 @@ const nodes = ref();
 
 type Item = {
     path: string
+    url?: string | null
     type: 'file' | 'dir'
 }
 
@@ -44,6 +45,7 @@ const load = async (path) => {
         return {
             key: item.path,
             label: item.path,
+            url: item.url,
             leaf: item.type == 'file',
             loading: false,
         }
@@ -82,18 +84,18 @@ const onlyUnused = ref(true);
             <div class="flex items-center justify-center">
                 <div v-if="node.leaf" class="flex items-center p-4  space-x-4 border border-gray-300 rounded-lg shadow-md bg-white">
                     <img
-                        :src="node.label"
+                        :src="node.url"
                         alt="Grafika"
                         class="object-cover rounded-md"
                     />
                     <a
-                        :href="node.label"
+                        :href="node.url"
                         target="_blank"
                         class="text-blue-500 underline text-center"
                     >
                         {{ node.label }}
                     </a>
-                    <Button label="Wybierz" @click="src = node.label.split('img/npc/')[1]; emit('selected')" />
+                    <Button label="Wybierz" @click="src = node.key.split('img/npc/')[1]; emit('selected')" />
                 </div>
                 <div v-else class="text-gray-700 text-lg font-medium">
                     {{ node.label }}

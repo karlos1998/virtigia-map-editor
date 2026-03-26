@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Facades\AssetUrl;
 use App\Models\BaseItem;
 use App\Models\BaseItemUsageView;
 use Illuminate\Database\Query\JoinClause;
@@ -116,7 +117,7 @@ class BaseItemUsageViewService
                 'id' => (int) $row->base_npc_id,
                 'name' => $row->base_npc_name,
                 'src' => $row->base_npc_src !== null
-                    ? config('assets.url').config('assets.dirs.npcs').$row->base_npc_src
+                    ? AssetUrl::npc($row->base_npc_src)
                     : null,
             ] : null,
             'location' => $row->map_id !== null && $row->x !== null && $row->y !== null ? [
@@ -139,7 +140,7 @@ class BaseItemUsageViewService
                 'id' => (int) $row->base_npc_id,
                 'name' => $row->base_npc_name,
                 'src' => $row->base_npc_src !== null
-                    ? config('assets.url').config('assets.dirs.npcs').$row->base_npc_src
+                    ? AssetUrl::npc($row->base_npc_src)
                     : null,
             ] : null,
             'location' => $row->map_id !== null && $row->x !== null && $row->y !== null ? [

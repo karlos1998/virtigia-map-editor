@@ -2,11 +2,10 @@
 
 namespace App\Providers;
 
-use App\Models\Map;
 use App\Providers\Socialite\VirtigiaPageProvider;
+use App\Support\AssetUrlGenerator;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Socialite\Facades\Socialite;
@@ -18,7 +17,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton('asset-url', fn (): AssetUrlGenerator => new AssetUrlGenerator);
     }
 
     /**
@@ -35,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
 
         Socialite::extend('virtigia_page', function ($app) {
             $config = $app['config']['services.virtigia_page'];
+
             return Socialite::buildProvider(VirtigiaPageProvider::class, $config);
         });
 

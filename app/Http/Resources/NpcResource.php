@@ -2,8 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Facades\AssetUrl;
 use App\Models\Npc;
-use App\Models\NpcLocation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -23,14 +23,14 @@ class NpcResource extends JsonResource
             'id' => $this->resource->id,
 
             'name' => $this->resource->base->name,
-            'src' => config('assets.url') . config('assets.dirs.npcs') . $this->resource->base->src,
+            'src' => AssetUrl::npc($this->resource->base->src),
             'lvl' => $this->resource->base->lvl,
             'type' => $this->resource->base->type,
             'group_id' => $this->resource->group_id,
             'in_group' => $this->resource->group_id > 0,
             'enabled' => $this->resource->enabled,
 
-            $this->mergeWhen($this->resource->pivot?->x !== null && $this->resource->pivot?->y !== null, fn() => [
+            $this->mergeWhen($this->resource->pivot?->x !== null && $this->resource->pivot?->y !== null, fn () => [
                 'location' => [
                     'id' => $this->resource->pivot->id,
                     'map_id' => $this->resource->pivot->map_id,
@@ -39,9 +39,9 @@ class NpcResource extends JsonResource
                 ],
             ]),
 
-            'locations' => $this->whenLoaded('locations', fn() => NpcLocationResource::collection($this->resource->locations)),
+            'locations' => $this->whenLoaded('locations', fn () => NpcLocationResource::collection($this->resource->locations)),
 
-            'dialog' => $this->whenLoaded('dialog', fn() => DialogResource::make($this->resource->dialog)),
+            'dialog' => $this->whenLoaded('dialog', fn () => DialogResource::make($this->resource->dialog)),
         ];
     }
 }

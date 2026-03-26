@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Facades\AssetUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use OpenApi\Attributes as OA;
@@ -32,7 +33,7 @@ class ApiNpcListResource extends JsonResource
             'base_npc_id' => $this->base_npc_id,
             'name' => $this->base?->name,
             'src' => $this->base?->src
-                ? config('assets.url').config('assets.dirs.npcs').$this->base->src
+                ? AssetUrl::npc($this->base->src)
                 : null,
             'lvl' => $this->base?->lvl,
             'rank' => $this->base?->rank?->value ?? $this->base?->rank,

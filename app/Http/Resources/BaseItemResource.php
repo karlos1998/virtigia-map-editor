@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Enums\Profession;
+use App\Facades\AssetUrl;
 use App\Models\BaseItem;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -24,7 +25,7 @@ class BaseItemResource extends JsonResource
         return [
             ...parent::toArray($request),
 
-            'src' => config('assets.url').config('assets.dirs.items').$this->resource->src.'?'.$this->resource->updated_at->timestamp,
+            'src' => AssetUrl::item($this->resource->src),
             $this->mergeWhen($this->resource->pivot?->position !== null, fn () => [
                 'position' => $this->resource->pivot->position,
             ]),

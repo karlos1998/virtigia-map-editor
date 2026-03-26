@@ -127,12 +127,21 @@ const removeAction = (index: number) => {
 };
 
 // Preview the pet image
-const previewImageSrc = computed(() => {
-    if (petSrc.value && petSrc.value.trim() !== '') {
-        return `/s3/img/pets/${petSrc.value.trim()}?v=${petImageCacheKey.value}`;
+const previewImageSrc = ref('');
+
+watch([petSrc, petImageCacheKey], async ([src]) => {
+    if (! src || src.trim() === '') {
+        previewImageSrc.value = '';
+
+        return;
     }
-    return '';
-});
+
+    const { data } = await axios.get<{ url: string }>(route('assets.sign-url', {
+        path: `img/pets/${src.trim()}`,
+    }));
+
+    previewImageSrc.value = data.url;
+}, { immediate: true });
 
 // Handle file upload
 const onFileSelect = (event: any) => {
