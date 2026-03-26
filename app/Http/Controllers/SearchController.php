@@ -51,6 +51,7 @@ class SearchController extends Controller
                         'id' => $item->id,
                         'name' => $item->name,
                         'size' => "{$item->x}x{$item->y}",
+                        'src' => $mapResource['src'],
                     ],
                 ];
             });

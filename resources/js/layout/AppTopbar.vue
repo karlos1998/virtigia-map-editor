@@ -35,6 +35,7 @@ const searchResults = ref([]);
 const showSearchResults = ref(false);
 const isSearching = ref(false);
 const showMobileSearch = ref(false);
+const activeMapPreview = ref(null);
 let searchTimeout = null;
 
 const performSearch = () => {
@@ -76,6 +77,7 @@ const navigateToResult = (result) => {
 
 const closeSearchResults = () => {
     showSearchResults.value = false;
+    activeMapPreview.value = null;
 };
 
 const resultTypeLabel = (type) => {
@@ -106,18 +108,28 @@ const resultTypeLabel = (type) => {
     return type;
 };
 
-const mapTooltip = (result) => {
-    if (result.type !== 'map' || !result.tooltip) {
-        return undefined;
+const showMapPreview = (result) => {
+    if (result.type !== 'map' || !result.tooltip?.src) {
+        return;
     }
 
-    return `#${result.tooltip.id} ${result.tooltip.name} (${result.tooltip.size})`;
+    activeMapPreview.value = {
+        id: result.tooltip.id ?? result.id,
+        name: result.tooltip.name ?? result.name,
+        size: result.tooltip.size,
+        src: result.tooltip.src,
+    };
+};
+
+const hideMapPreview = () => {
+    activeMapPreview.value = null;
 };
 
 const clearSearch = () => {
     searchQuery.value = '';
     showSearchResults.value = false;
     showMobileSearch.value = false;
+    activeMapPreview.value = null;
 };
 
 // Close search results when clicking outside
@@ -156,6 +168,29 @@ onUnmounted(() => {
         </div>
 
         <div class="topbar-end">
+            <div
+                v-if="activeMapPreview"
+                class="pointer-events-none fixed inset-0 z-[90] flex items-center justify-center px-6 py-10"
+            >
+                <div class="w-full max-w-[38rem] rounded-2xl border border-slate-200/70 bg-white/95 p-4 shadow-2xl backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
+                    <div class="flex items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-950 p-3 dark:border-slate-700">
+                        <img
+                            :src="activeMapPreview.src"
+                            :alt="activeMapPreview.name"
+                            class="max-h-[70vh] w-auto max-w-full object-contain"
+                        />
+                    </div>
+                    <div class="mt-3 space-y-1">
+                        <div class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                            #{{ activeMapPreview.id }} {{ activeMapPreview.name }}
+                        </div>
+                        <div class="text-sm text-slate-600 dark:text-slate-300">
+                            Rozmiar: {{ activeMapPreview.size }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <ul class="topbar-menu">
                 <li class="hidden md:block mr-2 relative" ref="searchContainer">
                     <span class="p-input-icon-left">
@@ -201,7 +236,8 @@ onUnmounted(() => {
                                                 :src="result.src"
                                                 :alt="result.name"
                                                 class="h-full w-full object-cover"
-                                                v-tooltip.top="mapTooltip(result)"
+                                                @mouseenter="showMapPreview(result)"
+                                                @mouseleave="hideMapPreview"
                                             />
                                             <img
                                                 v-else-if="result.src"
@@ -282,7 +318,6 @@ onUnmounted(() => {
                                                 :src="result.src"
                                                 :alt="result.name"
                                                 class="h-full w-full object-cover"
-                                                v-tooltip.top="mapTooltip(result)"
                                             />
                                             <img
                                                 v-else-if="result.src"
