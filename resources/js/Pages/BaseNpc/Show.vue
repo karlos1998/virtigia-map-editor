@@ -32,6 +32,8 @@ const {baseNpc, locations, logs} = defineProps<{
     logs?: any[]
 }>()
 
+const dropChanceLabels = ['Common', 'Unique', 'Heroic', 'Legendary', 'Artefact'];
+
 // Function to format time from seconds to a human-readable format
 const formatTimeFromSeconds = (seconds: number): string => {
   if (seconds === null || seconds === 0) return '0s';
@@ -52,6 +54,10 @@ const formatTimeFromSeconds = (seconds: number): string => {
   if (seconds > 0) parts.push(`${seconds}s`);
 
   return parts.join(' ');
+};
+
+const formatDropChanceAsPercent = (dropChance: number): string => {
+    return `${(dropChance * 100).toFixed(2).replace(/\.00$/, '')}%`;
 };
 
 const isEditBaseNpcDialogVisible = ref(false);
@@ -222,6 +228,23 @@ const handleSpecialAttackDialogClose = () => {
                 <template #value>
                     <Tag v-if="baseNpc.max_respawn_time === null" severity="info" value="Domyślnie dla silnika" />
                     <Tag v-else severity="success" :value="formatTimeFromSeconds(baseNpc.max_respawn_time)" />
+                </template>
+            </DetailsCardListItem>
+            <DetailsCardListItem label="Szanse dropu">
+                <template #value>
+                    <Tag
+                        v-if="baseNpc.drop_chances === null"
+                        severity="info"
+                        value="Domyślnie dla silnika"
+                    />
+                    <div v-else class="flex flex-wrap gap-2">
+                        <Tag
+                            v-for="(dropChance, index) in baseNpc.drop_chances"
+                            :key="dropChanceLabels[index]"
+                            severity="contrast"
+                            :value="`${dropChanceLabels[index]}: ${formatDropChanceAsPercent(dropChance)}`"
+                        />
+                    </div>
                 </template>
             </DetailsCardListItem>
         </DetailsCardList>

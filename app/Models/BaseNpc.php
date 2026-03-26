@@ -25,6 +25,7 @@ class BaseNpc extends DynamicModel
         'is_aggressive',
         'divine_intervention',
         'guaranteed_loot',
+        'drop_chances',
         'min_respawn_time',
         'max_respawn_time'
     ];
@@ -36,6 +37,7 @@ class BaseNpc extends DynamicModel
         'is_aggressive' => 'boolean',
         'divine_intervention' => 'boolean',
         'guaranteed_loot' => 'boolean',
+        'drop_chances' => 'array',
         'min_respawn_time' => 'integer',
         'max_respawn_time' => 'integer',
     ];

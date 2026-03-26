@@ -22,6 +22,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'is_aggressive', type: 'boolean'),
         new OA\Property(property: 'divine_intervention', type: 'boolean', nullable: true),
         new OA\Property(property: 'guaranteed_loot', type: 'boolean'),
+        new OA\Property(property: 'drop_chances', type: 'array', nullable: true, items: new OA\Items(type: 'number', format: 'float')),
         new OA\Property(property: 'min_respawn_time', type: 'integer', nullable: true),
         new OA\Property(property: 'max_respawn_time', type: 'integer', nullable: true),
     ]
@@ -42,6 +43,7 @@ class ApiBaseNpcDetailResource extends JsonResource
             'is_aggressive' => (bool) $this->is_aggressive,
             'divine_intervention' => $this->divine_intervention,
             'guaranteed_loot' => (bool) $this->guaranteed_loot,
+            'drop_chances' => $this->drop_chances,
             'min_respawn_time' => $this->min_respawn_time,
             'max_respawn_time' => $this->max_respawn_time,
         ];

@@ -36,6 +36,7 @@ declare module 'vue' {
     Message: typeof import('primevue/message')['default']
     MultiSelect: typeof import('primevue/multiselect')['default']
     Panel: typeof import('primevue/panel')['default']
+    ProgressBar: typeof import('primevue/progressbar')['default']
     ProgressSpinner: typeof import('primevue/progressspinner')['default']
     RadioButton: typeof import('primevue/radiobutton')['default']
     RadioButtonGroup: typeof import('primevue/radiobuttongroup')['default']
@@ -55,6 +56,7 @@ declare module 'vue' {
     Tag: typeof import('primevue/tag')['default']
     Textarea: typeof import('primevue/textarea')['default']
     Toast: typeof import('primevue/toast')['default']
+    ToggleSwitch: typeof import('primevue/toggleswitch')['default']
     Tree: typeof import('primevue/tree')['default']
     TreeSelect: typeof import('primevue/treeselect')['default']
   }

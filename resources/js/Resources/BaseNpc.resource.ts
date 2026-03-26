@@ -16,6 +16,7 @@ export interface BaseNpcResource {
     profession_name: string
     is_aggressive: boolean
     divine_intervention: boolean | null
+    drop_chances: number[] | null
     min_respawn_time: number | null
     max_respawn_time: number | null
 }

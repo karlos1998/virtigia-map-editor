@@ -48,6 +48,7 @@ class BaseNpcResource extends JsonResource
             'special_attacks' => $this->whenLoaded('specialAttacks', fn () => SpecialAttackResource::collection($this->resource->specialAttacks)),
             'src' => AssetUrl::npc($this->resource->src),
             'guaranteed_loot' => $this->resource->guaranteed_loot ?? false,
+            'drop_chances' => $this->resource->drop_chances,
         ];
     }
 }
