@@ -78,6 +78,42 @@ const closeSearchResults = () => {
     showSearchResults.value = false;
 };
 
+const resultTypeLabel = (type) => {
+    if (type === 'map') {
+        return 'Mapa';
+    }
+
+    if (type === 'baseitem') {
+        return 'Przedmiot';
+    }
+
+    if (type === 'basenpc') {
+        return 'Bazowy NPC';
+    }
+
+    if (type === 'dialog') {
+        return 'Dialog';
+    }
+
+    if (type === 'quest') {
+        return 'Quest';
+    }
+
+    if (type === 'shop') {
+        return 'Sklep';
+    }
+
+    return type;
+};
+
+const mapTooltip = (result) => {
+    if (result.type !== 'map' || !result.tooltip) {
+        return undefined;
+    }
+
+    return `#${result.tooltip.id} ${result.tooltip.name} (${result.tooltip.size})`;
+};
+
 const clearSearch = () => {
     searchQuery.value = '';
     showSearchResults.value = false;
@@ -145,8 +181,35 @@ onUnmounted(() => {
                                     class="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg cursor-pointer transition-colors duration-200"
                                     @click="navigateToResult(result)">
                                     <div class="flex items-center">
-                                        <div class="flex-shrink-0 mr-2">
-                                            <i v-if="result.type === 'map'" class="pi pi-map text-blue-500"></i>
+                                        <div class="mr-3 flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-md bg-surface-100 dark:bg-surface-700">
+                                            <img
+                                                v-if="result.src && result.type === 'baseitem'"
+                                                :src="result.src"
+                                                :alt="result.name"
+                                                class="h-full w-full object-cover"
+                                                v-tip.item.top.show-id="result.tooltip"
+                                            />
+                                            <img
+                                                v-else-if="result.src && result.type === 'basenpc'"
+                                                :src="result.src"
+                                                :alt="result.name"
+                                                class="h-full w-full object-cover"
+                                                v-tip.npc.top.show-id="result.tooltip"
+                                            />
+                                            <img
+                                                v-else-if="result.src && result.type === 'map'"
+                                                :src="result.src"
+                                                :alt="result.name"
+                                                class="h-full w-full object-cover"
+                                                v-tooltip.top="mapTooltip(result)"
+                                            />
+                                            <img
+                                                v-else-if="result.src"
+                                                :src="result.src"
+                                                :alt="result.name"
+                                                class="h-full w-full object-cover"
+                                            />
+                                            <i v-else-if="result.type === 'map'" class="pi pi-map text-blue-500"></i>
                                             <i v-else-if="result.type === 'baseitem'" class="pi pi-box text-green-500"></i>
                                             <i v-else-if="result.type === 'basenpc'" class="pi pi-user text-red-500"></i>
                                             <i v-else-if="result.type === 'dialog'" class="pi pi-comments text-purple-500"></i>
@@ -156,7 +219,7 @@ onUnmounted(() => {
                                         </div>
                                         <div>
                                             <div class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ result.name }}</div>
-                                            <div class="text-xs text-gray-500 dark:text-gray-400 capitalize">{{ result.type }}</div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ resultTypeLabel(result.type) }}</div>
                                         </div>
                                     </div>
                                 </li>
@@ -199,8 +262,35 @@ onUnmounted(() => {
                                     class="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg cursor-pointer transition-colors duration-200 border border-gray-100 dark:border-gray-700"
                                     @click="navigateToResult(result)">
                                     <div class="flex items-center">
-                                        <div class="flex-shrink-0 mr-3">
-                                            <i v-if="result.type === 'map'" class="pi pi-map text-blue-500 text-lg"></i>
+                                        <div class="mr-3 flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-md bg-surface-100 dark:bg-surface-700">
+                                            <img
+                                                v-if="result.src && result.type === 'baseitem'"
+                                                :src="result.src"
+                                                :alt="result.name"
+                                                class="h-full w-full object-cover"
+                                                v-tip.item.top.show-id="result.tooltip"
+                                            />
+                                            <img
+                                                v-else-if="result.src && result.type === 'basenpc'"
+                                                :src="result.src"
+                                                :alt="result.name"
+                                                class="h-full w-full object-cover"
+                                                v-tip.npc.top.show-id="result.tooltip"
+                                            />
+                                            <img
+                                                v-else-if="result.src && result.type === 'map'"
+                                                :src="result.src"
+                                                :alt="result.name"
+                                                class="h-full w-full object-cover"
+                                                v-tooltip.top="mapTooltip(result)"
+                                            />
+                                            <img
+                                                v-else-if="result.src"
+                                                :src="result.src"
+                                                :alt="result.name"
+                                                class="h-full w-full object-cover"
+                                            />
+                                            <i v-else-if="result.type === 'map'" class="pi pi-map text-blue-500 text-lg"></i>
                                             <i v-else-if="result.type === 'baseitem'" class="pi pi-box text-green-500 text-lg"></i>
                                             <i v-else-if="result.type === 'basenpc'" class="pi pi-user text-red-500 text-lg"></i>
                                             <i v-else-if="result.type === 'dialog'" class="pi pi-comments text-purple-500 text-lg"></i>
@@ -210,7 +300,7 @@ onUnmounted(() => {
                                         </div>
                                         <div>
                                             <div class="text-base font-medium text-gray-700 dark:text-gray-300">{{ result.name }}</div>
-                                            <div class="text-sm text-gray-500 dark:text-gray-400 capitalize">{{ result.type }}</div>
+                                            <div class="text-sm text-gray-500 dark:text-gray-400">{{ resultTypeLabel(result.type) }}</div>
                                         </div>
                                     </div>
                                 </li>

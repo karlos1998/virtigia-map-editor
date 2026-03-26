@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\BaseItemResource;
+use App\Http\Resources\BaseNpcResource;
+use App\Http\Resources\MapResource;
 use App\Models\BaseItem;
 use App\Models\BaseNpc;
 use App\Models\Dialog;
@@ -16,7 +19,6 @@ class SearchController extends Controller
     /**
      * Search for items in maps, baseitems, basenpcs, dialogs, quests, shops in the current world
      *
-     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function search(Request $request)
@@ -35,39 +37,55 @@ class SearchController extends Controller
         // Search in maps
         $maps = Map::where('name', 'like', "%{$query}%")
             ->limit(5)
-            ->get(['id', 'name'])
+            ->get()
             ->map(function ($item) {
+                $mapResource = MapResource::make($item)->resolve();
+
                 return [
                     'id' => $item->id,
                     'name' => $item->name,
                     'type' => 'map',
-                    'route' => route('maps.show', $item->id)
+                    'route' => route('maps.show', $item->id),
+                    'src' => $mapResource['thumbnail_src'] ?? $mapResource['src'],
+                    'tooltip' => [
+                        'id' => $item->id,
+                        'name' => $item->name,
+                        'size' => "{$item->x}x{$item->y}",
+                    ],
                 ];
             });
 
         // Search in base items
         $baseItems = BaseItem::where('name', 'like', "%{$query}%")
             ->limit(5)
-            ->get(['id', 'name'])
+            ->get()
             ->map(function ($item) {
+                $itemResource = BaseItemResource::make($item)->resolve();
+
                 return [
                     'id' => $item->id,
                     'name' => $item->name,
                     'type' => 'baseitem',
-                    'route' => route('base-items.show', $item->id)
+                    'route' => route('base-items.show', $item->id),
+                    'src' => $itemResource['src'],
+                    'tooltip' => $itemResource,
                 ];
             });
 
         // Search in base npcs
         $baseNpcs = BaseNpc::where('name', 'like', "%{$query}%")
             ->limit(5)
-            ->get(['id', 'name'])
+            ->get()
             ->map(function ($item) {
+                $npcResource = BaseNpcResource::make($item)->resolve();
+
                 return [
                     'id' => $item->id,
                     'name' => $item->name,
                     'type' => 'basenpc',
-                    'route' => route('base-npcs.show', $item->id)
+                    'route' => route('base-npcs.show', $item->id),
+                    'src' => $npcResource['src'],
+                    'tooltip' => $npcResource,
                 ];
             });
 
@@ -80,7 +98,7 @@ class SearchController extends Controller
                     'id' => $item->id,
                     'name' => $item->name,
                     'type' => 'dialog',
-                    'route' => route('dialogs.show', $item->id)
+                    'route' => route('dialogs.show', $item->id),
                 ];
             });
 
@@ -93,7 +111,7 @@ class SearchController extends Controller
                     'id' => $item->id,
                     'name' => $item->name,
                     'type' => 'quest',
-                    'route' => route('quests.show', $item->id)
+                    'route' => route('quests.show', $item->id),
                 ];
             });
 
@@ -106,7 +124,7 @@ class SearchController extends Controller
                     'id' => $item->id,
                     'name' => $item->name,
                     'type' => 'shop',
-                    'route' => route('shops.show', $item->id)
+                    'route' => route('shops.show', $item->id),
                 ];
             });
 
