@@ -116,6 +116,8 @@ Route::middleware(['auth'])->group(function () {
                     Route::post('spawn-points/set-default-for-missing', [\App\Http\Controllers\SpawnPointController::class, 'setDefaultForMissing'])->name('spawn-points.set-default-for-missing');
 
                     Route::get('world-info', [\App\Http\Controllers\WorldInfoController::class, 'index'])->name('world-info.index');
+                    Route::post('world-info/base-npcs/guaranteed-loot/preview', [\App\Http\Controllers\WorldInfoController::class, 'previewBulkGuaranteedLoot'])->name('world-info.base-npcs.guaranteed-loot.preview');
+                    Route::patch('world-info/base-npcs/guaranteed-loot', [\App\Http\Controllers\WorldInfoController::class, 'applyBulkGuaranteedLoot'])->name('world-info.base-npcs.guaranteed-loot.apply');
                     Route::patch('maps/{map}/cols', [MapController::class, 'updateCol'])->name('maps.update.col');
                     Route::patch('maps/{map}/clear-collisions', [MapController::class, 'clearCollisions'])->name('maps.clear.collisions');
                     Route::patch('maps/{map}/water', [MapController::class, 'updateWater'])->name('maps.update.water');

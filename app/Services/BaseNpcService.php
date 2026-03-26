@@ -141,6 +141,73 @@ final class BaseNpcService extends BaseService
             ->log('update-base-npc-guaranteed-loot');
     }
 
+    /**
+     * @return array{count: int, examples: array<int, array{id: int, name: string|null, lvl: int, guaranteed_loot: bool}>}
+     */
+    public function getGuaranteedLootBulkPreview(int $level): array
+    {
+        $query = $this->baseNpcModel->newQuery()
+            ->where('category', BaseNpcCategory::MOB)
+            ->where('lvl', '>=', 1)
+            ->where('lvl', '<=', $level)
+            ->whereHas('loots')
+            ->where(function ($builder) {
+                $builder
+                    ->whereNull('guaranteed_loot')
+                    ->orWhere('guaranteed_loot', false);
+            });
+
+        $count = (clone $query)->count();
+
+        /** @var \Illuminate\Support\Collection<int, BaseNpc> $examples */
+        $examples = (clone $query)
+            ->orderBy('lvl')
+            ->orderBy('name')
+            ->limit(15)
+            ->get(['id', 'name', 'lvl', 'guaranteed_loot']);
+
+        return [
+            'count' => $count,
+            'examples' => $examples
+                ->map(fn (BaseNpc $baseNpc): array => [
+                    'id' => $baseNpc->id,
+                    'name' => $baseNpc->name,
+                    'lvl' => $baseNpc->lvl,
+                    'guaranteed_loot' => (bool) $baseNpc->guaranteed_loot,
+                ])
+                ->values()
+                ->all(),
+        ];
+    }
+
+    public function setGuaranteedLootBulkForLevel(int $level): int
+    {
+        $updatedCount = $this->baseNpcModel->newQuery()
+            ->where('category', BaseNpcCategory::MOB)
+            ->where('lvl', '>=', 1)
+            ->where('lvl', '<=', $level)
+            ->whereHas('loots')
+            ->where(function ($builder) {
+                $builder
+                    ->whereNull('guaranteed_loot')
+                    ->orWhere('guaranteed_loot', false);
+            })
+            ->update(['guaranteed_loot' => true]);
+
+        if ($updatedCount > 0) {
+            activity()
+                ->causedBy(Auth::user())
+                ->event('bulk-update-base-npc-guaranteed-loot')
+                ->withProperties([
+                    'level' => $level,
+                    'updated_count' => $updatedCount,
+                ])
+                ->log('bulk-update-base-npc-guaranteed-loot');
+        }
+
+        return $updatedCount;
+    }
+
     public function attachLoot(BaseNpc $baseNpc, int $baseItemId)
     {
         $baseItem = BaseItem::findOrFail($baseItemId);

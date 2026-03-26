@@ -2,19 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\BulkSetGuaranteedLootRequest;
+use App\Services\BaseNpcService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class WorldInfoController extends Controller
 {
+    public function __construct(private readonly BaseNpcService $baseNpcService) {}
+
     /**
      * Display advanced information about the current world.
-     *
-     * @return \Inertia\Response
      */
-    public function index()
+    public function index(): Response
     {
         $migrationFiles = File::files(database_path('migrations/remote'));
         $migrationFileNames = [];
@@ -40,10 +44,14 @@ class WorldInfoController extends Controller
         }
 
         // Sort migrations by batch (executed first, then by batch number)
-        usort($migrations, function($a, $b) {
+        usort($migrations, function ($a, $b) {
             // Put executed migrations first
-            if ($a['executed'] && !$b['executed']) return -1;
-            if (!$a['executed'] && $b['executed']) return 1;
+            if ($a['executed'] && ! $b['executed']) {
+                return -1;
+            }
+            if (! $a['executed'] && $b['executed']) {
+                return 1;
+            }
 
             // If both are executed, sort by batch
             if ($a['executed'] && $b['executed']) {
@@ -60,5 +68,19 @@ class WorldInfoController extends Controller
             'migrations' => $migrations,
             'worldName' => session('world'),
         ]);
+    }
+
+    public function previewBulkGuaranteedLoot(BulkSetGuaranteedLootRequest $request): JsonResponse
+    {
+        return response()->json(
+            $this->baseNpcService->getGuaranteedLootBulkPreview($request->integer('level')),
+        );
+    }
+
+    public function applyBulkGuaranteedLoot(BulkSetGuaranteedLootRequest $request): RedirectResponse
+    {
+        $updatedCount = $this->baseNpcService->setGuaranteedLootBulkForLevel($request->integer('level'));
+
+        return back()->with('success', "Zmieniono {$updatedCount} base NPC.");
     }
 }
