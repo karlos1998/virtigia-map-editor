@@ -23,10 +23,12 @@ import {useConfirm} from "primevue/useconfirm";
 import {useToast} from "primevue";
 import {router} from "@inertiajs/vue3";
 import {useDialog} from "primevue/usedialog";
+import type {AdvanceTableResponse} from "@/karlos3098-LaravelPrimevueTable/Services/tableService";
+import type {PureNpcWithOnlyLocationsResource} from "@/Resources/Npc.resource";
 
 const {baseNpc, locations, logs} = defineProps<{
     baseNpc: BaseNpcWithLoots
-    locations: NpcLocationResource[]
+    locations: AdvanceTableResponse<PureNpcWithOnlyLocationsResource>
     logs?: any[]
 }>()
 
@@ -284,7 +286,7 @@ const handleSpecialAttackDialogClose = () => {
         </div>
 
         <div class="card">
-            <BaseNpcLocationsTable :npc-src="baseNpc.src" />
+            <BaseNpcLocationsTable :npc-src="baseNpc.src" :npc-count="locations.meta.total" />
         </div>
 
         <BaseNpcActivityLogsTable v-if="logs" :logs="logs" :base-npc-id="baseNpc.id" />
