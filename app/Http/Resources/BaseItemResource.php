@@ -21,6 +21,16 @@ class BaseItemResource extends JsonResource
     public function toArray(Request $request): array
     {
         $usageView = $this->resource->relationLoaded('usageView') ? $this->resource->usageView : null;
+        $usageSources = collect($usageView?->sources ?? [])
+            ->map(function (array $source): array {
+                if (isset($source['npc']) && is_array($source['npc'])) {
+                    $source['npc']['src'] = AssetUrl::npc($source['npc']['src'] ?? null);
+                }
+
+                return $source;
+            })
+            ->values()
+            ->all();
 
         return [
             ...parent::toArray($request),
@@ -42,7 +52,7 @@ class BaseItemResource extends JsonResource
             'reverse_attributes' => $this->resource->reverse_attributes ?? null,
 
             'in_use' => $usageView?->is_in_use ?? $this->resource->isInUse(),
-            'usage_sources' => $usageView?->sources ?? [],
+            'usage_sources' => $usageSources,
             'usage_source_count' => $usageView?->source_count ?? 0,
             'specific_currency_price' => $this->resource->specific_currency_price, // specjalna cena waluty dedykowana dla itemu
 

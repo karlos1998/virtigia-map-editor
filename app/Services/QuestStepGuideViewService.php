@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Facades\AssetUrl;
 use App\Models\BaseItem;
 use App\Models\BaseItemUsageView;
 use App\Models\Dialog;
@@ -102,9 +101,7 @@ class QuestStepGuideViewService
                         'item' => [
                             'id' => (int) $itemId,
                             'name' => $itemName,
-                            'src' => $item
-                                ? AssetUrl::item($item->src)
-                                : null,
+                            'src' => $item?->src,
                             'usage_sources' => $usageView?->sources ?? [],
                         ],
                     ];
@@ -382,9 +379,7 @@ class QuestStepGuideViewService
                             'id' => $npc->id,
                             'base_npc_id' => $npc->base?->id,
                             'name' => $npc->base?->name ?? "NPC #{$npc->id}",
-                            'src' => $npc->base?->src
-                                ? AssetUrl::npc($npc->base->src)
-                                : null,
+                            'src' => $npc->base?->src,
                             'locations' => $npc->locations->map(function ($location): array {
                                 $mapName = $location->map?->name ?? "Mapa #{$location->map_id}";
 

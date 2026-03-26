@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Facades\AssetUrl;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,6 +15,51 @@ class QuestStepResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $guides = collect($this->guideView?->guides ?? [])
+            ->map(function (array $guide): array {
+                $guide['npcs'] = collect($guide['npcs'] ?? [])
+                    ->map(function (array $npc): array {
+                        $npc['src'] = AssetUrl::npc($npc['src'] ?? null);
+
+                        return $npc;
+                    })
+                    ->values()
+                    ->all();
+
+                $guide['click_steps'] = collect($guide['click_steps'] ?? [])
+                    ->map(function (array $clickStep): array {
+                        $clickStep['option_requirements'] = collect($clickStep['option_requirements'] ?? [])
+                            ->map(function (array $requirement): array {
+                                if (! isset($requirement['item']) || ! is_array($requirement['item'])) {
+                                    return $requirement;
+                                }
+
+                                $requirement['item']['src'] = AssetUrl::item($requirement['item']['src'] ?? null);
+                                $requirement['item']['usage_sources'] = collect($requirement['item']['usage_sources'] ?? [])
+                                    ->map(function (array $source): array {
+                                        if (isset($source['npc']) && is_array($source['npc'])) {
+                                            $source['npc']['src'] = AssetUrl::npc($source['npc']['src'] ?? null);
+                                        }
+
+                                        return $source;
+                                    })
+                                    ->values()
+                                    ->all();
+
+                                return $requirement;
+                            })
+                            ->values()
+                            ->all();
+
+                        return $clickStep;
+                    })
+                    ->values()
+                    ->all();
+
+                return $guide;
+            })
+            ->values()
+            ->all();
 
         return [
             'id' => $this->id,
@@ -34,7 +80,7 @@ class QuestStepResource extends JsonResource
                     ];
                 }),
             ]),
-            'guides' => $this->guideView?->guides ?? [],
+            'guides' => $guides,
             'guide_count' => $this->guideView?->guide_count ?? 0,
             'dialogs' => SimpleDialogResource::collection($this->getDialogs()),
             'nodes' => SimpleDialogNodeResource::collection($this->getNodes()),

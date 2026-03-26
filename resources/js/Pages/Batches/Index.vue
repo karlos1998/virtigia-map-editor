@@ -1,7 +1,56 @@
 <template>
     <AppLayout>
         <div class="card">
-            <h1 class="text-3xl font-bold mb-6">Batchy zadań</h1>
+            <div class="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold">Batchy zadań</h1>
+                    <div class="text-sm text-gray-500">
+                        Aktualny świat: {{ world }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <div
+                    v-for="syncStatus in syncStatuses"
+                    :key="syncStatus.label"
+                    class="rounded-xl border border-surface-200 bg-surface-50 p-4 dark:border-surface-700 dark:bg-surface-900/40"
+                >
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <div class="text-base font-semibold text-surface-900 dark:text-surface-0">
+                                {{ syncStatus.label }}
+                            </div>
+                            <div class="text-sm text-surface-500 dark:text-surface-400">
+                                {{ syncStatus.description }}
+                            </div>
+                        </div>
+
+                        <Tag
+                            :severity="getSyncStatusSeverity(syncStatus.status)"
+                            :value="getSyncStatusLabel(syncStatus.status)"
+                        />
+                    </div>
+
+                    <div class="mt-4 grid grid-cols-1 gap-2 text-sm text-surface-700 dark:text-surface-200 md:grid-cols-2">
+                        <div>
+                            <span class="font-medium">Ostatnia synchronizacja:</span>
+                            {{ formatSyncTimestamp(syncStatus.last_synced_at) }}
+                        </div>
+                        <div>
+                            <span class="font-medium">Ostatni update:</span>
+                            {{ formatSyncTimestamp(syncStatus.updated_at) }}
+                        </div>
+                    </div>
+
+                    <div
+                        v-if="syncStatus.chunks > 0"
+                        class="mt-3 text-xs text-surface-500 dark:text-surface-400"
+                    >
+                        Postęp: {{ syncStatus.processed_chunks }} / {{ syncStatus.chunks }} chunków
+                    </div>
+                </div>
+            </div>
 
             <!-- Statistics Cards -->
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
@@ -236,6 +285,7 @@ import Calendar from 'primevue/calendar';
 import InputNumber from 'primevue/inputnumber';
 import Button from 'primevue/button';
 import Paginator from 'primevue/paginator';
+import Tag from 'primevue/tag';
 
 // Simple debounce function
 const debounce = (func, delay) => {
@@ -272,6 +322,14 @@ const props = defineProps({
     filters: {
         type: Object,
         default: () => ({})
+    },
+    world: {
+        type: String,
+        default: 'retro'
+    },
+    syncStatuses: {
+        type: Array,
+        default: () => []
     }
 });
 
@@ -346,6 +404,33 @@ const getProgressBarClass = (status) => {
 const formatTimestamp = (timestamp) => {
     if (!timestamp) return '—';
     return new Date(timestamp * 1000).toLocaleString('pl-PL');
+};
+
+const formatSyncTimestamp = (timestamp) => {
+    if (!timestamp) return 'Nigdy';
+    return new Date(timestamp).toLocaleString('pl-PL');
+};
+
+const getSyncStatusLabel = (status) => {
+    switch (status) {
+        case 'finished':
+            return 'Zsynchronizowano';
+        case 'started':
+            return 'W trakcie';
+        default:
+            return 'Brak danych';
+    }
+};
+
+const getSyncStatusSeverity = (status) => {
+    switch (status) {
+        case 'finished':
+            return 'success';
+        case 'started':
+            return 'warning';
+        default:
+            return 'secondary';
+    }
 };
 
 const applyFilters = () => {
