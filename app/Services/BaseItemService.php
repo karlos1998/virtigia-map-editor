@@ -96,7 +96,7 @@ final class BaseItemService extends BaseService
                         ]
                     ),
                 ],
-                globalFilterColumns: ['base_items.name', 'base_items.src'],
+                globalFilterColumns: ['name', 'src'],
                 rowsPerPage: [100, 300, 500]
             )
         );
