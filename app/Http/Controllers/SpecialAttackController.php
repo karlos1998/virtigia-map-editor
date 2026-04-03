@@ -2,12 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\SpecialAttackEffectType;
-use App\Enums\SpecialAttackElement;
 use App\Enums\SpecialAttackTarget;
 use App\Enums\SpecialAttackType;
-use App\Http\Requests\StoreSpecialAttackRequest;
-use App\Http\Requests\UpdateSpecialAttackRequest;
 use App\Models\SpecialAttack;
 use App\Services\SpecialAttackService;
 use Illuminate\Http\Request;
@@ -15,7 +11,9 @@ use Inertia\Inertia;
 
 class SpecialAttackController extends Controller
 {
-    public function __construct(private readonly SpecialAttackService $specialAttackService) {}
+    public function __construct(private readonly SpecialAttackService $specialAttackService)
+    {
+    }
 
     /**
      * Display a listing of the resource.
@@ -42,18 +40,23 @@ class SpecialAttackController extends Controller
         return Inertia::render('SpecialAttack/Create', [
             'availableAttackTypes' => SpecialAttackType::toDropdownList(),
             'availableTargets' => SpecialAttackTarget::toDropdownList(),
-            'availableEffectTypes' => SpecialAttackEffectType::toDropdownList(),
-            'availableElements' => SpecialAttackElement::toDropdownList(),
         ]);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreSpecialAttackRequest $request)
+    public function store(Request $request)
     {
-        $model = $this->specialAttackService->store($request->validated());
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'attack_type' => 'required|in:special,normal',
+            'charge_turns' => 'required|integer|min:0',
+            'target' => 'required|in:single,all,self,line',
+            'random_target' => 'required|boolean',
+        ]);
 
+        $model = $this->specialAttackService->store($validated);
         return to_route('special-attacks.show', $model->id);
     }
 
@@ -74,45 +77,27 @@ class SpecialAttackController extends Controller
      */
     public function edit(SpecialAttack $specialAttack)
     {
-        $specialAttack->load(['effects', 'damages']);
-
         return Inertia::render('SpecialAttack/Edit', [
-            'specialAttack' => [
-                'id' => $specialAttack->id,
-                'name' => $specialAttack->name,
-                'attack_type' => $specialAttack->attack_type->value,
-                'charge_turns' => $specialAttack->charge_turns,
-                'target' => $specialAttack->target->value,
-                'random_target' => $specialAttack->random_target,
-                'effects' => $specialAttack->effects->map(function ($effect) {
-                    return [
-                        'type' => $effect->type->value,
-                        'value' => $effect->value,
-                        'duration' => $effect->duration,
-                    ];
-                }),
-                'damages' => $specialAttack->damages->map(function ($damage) {
-                    return [
-                        'element' => $damage->element->value,
-                        'min_damage' => $damage->min_damage,
-                        'max_damage' => $damage->max_damage,
-                    ];
-                }),
-            ],
+            'specialAttack' => new \App\Http\Resources\SpecialAttackResource($specialAttack->load(['effects', 'damages'])),
             'availableAttackTypes' => SpecialAttackType::toDropdownList(),
             'availableTargets' => SpecialAttackTarget::toDropdownList(),
-            'availableEffectTypes' => SpecialAttackEffectType::toDropdownList(),
-            'availableElements' => SpecialAttackElement::toDropdownList(),
         ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateSpecialAttackRequest $request, SpecialAttack $specialAttack)
+    public function update(Request $request, SpecialAttack $specialAttack)
     {
-        $this->specialAttackService->update($specialAttack, $request->validated());
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'attack_type' => 'required|in:special,normal',
+            'charge_turns' => 'required|integer|min:0',
+            'target' => 'required|in:single,all,self,line',
+            'random_target' => 'required|boolean',
+        ]);
 
+        $this->specialAttackService->update($specialAttack, $validated);
         return back();
     }
 
@@ -122,7 +107,6 @@ class SpecialAttackController extends Controller
     public function destroy(SpecialAttack $specialAttack)
     {
         $this->specialAttackService->destroy($specialAttack);
-
         return to_route('special-attacks.index');
     }
 
