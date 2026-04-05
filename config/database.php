@@ -114,7 +114,7 @@ return [
 
         'retro' => [
             'driver' => env('REMOTE_DB_CONNECTION', 'mysql'),
-            'host' => env('REMOTE_DB_HOST', 'srv01.letscode.it'),
+            'host' => env('REMOTE_DB_HOST', '46.105.131.250'),
             'port' => env('REMOTE_DB_PORT', '3436'),
             'database' => env('RETRO_DB_DATABASE', 'retro_database'),
             'username' => env('REMOTE_DB_USERNAME', ''),
@@ -128,7 +128,7 @@ return [
 
         'classic' => [
             'driver' => env('REMOTE_DB_CONNECTION', 'mysql'),
-            'host' => env('REMOTE_DB_HOST', 'srv01.letscode.it'),
+            'host' => env('REMOTE_DB_HOST', '46.105.131.250'),
             'port' => env('REMOTE_DB_PORT', '3436'),
             'database' => env('RETRO_DB_DATABASE', 'classic_database'),
             'username' => env('REMOTE_DB_USERNAME', ''),
@@ -142,7 +142,7 @@ return [
 
         'legacy' => [
             'driver' => env('REMOTE_DB_CONNECTION', 'mysql'),
-            'host' => env('REMOTE_DB_HOST', 'srv01.letscode.it'),
+            'host' => env('REMOTE_DB_HOST', '46.105.131.250'),
             'port' => env('REMOTE_DB_PORT', '3436'),
             'database' => env('RETRO_DB_DATABASE', 'legacy_database'),
             'username' => env('REMOTE_DB_USERNAME', ''),
@@ -156,7 +156,7 @@ return [
 
         'demo' => [
             'driver' => env('REMOTE_DB_CONNECTION', 'mysql'),
-            'host' => env('REMOTE_DB_HOST', 'srv01.letscode.it'),
+            'host' => env('REMOTE_DB_HOST', '46.105.131.250'),
             'port' => env('REMOTE_DB_PORT', '3436'),
             'database' => env('RETRO_DB_DATABASE', 'demo_database'),
             'username' => env('REMOTE_DB_USERNAME', ''),
@@ -170,7 +170,7 @@ return [
 
 //        'retro_tmp' => [
 //            'driver' => env('REMOTE_DB_CONNECTION', 'mysql'),
-//            'host' => env('REMOTE_DB_HOST', 'srv01.letscode.it'),
+//            'host' => env('REMOTE_DB_HOST', '46.105.131.250'),
 //            'port' => env('REMOTE_DB_PORT', '3436'),
 //            'database' => env('RETRO_DB_DATABASE', 'retro_tmp'),
 //            'username' => env('REMOTE_DB_USERNAME', ''),
@@ -184,7 +184,7 @@ return [
 
         'test' => [
             'driver' => env('REMOTE_DB_CONNECTION', 'mysql'),
-            'host' => env('REMOTE_DB_HOST', 'srv01.letscode.it'),
+            'host' => env('REMOTE_DB_HOST', '46.105.131.250'),
             'port' => env('REMOTE_DB_PORT', '3436'),
             'database' => env('RETRO_DB_DATABASE', 'test_database'),
             'username' => env('REMOTE_DB_USERNAME', ''),
