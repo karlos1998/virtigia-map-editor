@@ -42,4 +42,7 @@ enum DialogNodeAdditionalAction: string
 
     #[Description('Wyzeruj licznik')]
     case RESET_DIALOG_COUNTER = 'resetDialogCounter';
+
+    #[Description('Resetuj rozdane punkty cech')]
+    case RESET_ADDITIONAL_ATTRIBUTE_POINTS = 'resetAdditionalAttributePoints';
 }

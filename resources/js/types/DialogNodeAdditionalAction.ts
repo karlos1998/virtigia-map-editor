@@ -8,4 +8,5 @@ export enum DialogNodeAdditionalAction {
     setOutfit = 'setOutfit',
     addDialogCounter = 'addDialogCounter',
     resetDialogCounter = 'resetDialogCounter',
+    resetAdditionalAttributePoints = 'resetAdditionalAttributePoints',
 }

@@ -274,6 +274,8 @@ const addAdditionalAction = () => {
         // duration will be set separately
     } else if (newAdditionalAction.value == DialogNodeAdditionalAction.addDialogCounter) {
         value = null;
+    } else if (newAdditionalAction.value == DialogNodeAdditionalAction.resetAdditionalAttributePoints) {
+        value = 1;
     }
 
     form.additional_actions[newAdditionalAction.value] = {
@@ -442,7 +444,7 @@ watch(currentOutfitSrc, async (value) => {
 
         <Textarea v-model="form.content" rows="5" cols="50" />
 
-        <InputGroup v-for="(_, name) in form.additional_actions">
+        <InputGroup v-for="name in Object.keys(form.additional_actions)" :key="name">
 
             <Button icon="pi pi-times" severity="danger" aria-label="Cancel"  @click="delete form.additional_actions[name]" />
 
