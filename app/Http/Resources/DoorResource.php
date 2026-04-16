@@ -17,11 +17,19 @@ class DoorResource extends JsonResource
         return [
             ...parent::toArray($request),
 
-            'name' => $this->resource->targetMap->name,
+            'name' => $this->resource->targetMap?->name ?? 'Brak mapy docelowej',
 
             'double_sided' => $this->resource->doubleSided(),
 
-            'required_base_item' => $this->whenLoaded('requiredBaseItem', function() {
+            'map' => $this->whenLoaded('map', function () {
+                return MapResource::make($this->resource->map);
+            }),
+
+            'target_map' => $this->whenLoaded('targetMap', function () {
+                return MapResource::make($this->resource->targetMap);
+            }),
+
+            'required_base_item' => $this->whenLoaded('requiredBaseItem', function () {
                 return BaseItemResource::make($this->resource->requiredBaseItem);
             }),
         ];

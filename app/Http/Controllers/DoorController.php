@@ -7,25 +7,35 @@ use App\Http\Requests\StoreDoorRequest;
 use App\Http\Requests\UpdateDoorLevelRequest;
 use App\Http\Requests\UpdateDoorLevelRestrictionsRequest;
 use App\Http\Requests\UpdateDoorRequiredItemRequest;
+use App\Http\Resources\DoorResource;
 use App\Models\Door;
+use App\Models\Map;
 use App\Services\DoorService;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class DoorController extends Controller
 {
-
-    public function __construct(private readonly DoorService $doorService)
-    {
-    }
+    public function __construct(private readonly DoorService $doorService) {}
 
     public function titanDoors()
     {
         $titanDoors = $this->doorService->getTitanDoors();
 
         return Inertia::render('Door/TitanDoors', [
-            'doors' => $titanDoors
+            'doors' => $titanDoors,
         ]);
+    }
+
+    public function byMap(Map $map)
+    {
+        $doors = Door::query()
+            ->where('map_id', $map->id)
+            ->with(['map', 'targetMap', 'requiredBaseItem'])
+            ->orderBy('x')
+            ->orderBy('y')
+            ->get();
+
+        return response()->json(DoorResource::collection($doors));
     }
 
     public function store(StoreDoorRequest $request)

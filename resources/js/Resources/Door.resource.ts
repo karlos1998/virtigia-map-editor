@@ -1,3 +1,6 @@
+import { BaseItemResource } from "@/Resources/BaseItem.resource";
+import { MapResource } from "@/Resources/Map.resource";
+
 export interface DoorResource {
     id: number
     map_id: number
@@ -11,4 +14,7 @@ export interface DoorResource {
 
     name: string
     double_sided: boolean
+    map?: MapResource | null
+    target_map?: MapResource | null
+    required_base_item?: BaseItemResource | null
 }

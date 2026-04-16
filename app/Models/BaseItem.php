@@ -79,11 +79,17 @@ class BaseItem extends DynamicModel
         return $this->hasOne(BaseItemUsageView::class, 'base_item_id');
     }
 
+    public function hotelRooms()
+    {
+        return $this->hasMany(HotelRoom::class, 'base_item_id');
+    }
+
     public function isInUse()
     {
         return $this->shops()->exists() ||
             $this->baseNpcs()->exists() ||
-            $this->dialogs()->exists();
+            $this->dialogs()->exists() ||
+            $this->hotelRooms()->exists();
     }
 
     /**

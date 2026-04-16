@@ -56,6 +56,11 @@ const model = ref([
                 route: 'shops.index',
             },
             {
+                label: 'Hotele',
+                icon: 'pi pi-building',
+                route: 'hotels.index',
+            },
+            {
                 label: 'Bazowe Przedmioty',
                 icon: 'pi pi-box',
                 route: 'base-items.index',

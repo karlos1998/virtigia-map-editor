@@ -9,6 +9,7 @@ use App\Http\Controllers\CalendarDayController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DialogController;
 use App\Http\Controllers\DoorController;
+use App\Http\Controllers\HotelController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\NpcController;
@@ -171,6 +172,16 @@ Route::middleware(['auth'])->group(function () {
                     Route::delete('shops/{shop}/items/{position}', [ShopController::class, 'destroyItem'])->name('shops.items.destroy');
                     Route::post('shops/{shop}/toggle-binds-items-permanently', [ShopController::class, 'toggleBindsItemsPermanently'])->name('shops.toggle-binds-items-permanently');
 
+                    Route::get('hotels', [HotelController::class, 'index'])->name('hotels.index');
+                    Route::get('hotels/create', [HotelController::class, 'create'])->name('hotels.create');
+                    Route::post('hotels', [HotelController::class, 'store'])->name('hotels.store');
+                    Route::get('hotels/{hotel}', [HotelController::class, 'show'])->name('hotels.show');
+                    Route::patch('hotels/{hotel}', [HotelController::class, 'update'])->name('hotels.update');
+                    Route::delete('hotels/{hotel}', [HotelController::class, 'destroy'])->name('hotels.destroy');
+                    Route::post('hotels/{hotel}/rooms', [HotelController::class, 'storeRoom'])->name('hotels.rooms.store');
+                    Route::patch('hotels/{hotel}/rooms/{hotelRoom}', [HotelController::class, 'updateRoom'])->name('hotels.rooms.update');
+                    Route::delete('hotels/{hotel}/rooms/{hotelRoom}', [HotelController::class, 'destroyRoom'])->name('hotels.rooms.destroy');
+
                     // Quest routes
                     Route::get('quests', [QuestController::class, 'index'])->name('quests.index');
                     Route::post('quests', [QuestController::class, 'store'])->name('quests.store');
@@ -242,6 +253,7 @@ Route::middleware(['auth'])->group(function () {
                     Route::get('assets/sign-url', [AssetController::class, 'signUrl'])->name('assets.sign-url');
 
                     Route::post('doors', [DoorController::class, 'store'])->name('doors.store');
+                    Route::get('maps/{map}/doors', [DoorController::class, 'byMap'])->name('doors.by-map');
                     Route::patch('doors/{door}/move', [DoorController::class, 'move'])->name('doors.move');
                     Route::patch('doors/{door}/level', [DoorController::class, 'updateLevel'])->name('doors.level.update');
                     Route::patch('doors/{door}/required-item', [DoorController::class, 'updateRequiredItem'])->name('doors.required-item.update');
