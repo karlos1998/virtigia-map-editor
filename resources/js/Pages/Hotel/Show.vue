@@ -94,6 +94,7 @@ const removeRoom = (room: HotelRoomResource): void => {
             :hotel-id="hotel.id"
             :room="editedRoom"
             :template-room="templateRoom"
+            :rooms="rooms"
             @closed="editedRoom = null; templateRoom = null"
         />
 

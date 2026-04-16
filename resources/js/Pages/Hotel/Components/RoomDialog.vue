@@ -6,7 +6,7 @@ import { MapResource } from "@/Resources/Map.resource";
 import { useForm } from "@inertiajs/vue3";
 import axios from "axios";
 import { useToast } from "primevue/usetoast";
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { route } from "ziggy-js";
 
 const visible = defineModel<boolean>("visible", { default: false });
@@ -15,6 +15,7 @@ const props = defineProps<{
     hotelId: number
     room?: HotelRoomResource | null
     templateRoom?: HotelRoomResource | null
+    rooms: HotelRoomResource[]
 }>()
 
 const emit = defineEmits<{
@@ -36,6 +37,10 @@ const itemSuggestions = ref<BaseItemResource[]>([])
 const mapSuggestions = ref<MapResource[]>([])
 const doors = ref<DoorResource[]>([])
 const isLoadingDoors = ref(false)
+
+const occupiedRooms = computed(() => {
+    return props.rooms.filter((hotelRoom) => hotelRoom.id !== props.room?.id)
+})
 
 const resetState = async (): Promise<void> => {
     const sourceRoom = props.room ?? props.templateRoom ?? null
@@ -128,6 +133,27 @@ const clearMap = (): void => {
     doors.value = []
 }
 
+const getRoomUsingDoor = (doorId: number): HotelRoomResource | undefined => {
+    return occupiedRooms.value.find((hotelRoom) => hotelRoom.door_id === doorId)
+}
+
+const isDoorOccupied = (doorId: number): boolean => {
+    return Boolean(getRoomUsingDoor(doorId))
+}
+
+const getDoorOccupancyTooltip = (doorId: number): string => {
+    const occupiedRoom = getRoomUsingDoor(doorId)
+
+    if (!occupiedRoom) {
+        return ""
+    }
+
+    const roomName = occupiedRoom.door?.name ?? `Pokój #${occupiedRoom.id}`
+    const keyName = occupiedRoom.base_item ? `[${occupiedRoom.base_item.id}] ${occupiedRoom.base_item.name}` : "brak klucza"
+
+    return `Te drzwi są już użyte przez ${roomName}. Klucz: ${keyName}.`
+}
+
 const submit = (): void => {
     const options = {
         preserveScroll: true,
@@ -185,11 +211,43 @@ const submit = (): void => {
                 >
                     <template #option="{ option }">
                         <div class="flex items-center gap-3">
-                            <img :src="option.src" class="h-10 w-10 object-cover" :alt="option.name" />
+                            <img
+                                :src="option.src"
+                                class="h-10 w-10 object-cover"
+                                :alt="option.name"
+                                v-tip.item.top.show-id="option"
+                            />
                             <span>[{{ option.id }}] {{ option.name }}</span>
                         </div>
                     </template>
+                    <template #value="{ value }">
+                        <div v-if="value" class="flex items-center gap-3">
+                            <img
+                                :src="value.src"
+                                class="h-10 w-10 object-cover"
+                                :alt="value.name"
+                                v-tip.item.top.show-id="value"
+                            />
+                            <span>[{{ value.id }}] {{ value.name }}</span>
+                        </div>
+                    </template>
                 </AutoComplete>
+
+                <div
+                    v-if="selectedItem"
+                    class="mt-4 flex items-center gap-3 rounded-lg border border-surface-200 bg-white p-3 dark:border-surface-700 dark:bg-surface-950"
+                >
+                    <img
+                        :src="selectedItem.src"
+                        class="h-12 w-12 object-cover"
+                        :alt="selectedItem.name"
+                        v-tip.item.top.show-id="selectedItem"
+                    />
+                    <div>
+                        <div class="text-xs uppercase tracking-wide text-surface-500 dark:text-surface-400">Wybrany klucz</div>
+                        <div class="font-semibold">[{{ selectedItem.id }}] {{ selectedItem.name }}</div>
+                    </div>
+                </div>
 
                 <Message v-if="form.errors.base_item_id" severity="error" size="small" variant="simple">
                     {{ form.errors.base_item_id }}
@@ -254,18 +312,40 @@ const submit = (): void => {
                             class="rounded-xl border p-4 text-left transition"
                             :class="selectedDoorId === door.id
                                 ? 'border-primary-500 bg-primary-50 dark:bg-primary-950/40'
-                                : 'border-surface-200 bg-white hover:border-primary-300 dark:border-surface-700 dark:bg-surface-900'"
+                                : isDoorOccupied(door.id)
+                                    ? 'border-surface-300 bg-surface-100 hover:border-surface-400 dark:border-surface-600 dark:bg-surface-800'
+                                    : 'border-surface-200 bg-white hover:border-primary-300 dark:border-surface-700 dark:bg-surface-900'"
                             @click="selectedDoorId = door.id"
                         >
                             <div class="mb-2 flex items-start justify-between gap-3">
-                                <div class="font-semibold">{{ door.name }}</div>
-                                <Tag :value="`#${door.id}`" severity="contrast" />
+                                <div class="flex items-center gap-2">
+                                    <span class="font-semibold">{{ door.name }}</span>
+                                    <i
+                                        v-if="isDoorOccupied(door.id)"
+                                        class="pi pi-exclamation-triangle text-amber-500"
+                                        v-tooltip.top="getDoorOccupancyTooltip(door.id)"
+                                    />
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <Tag
+                                        v-if="isDoorOccupied(door.id)"
+                                        value="Zajęte"
+                                        severity="secondary"
+                                    />
+                                    <Tag :value="`#${door.id}`" severity="contrast" />
+                                </div>
                             </div>
                             <div class="text-sm text-surface-500 dark:text-surface-400">
                                 Drzwi na mapie: ({{ door.x }}, {{ door.y }})
                             </div>
                             <div class="text-sm text-surface-500 dark:text-surface-400">
                                 Prowadzą do: {{ door.target_map?.name ?? door.name }}
+                            </div>
+                            <div
+                                v-if="isDoorOccupied(door.id)"
+                                class="mt-2 text-sm text-surface-600 dark:text-surface-300"
+                            >
+                                Już przypisane do innego pokoju w tym hotelu.
                             </div>
                         </button>
                     </div>
