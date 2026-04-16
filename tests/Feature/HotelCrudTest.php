@@ -87,6 +87,8 @@ class HotelCrudTest extends TestCase
         Schema::connection('retro')->create('hotels', function (Blueprint $table): void {
             $table->id();
             $table->string('name');
+            $table->string('currency')->default('dragonTear');
+            $table->string('period')->default('month');
             $table->timestamps();
         });
 
@@ -95,6 +97,7 @@ class HotelCrudTest extends TestCase
             $table->foreignId('hotel_id')->constrained('hotels')->cascadeOnDelete();
             $table->foreignId('base_item_id')->constrained('base_items');
             $table->foreignId('door_id')->constrained('doors');
+            $table->integer('price')->default(0);
             $table->timestamps();
             $table->unique(['hotel_id', 'door_id']);
         });
@@ -178,6 +181,8 @@ class HotelCrudTest extends TestCase
             ->withSession(['world' => 'retro'])
             ->post(route('hotels.store'), [
                 'name' => 'Zajazd u Makiny',
+                'currency' => 'dragonTear',
+                'period' => 'month',
             ])
             ->assertRedirect();
 
@@ -187,6 +192,7 @@ class HotelCrudTest extends TestCase
             ->withSession(['world' => 'retro'])
             ->post(route('hotels.rooms.store', ['hotel' => $hotelId]), [
                 'base_item_id' => 1,
+                'price' => 250,
                 'door_id' => 1,
             ])
             ->assertRedirect();
@@ -194,11 +200,14 @@ class HotelCrudTest extends TestCase
         $this->assertDatabaseHas('hotels', [
             'id' => $hotelId,
             'name' => 'Zajazd u Makiny',
+            'currency' => 'dragonTear',
+            'period' => 'month',
         ], 'retro');
 
         $this->assertDatabaseHas('hotel_rooms', [
             'hotel_id' => $hotelId,
             'base_item_id' => 1,
+            'price' => 250,
             'door_id' => 1,
         ], 'retro');
     }

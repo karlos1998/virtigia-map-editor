@@ -6,6 +6,7 @@ export interface HotelRoomResource {
     hotel_id: number
     base_item_id: number
     door_id: number
+    price: number
     base_item?: BaseItemResource | null
     door?: DoorResource | null
     created_at?: string
@@ -15,6 +16,8 @@ export interface HotelRoomResource {
 export interface HotelResource {
     id: number
     name: string
+    currency: string
+    period: string
     rooms_count: number
     rooms?: HotelRoomResource[]
     created_at?: string

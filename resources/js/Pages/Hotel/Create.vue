@@ -1,10 +1,18 @@
 <script setup lang="ts">
+import { DropdownListType } from "@/Resources/DropdownList.type";
 import AppLayout from "@/layout/AppLayout.vue";
-import { useForm, Link } from "@inertiajs/vue3";
+import { useForm, Link, usePage } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
+
+const { currencyList, periodList } = usePage<{
+    currencyList: DropdownListType
+    periodList: DropdownListType
+}>().props
 
 const form = useForm({
     name: "",
+    currency: "dragonTear",
+    period: "month",
 })
 
 const submit = (): void => {
@@ -30,6 +38,38 @@ const submit = (): void => {
                         <Message v-if="form.errors.name" severity="error" size="small" variant="simple">
                             {{ form.errors.name }}
                         </Message>
+                    </div>
+
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div class="flex flex-col gap-2">
+                            <label for="currency" class="font-semibold">Waluta hotelu</label>
+                            <Dropdown
+                                input-id="currency"
+                                v-model="form.currency"
+                                :options="currencyList"
+                                optionLabel="label"
+                                optionValue="value"
+                                class="w-full"
+                            />
+                            <Message v-if="form.errors.currency" severity="error" size="small" variant="simple">
+                                {{ form.errors.currency }}
+                            </Message>
+                        </div>
+
+                        <div class="flex flex-col gap-2">
+                            <label for="period" class="font-semibold">Okres</label>
+                            <Dropdown
+                                input-id="period"
+                                v-model="form.period"
+                                :options="periodList"
+                                optionLabel="label"
+                                optionValue="value"
+                                class="w-full"
+                            />
+                            <Message v-if="form.errors.period" severity="error" size="small" variant="simple">
+                                {{ form.errors.period }}
+                            </Message>
+                        </div>
                     </div>
 
                     <div class="flex justify-end gap-2">

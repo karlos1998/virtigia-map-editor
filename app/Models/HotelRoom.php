@@ -10,6 +10,7 @@ class HotelRoom extends DynamicModel
         'hotel_id',
         'base_item_id',
         'door_id',
+        'price',
     ];
 
     public function hotel(): BelongsTo

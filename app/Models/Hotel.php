@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\BaseItemCurrency;
+use App\Enums\HotelPeriod;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
@@ -9,6 +11,13 @@ class Hotel extends DynamicModel
 {
     protected $fillable = [
         'name',
+        'currency',
+        'period',
+    ];
+
+    protected $casts = [
+        'currency' => BaseItemCurrency::class,
+        'period' => HotelPeriod::class,
     ];
 
     public function rooms(): HasMany

@@ -16,6 +16,8 @@ class HotelResource extends JsonResource
         return [
             'id' => $this->resource->id,
             'name' => $this->resource->name,
+            'currency' => $this->resource->currency?->value,
+            'period' => $this->resource->period?->value,
             'rooms_count' => $this->resource->rooms_count ?? $this->resource->rooms()->count(),
             'rooms' => $this->whenLoaded('rooms', function () {
                 return HotelRoomResource::collection($this->resource->rooms);

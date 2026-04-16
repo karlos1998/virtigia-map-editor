@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import RoomDialog from "@/Pages/Hotel/Components/RoomDialog.vue";
+import { DropdownListType } from "@/Resources/DropdownList.type";
 import { HotelResource, HotelRoomResource } from "@/Resources/Hotel.resource";
 import AppLayout from "@/layout/AppLayout.vue";
-import { Link, router, useForm } from "@inertiajs/vue3";
+import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { useToast } from "primevue/usetoast";
 import { computed, ref } from "vue";
 import { route } from "ziggy-js";
+
+const { currencyList, periodList } = usePage<{
+    currencyList: DropdownListType
+    periodList: DropdownListType
+}>().props
 
 const props = defineProps<{
     hotel: HotelResource
@@ -15,6 +21,8 @@ const toast = useToast()
 
 const hotelForm = useForm({
     name: props.hotel.name,
+    currency: props.hotel.currency,
+    period: props.hotel.period,
 })
 
 const isRoomDialogVisible = ref(false)
@@ -128,8 +136,40 @@ const removeRoom = (room: HotelRoomResource): void => {
                     </Message>
                 </div>
 
+                <div class="mt-4 grid gap-4">
+                    <div class="flex flex-col gap-2">
+                        <label for="hotel-currency" class="font-semibold">Waluta</label>
+                        <Dropdown
+                            input-id="hotel-currency"
+                            v-model="hotelForm.currency"
+                            :options="currencyList"
+                            optionLabel="label"
+                            optionValue="value"
+                            class="w-full"
+                        />
+                        <Message v-if="hotelForm.errors.currency" severity="error" size="small" variant="simple">
+                            {{ hotelForm.errors.currency }}
+                        </Message>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label for="hotel-period" class="font-semibold">Okres</label>
+                        <Dropdown
+                            input-id="hotel-period"
+                            v-model="hotelForm.period"
+                            :options="periodList"
+                            optionLabel="label"
+                            optionValue="value"
+                            class="w-full"
+                        />
+                        <Message v-if="hotelForm.errors.period" severity="error" size="small" variant="simple">
+                            {{ hotelForm.errors.period }}
+                        </Message>
+                    </div>
+                </div>
+
                 <div class="mt-4 flex justify-end">
-                    <Button label="Zapisz nazwę" icon="pi pi-save" :loading="hotelForm.processing" @click="saveHotel" />
+                    <Button label="Zapisz hotel" icon="pi pi-save" :loading="hotelForm.processing" @click="saveHotel" />
                 </div>
             </div>
 
@@ -174,10 +214,10 @@ const removeRoom = (room: HotelRoomResource): void => {
                                     />
                                     <div>
                                         <div class="font-semibold">
-                                            {{ room.base_item ? `[${room.base_item.id}] ${room.base_item.name}` : 'Brak klucza' }}
+                                        {{ room.base_item ? `[${room.base_item.id}] ${room.base_item.name}` : 'Brak klucza' }}
                                         </div>
                                         <div class="text-sm text-surface-500 dark:text-surface-400">
-                                            Klucz potrzebny do wejścia
+                                            Klucz potrzebny do wejścia · Cena: {{ room.price }}
                                         </div>
                                     </div>
                                 </div>

@@ -26,6 +26,7 @@ const toast = useToast()
 
 const form = useForm({
     base_item_id: null as number | null,
+    price: 0,
     door_id: null as number | null,
 })
 
@@ -50,6 +51,7 @@ const resetState = async (): Promise<void> => {
     selectedDoorId.value = props.room?.door_id ?? null
 
     form.base_item_id = selectedItem.value?.id ?? null
+    form.price = sourceRoom?.price ?? 0
     form.door_id = selectedDoorId.value
     form.clearErrors()
 
@@ -255,6 +257,22 @@ const submit = (): void => {
             </div>
 
             <div class="rounded-xl border border-surface-200 bg-surface-50 p-4 dark:border-surface-700 dark:bg-surface-900">
+                <div class="mb-2 font-semibold">Cena pokoju</div>
+
+                <InputNumber
+                    v-model="form.price"
+                    :min="0"
+                    :step="1"
+                    :useGrouping="false"
+                    fluid
+                />
+
+                <Message v-if="form.errors.price" severity="error" size="small" variant="simple">
+                    {{ form.errors.price }}
+                </Message>
+            </div>
+
+            <div class="rounded-xl border border-surface-200 bg-surface-50 p-4 dark:border-surface-700 dark:bg-surface-900">
                 <div class="mb-3 flex items-center justify-between gap-3">
                     <div>
                         <div class="font-semibold">Mapa z drzwiami</div>
@@ -367,7 +385,7 @@ const submit = (): void => {
                     label="Zapisz"
                     icon="pi pi-check"
                     :loading="form.processing"
-                    :disabled="!form.base_item_id || !form.door_id"
+                    :disabled="!form.base_item_id || form.price === null || form.price < 0 || !form.door_id"
                     @click="submit"
                 />
             </div>

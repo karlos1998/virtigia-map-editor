@@ -21,6 +21,7 @@ class UpdateHotelRoomRequest extends FormRequest
 
         return [
             'base_item_id' => ['required', 'integer', "exists:{$this->selectedDatabase}.base_items,id"],
+            'price' => ['required', 'integer', 'min:0'],
             'door_id' => [
                 'required',
                 'integer',

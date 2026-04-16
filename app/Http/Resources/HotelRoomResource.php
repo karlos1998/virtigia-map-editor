@@ -18,6 +18,7 @@ class HotelRoomResource extends JsonResource
             'hotel_id' => $this->resource->hotel_id,
             'base_item_id' => $this->resource->base_item_id,
             'door_id' => $this->resource->door_id,
+            'price' => $this->resource->price,
             'base_item' => $this->whenLoaded('baseItem', function () {
                 return BaseItemResource::make($this->resource->baseItem);
             }),

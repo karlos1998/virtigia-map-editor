@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\BaseItemCurrency;
+use App\Enums\HotelPeriod;
 use App\Http\Requests\StoreHotelRequest;
 use App\Http\Requests\StoreHotelRoomRequest;
 use App\Http\Requests\UpdateHotelRequest;
@@ -27,7 +29,10 @@ class HotelController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('Hotel/Create');
+        return Inertia::render('Hotel/Create', [
+            'currencyList' => BaseItemCurrency::toDropdownList(),
+            'periodList' => HotelPeriod::toDropdownList(),
+        ]);
     }
 
     public function store(StoreHotelRequest $request): RedirectResponse
@@ -41,6 +46,8 @@ class HotelController extends Controller
     {
         return Inertia::render('Hotel/Show', [
             'hotel' => HotelResource::make($this->hotelService->getById($hotel)),
+            'currencyList' => BaseItemCurrency::toDropdownList(),
+            'periodList' => HotelPeriod::toDropdownList(),
         ]);
     }
 
