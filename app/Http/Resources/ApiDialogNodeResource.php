@@ -8,7 +8,6 @@ use OpenApi\Attributes as OA;
 
 #[OA\Schema(
     schema: ApiDialogNodeResource::class,
-    type: 'object',
     properties: [
         new OA\Property(property: 'id', type: 'integer'),
         new OA\Property(property: 'type', type: 'string'),
@@ -18,12 +17,15 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'additional_actions', type: 'object', nullable: true),
         new OA\Property(property: 'shop_id', type: 'integer', nullable: true),
         new OA\Property(property: 'shop_name', type: 'string', nullable: true),
+        new OA\Property(property: 'hotel_id', type: 'integer', nullable: true),
+        new OA\Property(property: 'hotel_name', type: 'string', nullable: true),
         new OA\Property(
             property: 'options',
             type: 'array',
             items: new OA\Items(ref: ApiDialogNodeOptionResource::class)
         ),
-    ]
+    ],
+    type: 'object'
 )]
 class ApiDialogNodeResource extends JsonResource
 {
@@ -38,6 +40,8 @@ class ApiDialogNodeResource extends JsonResource
             'additional_actions' => $this->additional_actions,
             'shop_id' => $this->shop_id,
             'shop_name' => $this->shop?->name,
+            'hotel_id' => $this->hotel_id,
+            'hotel_name' => $this->hotel?->name,
             'options' => ApiDialogNodeOptionResource::collection($this->whenLoaded('options')),
         ];
     }

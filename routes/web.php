@@ -85,6 +85,7 @@ Route::middleware(['auth'])->group(function () {
                     Route::delete('dialogs/{dialog}/nodes/{dialogNode}/options/{dialogNodeOption}', [DialogController::class, 'destroyOption'])->name('dialogs.nodes.options.destroy');
                     Route::patch('dialog/{dialog}/nodes/{dialogNode}/action', [DialogController::class, 'updateAction'])->name('dialogs.nodes.action.update');
                     Route::put('dialog/{dialog}/nodes/{dialogNode}/shop', [DialogController::class, 'assignShop'])->name('dialogs.nodes.shop.assign');
+                    Route::put('dialog/{dialog}/nodes/{dialogNode}/hotel', [DialogController::class, 'assignHotel'])->name('dialogs.nodes.hotel.assign');
                     Route::patch('dialogs/{dialog}/nodes/{dialogNode}/start-edges', [DialogController::class, 'updateStartNodeEdges'])->name('dialogs.nodes.start-edges.update');
                     Route::post('dialogs/{dialog}/nodes/{dialogNode}/copy', [DialogController::class, 'copyNode'])->name('dialogs.nodes.copy');
 
@@ -175,6 +176,7 @@ Route::middleware(['auth'])->group(function () {
                     Route::get('hotels', [HotelController::class, 'index'])->name('hotels.index');
                     Route::get('hotels/create', [HotelController::class, 'create'])->name('hotels.create');
                     Route::post('hotels', [HotelController::class, 'store'])->name('hotels.store');
+                    Route::get('hotels/search', [HotelController::class, 'search'])->name('hotels.search');
                     Route::get('hotels/{hotel}', [HotelController::class, 'show'])->name('hotels.show');
                     Route::patch('hotels/{hotel}', [HotelController::class, 'update'])->name('hotels.update');
                     Route::delete('hotels/{hotel}', [HotelController::class, 'destroy'])->name('hotels.destroy');

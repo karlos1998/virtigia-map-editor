@@ -46,6 +46,17 @@ class DialogNodeResource extends JsonResource
                 ],
             ]),
 
+            $this->mergeWhen($this->resource->type == 'hotel', fn () => [
+                'data' => [
+                    'dialog_id' => $this->resource->source_dialog_id,
+                    'hotel' => $this->when($this->resource->hotel()->exists(), fn () => [
+                        'id' => $this->resource->hotel->id,
+                        'name' => $this->resource->hotel->name,
+                        'rooms_count' => $this->resource->hotel->rooms()->count(),
+                    ]),
+                ],
+            ]),
+
             $this->mergeWhen($this->resource->type == 'teleportation', function () {
                 $teleportation = $this->resource->action_data['teleportation'] ?? null;
 

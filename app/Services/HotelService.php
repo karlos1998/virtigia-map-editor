@@ -19,6 +19,15 @@ final readonly class HotelService
             ->get();
     }
 
+    public function search(string $query = ''): Collection
+    {
+        return $this->hotelModel
+            ->newQuery()
+            ->where('name', 'like', '%'.$query.'%')
+            ->limit(10)
+            ->get();
+    }
+
     public function getById(Hotel $hotel): Hotel
     {
         return $hotel->load([

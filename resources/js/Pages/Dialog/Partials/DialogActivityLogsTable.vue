@@ -40,6 +40,8 @@ const formatNodeType = (type: string | null | undefined): string => {
             return 'Losowanie';
         case 'shop':
             return 'Sklep';
+        case 'hotel':
+            return 'Hotel';
         case 'teleportation':
             return 'Teleport';
         default:
@@ -146,6 +148,8 @@ const getFieldLabel = (field: string): string => {
             return 'Kolejność';
         case 'shop_id':
             return 'Sklep';
+        case 'hotel_id':
+            return 'Hotel';
         default:
             return field;
     }

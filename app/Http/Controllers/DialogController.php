@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\DialogNodeAdditionalAction;
 use App\Enums\DialogNodeOptionAdditionalAction;
 use App\Enums\DialogNodeOptionRule;
+use App\Http\Requests\AssignHotelToDialogNodeRequest;
 use App\Http\Requests\AssignShopToDialogNodeRequest;
 use App\Http\Requests\MoveDialogNodeRequest;
 use App\Http\Requests\StoreDialogEdgeRequest;
@@ -69,7 +70,7 @@ class DialogController extends Controller
                     $query->with(['edges' => function ($query) {
                         $query->with('targetNode');
                     }]);
-                }, 'shop']);
+                }, 'shop', 'hotel']);
             },
             'edges' => function ($query) {
                 $query->with(['sourceOption' => function ($query) {
@@ -183,6 +184,18 @@ class DialogController extends Controller
     public function assignShop(Dialog $dialog, DialogNode $dialogNode, AssignShopToDialogNodeRequest $request)
     {
         $node = $this->dialogService->assignShop($dialog, $dialogNode, $request->get('shop_id'));
+
+        return response()->json([
+            'dialogNode' => DialogNodeResource::make($node),
+        ]);
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    public function assignHotel(Dialog $dialog, DialogNode $dialogNode, AssignHotelToDialogNodeRequest $request): JsonResponse
+    {
+        $node = $this->dialogService->assignHotel($dialog, $dialogNode, $request->get('hotel_id'));
 
         return response()->json([
             'dialogNode' => DialogNodeResource::make($node),

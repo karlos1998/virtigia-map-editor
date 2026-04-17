@@ -13,6 +13,7 @@ use App\Models\Hotel;
 use App\Models\HotelRoom;
 use App\Services\HotelService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -86,5 +87,10 @@ class HotelController extends Controller
         $this->hotelService->deleteRoom($hotelRoom);
 
         return to_route('hotels.show', $hotel->id);
+    }
+
+    public function search(Request $request)
+    {
+        return response()->json($this->hotelService->search($request->get('query', '')));
     }
 }

@@ -108,8 +108,8 @@ class DialogController extends Controller
         path: '/api/v1/dialogs/{dialogId}',
         operationId: 'getDialogById',
         summary: 'Pobranie pojedynczego dialogu razem z grafem (nodes/options/edges)',
-        tags: ['Dialogs'],
         security: [['bearerAuth' => [], 'worldHeader' => []]],
+        tags: ['Dialogs'],
         parameters: [
             new OA\Parameter(
                 name: 'dialogId',
@@ -136,6 +136,7 @@ class DialogController extends Controller
                 'npcs.locations',
                 'nodes' => fn ($query) => $query->with([
                     'shop',
+                    'hotel',
                     'options' => fn ($optionQuery) => $optionQuery->with([
                         'edges.targetNode',
                     ]),

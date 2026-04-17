@@ -12,7 +12,7 @@ class DialogNode extends DynamicModel
 {
     use HasFactory, JsonQueryHelpers;
 
-    protected $fillable = ['content', 'type', 'position', 'action_data', 'additional_actions'];
+    protected $fillable = ['content', 'type', 'position', 'action_data', 'additional_actions', 'shop_id', 'hotel_id'];
 
     protected $casts = [
         'position' => 'json',
@@ -33,6 +33,11 @@ class DialogNode extends DynamicModel
     public function shop()
     {
         return $this->hasOne(Shop::class, 'id', 'shop_id');
+    }
+
+    public function hotel()
+    {
+        return $this->hasOne(Hotel::class, 'id', 'hotel_id');
     }
 
     public function sourceEdges(): HasMany

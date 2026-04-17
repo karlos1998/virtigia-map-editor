@@ -306,6 +306,20 @@ class DialogService extends BaseService
         return $dialogNode;
     }
 
+    public function assignHotel(Dialog $dialog, DialogNode $dialogNode, int $hotelId): DialogNode
+    {
+        if ($dialogNode->type != 'hotel') {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'message' => 'Hotel może zostać podpięty wyłącznie do kwestii dialogowej typu "hotel".',
+            ]);
+        }
+
+        $dialogNode->hotel_id = $hotelId;
+        $dialogNode->save();
+
+        return $dialogNode;
+    }
+
     public function search(string $query = '')
     {
         return $this->dialogModel->where('name', 'like', '%'.$query.'%')->limit(10)->get();
@@ -351,6 +365,7 @@ class DialogService extends BaseService
             ],
             'action_data' => $dialogNode->action_data,
             'shop_id' => $dialogNode->shop_id,
+            'hotel_id' => $dialogNode->hotel_id,
         ]);
 
         // Copy all options
@@ -425,6 +440,7 @@ class DialogService extends BaseService
                 'position' => $node->position,
                 'action_data' => $node->action_data,
                 'shop_id' => $node->shop_id,
+                'hotel_id' => $node->hotel_id,
             ]);
 
             $nodeMap[$node->id] = $newNode->id;

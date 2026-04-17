@@ -8,6 +8,7 @@ import SpecialNode from '@/Pages/Dialog/SpecialNode.vue';
 import { Controls } from '@vue-flow/controls';
 import StartNode from '@/Pages/Dialog/StartNode.vue';
 import ShopNode from '@/Pages/Dialog/ShopNode.vue';
+import HotelNode from '@/Pages/Dialog/HotelNode.vue';
 import RandomizerNode from '@/Pages/Dialog/RandomizerNode.vue';
 import DialogEdge from '@/Pages/Dialog/DialogEdge.vue';
 import DialogActivityLogsTable from '@/Pages/Dialog/Partials/DialogActivityLogsTable.vue';
@@ -94,6 +95,8 @@ function nodeStroke(n: NodeProps) {
             return '#f59e0b';
         case 'shop':
             return '#7a1a10';
+        case 'hotel':
+            return '#1f4f64';
         default:
             return '#999';
     }
@@ -109,6 +112,8 @@ function nodeColor(n: NodeProps) {
             return '#f59e0b';
         case 'shop':
             return '#7a1a10';
+        case 'hotel':
+            return '#1f4f64';
         default:
             return '#888';
     }
@@ -374,6 +379,13 @@ const items = ref([
         }
     },
     {
+        label: 'Hotel',
+        icon: 'pi pi-home',
+        command: () => {
+            addNode('hotel');
+        }
+    },
+    {
         label: 'Teleport',
         icon: 'pi pi-forward',
         command: () => {
@@ -510,6 +522,10 @@ const items = ref([
                 <template #node-shop="shopNodeProps">
                     <!--suppress RequiredAttributes -->
                     <ShopNode v-bind="shopNodeProps" />
+                </template>
+                <template #node-hotel="hotelNodeProps">
+                    <!--suppress RequiredAttributes -->
+                    <HotelNode v-bind="hotelNodeProps" />
                 </template>
                 <template #node-randomizer="randomizerNodeProps">
                     <!--suppress RequiredAttributes -->
