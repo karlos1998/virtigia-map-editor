@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue"
 import { usePage } from "@inertiajs/vue3"
-import { debounce } from "@/debounce"
 import { DialogNodeOptionRule } from "@/types/DialogNodeOptionRule"
 import { DropdownListType } from "@/Resources/DropdownList.type"
 import { BaseItemResource } from "@/Resources/BaseItem.resource"
@@ -9,11 +8,10 @@ import { DialogCounterResource } from "@/Resources/DialogCounter.resource"
 import { DialogNodeRulesResource } from "@/Resources/DialogNodeRules.resource"
 import { route } from "ziggy-js"
 import axios from "axios"
-import { MultiSelectFilterEvent } from "primevue"
-import { QuestResource, QuestStepResource } from "@/Resources/Quest.resource"
 import TreeSelectAdapter from "@/Pages/Dialog/Componnts/TreeSelectAdapter.vue";
 import { useQuestStepSelection } from "@/Pages/Dialog/Composables/useQuestStepSelection";
 import InputText from 'primevue/inputtext';
+import BaseItemSearchSelect from "@/Components/BaseItemSearchSelect.vue";
 
 const rules = defineModel<DialogNodeRulesResource>("rules", {
     required: true,
@@ -33,7 +31,7 @@ const availableRules = computed(() =>
     staticAvailableRules.filter(rule => !rules.value[rule.value])
 )
 
-const itemsDropdown = ref<BaseItemResource[]>([])
+const resolvedRuleItems = ref<BaseItemResource[]>([])
 
 // Dialog counters
 const dialogCounters = ref<DialogCounterResource[]>([])
@@ -45,19 +43,6 @@ const loadDialogCounters = async () => {
 
 // Use the quest step selection composable
 const { questNodes, loading, loadQuests, loadQuestStepById, onQuestNodeExpand } = useQuestStepSelection()
-
-const searchItems = debounce(async (query: string, ids: number[]) => {
-    const { data } = await axios.get<BaseItemResource[]>(
-        route("base-items.search", { query, ids })
-    )
-    itemsDropdown.value = data
-}, 500)
-
-const itemsSearchChanged = ({ value }: MultiSelectFilterEvent) => {
-    if (rules.value[DialogNodeOptionRule.items]) {
-        searchItems(value, rules.value[DialogNodeOptionRule.items].value as number[])
-    }
-}
 
 const newRule = ref<DialogNodeOptionRule>()
 
@@ -124,22 +109,7 @@ const saveItemAmounts = () => {
     showItemsAmountModal.value = false
 }
 
-watch(
-    () => rules.value[DialogNodeOptionRule.items]?.value,
-    (value: number[] | undefined) => {
-        if (value) {
-            searchItems("", value)
-        }
-    },
-    { immediate: true }
-)
-
 onMounted(() => {
-    console.log('on mounted')
-    if (rules.value[DialogNodeOptionRule.items]) {
-        searchItems("", rules.value[DialogNodeOptionRule.items].value as number[])
-    }
-
     // Load quests for the TreeSelect
     loadQuests()
 
@@ -240,18 +210,14 @@ watch(
             <b>Wymaga bycia członkiem</b>
         </InputGroupAddon>
 
-        <MultiSelect
+        <BaseItemSearchSelect
             v-if="rules[name] && name === DialogNodeOptionRule.items"
             v-model="rules[name].value"
-            variant="filled"
-            :optionLabel="(item: BaseItemResource) => `[${item.id}] ${item.name} (${item.in_use ? 'W użyciu' : 'Nieużywany'})`"
-            optionValue="id"
-            filter
-            placeholder="Szukaj przedmiotów"
-            :maxSelectedLabels="3"
+            value-mode="id"
+            multiple
+            placeholder="Szukaj przedmiotów (nazwa lub #id)"
             class="w-full md:w-80"
-            @filter="itemsSearchChanged"
-            :options="itemsDropdown"
+            @resolved-items="(items) => resolvedRuleItems = items"
         />
 
         <Button
@@ -340,7 +306,7 @@ watch(
                     [#{{ itemId }}]
                 </div>
                 <div class="text-base font-semibold mb-3">
-                    {{ itemsDropdown.find(i => i.id === itemId)?.name ?? 'Nieznany' }}
+                    {{ resolvedRuleItems.find(i => i.id === itemId)?.name ?? 'Nieznany' }}
                 </div>
                 <InputNumber
                     v-model="itemAmounts[idx]"

@@ -102,12 +102,14 @@ final class BaseItemService extends BaseService
         );
     }
 
-    public function search(string $search = '', ?Collection $ids = null, ?string $category = null)
+    public function search(string $search = '', ?Collection $ids = null, ?string $category = null): Collection
     {
         $idsArray = $ids?->toArray() ?? [];
+        $trimmedSearch = trim($search);
+        $searchedId = $this->extractExactIdFromSearch($trimmedSearch);
 
         // If ids are provided and search is empty, return only those ids (respecting category if set)
-        if (! empty($idsArray) && $search === '') {
+        if (! empty($idsArray) && $trimmedSearch === '') {
             $query = $this->baseItemModel->newQuery()->whereIn('id', $idsArray);
             if ($category) {
                 $query->where('category', $category);
@@ -132,9 +134,59 @@ final class BaseItemService extends BaseService
         if ($category) {
             $searchQuery->where('category', $category);
         }
-        $searchItems = $searchQuery->where('name', 'like', '%'.$search.'%')->limit(30)->get();
+        if ($searchedId !== null) {
+            $searchQuery->where('id', $searchedId);
+        } else {
+            $searchQuery->where('name', 'like', '%'.$trimmedSearch.'%');
+        }
+
+        $searchItems = $searchQuery->orderBy('id')->limit(30)->get();
 
         return $idsResults->merge($searchItems)->unique('id')->values();
+    }
+
+    /**
+     * @return array{items: Collection<int, BaseItem>, hasMore: bool}
+     */
+    public function searchPaginated(string $search = '', ?string $category = null, int $offset = 0, int $limit = 30): array
+    {
+        $normalizedLimit = max(1, min(100, $limit));
+        $normalizedOffset = max(0, $offset);
+        $trimmedSearch = trim($search);
+        $searchedId = $this->extractExactIdFromSearch($trimmedSearch);
+
+        $query = $this->baseItemModel->newQuery();
+        if ($category) {
+            $query->where('category', $category);
+        }
+
+        if ($searchedId !== null) {
+            $query->where('id', $searchedId);
+        } else {
+            $query->where('name', 'like', '%'.$trimmedSearch.'%');
+        }
+
+        $items = $query
+            ->orderBy('id')
+            ->offset($normalizedOffset)
+            ->limit($normalizedLimit + 1)
+            ->get();
+
+        $hasMore = $items->count() > $normalizedLimit;
+
+        return [
+            'items' => $items->take($normalizedLimit)->values(),
+            'hasMore' => $hasMore,
+        ];
+    }
+
+    private function extractExactIdFromSearch(string $search): ?int
+    {
+        if (preg_match('/^\#(\d+)$/', $search, $matches) !== 1) {
+            return null;
+        }
+
+        return (int) $matches[1];
     }
 
     /**

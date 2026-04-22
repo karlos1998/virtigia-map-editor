@@ -15,7 +15,6 @@ use App\Http\Resources\BaseItemResource;
 use App\Models\BaseItem;
 use App\Services\BaseItemService;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Inertia\Inertia;
 use Spatie\Activitylog\Models\Activity;
 
@@ -35,10 +34,31 @@ class BaseItemController extends Controller
 
     public function search(Request $request): \Illuminate\Http\JsonResponse
     {
-        $category = $request->string('category', null);
+        $category = $request->filled('category') ? $request->string('category')->toString() : null;
+        $query = $request->string('query', '')->toString();
+        $ids = $request
+            ->collect('ids')
+            ->filter(fn ($id) => is_numeric($id))
+            ->map(fn ($id) => (int) $id)
+            ->values();
+
+        if ($request->boolean('paginated')) {
+            $offset = max(0, $request->integer('offset', 0));
+            $limit = max(1, min(100, $request->integer('limit', 30)));
+            $results = $this->baseItemService->searchPaginated($query, $category, $offset, $limit);
+
+            return response()->json([
+                'data' => BaseItemResource::collection($results['items']),
+                'meta' => [
+                    'has_more' => $results['hasMore'],
+                    'offset' => $offset,
+                    'limit' => $limit,
+                ],
+            ]);
+        }
 
         return response()->json(BaseItemResource::collection(
-            $this->baseItemService->search($request->string('query', ''), $request->collect('ids'), $category)
+            $this->baseItemService->search($query, $ids, $category)
         ));
     }
 

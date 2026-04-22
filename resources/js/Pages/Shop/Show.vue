@@ -18,9 +18,8 @@ import { itemTip } from "../../old-createItemTip";
 import Item from "@/Components/Item.vue";
 import InputNumber from "primevue/inputnumber";
 import Button from "primevue/button";
-import AutoComplete from "primevue/autocomplete";
-import axios from "axios";
 import Card from "primevue/card";
+import BaseItemSearchSelect from "@/Components/BaseItemSearchSelect.vue";
 
 const props = defineProps<{
     shop: ShopResource
@@ -152,11 +151,6 @@ const buyPricePercent = ref(props.shop.buy_price_percent);
 const sellPricePercent = ref(props.shop.sell_price_percent);
 const maxBuyPrice = ref(props.shop.max_buy_price);
 const currencyItemSelected = ref<BaseItemResource | null>(props.shop.currency_item ?? null);
-const currencySuggestions = ref<BaseItemResource[]>([]);
-const filterCurrencyItems = async ({query}: { query: string }) => {
-    const {data} = await axios.get(route('base-items.search'), {params: {query}});
-    currencySuggestions.value = data;
-};
 const clearCurrencyItem = () => {
     currencyItemSelected.value = null;
 
@@ -287,30 +281,11 @@ const toggleShowAllItems = () => {
                 </div>
                 <div class="field col-12 md:col-4">
                     <label for="currency-item">Przedmiot jako waluta (opcjonalnie)</label>
-                    <AutoComplete
+                    <BaseItemSearchSelect
                         v-model="currencyItemSelected"
-                        :suggestions="currencySuggestions"
-                        @complete="filterCurrencyItems"
-                        placeholder="Szukaj przedmiotu..."
-                        class="w-full"
-                        :option-label="(option: BaseItemResource|null) => option ? `[${option.id}] ${option.name}` : ''"
-                        :dropdown="true"
-                    >
-                        <template #option="{option}">
-                            <div class="name-item flex items-center gap-2 p-1">
-                                <img :src="option.src" class="h-8 w-8 object-cover" v-tip.item.top.show-id="option"
-                                     :alt="option.name"/>
-                                <span class="font-semibold text-gray-800">[{{ option.id }}] {{ option.name }}</span>
-                            </div>
-                        </template>
-                        <template #value="{value}">
-                            <div v-if="value" class="flex items-center gap-2">
-                                <img :src="value.src" class="h-8 w-8 object-cover" v-tip.item.top.show-id="value"
-                                     :alt="value.name"/>
-                                <span class="font-semibold text-gray-800">[{{ value.id }}] {{ value.name }}</span>
-                            </div>
-                        </template>
-                    </AutoComplete>
+                        value-mode="object"
+                        placeholder="Szukaj przedmiotu (nazwa lub #id)"
+                    />
                     <Button text class="ml-2" severity="secondary" @click="clearCurrencyItem"
                             v-if="currencyItemSelected">Wyczyść
                     </Button>

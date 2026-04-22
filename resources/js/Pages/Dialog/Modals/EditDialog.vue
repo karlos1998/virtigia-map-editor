@@ -7,13 +7,12 @@ import {inject, onMounted} from "vue";
 import {DynamicDialogInstance} from "primevue/dynamicdialogoptions";
 import {route} from "ziggy-js";
 import axios from "axios";
-import {MultiSelectFilterEvent, useToast} from "primevue";
+import {useToast} from "primevue";
 import {usePage} from "@inertiajs/vue3";
 import {DropdownListType} from "@/Resources/DropdownList.type";
 import {DialogNodeAdditionalAction} from "@/types/DialogNodeAdditionalAction";
 import {BaseItemResource} from "@/Resources/BaseItem.resource";
 import {DialogNodeAdditionalActionsResource} from "@/Resources/DialogNodeAdditionalActions.resource";
-import {debounce} from "@/debounce";
 import TreeSelectAdapter from "../Componnts/TreeSelectAdapter.vue";
 import { useQuestStepSelection } from "../Composables/useQuestStepSelection";
 import InputSwitch from 'primevue/inputswitch';
@@ -21,6 +20,7 @@ import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import OutfitBrowserDialog from '../../BaseItem/Components/OutfitBrowserDialog.vue';
 import { DialogCounterResource } from "@/Resources/DialogCounter.resource";
+import BaseItemSearchSelect from "@/Components/BaseItemSearchSelect.vue";
 
 const dialogRef = inject<Ref<DynamicDialogInstance & {
     data: {
@@ -43,10 +43,6 @@ onMounted(async () => {
 
     form.content = dialogRef.value.data?.content ?? '';
     form.additional_actions = !Array.isArray(dialogRef.value.data?.additional_actions) ? dialogRef.value.data?.additional_actions ?? {} : {};
-
-    if(form.additional_actions[DialogNodeAdditionalAction.addItems]) {
-        searchItems('', form.additional_actions[DialogNodeAdditionalAction.addItems].value as number[])
-    }
 
     if (form.additional_actions[DialogNodeAdditionalAction.blessing]) {
         const current = form.additional_actions[DialogNodeAdditionalAction.blessing];
@@ -291,35 +287,8 @@ const addAdditionalAction = () => {
 };
 
 /// powtarzajacy sie kod
-
-const itemsDropdown = ref<BaseItemResource[]>([]);
-
-const searchItems = debounce(async (query: string, ids: number[]) => {
-    const { data } = await axios.get<BaseItemResource[]>(route('base-items.search', { query, ids }));
-    itemsDropdown.value = data;
-}, 500);
-
-const itemsSearchChanged = ({ value }: MultiSelectFilterEvent) => {
-    if(form.additional_actions[DialogNodeAdditionalAction.addItems]) {
-        searchItems(value, form.additional_actions[DialogNodeAdditionalAction.addItems].value as number[]);
-    }
-};
-
-// Blessing (single item) search
-const blessingDropdown = ref<BaseItemResource[]>([]);
+const resolvedAddItems = ref<BaseItemResource[]>([]);
 const selectedBlessingItem = ref<BaseItemResource | null>(null);
-
-const searchBlessings = debounce(async (query: string, id?: number | null) => {
-    const ids = id ? [id] : [];
-    const {data} = await axios.get<BaseItemResource[]>(route('base-items.search', {query, ids, category: 'blessings'}));
-    blessingDropdown.value = data;
-
-    return data[0];
-}, 500);
-
-const blessingSearchChanged = async ({query}: { query: string }) => {
-    await searchBlessings(query);
-};
 
 watch(selectedBlessingItem, (newVal) => {
     if (!form.additional_actions[DialogNodeAdditionalAction.blessing]) return;
@@ -470,18 +439,14 @@ watch(currentOutfitSrc, async (value) => {
                 suffix="%"
             />
 
-            <MultiSelect
+            <BaseItemSearchSelect
                 v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.addItems"
                 v-model="form.additional_actions[name].value"
-                variant="filled"
-                :optionLabel="(item: BaseItemResource) => `[${item.id}] ${item.name} (${item.in_use ? 'W użyciu' : 'Nieużywany'})`"
-                option-value="id"
-                filter
-                placeholder="Szukaj przedmiotów"
-                :maxSelectedLabels="3"
+                value-mode="id"
+                multiple
+                placeholder="Szukaj przedmiotów (nazwa lub #id)"
                 class="w-full md:w-80"
-                @filter="itemsSearchChanged"
-                :options="itemsDropdown"
+                @resolved-items="(items) => resolvedAddItems = items"
             />
             <Button
                 v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.addItems"
@@ -509,7 +474,7 @@ watch(currentOutfitSrc, async (value) => {
                     >
                         <div class="text-sm text-gray-500 mb-1 font-medium">[#{{ itemId }}]</div>
                         <div class="text-base font-semibold mb-3">
-                            {{ itemsDropdown.find(i => i.id === itemId)?.name ?? 'Nieznany' }}
+                            {{ resolvedAddItems.find(i => i.id === itemId)?.name ?? 'Nieznany' }}
                         </div>
                         <InputNumber
                             v-model="itemAmounts[idx]"
@@ -531,33 +496,14 @@ watch(currentOutfitSrc, async (value) => {
                 </template>
             </Dialog>
 
-            <AutoComplete
+            <BaseItemSearchSelect
                 v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.blessing"
                 v-model="selectedBlessingItem"
-                :suggestions="blessingDropdown"
-                @complete="blessingSearchChanged"
-                :option-label="(item: BaseItemResource | null) => item?.name || ''"
+                value-mode="object"
+                category="blessings"
+                placeholder="Szukaj błogosławieństwa (nazwa lub #id)"
                 class="w-full p-0"
-                placeholder="Szukaj błogosławieństwa"
-            >
-                <template #option="slotProps">
-                    <div class="name-item flex items-center justify-between">
-                        <div class="flex items-center space-x-4">
-                            <img
-                                class="h-12 w-12 object-cover"
-                                :src="slotProps.option.src"
-                                alt="Option Image"
-                                v-tip.item.top.show-id="slotProps.option"
-                            />
-                            <div class="text-center">
-                                <span class="font-semibold text-gray-800">
-                                    [{{ slotProps.option.id }}] {{ slotProps.option.name }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </template>
-            </AutoComplete>
+            />
 
             <div v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.blessing"
                  class="flex items-center gap-2">
