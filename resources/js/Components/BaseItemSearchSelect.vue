@@ -59,6 +59,28 @@ const currentSelectedItems = computed<BaseItemResource[]>(() => {
     return selectedSingle.value ? [selectedSingle.value] : [];
 });
 
+const getOptionLabel = (item: BaseItemResource | null): string => {
+    if (!item) {
+        return "";
+    }
+
+    return `[${item.id}] ${item.name}`;
+};
+
+const areNumberArraysEqual = (left: number[], right: number[]): boolean => {
+    if (left.length !== right.length) {
+        return false;
+    }
+
+    for (let index = 0; index < left.length; index++) {
+        if (left[index] !== right[index]) {
+            return false;
+        }
+    }
+
+    return true;
+};
+
 const extractIdsFromValue = (value: ItemSearchModelValue): number[] => {
     if (value === null) {
         return [];
@@ -138,17 +160,39 @@ const emitModelValue = (): void => {
 
     if (props.valueMode === "object") {
         if (props.multiple) {
-            emit("update:modelValue", [...selectedMultiple.value]);
+            const currentModelValue = Array.isArray(props.modelValue) ? (props.modelValue as BaseItemResource[]) : [];
+            const nextModelValue = [...selectedMultiple.value];
+
+            const currentIds = currentModelValue.map((item) => item.id);
+            const nextIds = nextModelValue.map((item) => item.id);
+            if (!areNumberArraysEqual(currentIds, nextIds)) {
+                emit("update:modelValue", nextModelValue);
+            }
         } else {
-            emit("update:modelValue", selectedSingle.value);
+            const currentId =
+                props.modelValue && !Array.isArray(props.modelValue) && typeof props.modelValue !== "number"
+                    ? (props.modelValue as BaseItemResource).id
+                    : null;
+            const nextId = selectedSingle.value ? selectedSingle.value.id : null;
+
+            if (currentId !== nextId) {
+                emit("update:modelValue", selectedSingle.value);
+            }
         }
     } else if (props.multiple) {
-        emit(
-            "update:modelValue",
-            selectedMultiple.value.map((item) => item.id)
-        );
+        const nextIds = selectedMultiple.value.map((item) => item.id);
+        const currentIds = extractIdsFromValue(props.modelValue);
+
+        if (!areNumberArraysEqual(currentIds, nextIds)) {
+            emit("update:modelValue", nextIds);
+        }
     } else {
-        emit("update:modelValue", selectedSingle.value ? selectedSingle.value.id : null);
+        const nextId = selectedSingle.value ? selectedSingle.value.id : null;
+        const currentId = extractIdsFromValue(props.modelValue)[0] ?? null;
+
+        if (currentId !== nextId) {
+            emit("update:modelValue", nextId);
+        }
     }
 
     emit("resolved-items", currentSelectedItems.value);
@@ -291,6 +335,7 @@ onBeforeUnmount(() => {
         multiple
         forceSelection
         :suggestions="suggestions"
+        :optionLabel="getOptionLabel"
         :placeholder="placeholder"
         :dropdown="dropdown"
         :delay="300"
@@ -325,6 +370,7 @@ onBeforeUnmount(() => {
         v-model="selectedSingle"
         forceSelection
         :suggestions="suggestions"
+        :optionLabel="getOptionLabel"
         :placeholder="placeholder"
         :dropdown="dropdown"
         :delay="300"

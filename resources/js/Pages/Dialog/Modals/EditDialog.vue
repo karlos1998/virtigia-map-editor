@@ -219,6 +219,23 @@ const save = () => {
         formData.additional_actions[DialogNodeAdditionalAction.blessing].value = selectedBlessingItem.value ? selectedBlessingItem.value.id : null;
     }
 
+    if (formData.additional_actions[DialogNodeAdditionalAction.addItems] && Array.isArray(formData.additional_actions[DialogNodeAdditionalAction.addItems].value)) {
+        formData.additional_actions[DialogNodeAdditionalAction.addItems].value = formData.additional_actions[DialogNodeAdditionalAction.addItems].value
+            .map((item: unknown) => {
+                if (typeof item === 'number') {
+                    return item;
+                }
+
+                if (item && typeof item === 'object' && 'id' in item) {
+                    const parsed = Number((item as { id: unknown }).id);
+                    return Number.isInteger(parsed) ? parsed : null;
+                }
+
+                return null;
+            })
+            .filter((itemId: number | null): itemId is number => itemId !== null);
+    }
+
     processing.value = true;
     axios.patch(route('dialogs.nodes.update', {
         dialog: dialogRef.value.data.dialog_id,
@@ -289,6 +306,9 @@ const addAdditionalAction = () => {
 /// powtarzajacy sie kod
 const resolvedAddItems = ref<BaseItemResource[]>([]);
 const selectedBlessingItem = ref<BaseItemResource | null>(null);
+const handleResolvedAddItems = (items: BaseItemResource[]): void => {
+    resolvedAddItems.value = items;
+};
 
 watch(selectedBlessingItem, (newVal) => {
     if (!form.additional_actions[DialogNodeAdditionalAction.blessing]) return;
@@ -330,7 +350,7 @@ watch(
         // otherwise assume object with .value
         return (action as any).value as number[] | undefined
     },
-    (current: number[] | undefined, previous: number[] | undefined) => {
+    (current: Array<number | { id?: number }> | undefined, previous: Array<number | { id?: number }> | undefined) => {
         if (!Array.isArray(current)) return
         // don't run on initial population where we don't have a previous value
         if (typeof previous === 'undefined') return
@@ -338,13 +358,30 @@ watch(
         const action = form.additional_actions[DialogNodeAdditionalAction.addItems]
         if (!action) return
 
-        const oldIds = Array.isArray(previous) ? previous : []
+        const toItemId = (item: number | { id?: number }): number | null => {
+            if (typeof item === 'number') {
+                return item;
+            }
+
+            if (item && typeof item === 'object' && typeof item.id === 'number') {
+                return item.id;
+            }
+
+            return null;
+        };
+
+        const oldIds = Array.isArray(previous) ? previous.map(toItemId).filter((id): id is number => id !== null) : []
         const oldValue2 = Array.isArray((action as any).value2) ? (action as any).value2 : []
 
         const newValue2: number[] = []
 
         for (let idx = 0; idx < current.length; idx++) {
-            const id = current[idx]
+            const id = toItemId(current[idx])
+            if (id === null) {
+                newValue2[idx] = 1
+                continue
+            }
+
             const prevIndex = oldIds.indexOf(id)
             newValue2[idx] = prevIndex !== -1 ? oldValue2[prevIndex] : 1
         }
@@ -446,7 +483,7 @@ watch(currentOutfitSrc, async (value) => {
                 multiple
                 placeholder="Szukaj przedmiotów (nazwa lub #id)"
                 class="w-full md:w-80"
-                @resolved-items="(items) => resolvedAddItems = items"
+                @resolved-items="handleResolvedAddItems"
             />
             <Button
                 v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.addItems"
