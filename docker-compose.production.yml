@@ -1,0 +1,92 @@
+services:
+  app:
+    image: virtigia-map-editor:${TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - mysql
+      - redis
+    ports:
+      - "${APP_PORT:-8080}:8000"
+    volumes:
+      - app_storage:/var/www/html/storage
+    networks:
+      - virtigia-network
+
+  worker:
+    image: virtigia-map-editor:${TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - mysql
+      - redis
+    command: >
+      sh -lc '
+      if php artisan list --raw | grep -q "^horizon$"; then
+        php artisan horizon;
+      else
+        php artisan queue:work redis --sleep=1 --tries=3 --max-time=3600;
+      fi
+      '
+    volumes:
+      - app_storage:/var/www/html/storage
+    networks:
+      - virtigia-network
+
+  scheduler:
+    image: virtigia-map-editor:${TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - mysql
+      - redis
+    command: >
+      sh -lc 'while true; do php artisan schedule:run --no-interaction; sleep 60; done'
+    volumes:
+      - app_storage:/var/www/html/storage
+    networks:
+      - virtigia-network
+
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - virtigia-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - virtigia-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+networks:
+  virtigia-network:
+    external: true
+
+volumes:
+  mysql_data:
+  redis_data:
+  app_storage:
