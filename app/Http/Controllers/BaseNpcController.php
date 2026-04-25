@@ -185,8 +185,16 @@ class BaseNpcController extends Controller
     public function forumGenerator()
     {
         $npcs = BaseNpc::with('loots', 'locations.locations.map')->where('rank', request()->enum('rank', BaseNpcRank::class))->orderBy('lvl', 'asc')->get();
+        $format = request()->string('format')->toString();
 
-        return view('npcs-forum-generator', ['npcs' => $npcs]);
+        if (! in_array($format, ['bbcode', 'markdown'], true)) {
+            $format = 'bbcode';
+        }
+
+        return view('npcs-forum-generator', [
+            'format' => $format,
+            'npcs' => $npcs,
+        ]);
     }
 
     /**

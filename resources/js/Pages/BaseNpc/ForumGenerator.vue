@@ -10,9 +10,15 @@ const { availableRanks } = usePage<{
 }>().props;
 
 const selectedRank = ref<string>(availableRanks[0]?.value ?? "");
+const formatOptions = [
+    { label: "BBCode", value: "bbcode" },
+    { label: "Markdown", value: "markdown" },
+];
+const selectedFormat = ref<string>("bbcode");
 
 const generatorUrl = computed(() => route("base-npcs.forum-generator", {
     rank: selectedRank.value,
+    format: selectedFormat.value,
 }));
 
 const submit = (): void => {
@@ -32,20 +38,34 @@ const submit = (): void => {
                 </div>
 
                 <form class="flex flex-col gap-6" @submit.prevent="submit">
-                    <div class="flex flex-col gap-2">
-                        <label for="rank" class="font-semibold">Szablon / ranga NPC</label>
-                        <Dropdown
-                            input-id="rank"
-                            v-model="selectedRank"
-                            :options="availableRanks"
-                            optionLabel="label"
-                            optionValue="value"
-                            class="w-full"
-                        />
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div class="flex flex-col gap-2">
+                            <label for="rank" class="font-semibold">Szablon / ranga NPC</label>
+                            <Dropdown
+                                input-id="rank"
+                                v-model="selectedRank"
+                                :options="availableRanks"
+                                optionLabel="label"
+                                optionValue="value"
+                                class="w-full"
+                            />
+                        </div>
+
+                        <div class="flex flex-col gap-2">
+                            <label for="format" class="font-semibold">Format wyjściowy</label>
+                            <Dropdown
+                                input-id="format"
+                                v-model="selectedFormat"
+                                :options="formatOptions"
+                                optionLabel="label"
+                                optionValue="value"
+                                class="w-full"
+                            />
+                        </div>
                     </div>
 
                     <div class="rounded-lg border border-surface-200 bg-surface-50 p-4 text-sm text-surface-600 dark:border-surface-700 dark:bg-surface-900/40 dark:text-surface-300">
-                        Generator otworzy istniejący endpoint z parametrem `rank` w nowej karcie.
+                        Generator otworzy istniejący endpoint z parametrami `rank` i `format` w nowej karcie.
                     </div>
 
                     <div class="flex justify-end gap-2">
@@ -60,7 +80,7 @@ const submit = (): void => {
                             type="submit"
                             label="Generuj"
                             icon="pi pi-external-link"
-                            :disabled="!selectedRank"
+                            :disabled="!selectedRank || !selectedFormat"
                         />
                     </div>
                 </form>
