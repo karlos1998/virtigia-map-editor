@@ -10,22 +10,19 @@ use App\Http\Requests\StoreBaseNpcRequest;
 use App\Http\Requests\StoreSimpleBaseNpcRequest;
 use App\Http\Requests\UpdateBaseNpcImageRequest;
 use App\Http\Requests\UpdateBaseNpcRequest;
+use App\Http\Resources\ActivityLogResource;
 use App\Http\Resources\BaseNpcResource;
-use App\Http\Resources\NpcLocationResource;
-use App\Http\Resources\PureNpcWithOnlyLocationsResource;
 use App\Models\BaseNpc;
 use App\Services\BaseNpcService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
-use App\Http\Resources\ActivityLogResource;
+use Inertia\Response;
 use Spatie\Activitylog\Models\Activity;
 
 class BaseNpcController extends Controller
 {
-    public function __construct(private readonly BaseNpcService $baseNpcService)
-    {
-    }
+    public function __construct(private readonly BaseNpcService $baseNpcService) {}
 
     /**
      * Display a listing of the resource.
@@ -65,12 +62,20 @@ class BaseNpcController extends Controller
         ]);
     }
 
+    public function createForumGenerator(): Response
+    {
+        return Inertia::render('BaseNpc/ForumGenerator', [
+            'availableRanks' => BaseNpcRank::toDropdownList(),
+        ]);
+    }
+
     /**
      * Store a newly created resource in storage using the advanced form.
      */
     public function store(StoreBaseNpcRequest $request)
     {
         $model = $this->baseNpcService->store($request->validated());
+
         return to_route('base-npcs.show', $model->id);
     }
 
@@ -86,6 +91,7 @@ class BaseNpcController extends Controller
 
     /**
      * Display the specified resource.
+     *
      * @throws \Exception
      */
     public function show(BaseNpc $baseNpc)
@@ -93,10 +99,10 @@ class BaseNpcController extends Controller
         // Get activity logs for this base NPC
         $logs = Activity::where('subject_type', BaseNpc::class)
             ->where('subject_id', $baseNpc->id)
-            ->orWhere(function($query) use ($baseNpc) {
+            ->orWhere(function ($query) use ($baseNpc) {
                 // Also get logs for loot changes related to this NPC
                 $query->where('description', 'like', '%loot%')
-                      ->where('properties->attributes->base_npc_id', $baseNpc->id);
+                    ->where('properties->attributes->base_npc_id', $baseNpc->id);
             })
             ->orderBy('created_at', 'desc')
             ->get();
@@ -135,6 +141,7 @@ class BaseNpcController extends Controller
     public function destroy(BaseNpc $baseNpc)
     {
         $this->baseNpcService->destroy($baseNpc);
+
         return to_route('base-npcs.index');
     }
 
@@ -174,9 +181,11 @@ class BaseNpcController extends Controller
         $this->baseNpcService->setGuaranteedLoot($baseNpc, $guaranteed);
     }
 
-    //metoda dosc tymczasowa...
-    public function forumGenerator() {
+    // metoda dosc tymczasowa...
+    public function forumGenerator()
+    {
         $npcs = BaseNpc::with('loots', 'locations.locations.map')->where('rank', request()->enum('rank', BaseNpcRank::class))->orderBy('lvl', 'asc')->get();
+
         return view('npcs-forum-generator', ['npcs' => $npcs]);
     }
 
@@ -186,7 +195,7 @@ class BaseNpcController extends Controller
     public function findSimilarBaseNpcs(BaseNpc $baseNpc)
     {
         return response()->json([
-            'similarBaseNpcs' => $this->baseNpcService->findSimilarBaseNpcs($baseNpc)
+            'similarBaseNpcs' => $this->baseNpcService->findSimilarBaseNpcs($baseNpc),
         ]);
     }
 
@@ -205,6 +214,7 @@ class BaseNpcController extends Controller
     public function convertToLayer(BaseNpc $baseNpc)
     {
         $this->baseNpcService->update($baseNpc, ['type' => 4]);
+
         return back();
     }
 
@@ -214,6 +224,7 @@ class BaseNpcController extends Controller
     public function revertFromLayer(BaseNpc $baseNpc)
     {
         $this->baseNpcService->update($baseNpc, ['type' => 0]);
+
         return back();
     }
 
@@ -230,7 +241,7 @@ class BaseNpcController extends Controller
     public function listSpecialAttacks(BaseNpc $baseNpc)
     {
         return response()->json([
-            'specialAttacks' => $baseNpc->specialAttacks()->with(['effects', 'damages'])->get()
+            'specialAttacks' => $baseNpc->specialAttacks()->with(['effects', 'damages'])->get(),
         ]);
     }
 }

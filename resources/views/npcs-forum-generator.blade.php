@@ -1,11 +1,13 @@
 @php
     use App\Enums\BaseItemRarity;
+
+    $world = session('world');
 @endphp
 
 @foreach ($npcs as $npc)
     <div>[center]
         <div>{{ $npc->name }}</div>
-        <div>#base-npc.retro.{{ $npc->id }}</div>
+        <div>#base-npc.{{ $world }}.{{ $npc->id }}</div>
         <br><br>
 
         @php
@@ -30,7 +32,7 @@
                 @endswitch
 
                 @foreach ($groupedLoots[$rarity->value] as $loot)
-                    #base-item.retro.{{ $loot->id }}
+                    #base-item.{{ $world }}.{{ $loot->id }}
                 @endforeach
                 <br>
             @endif

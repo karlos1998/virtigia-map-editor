@@ -205,8 +205,10 @@ Route::middleware(['auth'])->group(function () {
                     Route::delete('quests/{quest}/steps/{step}', [QuestStepController::class, 'destroy'])->name('quests.steps.destroy');
                     Route::get('quest-steps/{step}', [QuestStepController::class, 'show'])->name('quest.steps.show');
 
+                    Route::get('base-npcs/forum-generator/create', [BaseNpcController::class, 'createForumGenerator'])->name('base-npcs.forum-generator.create');
+
                     /**
-                Generowanie template z npc dla forum
+                     * Generowanie template z npc dla forum
                      */
                     Route::get('base-npcs/forum-generator', [BaseNpcController::class, 'forumGenerator'])->name('base-npcs.forum-generator');
 

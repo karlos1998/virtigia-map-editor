@@ -1,7 +1,6 @@
 <script setup>
 import { ref } from 'vue';
 import AppMenuItem from './AppMenuItem.vue';
-import {route} from "ziggy-js";
 import { useLayout } from '@/layout/composables/layout';
 // import { hasRole } from '@/roles.ts';
 
@@ -109,6 +108,11 @@ const model = ref([
                 label: 'Liczniki Dialogowe',
                 icon: 'pi pi-hashtag',
                 route: 'dialog-counters.index',
+            },
+            {
+                label: 'Generator dla forum',
+                icon: 'pi pi-megaphone',
+                route: 'base-npcs.forum-generator.create',
             },
         ],
     },
