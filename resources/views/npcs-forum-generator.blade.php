@@ -64,30 +64,31 @@
 @php
     $groupedLoots = $npc->loots->groupBy('rarity');
     $validLocations = $npc->locations->filter(fn ($npcInstance) => $npcInstance->locations->isNotEmpty());
+    $locationLines = $validLocations->flatMap(
+        fn ($npcInstance) => $npcInstance->locations->map(
+            fn ($location) => "**{$location->map->name}** ({$location->map_id}) — `({$location->x}, {$location->y})`"
+        )
+    );
 @endphp
 @if ($format === 'markdown')
-## {{ $npc->name }}
-
-- NPC: `#base-npc.{{ $world }}.{{ $npc->id }}`
+| {{ $npc->name }} |
+|:---:|
+| `#base-npc.{{ $world }}.{{ $npc->id }}` |
 
 @foreach ([BaseItemRarity::COMMON, BaseItemRarity::UNIQUE, BaseItemRarity::HEROIC, BaseItemRarity::LEGENDARY] as $rarity)
 @if ($groupedLoots->has($rarity->value))
-### {{ $rarityLabels[$rarity->value] }}
-@foreach ($groupedLoots[$rarity->value] as $loot)
-- `#base-item.{{ $world }}.{{ $loot->id }}`
-@endforeach
+| **{{ $rarityLabels[$rarity->value] }}:** @foreach ($groupedLoots[$rarity->value] as $loot)`#base-item.{{ $world }}.{{ $loot->id }}`@if (! $loop->last) · @endif @endforeach |
 
 @endif
 @endforeach
-@if ($validLocations->isNotEmpty())
-### Respy
-@foreach ($validLocations as $npcInstance)
-@foreach ($npcInstance->locations as $location)
-- **{{ $location->map->name }}** ({{ $location->map_id }}) — `({{ $location->x }}, {{ $location->y }})`
-@endforeach
+@if ($locationLines->isNotEmpty())
+| **Respy** |
+@foreach ($locationLines as $locationLine)
+| {{ $locationLine }} |
 @endforeach
 
 @endif
+
 ---
 
 @else
