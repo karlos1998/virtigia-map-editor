@@ -77,14 +77,15 @@
 
 @foreach ([BaseItemRarity::COMMON, BaseItemRarity::UNIQUE, BaseItemRarity::HEROIC, BaseItemRarity::LEGENDARY] as $rarity)
 @if ($groupedLoots->has($rarity->value))
-| **{{ $rarityLabels[$rarity->value] }}:** @foreach ($groupedLoots[$rarity->value] as $loot)`#base-item.{{ $world }}.{{ $loot->id }}`@if (! $loop->last) · @endif @endforeach |
+**{{ $rarityLabels[$rarity->value] }}:** @foreach ($groupedLoots[$rarity->value] as $loot)`#base-item.{{ $world }}.{{ $loot->id }}`@if (! $loop->last) @endif @endforeach
 
 @endif
 @endforeach
 @if ($locationLines->isNotEmpty())
-| **Respy** |
+
+**Respy:**
 @foreach ($locationLines as $locationLine)
-| {{ $locationLine }} |
+- {{ $locationLine }}
 @endforeach
 
 @endif
