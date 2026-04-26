@@ -49,7 +49,6 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
           script: |
-            docker network create virtigia-network || true
             docker image prune -a -f --filter "until=24h" || true
 
       - name: Deploy and restart services
@@ -76,7 +75,6 @@ jobs:
             docker compose -f docker-compose.production.yml down || true
             docker load < virtigia-map-editor-production.tar.gz
 
-            docker compose -f docker-compose.production.yml up -d mysql redis meilisearch
-            sleep 10
+            docker compose -f docker-compose.production.yml up -d --wait --wait-timeout 120 mysql redis meilisearch
             docker compose -f docker-compose.production.yml run --rm app php artisan migrate --force --no-interaction
             docker compose -f docker-compose.production.yml up -d app worker scheduler
