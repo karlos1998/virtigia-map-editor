@@ -3,7 +3,7 @@ name: Build and Deploy Virtigia Map Editor (Production)
 on:
   push:
     branches:
-      - production
+      - main
 
 jobs:
   deploy:
