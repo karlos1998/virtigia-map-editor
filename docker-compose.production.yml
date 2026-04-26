@@ -19,6 +19,7 @@ services:
     networks:
       - internal
       - nginx-proxy
+      - virtigia-static-databases-network
 
   worker:
     image: virtigia-map-editor:${TAG:-latest}
@@ -37,6 +38,7 @@ services:
       - app_storage:/var/www/html/storage
     networks:
       - internal
+      - virtigia-static-databases-network
 
   scheduler:
     image: virtigia-map-editor:${TAG:-latest}
@@ -56,6 +58,7 @@ services:
       - app_storage:/var/www/html/storage
     networks:
       - internal
+      - virtigia-static-databases-network
 
   mysql:
     image: mysql:8.0
@@ -125,6 +128,9 @@ networks:
   nginx-proxy:
     external: true
     name: nginx-proxy
+  virtigia-static-databases-network:
+    external: true
+    name: virtigia-static-databases-network
 
 volumes:
   mysql_data:
