@@ -11,6 +11,7 @@ RUN composer install \
     --no-scripts \
     --ignore-platform-req=ext-fileinfo \
     --ignore-platform-req=ext-gd \
+    --ignore-platform-req=ext-pcntl \
     --ignore-platform-req=ext-zip
 
 COPY . .
