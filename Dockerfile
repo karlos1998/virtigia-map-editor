@@ -75,7 +75,7 @@ ENV APP_DEBUG=false
 ENV PHP_OPCACHE_ENABLE=1
 ENV PHP_OPCACHE_VALIDATE_TIMESTAMPS=0
 
-EXPOSE 8000
+EXPOSE 80
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=80"]

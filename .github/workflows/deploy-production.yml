@@ -13,6 +13,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Download environment from Envly
+        env:
+          ENVLY_API_URL: "https://envly.xyz/api/env/margatron-map-editor"
+          ENVLY_TOKEN: ${{ secrets.ENVLY_TOKEN }}
+        run: |
+          curl -fsSL \
+            -H "Authorization: Bearer ${ENVLY_TOKEN}" \
+            "${ENVLY_API_URL}" > .env
+
       - name: Build Docker image
         run: docker build -t virtigia-map-editor:${{ github.sha }} .
 
@@ -29,7 +38,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
-          source: "virtigia-map-editor-production.tar.gz,TAG,./docker-compose.production.yml"
+          source: "virtigia-map-editor-production.tar.gz,TAG,.env,./docker-compose.production.yml"
           target: "/tmp/virtigia-map-editor-production"
 
       - name: Prepare server network
@@ -56,6 +65,7 @@ jobs:
             TARGET="virtigia-map-editor"
             mkdir -p /opt/apps/$TARGET
             cp -f /tmp/virtigia-map-editor-production/TAG /opt/apps/$TARGET/TAG
+            cp -f /tmp/virtigia-map-editor-production/.env /opt/apps/$TARGET/.env
             cp -f /tmp/virtigia-map-editor-production/docker-compose.production.yml /opt/apps/$TARGET/docker-compose.production.yml
             cp -f /tmp/virtigia-map-editor-production/virtigia-map-editor-production.tar.gz /opt/apps/$TARGET/virtigia-map-editor-production.tar.gz
 
@@ -66,7 +76,7 @@ jobs:
             docker compose -f docker-compose.production.yml down || true
             docker load < virtigia-map-editor-production.tar.gz
 
-            docker compose -f docker-compose.production.yml up -d mysql redis
+            docker compose -f docker-compose.production.yml up -d mysql redis meilisearch
             sleep 10
             docker compose -f docker-compose.production.yml run --rm app php artisan migrate --force --no-interaction
             docker compose -f docker-compose.production.yml up -d app worker scheduler

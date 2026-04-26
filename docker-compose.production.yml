@@ -4,15 +4,18 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    environment:
+      VIRTUAL_HOST: ${VIRTUAL_HOST}
+      VIRTUAL_PORT: 80
     depends_on:
       - mysql
       - redis
-    ports:
-      - "${APP_PORT:-8080}:8000"
+      - meilisearch
     volumes:
       - app_storage:/var/www/html/storage
     networks:
       - virtigia-network
+      - nginx-proxy
 
   worker:
     image: virtigia-map-editor:${TAG:-latest}
@@ -22,6 +25,7 @@ services:
     depends_on:
       - mysql
       - redis
+      - meilisearch
     command: php artisan horizon
     volumes:
       - app_storage:/var/www/html/storage
@@ -36,6 +40,7 @@ services:
     depends_on:
       - mysql
       - redis
+      - meilisearch
     command: >
       sh -lc 'while true; do php artisan schedule:run --no-interaction; sleep 60; done'
     volumes:
@@ -75,11 +80,31 @@ services:
       timeout: 5s
       retries: 10
 
+  meilisearch:
+    image: getmeili/meilisearch:latest
+    restart: unless-stopped
+    environment:
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_MASTER_KEY: ${MEILISEARCH_KEY:-}
+    volumes:
+      - meilisearch_data:/meili_data
+    networks:
+      - virtigia-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--spider", "http://127.0.0.1:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
 networks:
   virtigia-network:
     external: true
+  nginx-proxy:
+    external: true
+    name: nginx-proxy
 
 volumes:
   mysql_data:
   redis_data:
+  meilisearch_data:
   app_storage:
