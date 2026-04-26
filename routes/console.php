@@ -18,6 +18,8 @@ Artisan::command('inspire', function () {
 
 Schedule::job(new CombineNpcsIntoGroupsJob)->hourly();
 
+Schedule::command('horizon:snapshot')->everyFiveMinutes();
+
 Schedule::command('telescope:prune --hours=48')->daily();
 
 Schedule::job(new DispatchFindNearestRespForMaps)->everyFourHours();

@@ -62,4 +62,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserApiToken::class);
     }
+
+    public function hasGameMasterRole(): bool
+    {
+        return collect($this->roles ?? [])
+            ->contains(fn (array $role): bool => ($role['name'] ?? null) === 'game_master');
+    }
 }

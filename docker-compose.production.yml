@@ -22,14 +22,7 @@ services:
     depends_on:
       - mysql
       - redis
-    command: >
-      sh -lc '
-      if php artisan list --raw | grep -q "^horizon$"; then
-        php artisan horizon;
-      else
-        php artisan queue:work redis --sleep=1 --tries=3 --max-time=3600;
-      fi
-      '
+    command: php artisan horizon
     volumes:
       - app_storage:/var/www/html/storage
     networks:
