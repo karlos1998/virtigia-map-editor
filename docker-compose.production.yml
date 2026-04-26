@@ -75,6 +75,21 @@ services:
       timeout: 5s
       retries: 10
 
+  phpmyadmin:
+    image: phpmyadmin:latest
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 1024M
+    ports:
+      - "${PHPMYADMIN_PORT:-38081}:80"
+    networks:
+      - internal
+
   redis:
     image: redis:7-alpine
     restart: unless-stopped
