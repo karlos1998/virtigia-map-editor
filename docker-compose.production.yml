@@ -103,10 +103,9 @@ services:
       - internal
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      start_period: 20s
-      interval: 5s
+      interval: 10s
       timeout: 5s
-      retries: 30
+      retries: 10
 
   meilisearch:
     image: getmeili/meilisearch:latest
