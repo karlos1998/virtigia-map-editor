@@ -90,4 +90,7 @@ enum BaseItemCategory: string
 
     #[Description('Zwierzaki')]
     case PETS = 'pets';
+
+    #[Description('Sakwy')]
+    case POUCHES = 'pouches';
 }

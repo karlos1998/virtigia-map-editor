@@ -176,6 +176,22 @@ const additionalAttributes: AdditionalAttribute[] = [
             {label: 'Różdżki', value: 'wands'},
             {label: 'Dystansowe', value: 'distances'},
             {label: 'Strzały', value: 'arrows'},
+            {label: 'Sakwy', value: 'pouches'},
+        ]
+    },
+    {
+        key: 'storableCategories', label: 'Pozwala przechowywać', type: 'multiselect', options: [
+            {label: 'Questowe', value: 'quests'},
+            {label: 'Konsumpcyjne', value: 'consumable'},
+            {label: 'Neutralne', value: 'neutrals'},
+            {label: 'Strzały', value: 'arrows'},
+            {label: 'Talizmany', value: 'talismans'},
+            {label: 'Ulepszenia', value: 'upgrades'},
+            {label: 'Książki', value: 'books'},
+            {label: 'Klucze', value: 'keys'},
+            {label: 'Złoto', value: 'golds'},
+            {label: 'Błogosławieństwa', value: 'blessings'},
+            {label: 'Zwierzaki', value: 'pets'},
         ]
     },
     {key: 'reduceLevelRequirementCommon', label: 'Obniża wymagania zwykłego o', type: 'int'},
