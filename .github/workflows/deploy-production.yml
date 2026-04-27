@@ -75,7 +75,6 @@ jobs:
             docker compose -f docker-compose.production.yml down || true
             docker load < virtigia-map-editor-production.tar.gz
 
-            docker compose -f docker-compose.production.yml up -d mysql redis meilisearch
-            sleep 20
+            docker compose -f docker-compose.production.yml up -d --wait --wait-timeout 300 mysql redis meilisearch
             docker compose -f docker-compose.production.yml run --rm app php artisan migrate --force --no-interaction
             docker compose -f docker-compose.production.yml up -d app worker scheduler phpmyadmin
