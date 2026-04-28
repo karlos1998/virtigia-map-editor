@@ -34,6 +34,12 @@ class DialogNodeResource extends JsonResource
                     'additional_actions' => $this->resource->additional_actions,
                 ],
             ]),
+            $this->mergeWhen($this->resource->type == 'profession', fn () => [
+                'data' => [
+                    'dialog_id' => $this->resource->source_dialog_id,
+                    'options' => DialogNodeOptionResource::collection($this->resource->options),
+                ],
+            ]),
 
             $this->mergeWhen($this->resource->type == 'shop', fn () => [
                 'data' => [

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\Profession;
 use App\Http\Resources\DialogResource;
 use App\Models\Dialog;
 use App\Models\DialogNode;
@@ -42,6 +43,15 @@ class DialogService extends BaseService
             ]);
         }
 
+        if (($data['type'] ?? 'special') === 'profession') {
+            foreach (Profession::cases() as $profession) {
+                $description = $profession->description();
+                $node->options()->create([
+                    'label' => $profession->value.' - '.$description,
+                ]);
+            }
+        }
+
         return $node->fresh();
     }
 
@@ -77,6 +87,12 @@ class DialogService extends BaseService
             if (! $sourceOption) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
                     'message' => 'Nie znaleziono źródłowej opcji połączenia.',
+                ]);
+            }
+
+            if ($sourceNode->type === 'profession' && $sourceOption->edges()->count() >= 1) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'message' => 'Każda profesja może mieć tylko jedno połączenie.',
                 ]);
             }
 

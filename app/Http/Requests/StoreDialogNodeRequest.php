@@ -37,7 +37,7 @@ class StoreDialogNodeRequest extends FormRequest
 
             'type' => [
                 'nullable',
-                'in:shop,hotel,teleportation,randomizer',
+                'in:shop,hotel,teleportation,randomizer,profession',
             ],
         ];
     }

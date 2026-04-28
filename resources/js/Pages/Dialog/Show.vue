@@ -10,6 +10,7 @@ import StartNode from '@/Pages/Dialog/StartNode.vue';
 import ShopNode from '@/Pages/Dialog/ShopNode.vue';
 import HotelNode from '@/Pages/Dialog/HotelNode.vue';
 import RandomizerNode from '@/Pages/Dialog/RandomizerNode.vue';
+import ProfessionNode from '@/Pages/Dialog/ProfessionNode.vue';
 import DialogEdge from '@/Pages/Dialog/DialogEdge.vue';
 import DialogActivityLogsTable from '@/Pages/Dialog/Partials/DialogActivityLogsTable.vue';
 import { DialogResource } from '@/Resources/Dialog.resource';
@@ -97,6 +98,8 @@ function nodeStroke(n: NodeProps) {
             return '#7a1a10';
         case 'hotel':
             return '#1f4f64';
+        case 'profession':
+            return '#2563eb';
         default:
             return '#999';
     }
@@ -114,6 +117,8 @@ function nodeColor(n: NodeProps) {
             return '#7a1a10';
         case 'hotel':
             return '#1f4f64';
+        case 'profession':
+            return '#2563eb';
         default:
             return '#888';
     }
@@ -393,6 +398,13 @@ const items = ref([
         }
     },
     {
+        label: 'Profesje',
+        icon: 'pi pi-users',
+        command: () => {
+            addNode('profession');
+        }
+    },
+    {
         label: 'Losowanie',
         icon: 'pi pi-percentage',
         command: () => {
@@ -530,6 +542,10 @@ const items = ref([
                 <template #node-randomizer="randomizerNodeProps">
                     <!--suppress RequiredAttributes -->
                     <RandomizerNode v-bind="randomizerNodeProps" />
+                </template>
+                <template #node-profession="professionNodeProps">
+                    <!--suppress RequiredAttributes -->
+                    <ProfessionNode v-bind="professionNodeProps" />
                 </template>
                 <template #node-teleportation="teleportationNodeProps">
                     <!--suppress RequiredAttributes -->
