@@ -218,8 +218,12 @@ Route::middleware(['auth'])->group(function () {
                     Route::get('base-npcs/create', [BaseNpcController::class, 'create'])->name('base-npcs.create');
                     Route::get('base-npcs/search', [BaseNpcController::class, 'search'])->name('base-npcs.search');
                     Route::get('base-npcs/search-hero', [BaseNpcController::class, 'searchHero'])->name('base-npcs.search-hero');
+                    Route::get('mob-species', [MobSpeciesController::class, 'index'])->name('mob-species.index');
                     Route::get('mob-species/search', [MobSpeciesController::class, 'search'])->name('mob-species.search');
                     Route::post('mob-species', [MobSpeciesController::class, 'store'])->name('mob-species.store');
+                    Route::get('mob-species/{mobSpecies}', [MobSpeciesController::class, 'show'])->name('mob-species.show');
+                    Route::post('mob-species/{mobSpecies}/base-npcs', [MobSpeciesController::class, 'attachBaseNpc'])->name('mob-species.base-npcs.attach');
+                    Route::delete('mob-species/{mobSpecies}/base-npcs/{baseNpc}', [MobSpeciesController::class, 'detachBaseNpc'])->name('mob-species.base-npcs.detach');
 
                     Route::get('base-npcs/{baseNpc}', [BaseNpcController::class, 'show'])->name('base-npcs.show');
 

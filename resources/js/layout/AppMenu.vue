@@ -75,6 +75,11 @@ const model = ref([
                 route: 'quests.index',
             },
             {
+                label: 'Gatunki Mobów',
+                icon: 'pi pi-tags',
+                route: 'mob-species.index',
+            },
+            {
                 label: 'Miejsca odrodzenia',
                 icon: 'pi pi-box',
                 route: 'respawn-points.index',
