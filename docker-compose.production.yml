@@ -97,6 +97,7 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     command: redis-server --appendonly yes
+    stop_grace_period: 1m
     volumes:
       - redis_data:/data
     networks:
