@@ -24,10 +24,21 @@ const toast = useToast();
 const autoProgress = ref(false);
 const progressType = ref('time'); // 'time' or 'mobs'
 const progressTime = ref(0); // in seconds
-const selectedMobs = ref<{ baseNpc: BaseNpcResource, quantity: number }[]>([]);
+type MobSpeciesResource = { id: number, name: string }
+type ProgressTarget = {
+    type: 'base_npc' | 'mob_species',
+    baseNpc?: BaseNpcResource | null,
+    mobSpecies?: MobSpeciesResource | null,
+    quantity: number
+}
+
+const selectedMobs = ref<ProgressTarget[]>([]);
 const selectedBaseNpc = ref<BaseNpcResource | null>(null);
+const selectedMobSpecies = ref<MobSpeciesResource | null>(null);
 const mobQuantity = ref(1);
+const targetType = ref<'base_npc' | 'mob_species'>('base_npc');
 const filteredBaseNpcs = ref<BaseNpcResource[]>([]);
+const filteredMobSpecies = ref<MobSpeciesResource[]>([]);
 
 const form = useForm({
     name: '',
@@ -36,7 +47,7 @@ const form = useForm({
     auto_progress: false,
     progress_type: 'time',
     progress_time: 0,
-    progress_mobs: [] as { base_npc_id: number, quantity: number }[],
+    progress_mobs: [] as { type: 'base_npc' | 'mob_species', base_npc_id: number | null, mob_species_id: number | null, quantity: number }[],
     auto_advance_next_day: false,
     auto_advance_to_step_id: null
 })
@@ -63,7 +74,9 @@ watch(() => props.step, (newStep) => {
                 progressTime.value = newStep.auto_progress.time_seconds;
             } else if (newStep.auto_progress.type === 'mobs' && newStep.auto_progress.mobs) {
                 selectedMobs.value = newStep.auto_progress.mobs.map(mob => ({
+                    type: mob.type || (mob.base_npc_id ? 'base_npc' : 'mob_species'),
                     baseNpc: mob.base_npc,
+                    mobSpecies: mob.mob_species,
                     quantity: mob.quantity
                 }));
             }
@@ -94,19 +107,38 @@ const searchBaseNpcs = async (query: string) => {
     const { data } = await axios.get(route('base-npcs.search', {query}))
     return data;
 }
+const searchMobSpecies = async (query: string) => {
+    const { data } = await axios.get(route('mob-species.search', { query }))
+    return data;
+}
 
 const filterBaseNpcs = async ({ query }: { query: string }) => {
     filteredBaseNpcs.value = await searchBaseNpcs(query);
 };
+const filterMobSpecies = async ({ query }: { query: string }) => {
+    filteredMobSpecies.value = await searchMobSpecies(query);
+};
 
 // Add selected mob to the list
 const addMob = () => {
-    if (selectedBaseNpc.value && mobQuantity.value > 0) {
+    if (targetType.value === 'base_npc' && selectedBaseNpc.value && mobQuantity.value > 0) {
         selectedMobs.value.push({
+            type: 'base_npc',
             baseNpc: selectedBaseNpc.value,
             quantity: mobQuantity.value
         });
         selectedBaseNpc.value = null;
+        mobQuantity.value = 1;
+        return;
+    }
+
+    if (targetType.value === 'mob_species' && selectedMobSpecies.value && mobQuantity.value > 0) {
+        selectedMobs.value.push({
+            type: 'mob_species',
+            mobSpecies: selectedMobSpecies.value,
+            quantity: mobQuantity.value
+        });
+        selectedMobSpecies.value = null;
         mobQuantity.value = 1;
     }
 };
@@ -122,7 +154,9 @@ const updateFormData = () => {
     form.progress_type = progressType.value;
     form.progress_time = progressTime.value;
     form.progress_mobs = selectedMobs.value.map(mob => ({
-        base_npc_id: mob.baseNpc.id,
+        type: mob.type,
+        base_npc_id: mob.type === 'base_npc' ? (mob.baseNpc?.id ?? null) : null,
+        mob_species_id: mob.type === 'mob_species' ? (mob.mobSpecies?.id ?? null) : null,
         quantity: mob.quantity
     }));
     form.auto_advance_next_day = form.auto_advance_next_day ?? false;
@@ -190,8 +224,22 @@ const submit = () => {
                     <div v-if="progressType === 'mobs'" class="flex flex-col gap-2">
                         <label class="font-semibold block">Moby do zabicia</label>
 
+                        <div class="mb-2">
+                            <Dropdown
+                                v-model="targetType"
+                                :options="[
+                                    { label: 'Konkretny NPC', value: 'base_npc' },
+                                    { label: 'Gatunek (MobSpecies)', value: 'mob_species' }
+                                ]"
+                                optionLabel="label"
+                                optionValue="value"
+                                class="w-full"
+                            />
+                        </div>
+
                         <div class="flex gap-2 mb-2">
                             <AutoComplete
+                                v-if="targetType === 'base_npc'"
                                 class="flex-grow"
                                 v-model="selectedBaseNpc"
                                 placeholder="Wyszukaj potwora"
@@ -216,17 +264,29 @@ const submit = () => {
                                 </template>
                             </AutoComplete>
 
+                            <AutoComplete
+                                v-else
+                                class="flex-grow"
+                                v-model="selectedMobSpecies"
+                                placeholder="Wyszukaj gatunek"
+                                :suggestions="filteredMobSpecies"
+                                @complete="filterMobSpecies"
+                                :option-label="(species: MobSpeciesResource|null) => species?.name || ''"
+                                fluid
+                            />
+
                             <InputNumber v-model="mobQuantity" :min="1" placeholder="Ilość" class="w-24" />
 
-                            <Button icon="pi pi-plus" @click="addMob" :disabled="!selectedBaseNpc" />
+                            <Button icon="pi pi-plus" @click="addMob" :disabled="targetType === 'base_npc' ? !selectedBaseNpc : !selectedMobSpecies" />
                         </div>
 
                         <div v-if="selectedMobs.length > 0" class="mt-2">
                             <ul class="list-none p-0 m-0">
                                 <li v-for="(mob, index) in selectedMobs" :key="index" class="flex items-center justify-between p-2 border-b">
                                     <div class="flex items-center gap-2">
-                                        <img :src="mob.baseNpc.src" class="h-8 w-8 object-cover" />
-                                        <span>[id: {{mob.baseNpc.id}}] {{ mob.baseNpc.name }} ({{ mob.quantity }})</span>
+                                        <img v-if="mob.type === 'base_npc' && mob.baseNpc" :src="mob.baseNpc.src" class="h-8 w-8 object-cover" />
+                                        <span v-if="mob.type === 'base_npc' && mob.baseNpc">[id: {{mob.baseNpc.id}}] {{ mob.baseNpc.name }} ({{ mob.quantity }})</span>
+                                        <span v-else-if="mob.type === 'mob_species' && mob.mobSpecies">[gatunek: {{mob.mobSpecies.id}}] {{ mob.mobSpecies.name }} ({{ mob.quantity }})</span>
                                     </div>
                                     <Button icon="pi pi-times" severity="danger" text @click="removeMob(index)" />
                                 </li>

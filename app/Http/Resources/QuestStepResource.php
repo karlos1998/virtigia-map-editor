@@ -74,9 +74,12 @@ class QuestStepResource extends JsonResource
                 'time_seconds' => $autoProgress->time_seconds,
                 'mobs' => $autoProgress->mobs->map(function ($mob) {
                     return [
+                        'type' => $mob->mob_species_id ? 'mob_species' : 'base_npc',
                         'base_npc_id' => $mob->base_npc_id,
+                        'mob_species_id' => $mob->mob_species_id,
                         'quantity' => $mob->quantity,
                         'base_npc' => $mob->baseNpc,
+                        'mob_species' => $mob->mobSpecies,
                     ];
                 }),
             ]),

@@ -23,6 +23,7 @@ import {useConfirm} from "primevue/useconfirm";
 import {useToast} from "primevue";
 import {router} from "@inertiajs/vue3";
 import {useDialog} from "primevue/usedialog";
+import axios from "axios";
 import type {AdvanceTableResponse} from "@/karlos3098-LaravelPrimevueTable/Services/tableService";
 import type {PureNpcWithOnlyLocationsResource} from "@/Resources/Npc.resource";
 
@@ -63,6 +64,8 @@ const formatDropChanceAsPercent = (dropChance: number): string => {
 const isEditBaseNpcDialogVisible = ref(false);
 const isEditSrcVisible = ref(false);
 const isAddSpecialAttackDialogVisible = ref(false);
+const selectedMobSpecies = ref<{ id: number, name: string }[]>(baseNpc.mob_species ?? []);
+const filteredMobSpecies = ref<{ id: number, name: string }[]>([]);
 
 const confirm = useConfirm();
 const toast = useToast();
@@ -150,6 +153,36 @@ const confirmDetachSpecialAttack = (attack: any) => {
 const handleSpecialAttackDialogClose = () => {
     isAddSpecialAttackDialogVisible.value = false;
 }
+
+const searchMobSpecies = async ({ query }: { query: string }) => {
+    const { data } = await axios.get(route('mob-species.search', { query }));
+    filteredMobSpecies.value = data;
+};
+
+const createMobSpecies = async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+        return;
+    }
+
+    const { data } = await axios.post(route('mob-species.store'), { name: trimmed });
+    const created = data?.species;
+    if (created && !selectedMobSpecies.value.some((x) => x.id === created.id)) {
+        selectedMobSpecies.value.push(created);
+    }
+};
+
+const syncMobSpecies = async () => {
+    await axios.patch(route('base-npcs.mob-species.sync', { baseNpc: baseNpc.id }), {
+        mob_species_ids: selectedMobSpecies.value.map((item) => item.id),
+    });
+    toast.add({
+        severity: 'success',
+        summary: 'Sukces',
+        detail: 'Przypisane gatunki zostały zaktualizowane',
+        life: 3000,
+    });
+};
 
 </script>
 <template>
@@ -248,6 +281,35 @@ const handleSpecialAttackDialogClose = () => {
                 </template>
             </DetailsCardListItem>
         </DetailsCardList>
+
+        <div class="card mb-4">
+            <h3 class="mb-3">Gatunki Mobów</h3>
+            <div class="flex gap-2 items-center">
+                <AutoComplete
+                    multiple
+                    class="w-full"
+                    v-model="selectedMobSpecies"
+                    :suggestions="filteredMobSpecies"
+                    @complete="searchMobSpecies"
+                    @keyup.enter="(event) => createMobSpecies((event.target as HTMLInputElement)?.value || '')"
+                    :option-label="(species: { id:number, name:string } | null) => species?.name || ''"
+                    placeholder="Wyszukaj i dodaj gatunki (np. Jeleń)"
+                    fluid
+                />
+                <Button label="Zapisz" icon="pi pi-save" @click="syncMobSpecies" />
+            </div>
+            <div class="text-sm text-surface-500 mt-2">
+                Jeśli gatunku nie ma na liście, wpisz nazwę i wciśnij Enter - utworzy się automatycznie.
+            </div>
+            <div class="mt-2">
+                <Chip
+                    v-for="species in selectedMobSpecies"
+                    :key="species.id"
+                    :label="species.name"
+                    class="mr-2 mb-2"
+                />
+            </div>
+        </div>
 
         <div class="card">
             <BaseNpcLootsTable  :base-npc />

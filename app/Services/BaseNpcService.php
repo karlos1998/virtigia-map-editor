@@ -248,6 +248,11 @@ final class BaseNpcService extends BaseService
             ->log('detach-base-npc-loots');
     }
 
+    public function syncMobSpecies(BaseNpc $baseNpc, array $mobSpeciesIds): void
+    {
+        $baseNpc->mobSpecies()->sync($mobSpeciesIds);
+    }
+
     public function attachLootsFromBaseNpc(BaseNpc $targetBaseNpc, int $sourceBaseNpcId)
     {
         $sourceBaseNpc = BaseNpc::findOrFail($sourceBaseNpcId);

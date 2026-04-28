@@ -46,6 +46,7 @@ class BaseNpcResource extends JsonResource
             'loots' => $this->whenLoaded('loots', fn () => BaseItemResource::collection($this->resource->loots)),
             //            'loots' => BaseItemResource::collection($this->resource->loots),
             'special_attacks' => $this->whenLoaded('specialAttacks', fn () => SpecialAttackResource::collection($this->resource->specialAttacks)),
+            'mob_species' => $this->whenLoaded('mobSpecies', fn () => MobSpeciesResource::collection($this->resource->mobSpecies)),
             'src' => AssetUrl::npc($this->resource->src),
             'guaranteed_loot' => $this->resource->guaranteed_loot ?? false,
             'drop_chances' => $this->resource->drop_chances,

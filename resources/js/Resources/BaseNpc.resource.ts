@@ -25,4 +25,8 @@ export interface BaseNpcWithLoots extends BaseNpcResource {
     loots: BaseItemResource[]
     guaranteed_loot: boolean
     special_attacks: SpecialAttackResource[]
+    mob_species?: {
+        id: number
+        name: string
+    }[]
 }

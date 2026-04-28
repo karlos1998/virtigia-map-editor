@@ -12,6 +12,7 @@ use App\Http\Controllers\DoorController;
 use App\Http\Controllers\HotelController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MapController;
+use App\Http\Controllers\MobSpeciesController;
 use App\Http\Controllers\NpcController;
 use App\Http\Controllers\ProblemAssetsController;
 use App\Http\Controllers\ProfileController;
@@ -217,6 +218,8 @@ Route::middleware(['auth'])->group(function () {
                     Route::get('base-npcs/create', [BaseNpcController::class, 'create'])->name('base-npcs.create');
                     Route::get('base-npcs/search', [BaseNpcController::class, 'search'])->name('base-npcs.search');
                     Route::get('base-npcs/search-hero', [BaseNpcController::class, 'searchHero'])->name('base-npcs.search-hero');
+                    Route::get('mob-species/search', [MobSpeciesController::class, 'search'])->name('mob-species.search');
+                    Route::post('mob-species', [MobSpeciesController::class, 'store'])->name('mob-species.store');
 
                     Route::get('base-npcs/{baseNpc}', [BaseNpcController::class, 'show'])->name('base-npcs.show');
 
@@ -231,6 +234,7 @@ Route::middleware(['auth'])->group(function () {
                     Route::post('base-npcs', [BaseNpcController::class, 'storeSimple'])->name('base-npcs.store-simple');
                     Route::delete('base-npcs/{baseNpc}', [BaseNpcController::class, 'destroy'])->name('base-npcs.destroy');
                     Route::patch('base-npcs/{baseNpc}', [BaseNpcController::class, 'update'])->name('base-npcs.update');
+                    Route::patch('base-npcs/{baseNpc}/mob-species', [BaseNpcController::class, 'syncMobSpecies'])->name('base-npcs.mob-species.sync');
 
                     // Special Attacks routes for base-npcs
                     Route::get('base-npcs/{baseNpc}/special-attacks', [BaseNpcController::class, 'listSpecialAttacks'])->name('base-npcs.special-attacks.index');

@@ -47,9 +47,15 @@ export interface QuestWithStepsResource extends QuestResource {
 }
 
 export interface QuestStepAutoProgressMob {
-    base_npc_id: number;
+    type: 'base_npc' | 'mob_species';
+    base_npc_id: number | null;
+    mob_species_id: number | null;
     quantity: number;
     base_npc?: BaseNpcResource;
+    mob_species?: {
+        id: number;
+        name: string;
+    };
 }
 
 export interface QuestStepAutoProgress {

@@ -13,6 +13,7 @@ class QuestStepAutoProgressMob extends DynamicModel
     protected $fillable = [
         'quest_step_auto_progress_id',
         'base_npc_id',
+        'mob_species_id',
         'quantity',
     ];
 
@@ -30,5 +31,10 @@ class QuestStepAutoProgressMob extends DynamicModel
     public function baseNpc(): BelongsTo
     {
         return $this->belongsTo(BaseNpc::class);
+    }
+
+    public function mobSpecies(): BelongsTo
+    {
+        return $this->belongsTo(MobSpecies::class);
     }
 }

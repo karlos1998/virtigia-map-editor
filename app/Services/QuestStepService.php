@@ -27,7 +27,7 @@ class QuestStepService
      */
     public function getQuestStep(QuestStep $step): QuestStep
     {
-        return $step->load(['quest', 'autoProgress.mobs.baseNpc']);
+        return $step->load(['quest', 'autoProgress.mobs.baseNpc', 'autoProgress.mobs.mobSpecies']);
     }
 
     /**
@@ -82,7 +82,8 @@ class QuestStepService
                 // Add new mobs
                 foreach ($data['progress_mobs'] as $mobData) {
                     $autoProgress->mobs()->create([
-                        'base_npc_id' => $mobData['base_npc_id'],
+                        'base_npc_id' => $mobData['type'] === 'base_npc' ? $mobData['base_npc_id'] : null,
+                        'mob_species_id' => $mobData['type'] === 'mob_species' ? $mobData['mob_species_id'] : null,
                         'quantity' => $mobData['quantity'],
                     ]);
                 }
@@ -95,6 +96,6 @@ class QuestStepService
             }
         }
 
-        return $step->load('autoProgress.mobs.baseNpc');
+        return $step->load('autoProgress.mobs.baseNpc', 'autoProgress.mobs.mobSpecies');
     }
 }
