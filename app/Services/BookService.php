@@ -51,6 +51,14 @@ final class BookService extends BaseService
         $book->update($validated);
     }
 
+    public function findItemsLinkedToBook(int $bookId): Collection
+    {
+        return (new BaseItem)->newQuery()
+            ->whereRaw('CAST(JSON_UNQUOTE(JSON_EXTRACT(attributes, "$.bookId")) AS UNSIGNED) = ?', [$bookId])
+            ->orderBy('id')
+            ->get();
+    }
+
     public function findBaseNpcsForPreview(array $filters): Collection
     {
         $query = (new BaseNpc)->newQuery();

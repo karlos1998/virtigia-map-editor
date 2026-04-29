@@ -8,6 +8,7 @@ use App\Http\Requests\PreviewBookBaseNpcRequest;
 use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\UpdateBookRequest;
 use App\Http\Resources\BaseItemBookPreviewResource;
+use App\Http\Resources\BaseItemResource;
 use App\Http\Resources\BaseNpcBookPreviewResource;
 use App\Http\Resources\BookResource;
 use App\Models\Book;
@@ -44,6 +45,7 @@ class BookController extends Controller
     {
         return Inertia::render('Book/Show', [
             'book' => BookResource::make($book),
+            'linkedItems' => BaseItemResource::collection($this->bookService->findItemsLinkedToBook((int) $book->id))->resolve(),
         ]);
     }
 

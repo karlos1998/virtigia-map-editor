@@ -6,13 +6,20 @@ import { useForm } from "@inertiajs/vue3";
 import { useToast } from "primevue/usetoast";
 import axios from "axios";
 import { computed, ref, watch } from "vue";
+import { Link } from '@inertiajs/vue3';
 
 const props = defineProps<{
     book: {
         id: number
         title: string
         content: string
-    }
+    },
+    linkedItems: Array<{
+        id: number
+        name: string
+        src: string
+        [key: string]: unknown
+    }>
 }>();
 
 const toast = useToast();
@@ -443,6 +450,29 @@ const exampleSnippets = computed(() => [
         </ItemHeader>
 
         <div class="card">
+            <h3 class="mb-3">Powiązane przedmioty</h3>
+            <div v-if="props.linkedItems.length === 0" class="book-npc-missing">
+                Brak powiązanych przedmiotów dla tego bookId.
+            </div>
+            <div v-else class="linked-items-grid">
+                <Link
+                    v-for="item in props.linkedItems"
+                    :key="item.id"
+                    :href="route('base-items.show', item.id)"
+                    class="linked-item"
+                >
+                    <img
+                        :src="item.src"
+                        :alt="item.name"
+                        class="book-npc-img"
+                        v-tip.item.top.show-id="item"
+                    />
+                    <span>#{{ item.id }} {{ item.name }}</span>
+                </Link>
+            </div>
+        </div>
+
+        <div class="card">
             <div class="mb-4">
                 <label class="font-semibold block mb-2">Tytuł</label>
                 <InputText v-model="form.title" class="w-full" />
@@ -641,6 +671,24 @@ const exampleSnippets = computed(() => [
 
 .book-npc-missing {
     color: #a52828;
+}
+
+.linked-items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 0.6rem 0.9rem;
+}
+
+.linked-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: inherit;
+    text-decoration: none;
+}
+
+.linked-item:hover {
+    text-decoration: underline;
 }
 
 .book-rich-entry {
