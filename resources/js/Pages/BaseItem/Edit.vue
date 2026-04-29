@@ -58,6 +58,23 @@ const scaleResult = ref<any>(null);
 const filteredBooks = ref<any[]>([]);
 const selectedBook = ref<any | null>(null);
 
+async function loadSelectedBookById(bookId: number) {
+    if (!bookId || bookId <= 0) {
+        selectedBook.value = null;
+        return;
+    }
+
+    try {
+        const { data } = await axios.get(route('books.fetch', { book: bookId }));
+        selectedBook.value = {
+            id: Number(data?.id ?? bookId),
+            title: String(data?.title ?? `#${bookId}`),
+        };
+    } catch {
+        selectedBook.value = { id: bookId, title: `#${bookId}` };
+    }
+}
+
 // Handle scale result changes from AttributePointsEditor
 const handleScaleResultChanged = (result: any) => {
     scaleResult.value = result;
@@ -83,7 +100,7 @@ onMounted(() => {
     toast.add({ severity: 'warn', summary: 'Uwaga', detail: 'W strefie pakowania jest artykuł, który nie powinien się tam znaleźć', life: 10000 });
     const currentBookId = Number(form.attributes?.bookId ?? 0);
     if (isBook.value && currentBookId > 0) {
-        selectedBook.value = { id: currentBookId, title: `#${currentBookId}` };
+        loadSelectedBookById(currentBookId);
     }
 })
 
@@ -237,7 +254,11 @@ watch(
             jsonEditorAttributes.value = JSON.parse(JSON.stringify(cleanAttributes(updatedBaseItem.attributes)));
         }
         const currentBookId = Number(updatedBaseItem.attributes?.bookId ?? 0);
-        selectedBook.value = currentBookId > 0 ? { id: currentBookId, title: `#${currentBookId}` } : null;
+        if (currentBookId > 0) {
+            loadSelectedBookById(currentBookId);
+        } else {
+            selectedBook.value = null;
+        }
     },
     { deep: true }
 );

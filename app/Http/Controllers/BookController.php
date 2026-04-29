@@ -49,6 +49,11 @@ class BookController extends Controller
         ]);
     }
 
+    public function fetch(Book $book)
+    {
+        return response()->json(BookResource::make($book)->resolve());
+    }
+
     public function store(StoreBookRequest $request)
     {
         $book = $this->bookService->create($request->validated());
