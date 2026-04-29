@@ -6,6 +6,7 @@ import ItemHeader from "../../Components/ItemHeader.vue";
 import {router, useForm} from "@inertiajs/vue3";
 import { onMounted, ref, computed, watch } from 'vue';
 import {useToast} from "primevue";
+import axios from "axios";
 import AttributeEditor from "../../Components/AttributeEditor.vue";
 import AttributePointsEditor from './Components/AttributePointsEditor.vue';
 import TeleportToEditor from './Components/TeleportToEditor.vue';
@@ -44,8 +45,9 @@ const form = useForm({
 // Local copy of attributes for JSON editor to prevent corruption
 const jsonEditorAttributes = ref(JSON.parse(JSON.stringify(cleanAttributes(props.baseItem.attributes))));
 
-// Check if this is a pet item
+// Check if this is a pet/book item
 const isPet = computed(() => props.baseItem.category === 'pets');
+const isBook = computed(() => props.baseItem.category === 'books');
 const baseItem = computed(() => props.baseItem);
 
 // Set default active tab based on category
@@ -53,6 +55,8 @@ const activeTab = ref(isPet.value ? '4' : '0');
 
 // Store scale result from AttributePointsEditor
 const scaleResult = ref<any>(null);
+const filteredBooks = ref<any[]>([]);
+const selectedBook = ref<any | null>(null);
 
 // Handle scale result changes from AttributePointsEditor
 const handleScaleResultChanged = (result: any) => {
@@ -77,6 +81,10 @@ const toast = useToast();
 
 onMounted(() => {
     toast.add({ severity: 'warn', summary: 'Uwaga', detail: 'W strefie pakowania jest artykuł, który nie powinien się tam znaleźć', life: 10000 });
+    const currentBookId = Number(form.attributes?.bookId ?? 0);
+    if (isBook.value && currentBookId > 0) {
+        selectedBook.value = { id: currentBookId, title: `#${currentBookId}` };
+    }
 })
 
 // Watch for tab changes to sync JSON editor
@@ -172,11 +180,19 @@ const save = () => {
         };
     }
 
+    if (isBook.value) {
+        if (selectedBook.value?.id) {
+            finalAttributes.bookId = selectedBook.value.id;
+        } else {
+            delete finalAttributes.bookId;
+        }
+    }
+
     // Create update data with all three fields
     const updateData = {
         attributes: finalAttributes,
-        attribute_points: form.attribute_points || {},
-        manual_attribute_points: form.manual_attribute_points || {}
+        attribute_points: isBook.value ? {} : (form.attribute_points || {}),
+        manual_attribute_points: isBook.value ? {} : (form.manual_attribute_points || {})
     };
 
     // Send the update
@@ -202,6 +218,11 @@ const save = () => {
         })
 }
 
+const searchBooks = async ({ query }: { query: string }) => {
+    const { data } = await axios.get(route('books.search', { query }));
+    filteredBooks.value = data;
+};
+
 const specificCurrencyPrice = ref(props.baseItem.specific_currency_price ?? null);
 
 watch(
@@ -215,6 +236,8 @@ watch(
         if (activeTab.value === '3') {
             jsonEditorAttributes.value = JSON.parse(JSON.stringify(cleanAttributes(updatedBaseItem.attributes)));
         }
+        const currentBookId = Number(updatedBaseItem.attributes?.bookId ?? 0);
+        selectedBook.value = currentBookId > 0 ? { id: currentBookId, title: `#${currentBookId}` } : null;
     },
     { deep: true }
 );
@@ -283,7 +306,23 @@ const clearCurrency = () => {
             <div v-if="baseItem.specific_currency_price !== null" class="mt-2 text-xs text-gray-700">Aktualna cena
                 waluty dla tego itemu: <strong>{{ baseItem.specific_currency_price }}</strong></div>
         </div>
-        <Tabs v-model:value="activeTab" class="card">
+        <div v-if="isBook" class="card">
+            <h4 class="font-semibold mb-3">Książka przypięta do przedmiotu</h4>
+            <AutoComplete
+                class="w-full"
+                v-model="selectedBook"
+                :suggestions="filteredBooks"
+                @complete="searchBooks"
+                :option-label="(book: any|null) => book ? `[${book.id}] ${book.title}` : ''"
+                placeholder="Wyszukaj książkę po tytule"
+                fluid
+            />
+            <div class="mt-2 text-sm text-surface-500">
+                Dla kategorii <strong>books</strong> aktywna jest tylko treść książki (atrybut <code>bookId</code>).
+            </div>
+        </div>
+
+        <Tabs v-else v-model:value="activeTab" class="card">
             <TabList>
                 <Tab v-if="!isPet" value="0">Kalkulator punktów</Tab>
                 <Tab v-if="!isPet" value="1">Teleport</Tab>

@@ -5,6 +5,7 @@ use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\BaseItemController;
 use App\Http\Controllers\BaseNpcController;
+use App\Http\Controllers\BookController;
 use App\Http\Controllers\CalendarDayController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DialogController;
@@ -149,6 +150,11 @@ Route::middleware(['auth'])->group(function () {
                     Route::get('base-items/{baseItem}', [BaseItemController::class, 'show'])->name('base-items.show');
                     Route::get('base-items/{baseItem}/edit', [BaseItemController::class, 'edit'])->name('base-items.edit');
                     Route::patch('base-items/{baseItem}/attributes', [BaseItemController::class, 'updateAttributes'])->name('base-items.attributes.update');
+                    Route::get('books', [BookController::class, 'index'])->name('books.index');
+                    Route::post('books', [BookController::class, 'store'])->name('books.store');
+                    Route::get('books/search', [BookController::class, 'search'])->name('books.search');
+                    Route::get('books/{book}', [BookController::class, 'show'])->name('books.show');
+                    Route::patch('books/{book}', [BookController::class, 'update'])->name('books.update');
 
                     Route::get('npcs', [NpcController::class, 'index'])->name('npcs.index');
                     Route::get('npcs/search-hero', [NpcController::class, 'searchHero'])->name('npcs.search-hero');

@@ -65,6 +65,11 @@ const model = ref([
                 route: 'base-items.index',
             },
             {
+                label: 'Książki',
+                icon: 'pi pi-book',
+                route: 'books.index',
+            },
+            {
                 label: 'Odnawialne Przedmioty',
                 icon: 'pi pi-box',
                 route: 'renewable-items.index',
