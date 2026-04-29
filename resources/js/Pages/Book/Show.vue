@@ -73,10 +73,19 @@ type PreviewBlock =
     | { type: "html"; html: string }
     | { type: "npcs"; items: PreviewNpc[]; mode: "text" | "img"; format: string; separator: string }
     | { type: "items"; items: PreviewItem[]; mode: "text" | "img"; format: string; separator: string }
-    | { type: "npc-loop-rich"; entries: NpcLoopEntry[]; loopKey: string; page: number; lastPage: number };
+    | { type: "npc-loop-rich"; entries: NpcLoopEntry[] };
 
-const previewBlocks = ref<PreviewBlock[]>([]);
-const loopPageOverrides = ref<Record<string, number>>({});
+const previewPages = ref<PreviewBlock[][]>([]);
+const previewPageIndex = ref(0);
+const showAllPreviewPages = ref(false);
+
+const totalPreviewPages = computed(() => Math.max(1, previewPages.value.length));
+const visiblePreviewPages = computed(() => {
+    if (showAllPreviewPages.value) {
+        return previewPages.value;
+    }
+    return [previewPages.value[Math.max(0, Math.min(previewPageIndex.value, previewPages.value.length - 1))] || []];
+});
 
 const escapeHtml = (value: string): string =>
     value
@@ -98,7 +107,6 @@ const parseAttrs = (raw: string): Record<string, string> => {
 
 const renderBasicBbcode = (source: string): string => {
     return escapeHtml(source)
-        .replace(/\[page\]/gi, '<hr class="book-page-break"><div class="book-page-marker">Następna strona</div>')
         .replace(/\[b\]([\s\S]*?)\[\/b\]/gi, "<strong>$1</strong>")
         .replace(/\[i\]([\s\S]*?)\[\/i\]/gi, "<em>$1</em>")
         .replace(/\[u\]([\s\S]*?)\[\/u\]/gi, "<u>$1</u>")
@@ -207,17 +215,32 @@ const processSingleTag = async (tag: string, attrsRaw: string): Promise<PreviewB
     };
 };
 
-const processNpcLoopRich = async (attrsRaw: string, inner: string, loopKey: string): Promise<PreviewBlock> => {
+const fetchAllNpcsForLoop = async (attrs: Record<string, string>): Promise<PreviewNpc[]> => {
+    const merged: PreviewNpc[] = [];
+    let page = 1;
+
+    while (true) {
+        const response = await fetchNpcs({
+            rank: attrs.rank,
+            lvl_from: attrs.minLvl || attrs.lvlFrom,
+            lvl_to: attrs.maxLvl || attrs.lvlTo,
+            per_page: 50,
+            page,
+        });
+
+        merged.push(...response.items);
+        const lastPage = Number(response.meta?.last_page || 1);
+        if (page >= lastPage) break;
+        page += 1;
+    }
+
+    return merged;
+};
+
+const processNpcLoopRich = async (attrsRaw: string, inner: string): Promise<{ entries: NpcLoopEntry[]; perPage: number }> => {
     const attrs = parseAttrs(attrsRaw);
-    const page = loopPageOverrides.value[loopKey] || Number(attrs.page || 1);
-    const npcResponse = await fetchNpcs({
-        rank: attrs.rank,
-        lvl_from: attrs.minLvl || attrs.lvlFrom,
-        lvl_to: attrs.maxLvl || attrs.lvlTo,
-        per_page: attrs.perPage || attrs.limit || 10,
-        page,
-    });
-    const npcs = npcResponse.items;
+    const perPage = Math.max(1, Number(attrs.perPage || attrs.limit || 10));
+    const npcs = await fetchAllNpcsForLoop(attrs);
 
     const npcTagMatch = inner.match(/\[npc([^[\]]*)\]/i);
     const npcTagAttrs = npcTagMatch ? parseAttrs(npcTagMatch[1] || "") : {};
@@ -259,24 +282,15 @@ const processNpcLoopRich = async (attrsRaw: string, inner: string, loopKey: stri
         });
     }
 
-    return {
-        type: "npc-loop-rich",
-        entries,
-        loopKey,
-        page: npcResponse.meta.page || page,
-        lastPage: npcResponse.meta.last_page || 1,
-    };
+    return { entries, perPage };
 };
 
 const buildPreview = async () => {
     const source = form.content || "";
-    const blocks: PreviewBlock[] = [];
+    const finalPages: PreviewBlock[][] = [];
+    const sourcePages = source.split(/\[page\]/gi);
 
-    const richLoopRegex = /\[npc-loop([^\]]*)\]([\s\S]*?)\[\/npc-loop\]/gi;
-    let lastIndex = 0;
-    let richMatch: RegExpExecArray | null;
-
-    const processInlineSegment = async (segment: string) => {
+    const processInlineSegment = async (segment: string, blocks: PreviewBlock[]) => {
         const inlineRegex = /\[((?:npc(?:-loop)?|item-loop))([^\]]*)\]/gi;
         let inlineLast = 0;
         let inlineMatch: RegExpExecArray | null;
@@ -304,44 +318,82 @@ const buildPreview = async () => {
         }
     };
 
-    while ((richMatch = richLoopRegex.exec(source)) !== null) {
-        const start = richMatch.index;
-        if (start > lastIndex) {
-            await processInlineSegment(source.slice(lastIndex, start));
+    for (let pageIdx = 0; pageIdx < sourcePages.length; pageIdx += 1) {
+        const pageContent = sourcePages[pageIdx] || "";
+        const pageBlocks: PreviewBlock[] = [];
+        const richLoopRegex = /\[npc-loop([^\]]*)\]([\s\S]*?)\[\/npc-loop\]/gi;
+        let lastIndex = 0;
+        let richMatch: RegExpExecArray | null;
+
+        while ((richMatch = richLoopRegex.exec(pageContent)) !== null) {
+            const start = richMatch.index;
+            if (start > lastIndex) {
+                await processInlineSegment(pageContent.slice(lastIndex, start), pageBlocks);
+            }
+
+            const attrsRaw = richMatch[1] || "";
+            const inner = richMatch[2] || "";
+            const loopResolved = await processNpcLoopRich(attrsRaw, inner);
+
+            const totalLoopPages = Math.max(1, Math.ceil(loopResolved.entries.length / loopResolved.perPage));
+            const introBlocks = [...pageBlocks];
+
+            for (let loopPageIdx = 0; loopPageIdx < totalLoopPages; loopPageIdx += 1) {
+                const from = loopPageIdx * loopResolved.perPage;
+                const to = from + loopResolved.perPage;
+                const slicedEntries = loopResolved.entries.slice(from, to);
+                const scopedBlocks: PreviewBlock[] = [];
+
+                if (loopPageIdx === 0) {
+                    scopedBlocks.push(...introBlocks);
+                }
+
+                if (slicedEntries.length > 0) {
+                    scopedBlocks.push({
+                        type: "npc-loop-rich",
+                        entries: slicedEntries,
+                    });
+                }
+
+                if (scopedBlocks.length > 0) {
+                    finalPages.push(scopedBlocks);
+                }
+            }
+
+            pageBlocks.length = 0;
+            lastIndex = start + richMatch[0].length;
         }
 
-        const attrsRaw = richMatch[1] || "";
-        const inner = richMatch[2] || "";
-        const loopKey = `${richMatch.index}-${attrsRaw}`;
-        blocks.push(await processNpcLoopRich(attrsRaw, inner, loopKey));
-        lastIndex = start + richMatch[0].length;
+        if (lastIndex < pageContent.length) {
+            await processInlineSegment(pageContent.slice(lastIndex), pageBlocks);
+        }
+
+        if (pageBlocks.length > 0) {
+            finalPages.push(pageBlocks);
+        }
     }
 
-    if (lastIndex < source.length) {
-        await processInlineSegment(source.slice(lastIndex));
-    }
-
-    previewBlocks.value = blocks;
+    previewPages.value = finalPages.length ? finalPages : [[{ type: "html", html: "" }]];
+    previewPageIndex.value = Math.max(0, Math.min(previewPageIndex.value, previewPages.value.length - 1));
 };
 
-const changeLoopPage = (loopKey: string, page: number) => {
-    if (page < 1) {
-        return;
+const prevPreviewPage = () => {
+    if (previewPageIndex.value > 0) {
+        previewPageIndex.value -= 1;
     }
-    loopPageOverrides.value = {
-        ...loopPageOverrides.value,
-        [loopKey]: page,
-    };
-    buildPreview().catch(() => {
-        previewBlocks.value = [{ type: "html", html: '<div class="book-npc-missing">Błąd podglądu BBCode.</div>' }];
-    });
+};
+
+const nextPreviewPage = () => {
+    if (previewPageIndex.value < totalPreviewPages.value - 1) {
+        previewPageIndex.value += 1;
+    }
 };
 
 watch(
     () => form.content,
     () => {
         buildPreview().catch(() => {
-            previewBlocks.value = [{ type: "html", html: '<div class="book-npc-missing">Błąd podglądu BBCode.</div>' }];
+            previewPages.value = [[{ type: "html", html: '<div class="book-npc-missing">Błąd podglądu BBCode.</div>' }]];
         });
     },
     { immediate: true }
@@ -372,6 +424,10 @@ const exampleSnippets = computed(() => [
         title: "NPC (v-tip) wyśrodkowany + itemy jeden pod drugim, też na środku",
         code: '[npc-loop rank=ELITE_II minLvl=10 maxLvl=50 perPage=3 page=1]\n[npc mode=img align=center]\n[item-loop mode=img rarity=unique align=center separator=line]\n[/npc-loop]',
     },
+    {
+        title: "Wstęp na 1. stronie, a od 2. strony lista NPC",
+        code: 'Witaj w spisie mobów.\nTu znajdziesz listę ELIT II do 50 poziomu.\n[page]\n[npc-loop rank=ELITE_II minLvl=10 maxLvl=50 perPage=3]\n[npc mode=img align=center]\n[item-loop mode=img rarity=unique align=center separator=line]\n[/npc-loop]',
+    },
 ]);
 </script>
 
@@ -399,8 +455,21 @@ const exampleSnippets = computed(() => [
 
         <div class="card">
             <h3 class="mb-3">Podgląd książki (live)</h3>
-            <div class="book-preview">
-                <template v-for="(block, idx) in previewBlocks" :key="idx">
+            <div class="book-preview-toolbar">
+                <div class="book-preview-pagination">
+                    <Button label="<" size="small" :disabled="showAllPreviewPages || previewPageIndex <= 0" @click="prevPreviewPage" />
+                    <span>Strona {{ previewPageIndex + 1 }} / {{ totalPreviewPages }}</span>
+                    <Button label=">" size="small" :disabled="showAllPreviewPages || previewPageIndex >= totalPreviewPages - 1" @click="nextPreviewPage" />
+                </div>
+                <label class="book-preview-toggle">
+                    <input type="checkbox" v-model="showAllPreviewPages">
+                    <span>Pokaż wszystkie strony (jedna pod drugą)</span>
+                </label>
+            </div>
+
+            <div v-for="(pageBlocks, pageIdx) in visiblePreviewPages" :key="`preview-page-${pageIdx}-${showAllPreviewPages ? pageIdx : previewPageIndex}`" class="book-preview">
+                <div v-if="showAllPreviewPages" class="book-preview-page-title">Strona {{ pageIdx + 1 }}</div>
+                <template v-for="(block, idx) in pageBlocks" :key="`block-${pageIdx}-${idx}`">
                     <div v-if="block.type === 'html'" v-html="block.html" />
 
                     <div v-else-if="block.type === 'npcs'" class="book-npc-block" :class="separatorClass(block.separator)">
@@ -485,13 +554,6 @@ const exampleSnippets = computed(() => [
                                 </template>
                             </div>
                         </div>
-                        <div class="book-loop-pagination" v-if="block.lastPage > 1">
-                            <Button size="small" label="<<" :disabled="block.page <= 1" @click="changeLoopPage(block.loopKey, 1)" />
-                            <Button size="small" label="<" :disabled="block.page <= 1" @click="changeLoopPage(block.loopKey, block.page - 1)" />
-                            <span class="book-loop-page-label">Strona {{ block.page }} / {{ block.lastPage }}</span>
-                            <Button size="small" label=">" :disabled="block.page >= block.lastPage" @click="changeLoopPage(block.loopKey, block.page + 1)" />
-                            <Button size="small" label=">>" :disabled="block.page >= block.lastPage" @click="changeLoopPage(block.loopKey, block.lastPage)" />
-                        </div>
                     </div>
                 </template>
             </div>
@@ -520,16 +582,33 @@ const exampleSnippets = computed(() => [
     line-height: 1.45;
 }
 
-:deep(.book-page-break) {
-    margin: 1rem 0 0.35rem;
-    border: none;
-    border-top: 1px dashed #9a8862;
+.book-preview-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    gap: 1rem;
 }
 
-:deep(.book-page-marker) {
+.book-preview-pagination {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.book-preview-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
     color: #6f6145;
-    font-size: 0.9rem;
-    margin-bottom: 0.8rem;
+}
+
+.book-preview-page-title {
+    font-weight: 700;
+    color: #6f6145;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px dashed #d5c8a5;
 }
 
 .book-npc-block.line .book-npc-text {
@@ -572,21 +651,6 @@ const exampleSnippets = computed(() => [
 
 .book-rich-entry:last-child {
     border-bottom: none;
-}
-
-.book-loop-pagination {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 0.4rem;
-    margin-top: 0.5rem;
-}
-
-.book-loop-page-label {
-    font-size: 0.85rem;
-    color: #6f6145;
-    min-width: 90px;
-    text-align: center;
 }
 
 .book-example-code {
