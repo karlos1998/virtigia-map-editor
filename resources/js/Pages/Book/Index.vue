@@ -15,7 +15,7 @@ type BookRow = {
 type Data = { data: BookRow }
 
 const createVisible = ref(false);
-const createForm = ref({ title: "", content: "" });
+const createForm = ref({ title: "" });
 const createProcessing = ref(false);
 
 const createBook = () => {
@@ -24,7 +24,7 @@ const createBook = () => {
         preserveScroll: true,
         onSuccess: () => {
             createVisible.value = false;
-            createForm.value = { title: "", content: "" };
+            createForm.value = { title: "" };
         },
         onFinish: () => {
             createProcessing.value = false;
@@ -68,10 +68,6 @@ const createBook = () => {
             <div class="mb-3">
                 <label class="font-semibold block mb-2">Tytuł</label>
                 <InputText v-model="createForm.title" class="w-full" />
-            </div>
-            <div class="mb-3">
-                <label class="font-semibold block mb-2">Treść (BBCode, podział stron: [page])</label>
-                <Textarea v-model="createForm.content" class="w-full" rows="12" autoResize />
             </div>
             <div class="flex justify-end gap-2">
                 <Button label="Anuluj" severity="secondary" @click="createVisible = false" />

@@ -153,6 +153,8 @@ Route::middleware(['auth'])->group(function () {
                     Route::get('books', [BookController::class, 'index'])->name('books.index');
                     Route::post('books', [BookController::class, 'store'])->name('books.store');
                     Route::get('books/search', [BookController::class, 'search'])->name('books.search');
+                    Route::get('books/preview/base-npcs', [BookController::class, 'previewBaseNpcs'])->name('books.preview.base-npcs');
+                    Route::get('books/preview/base-items', [BookController::class, 'previewBaseItems'])->name('books.preview.base-items');
                     Route::get('books/{book}', [BookController::class, 'show'])->name('books.show');
                     Route::patch('books/{book}', [BookController::class, 'update'])->name('books.update');
 

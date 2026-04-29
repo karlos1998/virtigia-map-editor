@@ -3,8 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\SearchBookRequest;
+use App\Http\Requests\PreviewBookBaseItemRequest;
+use App\Http\Requests\PreviewBookBaseNpcRequest;
 use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\UpdateBookRequest;
+use App\Http\Resources\BaseItemBookPreviewResource;
+use App\Http\Resources\BaseNpcBookPreviewResource;
 use App\Http\Resources\BookResource;
 use App\Models\Book;
 use App\Services\BookService;
@@ -55,5 +59,30 @@ class BookController extends Controller
         $this->bookService->update($book, $request->validated());
 
         return back();
+    }
+
+    public function previewBaseNpcs(PreviewBookBaseNpcRequest $request)
+    {
+        $validated = $request->validated();
+        $perPage = max(1, min(50, (int) ($validated['per_page'] ?? 30)));
+        $page = max(1, (int) ($validated['page'] ?? 1));
+        $total = $this->bookService->countBaseNpcsForPreview($validated);
+
+        return response()->json([
+            'items' => BaseNpcBookPreviewResource::collection($this->bookService->findBaseNpcsForPreview($validated))->resolve(),
+            'meta' => [
+                'total' => $total,
+                'per_page' => $perPage,
+                'page' => $page,
+                'last_page' => max(1, (int) ceil($total / $perPage)),
+            ],
+        ]);
+    }
+
+    public function previewBaseItems(PreviewBookBaseItemRequest $request)
+    {
+        return response()->json([
+            'items' => BaseItemBookPreviewResource::collection($this->bookService->findBaseItemsForPreview($request->validated()))->resolve(),
+        ]);
     }
 }
