@@ -181,6 +181,8 @@ const availableAttributes = [
   { key: 'isBindsAfterEquip', label: 'Wiąże po założeniu', type: 'boolean' },
   { key: 'isNotAuctionable', label: 'Nie można wystawiać na aukcję', type: 'boolean' },
   { key: 'isBoundToOwner', label: 'Związany z właścicielem', type: 'boolean' },
+  { key: 'unbindsOwnerBound', label: 'Odwiązuje przedmiot związany z właścicielem', type: 'boolean' },
+  { key: 'unbindsPermanentlyBound', label: 'Odwiązuje przedmiot związany na stałe (też zwykły bind)', type: 'boolean' },
   { key: 'isRecovered', label: 'Przedmiot odzyskany', type: 'boolean' },
   { key: 'isUnidentified', label: 'Przedmiot niezidentyfikowany', type: 'boolean' },
   { key: 'useOutfit', label: 'Zmiana wyglądu postaci', type: 'object' }

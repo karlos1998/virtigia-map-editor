@@ -134,6 +134,8 @@ const booleanAttributes: BooleanAttribute[] = [
     {key: 'isBindsAfterEquip', label: 'Wiąże po założeniu'},
     {key: 'isNotAuctionable', label: 'Tego przedmiotu nie można wystawiać na aukcję'},
     {key: 'isBoundToOwner', label: 'Związany z włascicielem'},
+    {key: 'unbindsOwnerBound', label: 'Odwiązuje przedmiot związany z właścicielem'},
+    {key: 'unbindsPermanentlyBound', label: 'Odwiązuje przedmiot związany na stałe (też zwykły bind)'},
     {key: 'isRecovered', label: 'Przedmiot odzyskany, obniżona wartość'},
     {key: 'isUnidentified', label: 'Przedmiot niezidentyfikowany'},
     {key: 'impossibleToRemove', label: 'Czar niemożliwy do zdjęcia'}
