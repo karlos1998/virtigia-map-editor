@@ -274,6 +274,8 @@ const addAdditionalAction = () => {
         value = [];
     } else if(newAdditionalAction.value == DialogNodeAdditionalAction.addGold) {
         value = 1;
+    } else if (newAdditionalAction.value == DialogNodeAdditionalAction.addHonorPoints) {
+        value = 1;
     } else if (newAdditionalAction.value == DialogNodeAdditionalAction.addExp) {
         value = 1;
     } else if (newAdditionalAction.value == DialogNodeAdditionalAction.addExpPercent) {
@@ -459,7 +461,7 @@ watch(currentOutfitSrc, async (value) => {
             </InputGroupAddon>
 
             <InputNumber
-                v-if="form.additional_actions[name] && typeof form.additional_actions[name].value == 'number' && (name == DialogNodeAdditionalAction.addGold || name == DialogNodeAdditionalAction.addExp)"
+                v-if="form.additional_actions[name] && typeof form.additional_actions[name].value == 'number' && (name == DialogNodeAdditionalAction.addGold || name == DialogNodeAdditionalAction.addHonorPoints || name == DialogNodeAdditionalAction.addExp)"
                 v-model="form.additional_actions[name].value"
                 :max="2000000000"
                 :min="0"

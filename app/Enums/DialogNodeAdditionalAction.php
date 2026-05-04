@@ -22,6 +22,9 @@ enum DialogNodeAdditionalAction: string
     #[Description('Dodaj złoto')]
     case ADD_GOLD = 'addGold';
 
+    #[Description('Dodaj punkty honoru')]
+    case ADD_HONOR_POINTS = 'addHonorPoints';
+
     #[Description('Dodaj doświadczenie')]
     case ADD_EXP = 'addExp';
 

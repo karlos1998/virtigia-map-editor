@@ -1,6 +1,7 @@
 export enum DialogNodeAdditionalAction {
     addItems = 'addItems',
     addGold = 'addGold',
+    addHonorPoints = 'addHonorPoints',
     setQuestStep = 'setQuestStep',
     addExp = 'addExp',
     addExpPercent = 'addExpPercent',
