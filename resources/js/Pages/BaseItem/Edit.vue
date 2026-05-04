@@ -48,6 +48,7 @@ const jsonEditorAttributes = ref(JSON.parse(JSON.stringify(cleanAttributes(props
 // Check if this is a pet/book item
 const isPet = computed(() => props.baseItem.category === 'pets');
 const isBook = computed(() => props.baseItem.category === 'books');
+const isMusicBox = computed(() => props.baseItem.category === 'musicBoxes');
 const baseItem = computed(() => props.baseItem);
 
 // Set default active tab based on category
@@ -57,6 +58,8 @@ const activeTab = ref(isPet.value ? '4' : '0');
 const scaleResult = ref<any>(null);
 const filteredBooks = ref<any[]>([]);
 const selectedBook = ref<any | null>(null);
+const filteredAudios = ref<any[]>([]);
+const selectedAudio = ref<any | null>(null);
 
 async function loadSelectedBookById(bookId: number) {
     if (!bookId || bookId <= 0) {
@@ -72,6 +75,23 @@ async function loadSelectedBookById(bookId: number) {
         };
     } catch {
         selectedBook.value = { id: bookId, title: `#${bookId}` };
+    }
+}
+
+async function loadSelectedAudioById(audioId: number) {
+    if (!audioId || audioId <= 0) {
+        selectedAudio.value = null;
+        return;
+    }
+
+    try {
+        const { data } = await axios.get(route('audios.fetch', { audio: audioId }));
+        selectedAudio.value = {
+            id: Number(data?.id ?? audioId),
+            name: String(data?.name ?? `#${audioId}`),
+        };
+    } catch {
+        selectedAudio.value = { id: audioId, name: `#${audioId}` };
     }
 }
 
@@ -101,6 +121,10 @@ onMounted(() => {
     const currentBookId = Number(form.attributes?.bookId ?? 0);
     if (isBook.value && currentBookId > 0) {
         loadSelectedBookById(currentBookId);
+    }
+    const currentAudioId = Number(form.attributes?.audioId ?? 0);
+    if (isMusicBox.value && currentAudioId > 0) {
+        loadSelectedAudioById(currentAudioId);
     }
 })
 
@@ -204,12 +228,19 @@ const save = () => {
             delete finalAttributes.bookId;
         }
     }
+    if (isMusicBox.value) {
+        if (selectedAudio.value?.id) {
+            finalAttributes.audioId = selectedAudio.value.id;
+        } else {
+            delete finalAttributes.audioId;
+        }
+    }
 
     // Create update data with all three fields
     const updateData = {
         attributes: finalAttributes,
-        attribute_points: isBook.value ? {} : (form.attribute_points || {}),
-        manual_attribute_points: isBook.value ? {} : (form.manual_attribute_points || {})
+        attribute_points: (isBook.value || isMusicBox.value) ? {} : (form.attribute_points || {}),
+        manual_attribute_points: (isBook.value || isMusicBox.value) ? {} : (form.manual_attribute_points || {})
     };
 
     // Send the update
@@ -240,6 +271,11 @@ const searchBooks = async ({ query }: { query: string }) => {
     filteredBooks.value = data;
 };
 
+const searchAudios = async ({ query }: { query: string }) => {
+    const { data } = await axios.get(route('audios.search', { query }));
+    filteredAudios.value = data;
+};
+
 const specificCurrencyPrice = ref(props.baseItem.specific_currency_price ?? null);
 
 watch(
@@ -258,6 +294,12 @@ watch(
             loadSelectedBookById(currentBookId);
         } else {
             selectedBook.value = null;
+        }
+        const currentAudioId = Number(updatedBaseItem.attributes?.audioId ?? 0);
+        if (currentAudioId > 0) {
+            loadSelectedAudioById(currentAudioId);
+        } else {
+            selectedAudio.value = null;
         }
     },
     { deep: true }
@@ -340,6 +382,21 @@ const clearCurrency = () => {
             />
             <div class="mt-2 text-sm text-surface-500">
                 Dla kategorii <strong>books</strong> aktywna jest tylko treść książki (atrybut <code>bookId</code>).
+            </div>
+        </div>
+        <div v-else-if="isMusicBox" class="card">
+            <h4 class="font-semibold mb-3">Plik audio przypięty do przedmiotu</h4>
+            <AutoComplete
+                class="w-full"
+                v-model="selectedAudio"
+                :suggestions="filteredAudios"
+                @complete="searchAudios"
+                :option-label="(audio: any|null) => audio ? `[${audio.id}] ${audio.name}` : ''"
+                placeholder="Wyszukaj plik audio po nazwie"
+                fluid
+            />
+            <div class="mt-2 text-sm text-surface-500">
+                Dla kategorii <strong>musicBoxes</strong> aktywny jest atrybut <code>audioId</code>.
             </div>
         </div>
 

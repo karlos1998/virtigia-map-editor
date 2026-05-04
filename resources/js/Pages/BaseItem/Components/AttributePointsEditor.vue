@@ -188,6 +188,7 @@ const additionalAttributes: AdditionalAttribute[] = [
             {label: 'Talizmany', value: 'talismans'},
             {label: 'Ulepszenia', value: 'upgrades'},
             {label: 'Książki', value: 'books'},
+            {label: 'Pozytywki', value: 'musicBoxes'},
             {label: 'Klucze', value: 'keys'},
             {label: 'Złoto', value: 'golds'},
             {label: 'Błogosławieństwa', value: 'blessings'},

@@ -70,6 +70,11 @@ const model = ref([
                 route: 'books.index',
             },
             {
+                label: 'Pliki audio',
+                icon: 'pi pi-volume-up',
+                route: 'audios.index',
+            },
+            {
                 label: 'Odnawialne Przedmioty',
                 icon: 'pi pi-box',
                 route: 'renewable-items.index',

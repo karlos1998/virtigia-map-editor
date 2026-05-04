@@ -6,6 +6,7 @@ use App\Http\Controllers\AssetController;
 use App\Http\Controllers\BaseItemController;
 use App\Http\Controllers\BaseNpcController;
 use App\Http\Controllers\BookController;
+use App\Http\Controllers\AudioController;
 use App\Http\Controllers\CalendarDayController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DialogController;
@@ -158,6 +159,13 @@ Route::middleware(['auth'])->group(function () {
                     Route::get('books/preview/base-items', [BookController::class, 'previewBaseItems'])->name('books.preview.base-items');
                     Route::get('books/{book}', [BookController::class, 'show'])->name('books.show');
                     Route::patch('books/{book}', [BookController::class, 'update'])->name('books.update');
+
+                    Route::get('audios', [AudioController::class, 'index'])->name('audios.index');
+                    Route::post('audios', [AudioController::class, 'store'])->name('audios.store');
+                    Route::get('audios/search', [AudioController::class, 'search'])->name('audios.search');
+                    Route::get('audios/{audio}/fetch', [AudioController::class, 'fetch'])->name('audios.fetch');
+                    Route::get('audios/{audio}', [AudioController::class, 'show'])->name('audios.show');
+                    Route::patch('audios/{audio}', [AudioController::class, 'update'])->name('audios.update');
 
                     Route::get('npcs', [NpcController::class, 'index'])->name('npcs.index');
                     Route::get('npcs/search-hero', [NpcController::class, 'searchHero'])->name('npcs.search-hero');

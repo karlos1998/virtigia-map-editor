@@ -79,6 +79,9 @@ enum BaseItemCategory: string
     #[Description('Książki')]
     case BOOKS = 'books';
 
+    #[Description('Pozytywki')]
+    case MUSIC_BOXES = 'musicBoxes';
+
     #[Description('Klucze')]
     case KEYS = 'keys';
 
