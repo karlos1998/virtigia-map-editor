@@ -39,7 +39,7 @@ class DialogService extends BaseService
 
         if (($data['type'] ?? 'special') === 'special') {
             $node->options()->create([
-                'label' => 'Zakończ.',
+                'label' => 'Zakończ rozmowę',
             ]);
         }
 
