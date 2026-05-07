@@ -113,6 +113,11 @@ Route::middleware(['auth'])->group(function () {
                     Route::get('maps/search', [MapController::class, 'search'])->name('maps.search');
                     Route::get('maps', [MapController::class, 'index'])->name('maps.index');
                     Route::get('minimap', [MapController::class, 'world'])->name('maps.world');
+                    Route::post('minimap/regenerate', [MapController::class, 'regenerateWorldMinimap'])->name('maps.world.regenerate');
+                    Route::get('web-api/minimap', [MapController::class, 'worldMinimapData'])->name('web-api.minimap.index');
+                    Route::post('web-api/minimap/nodes', [MapController::class, 'addWorldMinimapNode'])->name('web-api.minimap.nodes.store');
+                    Route::patch('web-api/minimap/nodes/{node}', [MapController::class, 'updateWorldMinimapNodePosition'])->name('web-api.minimap.nodes.update');
+                    Route::delete('web-api/minimap/nodes/{node}', [MapController::class, 'deleteWorldMinimapNode'])->name('web-api.minimap.nodes.destroy');
                     Route::get('maps/{map}/data', [MapController::class, 'getMapData'])->name('maps.data');
                     Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');
 

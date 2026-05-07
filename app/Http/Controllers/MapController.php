@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Enums\PvpType;
 use App\Http\Requests\StoreMapRequest;
+use App\Http\Requests\AddWorldMinimapNodeRequest;
+use App\Http\Requests\UpdateWorldMinimapNodePositionRequest;
 use App\Http\Requests\UpdateMapBattleground2Request;
 use App\Http\Requests\UpdateMapBattlegroundRequest;
 use App\Http\Requests\UpdateMapColsRequest;
@@ -20,17 +22,20 @@ use App\Http\Resources\RenewableMapItemResource;
 use App\Models\Map;
 use App\Models\Door;
 use App\Models\RespawnPoint;
+use App\Models\WorldMinimapNode;
+use App\Jobs\RegenerateWorldMinimapJob;
 use App\Services\MapService;
 use App\Services\NpcService;
+use App\Services\WorldMinimapService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Cache;
 
 class MapController extends Controller
 {
     public function __construct(
         private MapService $mapService,
-        private NpcService $npcService
+        private NpcService $npcService,
+        private WorldMinimapService $worldMinimapService,
     )
     {
     }
@@ -62,15 +67,50 @@ class MapController extends Controller
      */
     public function world()
     {
-        $mapService = $this->mapService;
-        $cached = Cache::remember('maps.world.connected_maps', 600, function () use ($mapService) {
-            return $mapService->getAllConnectedMaps();
-        });
-
+        $worldMinimap = $this->worldMinimapService->getData();
         return Inertia::render('Map/WorldMinimap', [
-            'maps' => $cached['maps'],
-            'doors' => $cached['doors'],
+            'nodes' => $worldMinimap['nodes'],
         ]);
+    }
+
+    public function regenerateWorldMinimap()
+    {
+        RegenerateWorldMinimapJob::dispatch(session('world'));
+
+        return back()->with('success', 'Generowanie minimapy zostało uruchomione w tle.');
+    }
+
+    public function worldMinimapData()
+    {
+        return response()->json($this->worldMinimapService->getData());
+    }
+
+    public function addWorldMinimapNode(AddWorldMinimapNodeRequest $request)
+    {
+        $this->worldMinimapService->addNode(
+            (int)$request->integer('map_id'),
+            $request->filled('near_map_id') ? (int)$request->integer('near_map_id') : null
+        );
+
+        return response()->json($this->worldMinimapService->getData());
+    }
+
+    public function updateWorldMinimapNodePosition(WorldMinimapNode $node, UpdateWorldMinimapNodePositionRequest $request)
+    {
+        $this->worldMinimapService->updateNodePosition(
+            $node,
+            (int)$request->integer('x'),
+            (int)$request->integer('y'),
+        );
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function deleteWorldMinimapNode(WorldMinimapNode $node)
+    {
+        $this->worldMinimapService->deleteNode($node);
+
+        return response()->json($this->worldMinimapService->getData());
     }
 
     public function show(Map $map)
