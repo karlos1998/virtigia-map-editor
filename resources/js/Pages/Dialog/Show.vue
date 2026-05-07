@@ -74,6 +74,7 @@ const {
     addEdges,
     addNodes,
     viewport,
+    screenToFlowCoordinate,
     onNodeDragStop,
     onEdgesChange,
     applyEdgeChanges,
@@ -136,9 +137,9 @@ const isDirectOutputNode = (type?: string): boolean => {
     return type === 'start' || type === 'randomizer';
 };
 
-const addNode = (type?: string) => {
+const addNode = (type?: string, position?: { x: number; y: number }) => {
     axios.post(route('dialogs.nodes.store', { dialog: props.dialog.id }), {
-        position: {
+        position: position ?? {
             x: -viewport.value.x,
             y: -viewport.value.y
         },
@@ -149,6 +150,58 @@ const addNode = (type?: string) => {
         .catch(({response}) => {
             toast.add({ severity: 'error', summary: 'Błąd', detail: response.data.message, life: 6000 });
         });
+};
+
+const draggableNodeTemplates = [
+    { label: 'Special', type: undefined, icon: 'pi pi-circle' },
+    { label: 'Shop', type: 'shop', icon: 'pi pi-shopping-cart' },
+    { label: 'Hotel', type: 'hotel', icon: 'pi pi-home' },
+    { label: 'Teleport', type: 'teleportation', icon: 'pi pi-forward' },
+    { label: 'Profesje', type: 'profession', icon: 'pi pi-users' },
+    { label: 'Losowanie', type: 'randomizer', icon: 'pi pi-percentage' },
+];
+
+const handleNodeTemplateDragStart = (event: DragEvent, type?: string): void => {
+    if (!event.dataTransfer) {
+        return;
+    }
+
+    event.dataTransfer.setData('application/x-dialog-node-type', type ?? 'special');
+    event.dataTransfer.effectAllowed = 'copy';
+};
+
+const handleFlowDragOver = (event: DragEvent): void => {
+    if (!event.dataTransfer) {
+        return;
+    }
+
+    if (event.dataTransfer.types.includes('application/x-dialog-node-type')) {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
+    }
+};
+
+const handleFlowDrop = (event: DragEvent): void => {
+    if (!event.dataTransfer) {
+        return;
+    }
+
+    const droppedType = event.dataTransfer.getData('application/x-dialog-node-type');
+    if (!droppedType) {
+        return;
+    }
+
+    event.preventDefault();
+
+    const flowPosition = screenToFlowCoordinate({
+        x: event.clientX,
+        y: event.clientY,
+    });
+
+    addNode(droppedType === 'special' ? undefined : droppedType, {
+        x: flowPosition.x,
+        y: flowPosition.y,
+    });
 };
 
 const defaultNodeFromJsonSample = `{
@@ -811,7 +864,7 @@ const items = ref([
 
 <!--        <pre v-text="startEdges" />-->
 <!--        <pre v-text="edges" />-->
-        <div class="">
+        <div class="" @dragover="handleFlowDragOver" @drop="handleFlowDrop">
 
 
             <VueFlow
@@ -871,6 +924,20 @@ const items = ref([
                     <!--                    </Button>-->
 
                     <SpeedDial :model="items" direction="up" />
+                    <div class="node-dnd-palette ml-2">
+                        <div class="node-dnd-title">Przeciągnij node</div>
+                        <button
+                            v-for="template in draggableNodeTemplates"
+                            :key="template.label"
+                            type="button"
+                            draggable="true"
+                            class="node-dnd-item"
+                            @dragstart="handleNodeTemplateDragStart($event, template.type)"
+                        >
+                            <i class="pi" :class="template.icon" />
+                            <span>{{ template.label }}</span>
+                        </button>
+                    </div>
 
                     <!--                    <Button @click="saveDialog">-->
                     <!--                        <FontAwesomeIcon icon="save" />-->
@@ -950,5 +1017,37 @@ const items = ref([
     background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
     color: #6d28d9;
     flex-shrink: 0;
+}
+
+.node-dnd-palette {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.5rem;
+    border: 1px solid var(--surface-border);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--surface-card) 92%, white 8%);
+}
+
+.node-dnd-title {
+    font-size: 0.75rem;
+    color: var(--text-color-secondary);
+    font-weight: 600;
+}
+
+.node-dnd-item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    border: 1px solid var(--surface-border);
+    background: var(--surface-card);
+    border-radius: 8px;
+    padding: 0.35rem 0.55rem;
+    font-size: 0.8rem;
+    cursor: grab;
+}
+
+.node-dnd-item:active {
+    cursor: grabbing;
 }
 </style>
