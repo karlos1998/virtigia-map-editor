@@ -101,6 +101,7 @@ Route::middleware(['auth'])->group(function () {
                     Route::patch('dialog-counters/{dialogCounter}', [\App\Http\Controllers\DialogCounterController::class, 'update'])->name('dialog-counters.update');
                     Route::delete('dialog-counters/{dialogCounter}', [\App\Http\Controllers\DialogCounterController::class, 'destroy'])->name('dialog-counters.destroy');
                     Route::get('seasonal-events', [SeasonalEventController::class, 'index'])->name('seasonal-events.index');
+                    Route::get('seasonal-events/{seasonalEvent}', [SeasonalEventController::class, 'show'])->name('seasonal-events.show');
                     Route::get('web-api/seasonal-events', [SeasonalEventController::class, 'indexJson'])->name('web-api.seasonal-events.index');
                     Route::post('seasonal-events', [SeasonalEventController::class, 'store'])->name('seasonal-events.store');
                     Route::patch('seasonal-events/{seasonalEvent}', [SeasonalEventController::class, 'update'])->name('seasonal-events.update');

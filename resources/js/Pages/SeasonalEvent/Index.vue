@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppLayout from "@/layout/AppLayout.vue";
-import {useForm} from "@inertiajs/vue3";
+import {Link, useForm} from "@inertiajs/vue3";
 import {route} from "ziggy-js";
 import {ref} from "vue";
 
@@ -100,6 +100,9 @@ const removeEvent = (eventId: number) => {
                 <Column header="Akcje" style="width: 18%">
                     <template #body="{ data }">
                         <div class="flex gap-2">
+                            <Link :href="route('seasonal-events.show', { seasonalEvent: data.id })">
+                                <Button size="small" label="Podgląd" icon="pi pi-eye"/>
+                            </Link>
                             <Button size="small" severity="secondary" label="Edytuj" icon="pi pi-pencil" @click="openEdit(data)"/>
                             <Button size="small" severity="danger" label="Usuń" icon="pi pi-trash" @click="removeEvent(data.id)"/>
                         </div>
@@ -139,4 +142,3 @@ const removeEvent = (eventId: number) => {
         </Dialog>
     </AppLayout>
 </template>
-

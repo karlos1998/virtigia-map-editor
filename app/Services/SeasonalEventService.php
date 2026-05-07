@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\DialogNodeOption;
 use App\Models\SeasonalEvent;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -44,6 +45,67 @@ final readonly class SeasonalEventService
         $seasonalEvent->delete();
     }
 
+    public function getShowData(SeasonalEvent $seasonalEvent): array
+    {
+        $seasonalEvent->load(['baseNpcs.locations']);
+
+        $baseNpcs = $seasonalEvent->baseNpcs
+            ->map(fn ($baseNpc) => [
+                'id' => $baseNpc->id,
+                'name' => $baseNpc->name,
+                'lvl' => $baseNpc->lvl,
+                'rank' => $baseNpc->rank?->value,
+                'locations_count' => $baseNpc->locations->count(),
+                'npcs_preview' => $baseNpc->locations
+                    ->take(5)
+                    ->map(fn ($npc) => [
+                        'id' => $npc->id,
+                    ])
+                    ->values(),
+            ])
+            ->sortBy('name')
+            ->values();
+
+        $dialogOptions = DialogNodeOption::query()
+            ->whereNotNull('rules')
+            ->with(['node.dialog.npcs.base'])
+            ->get()
+            ->filter(function (DialogNodeOption $option) use ($seasonalEvent) {
+                return (int) data_get($option->rules, 'seasonalEvent.value') === (int) $seasonalEvent->id;
+            })
+            ->map(function (DialogNodeOption $option) {
+                $dialog = $option->node?->dialog;
+                $dialogNpcs = collect($dialog?->npcs ?? [])
+                    ->map(fn ($npc) => [
+                        'id' => $npc->id,
+                        'base_npc_id' => $npc->base?->id,
+                        'base_npc_name' => $npc->base?->name,
+                    ])
+                    ->values();
+
+                return [
+                    'option_id' => $option->id,
+                    'option_label' => $option->label,
+                    'node_id' => $option->node?->id,
+                    'node_type' => $option->node?->type,
+                    'dialog_id' => $dialog?->id,
+                    'dialog_name' => $dialog?->name,
+                    'dialog_npcs' => $dialogNpcs,
+                ];
+            })
+            ->sortBy([
+                ['dialog_name', 'asc'],
+                ['option_id', 'asc'],
+            ])
+            ->values();
+
+        return [
+            'event' => $this->mapForOutput($seasonalEvent),
+            'base_npcs' => $baseNpcs,
+            'dialog_options' => $dialogOptions,
+        ];
+    }
+
     private function mapForOutput(SeasonalEvent $event): array
     {
         return [
@@ -57,4 +119,3 @@ final readonly class SeasonalEventService
         ];
     }
 }
-

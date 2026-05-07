@@ -24,6 +24,11 @@ class SeasonalEventController extends Controller
         return response()->json($this->seasonalEventService->getAllForList());
     }
 
+    public function show(SeasonalEvent $seasonalEvent)
+    {
+        return Inertia::render('SeasonalEvent/Show', $this->seasonalEventService->getShowData($seasonalEvent));
+    }
+
     public function store(StoreSeasonalEventRequest $request)
     {
         $this->seasonalEventService->create($request->validated());
