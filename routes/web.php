@@ -184,6 +184,7 @@ Route::middleware(['auth'])->group(function () {
                     Route::get('npcs/search-hero', [NpcController::class, 'searchHero'])->name('npcs.search-hero');
                     Route::get('npcs/{npc}', [NpcController::class, 'show'])->name('npcs.show');
                     Route::patch('npcs/{npc}', [NpcController::class, 'update'])->name('npcs.update');
+                    Route::post('npcs/{npc}/dialogs/create-and-assign', [NpcController::class, 'createAndAssignDialog'])->name('npcs.dialogs.create-and-assign');
                     Route::patch('npcs/{npc}/toggle-enabled', [NpcController::class, 'toggleEnabled'])->name('npcs.toggle-enabled');
                     Route::patch('npcs/{npc}/locations/{npcLocation}', [NpcController::class, 'updateLocation'])->name('npcs.update.location');
 

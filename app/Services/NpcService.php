@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Http\Resources\NpcResource;
-use App\Models\BaseNpc;
+use App\Models\Dialog;
 use App\Models\Npc;
 use App\Models\NpcGroup;
 use App\Models\NpcLocation;
@@ -11,15 +11,55 @@ use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Karlos3098\LaravelPrimevueTableService\Enum\TagSeverity;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
-use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownOptions\TableDropdownOptionTag;
-use Karlos3098\LaravelPrimevueTableService\Services\TableService;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownOptions\TableDropdownOption;
+use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownOptions\TableDropdownOptionTag;
+use Karlos3098\LaravelPrimevueTableService\Services\TableService;
 
 class NpcService extends BaseService
 {
-    public function __construct(private readonly Npc $npcModel)
+    public function __construct(private readonly Npc $npcModel) {}
+
+    public function createAndAssignDialog(Npc $npc): Dialog
     {
+        $npc->loadMissing(['base', 'locations.map']);
+
+        $firstLocation = $npc->locations->sortBy('id')->first();
+        $mapName = $firstLocation?->map?->name ?? 'Unknown Map';
+        $dialogName = sprintf('%s - %s', $npc->base->name, $mapName);
+
+        $dialog = Dialog::create([
+            'name' => $dialogName,
+        ]);
+
+        $startNode = $dialog->nodes()->create([
+            'type' => 'start',
+            'position' => [
+                'x' => 0,
+                'y' => 0,
+            ],
+        ]);
+
+        $specialNode = $dialog->nodes()->create([
+            'position' => [
+                'x' => 200,
+                'y' => 100,
+            ],
+            'content' => 'Oto przykładowa kwestia dialogowa',
+        ]);
+
+        $specialNode->options()->create(['label' => 'Zakończ rozmowę']);
+
+        $dialog
+            ->edges()->make()
+            ->sourceNode()->associate($startNode)
+            ->targetNode()->associate($specialNode)
+            ->save();
+
+        $npc->dialog()->associate($dialog);
+        $npc->save();
+
+        return $dialog;
     }
 
     /**
@@ -44,22 +84,22 @@ class NpcService extends BaseService
                     'enabled' => new TableDropdownColumn(
                         placeholder: 'Status',
                         options: [
-                            new TableDropdownOptionTag('Dostępny', fn($q) => $q->whereEnabled(true), TagSeverity::SUCCESS),
-                            new TableDropdownOptionTag('Wylączony', fn($q) => $q->whereEnabled(false), TagSeverity::DANGER),
+                            new TableDropdownOptionTag('Dostępny', fn ($q) => $q->whereEnabled(true), TagSeverity::SUCCESS),
+                            new TableDropdownOptionTag('Wylączony', fn ($q) => $q->whereEnabled(false), TagSeverity::DANGER),
                         ]
                     ),
                     'locations' => new TableDropdownColumn(
                         placeholder: 'Lokalizacje',
                         options: [
-                            new TableDropdownOption('Ma jedną lokalizację', fn($q) => $q->has('locations', '=', 1)),
-                            new TableDropdownOption('Ma wiele lokalizacji', fn($q) => $q->has('locations', '>', 1)),
+                            new TableDropdownOption('Ma jedną lokalizację', fn ($q) => $q->has('locations', '=', 1)),
+                            new TableDropdownOption('Ma wiele lokalizacji', fn ($q) => $q->has('locations', '>', 1)),
                         ]
                     ),
                     'dialog' => new TableDropdownColumn(
                         placeholder: 'Dialog',
                         options: [
-                            new TableDropdownOption('Ma dialog', fn($q) => $q->whereHas('dialog')),
-                            new TableDropdownOption('Nie ma dialogu', fn($q) => $q->whereDoesntHave('dialog')),
+                            new TableDropdownOption('Ma dialog', fn ($q) => $q->whereHas('dialog')),
+                            new TableDropdownOption('Nie ma dialogu', fn ($q) => $q->whereDoesntHave('dialog')),
                         ]
                     ),
                 ],
@@ -86,19 +126,15 @@ class NpcService extends BaseService
 
     public function destroyLocation(Npc $npc, NpcLocation $npcLocation): void
     {
-        if(!$npcLocation->npc()->is($npc))
-        {
+        if (! $npcLocation->npc()->is($npc)) {
             throw ValidationException::withMessages([
                 'message' => 'Ta lokalizacja nie jest powiązana z tym npc',
             ]);
         }
 
-        if($npc->locations()->count() > 1)
-        {
+        if ($npc->locations()->count() > 1) {
             $npcLocation->delete();
-        }
-        else
-        {
+        } else {
             $npc->delete();
         }
     }
@@ -112,8 +148,7 @@ class NpcService extends BaseService
 
     public function updateLocation(Npc $npc, NpcLocation $npcLocation, mixed $validated): void
     {
-        if(!$npcLocation->npc()->is($npc))
-        {
+        if (! $npcLocation->npc()->is($npc)) {
             throw ValidationException::withMessages([
                 'message' => 'Ta lokalizacja nie jest powiązana z tym npc',
             ]);
@@ -126,13 +161,10 @@ class NpcService extends BaseService
     {
         $group = $npc->group;
 
-        if($group?->npcs()->count() > 2)
-        {
+        if ($group?->npcs()->count() > 2) {
             $npc->manually_group_detached = true;
             $npc->group()->disassociate()->save();
-        }
-        else
-        {
+        } else {
             // Mark all NPCs in the group as manually detached
             foreach ($group->npcs as $groupNpc) {
                 $groupNpc->manually_group_detached = true;
@@ -145,7 +177,7 @@ class NpcService extends BaseService
     public function addToGroup(Npc $sourceNpc, Npc $targetNpc)
     {
         // If source NPC doesn't have a group, create one
-        if (!$sourceNpc->group_id) {
+        if (! $sourceNpc->group_id) {
             $group = NpcGroup::create();
             $sourceNpc->manually_group_detached = false; // Reset the detached flag
             $sourceNpc->group()->associate($group)->save();
@@ -179,9 +211,9 @@ class NpcService extends BaseService
         return NpcResource::collection(
             $this->npcModel
                 ->with(['base', 'locations'])
-                ->whereHas('base', function($query) use ($search) {
-                    $query->where('name', 'like', '%' . $search . '%')
-                          ->where('rank', 'HERO');
+                ->whereHas('base', function ($query) use ($search) {
+                    $query->where('name', 'like', '%'.$search.'%')
+                        ->where('rank', 'HERO');
                 })
                 ->limit(25)
                 ->get()

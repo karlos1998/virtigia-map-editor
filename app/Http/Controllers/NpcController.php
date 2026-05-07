@@ -9,10 +9,12 @@ use App\Http\Requests\StoreNpcRequest;
 use App\Http\Requests\UpdateNpcLocationRequest;
 use App\Http\Requests\UpdateNpcRequest;
 use App\Http\Resources\BaseNpcResource;
+use App\Http\Resources\DialogResource;
 use App\Http\Resources\NpcResource;
 use App\Models\Npc;
 use App\Models\NpcLocation;
 use App\Services\NpcService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -49,6 +51,15 @@ class NpcController extends Controller
     public function update(Npc $npc, UpdateNpcRequest $request): void
     {
         $this->npcService->update($npc, $request->validated());
+    }
+
+    public function createAndAssignDialog(Npc $npc): JsonResponse
+    {
+        $dialog = $this->npcService->createAndAssignDialog($npc);
+
+        return response()->json([
+            'dialog' => DialogResource::make($dialog),
+        ]);
     }
 
     /**

@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import {inject, onMounted, Ref, ref, watch} from "vue";
+import {ref} from "vue";
 import {debounce} from "chart.js/helpers";
 import axios from "axios";
 import {route} from "ziggy-js";
-import {DynamicDialogInstance} from "primevue/dynamicdialogoptions";
 import {DialogResource} from "../../../Resources/Dialog.resource";
-import {useForm} from "@inertiajs/vue3";
-import {NpcResource, NpcWithDetails} from "../../../Resources/Npc.resource";
+import {router, useForm} from "@inertiajs/vue3";
+import {NpcWithDetails} from "../../../Resources/Npc.resource";
 
 const visible = defineModel<boolean>('visible');
 
@@ -15,6 +14,7 @@ const { npc } = defineProps<{
 }>()
 
 const dropdownDialogs = ref<DialogResource[]>([]);
+const isCreatingDialog = ref(false);
 
 const searchOptions = debounce((event) => {
     axios.get(route('dialogs.search', { query: event[0].query }))
@@ -52,6 +52,19 @@ const remove = () => {
     save(true);
 }
 
+const createAndAssignDialog = async () => {
+    isCreatingDialog.value = true;
+
+    try {
+        const response = await axios.post(route('npcs.dialogs.create-and-assign', { npc: npc.id }));
+        form.dialog = response.data.dialog;
+        visible.value = false;
+        await router.reload({ only: ['npc'] });
+    } finally {
+        isCreatingDialog.value = false;
+    }
+}
+
 </script>
 <template>
     <Dialog v-model:visible="visible" modal header="Wybierz dialog">
@@ -67,6 +80,17 @@ const remove = () => {
             </AutoComplete>
         </div>
         <Message severity="error" size="small" variant="simple">{{ form.errors.dialog }}</Message>
+        <div v-if="!npc.dialog" class="mt-4">
+            <Button
+                type="button"
+                label="Lub utwórz nowy teraz"
+                icon="pi pi-plus"
+                severity="secondary"
+                outlined
+                :loading="isCreatingDialog"
+                @click="createAndAssignDialog"
+            />
+        </div>
 
         <div class="flex justify-end gap-2 mt-6">
             <Button type="button" label="Anuluj" severity="secondary" @click="cancel" />
