@@ -18,7 +18,7 @@ import { NpcWithLocationsResource } from '@/Resources/Npc.resource';
 import { SimpleQuestResource } from '@/Resources/Quest.resource';
 import type { AdvanceTableResponse } from '@/karlos3098-LaravelPrimevueTable/Services/tableService';
 // import { DialogConnectionResource } from '@/Resources/DialogConnection.resource';
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import axios from 'axios';
 import { route } from 'ziggy-js';
 import TeleporationNode from '@/Pages/Dialog/TeleporationNode.vue';
@@ -37,12 +37,17 @@ const props = defineProps<{
     npcs: NpcWithLocationsResource[],
     quests: SimpleQuestResource[],
     logs: AdvanceTableResponse<any>,
+    dialogNodeOptionAdditionalActionsList: any[],
+    availableRules: any[],
+    dialogNodeAdditionalActionsList: any[],
 }>();
 
 const isEditDialogNameVisible = ref(false);
 const isAddNodeFromJsonVisible = ref(false);
 const nodeFromJsonProcessing = ref(false);
 const nodeFromJsonInput = ref('');
+const isJsonDocumentationVisible = ref(false);
+const addNodeFromJsonModalContentRef = ref<HTMLElement | null>(null);
 const confirm = useConfirm();
 
 // Form for copying the dialog
@@ -251,6 +256,68 @@ const advancedNodeFromJsonSamples = [
 
 nodeFromJsonInput.value = defaultNodeFromJsonSample;
 
+const allNodeJsonSamples = [
+    {
+        label: 'Minimalny special',
+        payload: defaultNodeFromJsonSample
+    },
+    ...advancedNodeFromJsonSamples,
+    {
+        label: 'Special z questem i cooldownem',
+        payload: `{
+  "node": {
+    "type": "special",
+    "position": {
+      "x": 320,
+      "y": 180
+    },
+    "content": "Czy chcesz przyjąć zadanie?"
+  },
+  "options": [
+    {
+      "label": "Tak, biorę.",
+      "cooldown": 3,
+      "rules": {
+        "questBeforeStep": {
+          "operator": ">=",
+          "value": "q-123"
+        }
+      }
+    },
+    {
+      "label": "Nie teraz."
+    }
+  ]
+}`
+    },
+    {
+        label: 'Teleportation node',
+        payload: `{
+  "node": {
+    "type": "teleportation",
+    "position": {
+      "x": 360,
+      "y": 220
+    },
+    "content": "Teleport do miasta."
+  }
+}`
+    },
+    {
+        label: 'Randomizer node',
+        payload: `{
+  "node": {
+    "type": "randomizer",
+    "position": {
+      "x": 390,
+      "y": 240
+    },
+    "content": "Losowanie odpowiedzi."
+  }
+}`
+    }
+];
+
 const addNodeFromJson = async () => {
     let parsedPayload;
 
@@ -278,6 +345,16 @@ const addNodeFromJson = async () => {
     } finally {
         nodeFromJsonProcessing.value = false;
     }
+};
+
+const selectNodeJsonSample = async (payload: string): Promise<void> => {
+    nodeFromJsonInput.value = payload;
+
+    await nextTick();
+    addNodeFromJsonModalContentRef.value?.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
 };
 
 onNodeDragStop(({ node }) => {
@@ -564,11 +641,11 @@ const items = ref([
 
         <EditDialogNameDialog :dialog="props.dialog" v-model:visible="isEditDialogNameVisible" />
         <Dialog v-model:visible="isAddNodeFromJsonVisible" modal header="Dodaj node z JSON" :style="{ width: '48rem' }">
-            <div class="flex flex-col gap-3">
+            <div ref="addNodeFromJsonModalContentRef" class="flex flex-col gap-3 max-h-[70vh] overflow-y-auto pr-1">
                 <p class="text-sm text-surface-500">
                     Wklej JSON z obiektem <strong>node</strong> oraz opcjonalną tablicą <strong>options</strong>.
                 </p>
-                <Textarea v-model="nodeFromJsonInput" rows="18" class="w-full font-mono text-sm" />
+                <Textarea v-model="nodeFromJsonInput" rows="18" class="w-full font-mono text-sm min-h-[22rem] flex-none" />
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="text-sm text-surface-500">Przykłady:</span>
                     <Button
@@ -578,8 +655,72 @@ const items = ref([
                         severity="secondary"
                         size="small"
                         outlined
-                        @click="nodeFromJsonInput = sample.payload"
+                        @click="selectNodeJsonSample(sample.payload)"
                     />
+                </div>
+                <div class="border border-surface-200 dark:border-surface-700 rounded-lg">
+                    <button
+                        type="button"
+                        class="w-full px-4 py-3 flex items-center justify-between text-left font-medium"
+                        @click="isJsonDocumentationVisible = !isJsonDocumentationVisible"
+                    >
+                        <span>Dokumentacja JSON</span>
+                        <i class="pi" :class="isJsonDocumentationVisible ? 'pi-chevron-up' : 'pi-chevron-down'" />
+                    </button>
+                    <div v-if="isJsonDocumentationVisible" class="px-4 pb-4 flex flex-col gap-3 text-sm">
+                        <Message severity="info" :closable="false">
+                            Dla <strong>special</strong> wymagane jest minimum jedno <strong>options[]</strong>.
+                        </Message>
+                        <div>
+                            <div class="font-semibold mb-1">Schemat</div>
+                            <pre class="bg-surface-100 dark:bg-surface-900 p-3 rounded overflow-auto">{
+  "node": {
+    "type": "special|shop|hotel|teleportation|randomizer|profession",
+    "position": { "x": 220, "y": 120 },
+    "content": "opcjonalny tekst",
+    "additional_actions": { "...": { "value": 1 } }
+  },
+  "options": [
+    {
+      "label": "Treść opcji",
+      "additional_action": "HEAL",
+      "cooldown": 5,
+      "rules": { "...": {} }
+    }
+  ]
+}</pre>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <div class="font-semibold">Dostępne `node.additional_actions`</div>
+                            <div class="text-surface-600 dark:text-surface-300">
+                                {{ props.dialogNodeAdditionalActionsList.map((item) => item.value).join(', ') || '-' }}
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <div class="font-semibold">Dostępne `options[].additional_action`</div>
+                            <div class="text-surface-600 dark:text-surface-300">
+                                {{ props.dialogNodeOptionAdditionalActionsList.map((item) => item.value).join(', ') || '-' }}
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <div class="font-semibold">Dostępne klucze `rules`</div>
+                            <div class="text-surface-600 dark:text-surface-300">
+                                {{ props.availableRules.map((item) => item.value).join(', ') || '-' }}
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-surface-500">Pełne przykłady:</span>
+                            <Button
+                                v-for="sample in allNodeJsonSamples"
+                                :key="`all-${sample.label}`"
+                                :label="sample.label"
+                                severity="secondary"
+                                size="small"
+                                text
+                                @click="selectNodeJsonSample(sample.payload)"
+                            />
+                        </div>
+                    </div>
                 </div>
                 <div class="flex justify-end gap-2">
                     <Button label="Anuluj" severity="secondary" @click="isAddNodeFromJsonVisible = false" />
