@@ -8,6 +8,7 @@ use App\Models\Dialog;
 use App\Models\DialogNode;
 use App\Models\DialogNodeOption;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableTextColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\TableService;
@@ -53,6 +54,33 @@ class DialogService extends BaseService
         }
 
         return $node->fresh();
+    }
+
+    public function addNodeFromJson(Dialog $dialog, array $data): DialogNode
+    {
+        return DB::transaction(function () use ($dialog, $data) {
+            $nodePayload = $data['node'];
+            $optionsPayload = $data['options'] ?? [];
+
+            $node = $dialog->nodes()->create([
+                'type' => $nodePayload['type'],
+                'position' => $nodePayload['position'],
+                'content' => $nodePayload['content'] ?? null,
+                'additional_actions' => $nodePayload['additional_actions'] ?? null,
+            ]);
+
+            foreach ($optionsPayload as $index => $optionPayload) {
+                $node->options()->create([
+                    'label' => $optionPayload['label'],
+                    'additional_action' => $optionPayload['additional_action'] ?? null,
+                    'cooldown' => $optionPayload['cooldown'] ?? null,
+                    'rules' => $optionPayload['rules'] ?? null,
+                    'order' => $index,
+                ]);
+            }
+
+            return $node->fresh();
+        });
     }
 
     public function moveNode(DialogNode $dialogNode, array $data)

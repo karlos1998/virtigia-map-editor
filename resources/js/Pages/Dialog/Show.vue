@@ -40,6 +40,9 @@ const props = defineProps<{
 }>();
 
 const isEditDialogNameVisible = ref(false);
+const isAddNodeFromJsonVisible = ref(false);
+const nodeFromJsonProcessing = ref(false);
+const nodeFromJsonInput = ref('');
 const confirm = useConfirm();
 
 // Form for copying the dialog
@@ -141,6 +144,140 @@ const addNode = (type?: string) => {
         .catch(({response}) => {
             toast.add({ severity: 'error', summary: 'Błąd', detail: response.data.message, life: 6000 });
         });
+};
+
+const defaultNodeFromJsonSample = `{
+  "node": {
+    "type": "special",
+    "position": {
+      "x": 220,
+      "y": 120
+    },
+    "content": "Witaj podróżniku. Czego potrzebujesz?"
+  },
+  "options": [
+    {
+      "label": "Pokaż mi sklep",
+      "rules": {
+        "gold": {
+          "operator": ">=",
+          "value": 100
+        }
+      }
+    },
+    {
+      "label": "Kończę rozmowę"
+    }
+  ]
+}`;
+
+const advancedNodeFromJsonSamples = [
+    {
+        label: 'Opcja z wymaganym przedmiotem',
+        payload: `{
+  "node": {
+    "type": "special",
+    "position": {
+      "x": 250,
+      "y": 130
+    },
+    "content": "Masz coś dla mnie?"
+  },
+  "options": [
+    {
+      "label": "Tak, mam wymagany item",
+      "rules": {
+        "items": {
+          "operator": ">=",
+          "value": {
+            "1001": 1
+          }
+        }
+      }
+    },
+    {
+      "label": "Jeszcze nie."
+    }
+  ]
+}`
+    },
+    {
+        label: 'Opcja z akcją po kliknięciu',
+        payload: `{
+  "node": {
+    "type": "special",
+    "position": {
+      "x": 260,
+      "y": 150
+    },
+    "content": "Mogę cię uleczyć."
+  },
+  "options": [
+    {
+      "label": "Ulecz mnie",
+      "additional_action": "HEAL",
+      "cooldown": 5
+    },
+    {
+      "label": "Nie teraz"
+    }
+  ]
+}`
+    },
+    {
+        label: 'Node z additional_actions',
+        payload: `{
+  "node": {
+    "type": "special",
+    "position": {
+      "x": 280,
+      "y": 170
+    },
+    "content": "Dostaniesz bonus doświadczenia.",
+    "additional_actions": {
+      "ADD_EXP_PERCENT": {
+        "value": 12.5
+      }
+    }
+  },
+  "options": [
+    {
+      "label": "Dziękuję!"
+    }
+  ]
+}`
+    }
+];
+
+nodeFromJsonInput.value = defaultNodeFromJsonSample;
+
+const addNodeFromJson = async () => {
+    let parsedPayload;
+
+    try {
+        parsedPayload = JSON.parse(nodeFromJsonInput.value);
+    } catch (_error) {
+        toast.add({ severity: 'error', summary: 'Błąd', detail: 'Nieprawidłowy JSON.', life: 6000 });
+
+        return;
+    }
+
+    nodeFromJsonProcessing.value = true;
+
+    try {
+        const { data: { node } } = await axios.post(route('dialogs.nodes.import-json', { dialog: props.dialog.id }), parsedPayload);
+        addNodes([node]);
+        isAddNodeFromJsonVisible.value = false;
+    } catch ({ response }: any) {
+        const validationErrors = response?.data?.errors
+            ? Object.values(response.data.errors).flat().join('\n')
+            : null;
+        const message = validationErrors || response?.data?.message || 'Nie udało się dodać noda z JSON.';
+
+        toast.add({ severity: 'error', summary: 'Błąd', detail: message, life: 9000 });
+    } finally {
+        nodeFromJsonProcessing.value = false;
+    }
 };
 
 onNodeDragStop(({ node }) => {
@@ -410,6 +547,13 @@ const items = ref([
         command: () => {
             addNode('randomizer');
         }
+    },
+    {
+        label: 'JSON',
+        icon: 'pi pi-code',
+        command: () => {
+            isAddNodeFromJsonVisible.value = true;
+        }
     }
 ]);
 </script>
@@ -419,6 +563,30 @@ const items = ref([
         <ConfirmDialog group="dialog-show-modal" />
 
         <EditDialogNameDialog :dialog="props.dialog" v-model:visible="isEditDialogNameVisible" />
+        <Dialog v-model:visible="isAddNodeFromJsonVisible" modal header="Dodaj node z JSON" :style="{ width: '48rem' }">
+            <div class="flex flex-col gap-3">
+                <p class="text-sm text-surface-500">
+                    Wklej JSON z obiektem <strong>node</strong> oraz opcjonalną tablicą <strong>options</strong>.
+                </p>
+                <Textarea v-model="nodeFromJsonInput" rows="18" class="w-full font-mono text-sm" />
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-sm text-surface-500">Przykłady:</span>
+                    <Button
+                        v-for="sample in advancedNodeFromJsonSamples"
+                        :key="sample.label"
+                        :label="sample.label"
+                        severity="secondary"
+                        size="small"
+                        outlined
+                        @click="nodeFromJsonInput = sample.payload"
+                    />
+                </div>
+                <div class="flex justify-end gap-2">
+                    <Button label="Anuluj" severity="secondary" @click="isAddNodeFromJsonVisible = false" />
+                    <Button label="Dodaj node" :loading="nodeFromJsonProcessing" @click="addNodeFromJson" />
+                </div>
+            </div>
+        </Dialog>
 
         <DetailsCardList title="Informacje o dialogu" class="mb-4">
             <DetailsCardListItem label="Nazwa">

@@ -9,6 +9,7 @@ use App\Http\Requests\AssignHotelToDialogNodeRequest;
 use App\Http\Requests\AssignShopToDialogNodeRequest;
 use App\Http\Requests\MoveDialogNodeRequest;
 use App\Http\Requests\StoreDialogEdgeRequest;
+use App\Http\Requests\StoreDialogNodeFromJsonRequest;
 use App\Http\Requests\StoreDialogNodeOptionRequest;
 use App\Http\Requests\StoreDialogNodeRequest;
 use App\Http\Requests\StoreDialogRequest;
@@ -114,6 +115,15 @@ class DialogController extends Controller
     public function addNode(Dialog $dialog, StoreDialogNodeRequest $request)
     {
         $node = $this->dialogService->addNode($dialog, $request->validated());
+
+        return response()->json([
+            'node' => DialogNodeResource::make($node),
+        ]);
+    }
+
+    public function addNodeFromJson(Dialog $dialog, StoreDialogNodeFromJsonRequest $request): JsonResponse
+    {
+        $node = $this->dialogService->addNodeFromJson($dialog, $request->validated());
 
         return response()->json([
             'node' => DialogNodeResource::make($node),
