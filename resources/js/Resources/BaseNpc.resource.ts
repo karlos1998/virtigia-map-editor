@@ -29,4 +29,12 @@ export interface BaseNpcWithLoots extends BaseNpcResource {
         id: number
         name: string
     }[]
+    seasonal_events?: {
+        id: number
+        name: string
+        slug: string
+        active: boolean | null
+        starts_at: string | null
+        ends_at: string | null
+    }[]
 }

@@ -10,6 +10,6 @@ export type DialogNodeRulesResource = Partial<
         DialogNodeOptionRule,
         DialogNodeOptionRule extends 'messageContent'
             ? MessageContentRuleType
-            : { value: number | number[] | string; consume: boolean, value2: number | number[] | undefined | null }
+            : { value: number | number[] | string | null; consume: boolean, value2: number | number[] | undefined | null }
     >
 >;

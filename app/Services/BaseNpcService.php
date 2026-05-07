@@ -253,6 +253,11 @@ final class BaseNpcService extends BaseService
         $baseNpc->mobSpecies()->sync($mobSpeciesIds);
     }
 
+    public function syncSeasonalEvents(BaseNpc $baseNpc, array $seasonalEventIds): void
+    {
+        $baseNpc->seasonalEvents()->sync($seasonalEventIds);
+    }
+
     public function attachLootsFromBaseNpc(BaseNpc $targetBaseNpc, int $sourceBaseNpcId)
     {
         $sourceBaseNpc = BaseNpc::findOrFail($sourceBaseNpcId);

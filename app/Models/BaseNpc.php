@@ -67,4 +67,9 @@ class BaseNpc extends DynamicModel
     {
         return $this->belongsToMany(MobSpecies::class, 'base_npc_mob_species');
     }
+
+    public function seasonalEvents()
+    {
+        return $this->belongsToMany(SeasonalEvent::class, 'base_npc_seasonal_events');
+    }
 }

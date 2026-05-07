@@ -51,6 +51,9 @@ enum DialogNodeOptionRule: string
     #[Description('Licznik dialogowy')]
     case DIALOG_COUNTER = 'dialogCounter';
 
+    #[Description('Wydarzenie sezonowe')]
+    case SEASONAL_EVENT = 'seasonalEvent';
+
     public function canBeUsed(): bool
     {
         $ref = new ReflectionClassConstant(self::class, $this->name);

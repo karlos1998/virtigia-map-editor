@@ -125,6 +125,11 @@ const model = ref([
                 route: 'dialog-counters.index',
             },
             {
+                label: 'Wydarzenia sezonowe',
+                icon: 'pi pi-calendar',
+                route: 'seasonal-events.index',
+            },
+            {
                 label: 'Generator dla forum',
                 icon: 'pi pi-megaphone',
                 route: 'base-npcs.forum-generator.create',

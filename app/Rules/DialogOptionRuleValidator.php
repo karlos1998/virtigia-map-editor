@@ -7,6 +7,7 @@ use App\Models\BaseItem;
 use App\Models\DialogCounter;
 use App\Models\Quest;
 use App\Models\QuestStep;
+use App\Models\SeasonalEvent;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 
@@ -139,6 +140,11 @@ class DialogOptionRuleValidator implements ValidationRule
 
                 if (!is_int($counterValue)) {
                     $fail("Dla rule: {$key}, wartość licznika musi być liczbą całkowitą.");
+                    return;
+                }
+            } elseif ($key === DialogNodeOptionRule::SEASONAL_EVENT->value) {
+                if (!is_int($ruleData['value']) || !SeasonalEvent::where('id', $ruleData['value'])->exists()) {
+                    $fail("Dla rule: {$key}, wartość musi być istniejącym ID wydarzenia sezonowego.");
                     return;
                 }
             } elseif (

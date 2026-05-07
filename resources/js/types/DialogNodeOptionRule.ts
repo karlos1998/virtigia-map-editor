@@ -10,4 +10,5 @@ export enum DialogNodeOptionRule {
     dragonTears = 'dragonTears',
     messageContent = 'messageContent',
     dialogCounter = 'dialogCounter',
+    seasonalEvent = 'seasonalEvent',
 }

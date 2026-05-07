@@ -35,10 +35,16 @@ const resolvedRuleItems = ref<BaseItemResource[]>([])
 
 // Dialog counters
 const dialogCounters = ref<DialogCounterResource[]>([])
+const seasonalEvents = ref<Array<{ id: number; name: string; is_currently_active: boolean }>>([])
 
 const loadDialogCounters = async () => {
     const { data } = await axios.get<DialogCounterResource[]>(route("web-api.dialog-counters.index"))
     dialogCounters.value = data
+}
+
+const loadSeasonalEvents = async () => {
+    const { data } = await axios.get<Array<{ id: number; name: string; is_currently_active: boolean }>>(route("web-api.seasonal-events.index"))
+    seasonalEvents.value = data
 }
 
 // Use the quest step selection composable
@@ -65,6 +71,8 @@ const submitNewRule = () => {
     } else if (newRule.value === DialogNodeOptionRule.dialogCounter) {
         value = null
         value2 = ['=', 0]
+    } else if (newRule.value === DialogNodeOptionRule.seasonalEvent) {
+        value = null
     }
 
     const data = {
@@ -118,6 +126,7 @@ onMounted(() => {
 
     // Load dialog counters
     loadDialogCounters()
+    loadSeasonalEvents()
 
     // Check if quest steps are already selected and load their details
     if (rules.value[DialogNodeOptionRule.questStep]) {
@@ -289,6 +298,23 @@ watch(
                 class="w-full md:w-32"
             />
         </template>
+
+        <Select
+            v-if="rules[name] && name === DialogNodeOptionRule.seasonalEvent"
+            v-model="rules[name].value"
+            :options="seasonalEvents"
+            optionLabel="name"
+            optionValue="id"
+            class="w-full md:w-80"
+            placeholder="Wybierz wydarzenie"
+        >
+            <template #option="{ option }">
+                <div class="flex items-center justify-between gap-3 w-full">
+                    <span>{{ option.name }}</span>
+                    <Tag :severity="option.is_currently_active ? 'success' : 'secondary'" :value="option.is_currently_active ? 'Aktywne' : 'Nieaktywne'" />
+                </div>
+            </template>
+        </Select>
 
     </InputGroup>
 

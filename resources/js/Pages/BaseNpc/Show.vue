@@ -66,6 +66,8 @@ const isEditSrcVisible = ref(false);
 const isAddSpecialAttackDialogVisible = ref(false);
 const selectedMobSpecies = ref<{ id: number, name: string }[]>(baseNpc.mob_species ?? []);
 const filteredMobSpecies = ref<{ id: number, name: string }[]>([]);
+const selectedSeasonalEvents = ref<{ id: number, name: string, is_currently_active?: boolean }[]>(baseNpc.seasonal_events ?? []);
+const filteredSeasonalEvents = ref<{ id: number, name: string, is_currently_active?: boolean }[]>([]);
 
 const confirm = useConfirm();
 const toast = useToast();
@@ -180,6 +182,26 @@ const syncMobSpecies = async () => {
         severity: 'success',
         summary: 'Sukces',
         detail: 'Przypisane gatunki zostały zaktualizowane',
+        life: 3000,
+    });
+};
+
+const searchSeasonalEvents = async ({ query }: { query: string }) => {
+    const { data } = await axios.get(route('web-api.seasonal-events.index'));
+    const normalizedQuery = query.trim().toLowerCase();
+    filteredSeasonalEvents.value = data.filter((event: { name: string }) =>
+        event.name.toLowerCase().includes(normalizedQuery)
+    );
+};
+
+const syncSeasonalEvents = async () => {
+    await axios.patch(route('base-npcs.seasonal-events.sync', { baseNpc: baseNpc.id }), {
+        seasonal_event_ids: selectedSeasonalEvents.value.map((item) => item.id),
+    });
+    toast.add({
+        severity: 'success',
+        summary: 'Sukces',
+        detail: 'Przypisane wydarzenia sezonowe zostały zaktualizowane',
         life: 3000,
     });
 };
@@ -309,6 +331,31 @@ const syncMobSpecies = async () => {
                     class="mr-2 mb-2"
                 />
             </div>
+        </div>
+
+        <div class="card mb-4">
+            <h3 class="mb-3">Wydarzenia sezonowe</h3>
+            <div class="flex gap-2 items-center">
+                <AutoComplete
+                    multiple
+                    class="w-full"
+                    v-model="selectedSeasonalEvents"
+                    :suggestions="filteredSeasonalEvents"
+                    @complete="searchSeasonalEvents"
+                    :option-label="(event: { id:number, name:string } | null) => event?.name || ''"
+                    placeholder="Dodaj wydarzenia sezonowe"
+                    fluid
+                >
+                    <template #option="{ option }">
+                        <div class="flex items-center justify-between gap-3 w-full">
+                            <span>{{ option.name }}</span>
+                            <Tag :severity="option.is_currently_active ? 'success' : 'secondary'" :value="option.is_currently_active ? 'Aktywne' : 'Nieaktywne'" />
+                        </div>
+                    </template>
+                </AutoComplete>
+                <Button label="Zapisz" icon="pi pi-save" @click="syncSeasonalEvents" />
+            </div>
+            <small class="block mt-2 text-surface-500">NPC bez przypisanego wydarzenia jest zawsze aktywny. Jeśli ma wydarzenia, wystarczy że jedno z nich jest aktywne.</small>
         </div>
 
         <div class="card">

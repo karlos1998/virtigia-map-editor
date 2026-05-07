@@ -8,6 +8,7 @@ use App\Enums\Profession;
 use App\Http\Requests\AttachBaseNpcLootRequest;
 use App\Http\Requests\StoreBaseNpcRequest;
 use App\Http\Requests\StoreSimpleBaseNpcRequest;
+use App\Http\Requests\SyncBaseNpcSeasonalEventsRequest;
 use App\Http\Requests\SyncBaseNpcMobSpeciesRequest;
 use App\Http\Requests\UpdateBaseNpcImageRequest;
 use App\Http\Requests\UpdateBaseNpcRequest;
@@ -109,7 +110,7 @@ class BaseNpcController extends Controller
             ->get();
 
         return Inertia::render('BaseNpc/Show', [
-            'baseNpc' => BaseNpcResource::make($baseNpc->load(['loots', 'specialAttacks.effects', 'specialAttacks.damages', 'mobSpecies'])),
+            'baseNpc' => BaseNpcResource::make($baseNpc->load(['loots', 'specialAttacks.effects', 'specialAttacks.damages', 'mobSpecies', 'seasonalEvents'])),
             'locations' => $this->baseNpcService->getLocations($baseNpc),
             'logs' => ActivityLogResource::collection($logs),
             'similarBaseNpcs' => Inertia::lazy(fn () => $this->baseNpcService->findSimilarBaseNpcs($baseNpc)),
@@ -257,5 +258,10 @@ class BaseNpcController extends Controller
     public function syncMobSpecies(BaseNpc $baseNpc, SyncBaseNpcMobSpeciesRequest $request)
     {
         $this->baseNpcService->syncMobSpecies($baseNpc, $request->validated('mob_species_ids', []));
+    }
+
+    public function syncSeasonalEvents(BaseNpc $baseNpc, SyncBaseNpcSeasonalEventsRequest $request)
+    {
+        $this->baseNpcService->syncSeasonalEvents($baseNpc, $request->validated('seasonal_event_ids', []));
     }
 }

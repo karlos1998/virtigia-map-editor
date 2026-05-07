@@ -23,6 +23,7 @@ use App\Http\Controllers\QuestStepController;
 use App\Http\Controllers\RenewableMapItemController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SpecialAttackController;
+use App\Http\Controllers\SeasonalEventController;
 use App\Http\Middleware\RemoveWorldTemplateNameFromRouteParameters;
 use App\Http\Middleware\SetDynamicModelConnection;
 use App\Models\DynamicModel;
@@ -99,6 +100,11 @@ Route::middleware(['auth'])->group(function () {
                     Route::get('dialog-counters/{dialogCounter}/edit', [\App\Http\Controllers\DialogCounterController::class, 'edit'])->name('dialog-counters.edit');
                     Route::patch('dialog-counters/{dialogCounter}', [\App\Http\Controllers\DialogCounterController::class, 'update'])->name('dialog-counters.update');
                     Route::delete('dialog-counters/{dialogCounter}', [\App\Http\Controllers\DialogCounterController::class, 'destroy'])->name('dialog-counters.destroy');
+                    Route::get('seasonal-events', [SeasonalEventController::class, 'index'])->name('seasonal-events.index');
+                    Route::get('web-api/seasonal-events', [SeasonalEventController::class, 'indexJson'])->name('web-api.seasonal-events.index');
+                    Route::post('seasonal-events', [SeasonalEventController::class, 'store'])->name('seasonal-events.store');
+                    Route::patch('seasonal-events/{seasonalEvent}', [SeasonalEventController::class, 'update'])->name('seasonal-events.update');
+                    Route::delete('seasonal-events/{seasonalEvent}', [SeasonalEventController::class, 'destroy'])->name('seasonal-events.destroy');
 
                     Route::get('maps/create', [MapController::class, 'create'])->name('maps.create');
                     Route::post('maps', [MapController::class, 'store'])->name('maps.store');
@@ -256,6 +262,7 @@ Route::middleware(['auth'])->group(function () {
                     Route::delete('base-npcs/{baseNpc}', [BaseNpcController::class, 'destroy'])->name('base-npcs.destroy');
                     Route::patch('base-npcs/{baseNpc}', [BaseNpcController::class, 'update'])->name('base-npcs.update');
                     Route::patch('base-npcs/{baseNpc}/mob-species', [BaseNpcController::class, 'syncMobSpecies'])->name('base-npcs.mob-species.sync');
+                    Route::patch('base-npcs/{baseNpc}/seasonal-events', [BaseNpcController::class, 'syncSeasonalEvents'])->name('base-npcs.seasonal-events.sync');
 
                     // Special Attacks routes for base-npcs
                     Route::get('base-npcs/{baseNpc}/special-attacks', [BaseNpcController::class, 'listSpecialAttacks'])->name('base-npcs.special-attacks.index');
