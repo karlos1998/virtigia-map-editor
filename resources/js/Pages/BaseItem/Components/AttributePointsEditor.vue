@@ -138,6 +138,8 @@ const booleanAttributes: BooleanAttribute[] = [
     {key: 'unbindsPermanentlyBound', label: 'Odwiązuje przedmiot związany na stałe (też zwykły bind)'},
     {key: 'isRecovered', label: 'Przedmiot odzyskany, obniżona wartość'},
     {key: 'isUnidentified', label: 'Przedmiot niezidentyfikowany'},
+    {key: 'findHeroNpc', label: 'Wskazuje najbliższego herosa do ubicia'},
+    {key: 'findDetailedHeroNpc', label: 'Wskazuje herosa z pozycją i czasem odrodzenia'},
     {key: 'impossibleToRemove', label: 'Czar niemożliwy do zdjęcia'}
 ];
 
