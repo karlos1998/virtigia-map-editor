@@ -160,6 +160,7 @@ const additionalAttributes: AdditionalAttribute[] = [
     {key: 'legendaryLootChanceBonusPercent', label: 'Zwiększa szansę na zdobycie przedmiotu legendarnego o %', type: 'int'},
     {key: 'heroicLootChanceBonusPercent', label: 'Zwiększa szansę na zdobycie przedmiotu heroicznego o %', type: 'int'},
     {key: 'minimumLootChancePercent', label: 'Zmniejsza szansę na pusty łup do %', type: 'int'},
+    {key: 'battleExperienceBonusPercent', label: 'Zwiększa doświadczenie za walkę o %', type: 'int'},
     {key: 'fasterRevivalRecovery', label: 'Procentowe przyśpieszenie wracania do siebie', type: 'int'},
     {key: 'timeToDisappear', label: 'Zniknie za X minut', type: 'int'},
     {key: 'percentageUpgradeCommon', label: 'Ulepszenie przedmiotu zwykłego o %', type: 'int'},
