@@ -16,12 +16,18 @@ import DoorRenderer from './DoorRenderer.vue';
 import CollisionRenderer from './CollisionRenderer.vue';
 import WaterRenderer from './WaterRenderer.vue';
 
+type NpcDrawOffset = {
+    x: number;
+    y: number;
+};
+
 const props = defineProps<{
     map: MapResource;
     npcs: NpcWithLocationResource[];
     doors: DoorResource[];
     renewableItems: any[];
     scale: number;
+    npcDrawOffsetOverrides?: Record<number, NpcDrawOffset>;
 }>();
 
 const emit = defineEmits<{
@@ -530,6 +536,7 @@ const handleRenewableItemClick = (item) => {
                 :npc-scale="npcScale"
                 :add-to-group-mode="addToGroupMode"
                 :source-npc="sourceNpc"
+                :npc-draw-offset-overrides="npcDrawOffsetOverrides"
                 @show-npc-confirm-dialog="(event, npc) => emit('showNpcConfirmDialog', event, npc)"
                 @add-to-group="addNpcToGroup"
             />

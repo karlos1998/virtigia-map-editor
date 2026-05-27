@@ -22,10 +22,13 @@ class NpcResource extends JsonResource
         return [
             'id' => $this->resource->id,
 
+            'base_npc_id' => $this->resource->base_npc_id,
             'name' => $this->resource->base->name,
             'src' => AssetUrl::npc($this->resource->base->src),
             'lvl' => $this->resource->base->lvl,
             'type' => $this->resource->base->type,
+            'draw_offset_x' => $this->resource->base->draw_offset_x ?? 0,
+            'draw_offset_y' => $this->resource->base->draw_offset_y ?? 0,
             'group_id' => $this->resource->group_id,
             'in_group' => $this->resource->group_id > 0,
             'enabled' => $this->resource->enabled,

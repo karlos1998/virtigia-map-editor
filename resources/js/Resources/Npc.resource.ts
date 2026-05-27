@@ -5,10 +5,14 @@ export type Details = {
 }
 export interface NpcResource {
     id: number
+    base_npc_id: number
     name: string
     src: string
     lvl: string
-    group_id?: number
+    type: number
+    draw_offset_x: number
+    draw_offset_y: number
+    group_id: number | null
     in_group: boolean
     enabled: boolean
     //...

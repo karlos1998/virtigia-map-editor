@@ -19,6 +19,8 @@ class BaseNpc extends DynamicModel
         'lvl',
         'type',
         'wt',
+        'draw_offset_x',
+        'draw_offset_y',
         'rank',
         'category',
         'profession',
@@ -27,7 +29,7 @@ class BaseNpc extends DynamicModel
         'guaranteed_loot',
         'drop_chances',
         'min_respawn_time',
-        'max_respawn_time'
+        'max_respawn_time',
     ];
 
     protected $casts = [
@@ -40,6 +42,13 @@ class BaseNpc extends DynamicModel
         'drop_chances' => 'array',
         'min_respawn_time' => 'integer',
         'max_respawn_time' => 'integer',
+        'draw_offset_x' => 'integer',
+        'draw_offset_y' => 'integer',
+    ];
+
+    protected $attributes = [
+        'draw_offset_x' => 0,
+        'draw_offset_y' => 0,
     ];
 
 

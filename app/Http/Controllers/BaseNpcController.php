@@ -137,6 +137,16 @@ class BaseNpcController extends Controller
         $this->baseNpcService->update($baseNpc, $request->validated());
     }
 
+    public function updateDrawOffset(Request $request, BaseNpc $baseNpc): void
+    {
+        $validated = $request->validate([
+            'draw_offset_x' => ['required', 'integer', 'min:-256', 'max:256'],
+            'draw_offset_y' => ['required', 'integer', 'min:-256', 'max:256'],
+        ]);
+
+        $this->baseNpcService->update($baseNpc, $validated);
+    }
+
     /**
      * Remove the specified resource from storage.
      */

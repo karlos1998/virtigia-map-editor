@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import AppLayout from '@/layout/AppLayout.vue';
 import { MapResource } from '@/Resources/Map.resource';
-import { ref } from 'vue';
-import { useConfirm } from 'primevue';
+import { computed, ref } from 'vue';
+import { useConfirm, useToast } from 'primevue';
 import { router } from '@inertiajs/vue3';
+import InputNumber from 'primevue/inputnumber';
+import { route } from 'ziggy-js';
 import ItemHeader from "@/Components/ItemHeader.vue";
 import { NpcWithLocationResource } from '@/Resources/Npc.resource';
 import { DoorResource } from '@/Resources/Door.resource';
@@ -35,7 +37,136 @@ const props = defineProps<{
 const scale = ref(1);
 const trackerPosition = ref({ x: 0, y: 0 });
 const confirm = useConfirm();
+const toast = useToast();
 const mapContainerRef = ref(null);
+
+type NpcDrawOffset = {
+    x: number;
+    y: number;
+};
+
+const offsetDialogVisible = ref(false);
+const offsetNpc = ref<NpcWithLocationResource | null>(null);
+const draftDrawOffsetX = ref(0);
+const draftDrawOffsetY = ref(0);
+const previewNpcDrawOffsets = ref<Record<number, NpcDrawOffset>>({});
+const savedNpcDrawOffsets = ref<Record<number, NpcDrawOffset>>({});
+const offsetLimit = 256;
+
+const activeBaseNpcId = computed(() => offsetNpc.value?.base_npc_id ?? null);
+
+const npcDrawOffsetOverrides = computed<Record<number, NpcDrawOffset>>(() => ({
+    ...savedNpcDrawOffsets.value,
+    ...previewNpcDrawOffsets.value,
+}));
+
+const clampOffset = (value: number | null): number => {
+    const numericValue = Number(value ?? 0);
+
+    if (!Number.isFinite(numericValue)) {
+        return 0;
+    }
+
+    return Math.max(-offsetLimit, Math.min(offsetLimit, Math.trunc(numericValue)));
+};
+
+const setPreviewForActiveNpc = () => {
+    if (activeBaseNpcId.value === null) {
+        return;
+    }
+
+    previewNpcDrawOffsets.value = {
+        ...previewNpcDrawOffsets.value,
+        [activeBaseNpcId.value]: {
+            x: draftDrawOffsetX.value,
+            y: draftDrawOffsetY.value,
+        },
+    };
+};
+
+const clearPreviewForActiveNpc = () => {
+    if (activeBaseNpcId.value === null) {
+        return;
+    }
+
+    const nextOffsets = { ...previewNpcDrawOffsets.value };
+    delete nextOffsets[activeBaseNpcId.value];
+    previewNpcDrawOffsets.value = nextOffsets;
+};
+
+const getStoredDrawOffset = (npc: NpcWithLocationResource): NpcDrawOffset => {
+    return savedNpcDrawOffsets.value[npc.base_npc_id] ?? {
+        x: npc.draw_offset_x ?? 0,
+        y: npc.draw_offset_y ?? 0,
+    };
+};
+
+const openDrawOffsetDialog = (npc: NpcWithLocationResource) => {
+    const offset = getStoredDrawOffset(npc);
+
+    offsetNpc.value = npc;
+    draftDrawOffsetX.value = offset.x;
+    draftDrawOffsetY.value = offset.y;
+    offsetDialogVisible.value = true;
+    setPreviewForActiveNpc();
+};
+
+const updateDraftDrawOffset = (axis: 'x' | 'y', value: number | null) => {
+    if (axis === 'x') {
+        draftDrawOffsetX.value = clampOffset(value);
+    } else {
+        draftDrawOffsetY.value = clampOffset(value);
+    }
+
+    setPreviewForActiveNpc();
+};
+
+const nudgeDrawOffset = (axis: 'x' | 'y', delta: number) => {
+    updateDraftDrawOffset(axis, (axis === 'x' ? draftDrawOffsetX.value : draftDrawOffsetY.value) + delta);
+};
+
+const resetDrawOffset = () => {
+    draftDrawOffsetX.value = 0;
+    draftDrawOffsetY.value = 0;
+    setPreviewForActiveNpc();
+};
+
+const closeDrawOffsetDialog = () => {
+    clearPreviewForActiveNpc();
+    offsetDialogVisible.value = false;
+    offsetNpc.value = null;
+};
+
+const saveDrawOffset = () => {
+    if (activeBaseNpcId.value === null) {
+        return;
+    }
+
+    const baseNpcId = activeBaseNpcId.value;
+    const offset = {
+        x: draftDrawOffsetX.value,
+        y: draftDrawOffsetY.value,
+    };
+
+    router.patch(route('base-npcs.draw-offset.update', baseNpcId), {
+        draw_offset_x: offset.x,
+        draw_offset_y: offset.y,
+    }, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+            savedNpcDrawOffsets.value = {
+                ...savedNpcDrawOffsets.value,
+                [baseNpcId]: offset,
+            };
+            toast.add({ severity: 'success', summary: 'Zapisano', detail: 'Offset NPC został zapisany', life: 3000 });
+            closeDrawOffsetDialog();
+        },
+        onError: () => {
+            toast.add({ severity: 'error', summary: 'Błąd', detail: 'Nie udało się zapisać offsetu NPC', life: 4000 });
+        },
+    });
+};
 
 // Zoom functions
 const zoomIn = () => {
@@ -113,7 +244,71 @@ const handleTrackerPositionChanged = (position: { x: number, y: number }) => {
         <ConfirmDialog />
 
         <!-- NPC Confirm Popup -->
-        <NpcConfirmPopup @move-npc="handleMoveNpc" @add-to-group="handleAddNpcToGroup" />
+        <NpcConfirmPopup
+            @move-npc="handleMoveNpc"
+            @add-to-group="handleAddNpcToGroup"
+            @adjust-draw-offset="openDrawOffsetDialog"
+        />
+
+        <Dialog
+            v-model:visible="offsetDialogVisible"
+            modal
+            header="Lekkie przesunięcie NPC"
+            :style="{ width: '28rem' }"
+            @hide="closeDrawOffsetDialog"
+        >
+            <div v-if="offsetNpc" class="flex flex-col gap-5">
+                <div class="flex items-center gap-3">
+                    <img :src="offsetNpc.src" alt="npc" class="max-w-16 max-h-16 object-contain" />
+                    <div class="min-w-0">
+                        <div class="font-semibold truncate">{{ offsetNpc.name }}</div>
+                        <div class="text-sm text-surface-500">Base NPC #{{ offsetNpc.base_npc_id }}</div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-3">
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="w-8 font-medium">X</span>
+                        <Button icon="pi pi-arrow-left" severity="secondary" outlined aria-label="Lewo" @click="nudgeDrawOffset('x', -1)" />
+                        <InputNumber
+                            :model-value="draftDrawOffsetX"
+                            :min="-offsetLimit"
+                            :max="offsetLimit"
+                            show-buttons
+                            class="w-32"
+                            suffix=" px"
+                            @update:model-value="(value) => updateDraftDrawOffset('x', value)"
+                        />
+                        <Button icon="pi pi-arrow-right" severity="secondary" outlined aria-label="Prawo" @click="nudgeDrawOffset('x', 1)" />
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="w-8 font-medium">Y</span>
+                        <Button icon="pi pi-arrow-up" severity="secondary" outlined aria-label="Góra" @click="nudgeDrawOffset('y', -1)" />
+                        <InputNumber
+                            :model-value="draftDrawOffsetY"
+                            :min="-offsetLimit"
+                            :max="offsetLimit"
+                            show-buttons
+                            class="w-32"
+                            suffix=" px"
+                            @update:model-value="(value) => updateDraftDrawOffset('y', value)"
+                        />
+                        <Button icon="pi pi-arrow-down" severity="secondary" outlined aria-label="Dół" @click="nudgeDrawOffset('y', 1)" />
+                    </div>
+                </div>
+            </div>
+
+            <template #footer>
+                <div class="flex justify-between w-full">
+                    <Button label="Reset" severity="secondary" text @click="resetDrawOffset" />
+                    <div class="flex gap-2">
+                        <Button label="Anuluj" severity="secondary" outlined @click="closeDrawOffsetDialog" />
+                        <Button label="Zapisz" @click="saveDrawOffset" />
+                    </div>
+                </div>
+            </template>
+        </Dialog>
 
         <!-- Door Confirm Popup -->
         <DoorConfirmPopup @move-door="handleMoveDoor" />
@@ -168,6 +363,7 @@ const handleTrackerPositionChanged = (position: { x: number, y: number }) => {
             :doors="doors"
             :renewable-items="renewableItems"
             :scale="scale"
+            :npc-draw-offset-overrides="npcDrawOffsetOverrides"
             @show-npc-confirm-dialog="showNpcConfirmDialog"
             @show-door-confirm-dialog="showDoorConfirmDialog"
             @tracker-position-changed="handleTrackerPositionChanged"

@@ -18,6 +18,8 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'rank', type: 'string'),
         new OA\Property(property: 'category', type: 'string'),
         new OA\Property(property: 'type', type: 'integer'),
+        new OA\Property(property: 'draw_offset_x', type: 'integer'),
+        new OA\Property(property: 'draw_offset_y', type: 'integer'),
         new OA\Property(property: 'is_aggressive', type: 'boolean'),
     ]
 )]
@@ -33,6 +35,8 @@ class ApiBaseNpcListResource extends JsonResource
             'rank' => $this->rank?->value ?? $this->rank,
             'category' => $this->category?->value ?? $this->category,
             'type' => $this->type,
+            'draw_offset_x' => $this->draw_offset_x ?? 0,
+            'draw_offset_y' => $this->draw_offset_y ?? 0,
             'is_aggressive' => (bool) $this->is_aggressive,
         ];
     }

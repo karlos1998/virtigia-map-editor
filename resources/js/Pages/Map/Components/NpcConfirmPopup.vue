@@ -7,6 +7,7 @@ import { NpcWithLocationResource } from '@/Resources/Npc.resource';
 const emit = defineEmits<{
     (e: 'moveNpc', npc: NpcWithLocationResource): void;
     (e: 'addToGroup', npc: NpcWithLocationResource): void;
+    (e: 'adjustDrawOffset', npc: NpcWithLocationResource): void;
 }>();
 
 const removeNpc = (npc: NpcWithLocationResource) => {
@@ -52,6 +53,8 @@ const removeFromGroup = (npc: NpcWithLocationResource) => {
                 </Link>
 
                 <Button label="Usuń" @click="removeNpc(message.npc)" severity="danger" size="small" />
+
+                <Button label="Lekko przesuń" @click="emit('adjustDrawOffset', message.npc); rejectCallback()" severity="secondary" size="small" />
 
                 <Button label="Przenieś" @click="emit('moveNpc', message.npc); rejectCallback()" severity="warn" size="small" />
             </div>

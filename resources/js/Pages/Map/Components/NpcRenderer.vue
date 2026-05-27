@@ -2,12 +2,18 @@
 import { ref, computed } from 'vue';
 import { NpcWithLocationResource } from '@/Resources/Npc.resource';
 
+type NpcDrawOffset = {
+    x: number;
+    y: number;
+};
+
 const props = defineProps<{
     npcs: NpcWithLocationResource[];
     scale: number;
     npcScale: boolean;
     addToGroupMode: boolean;
     sourceNpc: NpcWithLocationResource | null;
+    npcDrawOffsetOverrides?: Record<number, NpcDrawOffset>;
 }>();
 
 const emit = defineEmits<{
@@ -31,6 +37,17 @@ const groupColors = [
 ];
 
 const getGroupColor = (groupId) => groupColors[groupId % groupColors.length];
+
+const getNpcDrawOffset = (npc: NpcWithLocationResource): NpcDrawOffset => {
+    return props.npcDrawOffsetOverrides?.[npc.base_npc_id] ?? {
+        x: npc.draw_offset_x ?? 0,
+        y: npc.draw_offset_y ?? 0,
+    };
+};
+
+const getNpcWidth = (npc: NpcWithLocationResource): number => npcWidths.value[npc.id] ?? 32;
+
+const getNpcHeight = (npc: NpcWithLocationResource): number => npcHeights.value[npc.id] ?? 32;
 
 // Compute which NPCs are nearby the source NPC (within 5 tiles)
 const nearbyNpcs = computed(() => {
@@ -78,10 +95,10 @@ const handleNpcClick = (event: MouseEvent, npc: NpcWithLocationResource) => {
             'source-npc': props.addToGroupMode && props.sourceNpc && npc.id === props.sourceNpc.id
         }"
         :style="{
-            top: `${(npc.location.y * 32 - ((npcHeights[npc.id] ?? 32) - 32)) * props.scale}px`,
+            top: `${(npc.location.y * 32 - (getNpcHeight(npc) - 32)) * props.scale}px`,
             left: `${npc.location.x * 32 * props.scale}px`,
-            width: props.npcScale ? `${(npcWidths[npc.id] ?? 32) * props.scale}px` : undefined,
-            height: props.npcScale ? `${(npcHeights[npc.id] ?? 32) * props.scale}px` : undefined,
+            width: props.npcScale ? `${getNpcWidth(npc) * props.scale}px` : undefined,
+            height: props.npcScale ? `${getNpcHeight(npc) * props.scale}px` : undefined,
         }"
     >
         <!-- Czerwony kwadrat u podstawy -->
@@ -98,10 +115,11 @@ const handleNpcClick = (event: MouseEvent, npc: NpcWithLocationResource) => {
             :src="npc.src"
             :style="{
                 position: 'relative',
-                width: `${npcWidths[npc.id] * props.scale}px`,
+                width: `${getNpcWidth(npc) * props.scale}px`,
                 bottom: 0,
                 zIndex: 1,
-                left: (32 - npcWidths[npc.id]) * props.scale / 2,
+                top: `${getNpcDrawOffset(npc).y * props.scale}px`,
+                left: `${((32 - getNpcWidth(npc)) / 2 + getNpcDrawOffset(npc).x) * props.scale}px`,
                 border: npc.group_id !== null ? `4px dashed ${getGroupColor(npc.group_id)}` : 'none',
                 borderRadius: npc.group_id !== null ? '8px' : '',
                 boxShadow: npc.group_id !== null ? `0 0 10px ${getGroupColor(npc.group_id)}` : ''

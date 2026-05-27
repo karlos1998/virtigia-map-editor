@@ -269,6 +269,7 @@ Route::middleware(['auth'])->group(function () {
                     Route::post('base-npcs', [BaseNpcController::class, 'storeSimple'])->name('base-npcs.store-simple');
                     Route::delete('base-npcs/{baseNpc}', [BaseNpcController::class, 'destroy'])->name('base-npcs.destroy');
                     Route::patch('base-npcs/{baseNpc}', [BaseNpcController::class, 'update'])->name('base-npcs.update');
+                    Route::patch('base-npcs/{baseNpc}/draw-offset', [BaseNpcController::class, 'updateDrawOffset'])->name('base-npcs.draw-offset.update');
                     Route::patch('base-npcs/{baseNpc}/mob-species', [BaseNpcController::class, 'syncMobSpecies'])->name('base-npcs.mob-species.sync');
                     Route::patch('base-npcs/{baseNpc}/seasonal-events', [BaseNpcController::class, 'syncSeasonalEvents'])->name('base-npcs.seasonal-events.sync');
 
