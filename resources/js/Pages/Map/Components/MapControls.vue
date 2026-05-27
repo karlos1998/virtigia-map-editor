@@ -4,10 +4,12 @@ import { router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import { MapResource } from '@/Resources/Map.resource';
 import { useConfirm } from 'primevue';
+import InputSwitch from 'primevue/inputswitch';
 
 const props = defineProps<{
     map: MapResource;
     scale: number;
+    naturalNpcSize: boolean;
 }>();
 
 const confirm = useConfirm();
@@ -17,6 +19,7 @@ const emit = defineEmits<{
     (e: 'zoomOut'): void;
     (e: 'editColsChanged', value: boolean): void;
     (e: 'editWaterChanged', value: boolean): void;
+    (e: 'naturalNpcSizeChanged', value: boolean): void;
 }>();
 
 // Use a single editMode ref instead of separate booleans
@@ -106,6 +109,15 @@ const confirmClearWater = (event) => {
         </div>
 
         <div class="flex gap-2 justify-end items-center">
+            <div class="flex items-center gap-2 mr-4">
+                <InputSwitch
+                    input-id="naturalNpcSize"
+                    :model-value="props.naturalNpcSize"
+                    @update:model-value="(value) => emit('naturalNpcSizeChanged', Boolean(value))"
+                />
+                <label for="naturalNpcSize">Naturalny rozmiar NPC</label>
+            </div>
+
             <label>Tryb edycji:</label>
             <div class="p-field-radiobutton">
                 <RadioButton id="editModeNone" name="editMode" value="none" v-model="editMode" />

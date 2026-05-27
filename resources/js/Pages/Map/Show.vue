@@ -39,6 +39,7 @@ const trackerPosition = ref({ x: 0, y: 0 });
 const confirm = useConfirm();
 const toast = useToast();
 const mapContainerRef = ref(null);
+const naturalNpcSize = ref(false);
 
 type NpcDrawOffset = {
     x: number;
@@ -189,6 +190,10 @@ const handleEditWaterChanged = (value: boolean) => {
     if (mapContainerRef.value) {
         mapContainerRef.value.setEditWaterOn(value);
     }
+};
+
+const handleNaturalNpcSizeChanged = (value: boolean) => {
+    naturalNpcSize.value = value;
 };
 
 // Handle NPC confirm dialog
@@ -349,10 +354,12 @@ const handleTrackerPositionChanged = (position: { x: number, y: number }) => {
         <MapControls
             :map="map"
             :scale="scale"
+            :natural-npc-size="naturalNpcSize"
             @zoom-in="zoomIn"
             @zoom-out="zoomOut"
             @edit-cols-changed="handleEditColsChanged"
             @edit-water-changed="handleEditWaterChanged"
+            @natural-npc-size-changed="handleNaturalNpcSizeChanged"
         />
 
         <!-- Map Container -->
@@ -363,6 +370,7 @@ const handleTrackerPositionChanged = (position: { x: number, y: number }) => {
             :doors="doors"
             :renewable-items="renewableItems"
             :scale="scale"
+            :natural-npc-size="naturalNpcSize"
             :npc-draw-offset-overrides="npcDrawOffsetOverrides"
             @show-npc-confirm-dialog="showNpcConfirmDialog"
             @show-door-confirm-dialog="showDoorConfirmDialog"

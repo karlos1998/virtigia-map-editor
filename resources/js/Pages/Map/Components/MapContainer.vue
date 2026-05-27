@@ -27,6 +27,7 @@ const props = defineProps<{
     doors: DoorResource[];
     renewableItems: any[];
     scale: number;
+    naturalNpcSize: boolean;
     npcDrawOffsetOverrides?: Record<number, NpcDrawOffset>;
 }>();
 
@@ -534,6 +535,7 @@ const handleRenewableItemClick = (item) => {
                 :npcs="npcs"
                 :scale="scale"
                 :npc-scale="npcScale"
+                :natural-npc-size="naturalNpcSize"
                 :add-to-group-mode="addToGroupMode"
                 :source-npc="sourceNpc"
                 :npc-draw-offset-overrides="npcDrawOffsetOverrides"

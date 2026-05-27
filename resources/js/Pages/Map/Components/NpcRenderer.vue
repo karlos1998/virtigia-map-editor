@@ -11,6 +11,7 @@ const props = defineProps<{
     npcs: NpcWithLocationResource[];
     scale: number;
     npcScale: boolean;
+    naturalNpcSize: boolean;
     addToGroupMode: boolean;
     sourceNpc: NpcWithLocationResource | null;
     npcDrawOffsetOverrides?: Record<number, NpcDrawOffset>;
@@ -25,8 +26,11 @@ const npcWidths = ref<Record<string, number>>({});
 const npcHeights = ref<Record<string, number>>({});
 
 const adjustNpcOffset = (id: string, element: HTMLImageElement) => {
-    npcWidths.value[id] = element.width;
-    npcHeights.value[id] = element.height;
+    const naturalWidth = element.naturalWidth || element.width || 32;
+    const naturalHeight = element.naturalHeight || element.height || 32;
+
+    npcWidths.value[id] = naturalWidth;
+    npcHeights.value[id] = naturalHeight;
 };
 
 const groupColors = [
@@ -45,9 +49,27 @@ const getNpcDrawOffset = (npc: NpcWithLocationResource): NpcDrawOffset => {
     };
 };
 
-const getNpcWidth = (npc: NpcWithLocationResource): number => npcWidths.value[npc.id] ?? 32;
+const getNpcNaturalWidth = (npc: NpcWithLocationResource): number => npcWidths.value[npc.id] ?? 32;
 
-const getNpcHeight = (npc: NpcWithLocationResource): number => npcHeights.value[npc.id] ?? 32;
+const getNpcNaturalHeight = (npc: NpcWithLocationResource): number => npcHeights.value[npc.id] ?? 32;
+
+const getNpcPreviewWidth = (npc: NpcWithLocationResource): number => Math.min(getNpcNaturalWidth(npc), 32);
+
+const getNpcPreviewHeight = (npc: NpcWithLocationResource): number => {
+    const naturalWidth = getNpcNaturalWidth(npc);
+    const naturalHeight = getNpcNaturalHeight(npc);
+    const width = getNpcPreviewWidth(npc);
+
+    return Math.round((naturalHeight / naturalWidth) * width);
+};
+
+const getNpcWidth = (npc: NpcWithLocationResource): number => {
+    return props.naturalNpcSize ? getNpcNaturalWidth(npc) : getNpcPreviewWidth(npc);
+};
+
+const getNpcHeight = (npc: NpcWithLocationResource): number => {
+    return props.naturalNpcSize ? getNpcNaturalHeight(npc) : getNpcPreviewHeight(npc);
+};
 
 // Compute which NPCs are nearby the source NPC (within 5 tiles)
 const nearbyNpcs = computed(() => {
@@ -86,7 +108,7 @@ const handleNpcClick = (event: MouseEvent, npc: NpcWithLocationResource) => {
 <template>
     <div
         v-for="npc in props.npcs"
-        :key="`npc-${npc.id}-${props.npcScale}`"
+        :key="`npc-${npc.id}-${props.npcScale}-${props.naturalNpcSize}`"
         class="absolute npc"
         v-tip.npc="npc"
         @click="handleNpcClick($event, npc)"
