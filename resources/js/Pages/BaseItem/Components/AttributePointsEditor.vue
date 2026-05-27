@@ -140,6 +140,7 @@ const booleanAttributes: BooleanAttribute[] = [
     {key: 'isUnidentified', label: 'Przedmiot niezidentyfikowany'},
     {key: 'findHeroNpc', label: 'Wskazuje najbliższego herosa do ubicia'},
     {key: 'findDetailedHeroNpc', label: 'Wskazuje herosa z pozycją i czasem odrodzenia'},
+    {key: 'combatFlee', label: 'Pozwala na ucieczkę z walki'},
     {key: 'impossibleToRemove', label: 'Czar niemożliwy do zdjęcia'}
 ];
 
