@@ -141,6 +141,8 @@ const booleanAttributes: BooleanAttribute[] = [
     {key: 'findHeroNpc', label: 'Wskazuje najbliższego herosa do ubicia'},
     {key: 'findDetailedHeroNpc', label: 'Wskazuje herosa z pozycją i czasem odrodzenia'},
     {key: 'combatFlee', label: 'Pozwala na ucieczkę z walki'},
+    {key: 'openDeposit', label: 'Wywołuje depozyt'},
+    {key: 'openClanDeposit', label: 'Wywołuje depozyt klanowy'},
     {key: 'openMail', label: 'Wywołuje pocztę'},
     {key: 'openAuction', label: 'Wywołuje aukcję'},
     {key: 'impossibleToRemove', label: 'Czar niemożliwy do zdjęcia'}
@@ -163,6 +165,7 @@ const additionalAttributes: AdditionalAttribute[] = [
     {key: 'heroicLootChanceBonusPercent', label: 'Zwiększa szansę na zdobycie przedmiotu heroicznego o %', type: 'int'},
     {key: 'minimumLootChancePercent', label: 'Zmniejsza szansę na pusty łup do %', type: 'int'},
     {key: 'battleExperienceBonusPercent', label: 'Zwiększa doświadczenie za walkę o %', type: 'int'},
+    {key: 'arrowPreservationChancePercent', label: 'Szansa na zachowanie strzały podczas ataku (%)', type: 'int'},
     {key: 'fasterRevivalRecovery', label: 'Procentowe przyśpieszenie wracania do siebie', type: 'int'},
     {key: 'timeToDisappear', label: 'Zniknie za X minut', type: 'int'},
     {key: 'percentageUpgradeCommon', label: 'Ulepszenie przedmiotu zwykłego o %', type: 'int'},
