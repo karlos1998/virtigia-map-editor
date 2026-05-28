@@ -141,6 +141,8 @@ const booleanAttributes: BooleanAttribute[] = [
     {key: 'findHeroNpc', label: 'Wskazuje najbliższego herosa do ubicia'},
     {key: 'findDetailedHeroNpc', label: 'Wskazuje herosa z pozycją i czasem odrodzenia'},
     {key: 'combatFlee', label: 'Pozwala na ucieczkę z walki'},
+    {key: 'openMail', label: 'Wywołuje pocztę'},
+    {key: 'openAuction', label: 'Wywołuje aukcję'},
     {key: 'impossibleToRemove', label: 'Czar niemożliwy do zdjęcia'}
 ];
 
