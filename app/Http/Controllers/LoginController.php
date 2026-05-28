@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Illuminate\Http\Request;
+use App\Services\OAuthPermissionPayload;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Laravel\Socialite\Facades\Socialite;
@@ -20,13 +20,19 @@ class LoginController extends Controller
         return Socialite::driver('laravelpassport')->redirect();
     }
 
-    public function handleCallback()
+    public function handleCallback(OAuthPermissionPayload $permissionPayload)
     {
-        $user = Socialite::driver('laravelpassport')->user();
+        $oauthUser = Socialite::driver('laravelpassport')->user();
+        $payload = (array) $oauthUser->user;
+
+        if (! $permissionPayload->hasMapEditorAccess($payload)) {
+            return to_route('login')
+                ->withErrors(['auth' => 'Nie masz uprawnienia do edytora map.']);
+        }
 
         $user = User::updateOrCreate([
-            'id' => $user->getId(),
-        ], $user->user);
+            'id' => $oauthUser->getId(),
+        ], $payload);
 
         Auth::login($user);
 
