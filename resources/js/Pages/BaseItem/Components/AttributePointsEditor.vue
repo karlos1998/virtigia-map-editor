@@ -48,10 +48,12 @@ interface BooleanAttribute {
     label: string;
 }
 
+type AdditionalAttributeType = 'int' | 'decimal' | 'string' | 'timestamp' | 'text' | 'multiselect' | 'array';
+
 interface AdditionalAttribute {
     key: string;
     label: string;
-    type: 'int' | 'string' | 'timestamp' | 'text' | 'multiselect' | 'array';
+    type: AdditionalAttributeType;
     placeholder?: string;
     showTime?: boolean;
     dateFormat?: string;
@@ -161,8 +163,8 @@ const additionalAttributes: AdditionalAttribute[] = [
     {key: 'restoreHealthPoints', label: 'Leczy punkty HP', type: 'int'},
     {key: 'stamina', label: 'Dodaje wyczerpanie', type: 'int'},
     {key: 'addDraconite', label: 'Dodaje smocze łzy', type: 'int'},
-    {key: 'legendaryLootChanceBonusPercent', label: 'Zwiększa szansę na zdobycie przedmiotu legendarnego o %', type: 'int'},
-    {key: 'heroicLootChanceBonusPercent', label: 'Zwiększa szansę na zdobycie przedmiotu heroicznego o %', type: 'int'},
+    {key: 'legendaryLootChanceBonusPercent', label: 'Zwiększa szansę na zdobycie przedmiotu legendarnego o %', type: 'decimal'},
+    {key: 'heroicLootChanceBonusPercent', label: 'Zwiększa szansę na zdobycie przedmiotu heroicznego o %', type: 'decimal'},
     {key: 'minimumLootChancePercent', label: 'Zmniejsza szansę na pusty łup do %', type: 'int'},
     {key: 'battleExperienceBonusPercent', label: 'Zwiększa doświadczenie za walkę o %', type: 'int'},
     {key: 'arrowPreservationChancePercent', label: 'Szansa na zachowanie strzały podczas ataku (%)', type: 'int'},
@@ -415,6 +417,9 @@ function updateAdditionalAttribute(attributeKey: string, value: number | string 
     if (value instanceof Date) {
         finalValue = Math.floor(value.getTime() / 1000);
     }
+    if (getAdditionalAttributeConfig(attributeKey)?.type === 'decimal') {
+        finalValue = normalizeDecimalAttribute(value);
+    }
 
     // Modify existing attributes object in place instead of reassigning
     form.value.attributes[attributeKey] = finalValue;
@@ -425,7 +430,7 @@ function updateAdditionalAttribute(attributeKey: string, value: number | string 
 /**
  * Get additional attribute value - converts unix timestamp to Date if needed
  */
-function getAdditionalAttributeValue(attributeKey: string, type: 'int' | 'string' | 'timestamp' | 'text' | 'multiselect' | 'array'): number | string | Date | string[] | number[] | null {
+function getAdditionalAttributeValue(attributeKey: string, type: AdditionalAttributeType): number | string | Date | string[] | number[] | null {
     const value = form.value?.attributes?.[attributeKey];
 
     if (value === null || value === undefined) {
@@ -433,14 +438,36 @@ function getAdditionalAttributeValue(attributeKey: string, type: 'int' | 'string
             const attr = additionalAttributes.find(a => a.key === attributeKey);
             return attr?.arraySize ? new Array(attr.arraySize).fill(0) : [];
         }
-        return type === 'int' ? 0 : type === 'string' || type === 'text' ? '' : type === 'multiselect' ? [] : null;
+        return type === 'int' || type === 'decimal' ? 0 : type === 'string' || type === 'text' ? '' : type === 'multiselect' ? [] : null;
     }
 
     if (type === 'timestamp' && typeof value === 'number') {
         return new Date(value * 1000);
     }
 
+    if (type === 'decimal') {
+        return normalizeDecimalAttribute(value);
+    }
+
     return value;
+}
+
+function getAdditionalAttributeConfig(attributeKey: string): AdditionalAttribute | undefined {
+    return additionalAttributes.find(attr => attr.key === attributeKey);
+}
+
+function normalizeDecimalAttribute(value: number | string | Date | null | string[] | number[]): number {
+    const numericValue = typeof value === 'number'
+        ? value
+        : typeof value === 'string'
+            ? Number(value.replace(',', '.'))
+            : 0;
+
+    if (!Number.isFinite(numericValue)) {
+        return 0;
+    }
+
+    return Math.round(Math.max(0, numericValue) * 1000) / 1000;
 }
 
 /**
@@ -448,6 +475,11 @@ function getAdditionalAttributeValue(attributeKey: string, type: 'int' | 'string
  */
 function getAdditionalAttributeValueAsInt(attributeKey: string): number {
     const value = getAdditionalAttributeValue(attributeKey, 'int');
+    return typeof value === 'number' ? value : 0;
+}
+
+function getAdditionalAttributeValueAsDecimal(attributeKey: string): number {
+    const value = getAdditionalAttributeValue(attributeKey, 'decimal');
     return typeof value === 'number' ? value : 0;
 }
 
@@ -557,12 +589,14 @@ function buildApiParameters(): Record<string, any> {
                 }
             }
             // For numbers, don't include if value is 0
-            else if (attr.type === 'int' && value === 0) {
+            else if ((attr.type === 'int' || attr.type === 'decimal') && value === 0) {
                 return; // Skip zero values
             }
 
             if (attr.type === 'timestamp' && value instanceof Date) {
                 params[attr.key] = Math.floor(value.getTime() / 1000);
+            } else if (attr.type === 'decimal') {
+                params[attr.key] = normalizeDecimalAttribute(value);
             } else {
                 params[attr.key] = value;
             }
@@ -1243,6 +1277,20 @@ watch(selectedLegendaryBonus, async () => {
                             showButtons
                             buttonLayout="horizontal"
                             class="w-full"
+                        />
+                    </template>
+                    <template v-else-if="attr.type === 'decimal'">
+                        <InputNumber
+                            :model-value="getAdditionalAttributeValueAsDecimal(attr.key)"
+                            @update:model-value="(value: number | null) => updateAdditionalAttribute(attr.key, value ?? 0)"
+                            showButtons
+                            buttonLayout="horizontal"
+                            class="w-full"
+                            :min="0"
+                            :step="0.001"
+                            :minFractionDigits="0"
+                            :maxFractionDigits="3"
+                            :useGrouping="false"
                         />
                     </template>
                     <template v-else-if="attr.type === 'string'">
