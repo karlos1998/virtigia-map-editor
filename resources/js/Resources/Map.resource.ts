@@ -11,6 +11,7 @@ export interface MapResource {
     pvp: number
     water?: string
     battleground?: string
+    battleground2?: string
 
     // ....
     is_teleport_locked?: boolean

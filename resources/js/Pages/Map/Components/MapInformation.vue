@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import {ref, computed, onMounted, watch} from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import { useToast } from 'primevue';
 import { MapResource } from '@/Resources/Map.resource';
 import ReplaceMapImageModal from '@/Pages/Map/Modals/ReplaceMapImageModal.vue';
 import InputSwitch from 'primevue/inputswitch';
+
+type BackgroundOption = {
+    file: string;
+    src: string;
+};
 
 const props = defineProps<{
     map: MapResource;
@@ -20,6 +25,7 @@ const selectedRespawnPointId = ref<number | null>(null);
 const toast = useToast();
 const showReplaceImageModal = ref(false);
 const isTeleportLocked = ref(props.map.is_teleport_locked ?? false);
+const isBackgroundSectionExpanded = ref(false);
 
 // Static list of battleground images (place these files under public/img/Backgrounds)
 const backgroundFiles = [
@@ -93,9 +99,23 @@ const backgroundClassicOptions = backgroundClassicFiles.map((file) => ({
 }));
 
 const selectedBattleground = ref<string | null>(props.map.battleground ?? null);
-const selectedBattlegroundObj = ref<{ file: string; src: string } | null>(null);
 const selectedBattleground2 = ref<string | null>(props.map.battleground2 ?? null);
-const selectedBattleground2Obj = ref<{ file: string; src: string } | null>(null);
+
+const selectedBattlegroundOption = computed(() => {
+    return backgroundOptions.find(background => background.file === selectedBattleground.value) ?? null;
+});
+
+const selectedBattleground2Option = computed(() => {
+    return backgroundClassicOptions.find(background => background.file === selectedBattleground2.value) ?? null;
+});
+
+const backgroundSectionToggleLabel = computed(() => {
+    return isBackgroundSectionExpanded.value ? 'Zwiń' : 'Rozwiń';
+});
+
+const backgroundSectionToggleIcon = computed(() => {
+    return isBackgroundSectionExpanded.value ? 'pi pi-chevron-up' : 'pi pi-chevron-down';
+});
 
 // Format respawn points for dropdown
 const formattedRespawnPoints = computed(() => {
@@ -113,17 +133,20 @@ onMounted(() => {
         selectedRespawnPointId.value = props.map.respawn_point.id;
     }
     selectedBattleground.value = props.map.battleground ?? null;
-    selectedBattlegroundObj.value = backgroundOptions.find(b => b.file === selectedBattleground.value) ?? null;
     selectedBattleground2.value = props.map.battleground2 ?? null;
-    selectedBattleground2Obj.value = backgroundClassicOptions.find(b => b.file === selectedBattleground2.value) ?? null;
 });
 
-watch(selectedBattlegroundObj, (newVal) => {
-    selectedBattleground.value = newVal ? newVal.file : null;
-});
-watch(selectedBattleground2Obj, (newVal) => {
-    selectedBattleground2.value = newVal ? newVal.file : null;
-});
+const selectBattleground = (background: BackgroundOption) => {
+    selectedBattleground.value = background.file;
+};
+
+const selectBattleground2 = (background: BackgroundOption) => {
+    selectedBattleground2.value = background.file;
+};
+
+const toggleBackgroundSection = () => {
+    isBackgroundSectionExpanded.value = !isBackgroundSectionExpanded.value;
+};
 
 // Update map name
 const updateMapName = () => {
@@ -234,114 +257,258 @@ const updateMapTeleportLocked = () => {
 </script>
 
 <template>
-    <div class="card p-4 mb-4">
-        <h2 class="text-xl font-bold mb-4">Informacje o mapie</h2>
+    <div class="flex flex-col gap-4">
+        <div class="card p-4 mb-0">
+            <h2 class="text-xl font-bold mb-4">Informacje o mapie</h2>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Map Image -->
-            <div>
-                <h3 class="font-semibold mb-2">Grafika mapy</h3>
-                <div class="flex items-center mb-2">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                    <h3 class="font-semibold mb-2">Grafika mapy</h3>
                     <Button label="Podmień grafikę" icon="pi pi-image" @click="showReplaceImageModal = true" class="w-full" />
                 </div>
 
                 <div>
-                    <Dropdown v-model="selectedBattlegroundObj" :options="backgroundOptions" optionLabel="file"
-                              class="w-full">
-                        <template #option="{option}">
-                            <div class="flex items-center gap-2">
-                                <img :src="option.src" class="w-24 h-12 object-contain"/>
-                                <div class="text-sm">{{ option.file }}</div>
-                            </div>
-                        </template>
-                        <template #value="{value}">
-                            <div class="flex items-center gap-2">
-                                <img v-if="value" :src="value.src" class="w-28 h-14 object-contain"/>
-                                <div class="text-sm">{{ value ? value.file : '-' }}</div>
-                            </div>
-                        </template>
-                    </Dropdown>
-
-                    <div class="flex items-center mt-2">
-                        <div class="text-sm text-gray-600 mr-4"><strong>Wybrane tło:</strong>
-                            {{ selectedBattleground ?? '-' }}
-                        </div>
-                        <Button label="Zapisz" @click="updateMapBattleground"/>
+                    <h3 class="font-semibold mb-2">Nazwa mapy</h3>
+                    <div class="flex items-center gap-2">
+                        <InputText v-model="mapName" class="w-full" />
+                        <Button label="Zapisz" @click="updateMapName" />
                     </div>
                 </div>
-            </div>
 
-            <div>
-                <h3 class="font-semibold mb-2">Grafika mapy 2</h3>
                 <div>
-                    <Dropdown v-model="selectedBattleground2Obj" :options="backgroundClassicOptions" optionLabel="file"
-                              class="w-full">
-                        <template #option="{option}">
-                            <div class="flex items-center gap-2">
-                                <img :src="option.src" class="w-24 h-12 object-contain"/>
-                                <div class="text-sm">{{ option.file }}</div>
-                            </div>
-                        </template>
-                        <template #value="{value}">
-                            <div class="flex items-center gap-2">
-                                <img v-if="value" :src="value.src" class="w-28 h-14 object-contain"/>
-                                <div class="text-sm">{{ value ? value.file : '-' }}</div>
-                            </div>
-                        </template>
-                    </Dropdown>
-                    <div class="flex items-center mt-2">
-                        <div class="text-sm text-gray-600 mr-4"><strong>Wybrane tło:</strong>
-                            {{ selectedBattleground2 ?? '-' }}
-                        </div>
-                        <Button label="Zapisz" @click="updateMapBattleground2"/>
+                    <h3 class="font-semibold mb-2">Typ PvP</h3>
+                    <div class="flex items-center gap-2">
+                        <Dropdown v-model="selectedPvpType" :options="pvpTypeList" optionLabel="label" optionValue="value" class="w-full" />
+                        <Button label="Zapisz" @click="updateMapPvp" />
                     </div>
                 </div>
-            </div>
 
-            <!-- Map Name -->
-            <div>
-                <h3 class="font-semibold mb-2">Nazwa mapy</h3>
-                <div class="flex items-center">
-                    <InputText v-model="mapName" class="w-full mr-2" />
-                    <Button label="Zapisz" @click="updateMapName" />
+                <div>
+                    <h3 class="font-semibold mb-2">Punkt odrodzenia</h3>
+                    <div class="flex items-center gap-2">
+                        <Dropdown v-model="selectedRespawnPointId" :options="formattedRespawnPoints" optionLabel="formatted" :optionValue="'id'" class="w-full" />
+                        <Button label="Zapisz" @click="updateMapRespawnPoint" />
+                    </div>
                 </div>
-            </div>
 
-            <!-- PvP Type -->
-            <div>
-                <h3 class="font-semibold mb-2">Typ PvP</h3>
-                <div class="flex items-center">
-                    <Dropdown v-model="selectedPvpType" :options="pvpTypeList" optionLabel="label" optionValue="value" class="w-full mr-2" />
-                    <Button label="Zapisz" @click="updateMapPvp" />
-                </div>
-            </div>
-
-            <!-- Teleportacja z mapy dozwolona -->
-            <div>
-                <h3 class="font-semibold mb-2">Blokada teleportacji</h3>
-                <div class="flex items-center">
-                    <InputSwitch v-model="isTeleportLocked" class="mr-2"/>
-                    <Button label="Zapisz" @click="updateMapTeleportLocked"/>
-                </div>
-                <div v-if="isTeleportLocked" class="mt-2 text-red-600 text-sm">
-                    Z tej mapy nie można się teleportować.
-                </div>
-                <div v-else class="mt-2 text-green-600 text-sm">
-                    Teleportacja dozwolona.
-                </div>
-            </div>
-
-            <!-- Respawn Point -->
-            <div>
-                <h3 class="font-semibold mb-2">Punkt odrodzenia</h3>
-                <div class="flex items-center">
-                    <Dropdown v-model="selectedRespawnPointId" :options="formattedRespawnPoints" optionLabel="formatted" :optionValue="'id'" class="w-full mr-2" />
-                    <Button label="Zapisz" @click="updateMapRespawnPoint" />
+                <div>
+                    <h3 class="font-semibold mb-2">Blokada teleportacji</h3>
+                    <div class="flex items-center gap-2">
+                        <InputSwitch v-model="isTeleportLocked" />
+                        <Button label="Zapisz" @click="updateMapTeleportLocked"/>
+                    </div>
+                    <div v-if="isTeleportLocked" class="mt-2 text-red-600 text-sm">
+                        Z tej mapy nie można się teleportować.
+                    </div>
+                    <div v-else class="mt-2 text-green-600 text-sm">
+                        Teleportacja dozwolona.
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Replace Map Image Modal -->
+        <div class="card p-4 mb-4">
+            <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                <div>
+                    <h2 class="text-xl font-bold">Tła mapy</h2>
+                    <div class="text-sm text-surface-500 dark:text-surface-400">
+                        Wybrane grafiki używane są w walce w staryn i nowym oknie.
+                    </div>
+                </div>
+
+                <div class="grid min-w-0 flex-1 grid-cols-1 gap-3 md:grid-cols-2 xl:max-w-3xl">
+                    <div class="flex min-w-0 items-center gap-3 rounded-md border border-surface-200 bg-surface-50 p-2 dark:border-surface-700 dark:bg-surface-900/40">
+                        <img
+                            v-if="selectedBattlegroundOption"
+                            :src="selectedBattlegroundOption.src"
+                            :alt="selectedBattlegroundOption.file"
+                            class="h-14 w-24 shrink-0 rounded object-contain"
+                        />
+                        <div v-else class="flex h-14 w-24 shrink-0 items-center justify-center rounded bg-surface-100 text-xs text-surface-500 dark:bg-surface-800 dark:text-surface-400">
+                            Brak
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-xs font-semibold uppercase text-surface-500 dark:text-surface-400">Tło 1</div>
+                            <div class="truncate text-sm font-semibold">{{ selectedBattleground ?? '-' }}</div>
+                        </div>
+                    </div>
+
+                    <div class="flex min-w-0 items-center gap-3 rounded-md border border-surface-200 bg-surface-50 p-2 dark:border-surface-700 dark:bg-surface-900/40">
+                        <img
+                            v-if="selectedBattleground2Option"
+                            :src="selectedBattleground2Option.src"
+                            :alt="selectedBattleground2Option.file"
+                            class="h-14 w-24 shrink-0 rounded object-contain"
+                        />
+                        <div v-else class="flex h-14 w-24 shrink-0 items-center justify-center rounded bg-surface-100 text-xs text-surface-500 dark:bg-surface-800 dark:text-surface-400">
+                            Brak
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-xs font-semibold uppercase text-surface-500 dark:text-surface-400">Tło 2</div>
+                            <div class="truncate text-sm font-semibold">{{ selectedBattleground2 ?? '-' }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <Button
+                    :label="backgroundSectionToggleLabel"
+                    :icon="backgroundSectionToggleIcon"
+                    severity="secondary"
+                    outlined
+                    @click="toggleBackgroundSection"
+                />
+            </div>
+
+            <div v-if="isBackgroundSectionExpanded" class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
+                <section class="min-w-0">
+                    <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 class="font-semibold">Tło mapy 1</h3>
+                            <div class="text-sm text-surface-500 dark:text-surface-400">
+                                Wybrane: <strong>{{ selectedBattleground ?? '-' }}</strong>
+                            </div>
+                        </div>
+                        <Button label="Zapisz tło 1" icon="pi pi-save" :disabled="!selectedBattleground" @click="updateMapBattleground" />
+                    </div>
+
+                    <div class="mb-4 overflow-hidden rounded-md border border-surface-200 bg-surface-50 dark:border-surface-700 dark:bg-surface-900/40">
+                        <img
+                            v-if="selectedBattlegroundOption"
+                            :src="selectedBattlegroundOption.src"
+                            :alt="selectedBattlegroundOption.file"
+                            class="h-56 w-full object-contain md:h-72"
+                        />
+                        <div v-else class="flex h-56 items-center justify-center text-surface-500 dark:text-surface-400 md:h-72">
+                            Brak wybranego tła
+                        </div>
+                    </div>
+
+                    <div class="background-picker-grid">
+                        <button
+                            v-for="background in backgroundOptions"
+                            :key="background.file"
+                            type="button"
+                            class="background-picker-option"
+                            :class="{ 'is-selected': selectedBattleground === background.file }"
+                            :aria-pressed="selectedBattleground === background.file"
+                            @click="selectBattleground(background)"
+                        >
+                            <img :src="background.src" :alt="background.file" class="background-picker-image" />
+                            <span class="background-picker-label">{{ background.file }}</span>
+                        </button>
+                    </div>
+                </section>
+
+                <section class="min-w-0">
+                    <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 class="font-semibold">Tło mapy 2</h3>
+                            <div class="text-sm text-surface-500 dark:text-surface-400">
+                                Wybrane: <strong>{{ selectedBattleground2 ?? '-' }}</strong>
+                            </div>
+                        </div>
+                        <Button label="Zapisz tło 2" icon="pi pi-save" :disabled="!selectedBattleground2" @click="updateMapBattleground2" />
+                    </div>
+
+                    <div class="mb-4 overflow-hidden rounded-md border border-surface-200 bg-surface-50 dark:border-surface-700 dark:bg-surface-900/40">
+                        <img
+                            v-if="selectedBattleground2Option"
+                            :src="selectedBattleground2Option.src"
+                            :alt="selectedBattleground2Option.file"
+                            class="h-56 w-full object-contain md:h-72"
+                        />
+                        <div v-else class="flex h-56 items-center justify-center text-surface-500 dark:text-surface-400 md:h-72">
+                            Brak wybranego tła
+                        </div>
+                    </div>
+
+                    <div class="background-picker-grid">
+                        <button
+                            v-for="background in backgroundClassicOptions"
+                            :key="background.file"
+                            type="button"
+                            class="background-picker-option"
+                            :class="{ 'is-selected': selectedBattleground2 === background.file }"
+                            :aria-pressed="selectedBattleground2 === background.file"
+                            @click="selectBattleground2(background)"
+                        >
+                            <img :src="background.src" :alt="background.file" class="background-picker-image" />
+                            <span class="background-picker-label">{{ background.file }}</span>
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </div>
+
         <ReplaceMapImageModal v-model:visible="showReplaceImageModal" :map="map" />
     </div>
 </template>
+
+<style scoped>
+.background-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.75rem;
+    max-height: 34rem;
+    overflow: auto;
+    padding-right: 0.25rem;
+}
+
+.background-picker-option {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.5rem;
+    border: 2px solid rgb(226 232 240);
+    border-radius: 8px;
+    background: rgb(248 250 252);
+    padding: 0.5rem;
+    text-align: left;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.background-picker-option:hover {
+    border-color: rgb(56 189 248);
+    box-shadow: 0 8px 20px rgb(15 23 42 / 12%);
+    transform: translateY(-1px);
+}
+
+.background-picker-option.is-selected {
+    border-color: rgb(14 165 233);
+    box-shadow: 0 0 0 3px rgb(14 165 233 / 20%);
+}
+
+.background-picker-image {
+    width: 100%;
+    height: 8.5rem;
+    border-radius: 6px;
+    background: rgb(226 232 240);
+    object-fit: contain;
+}
+
+.background-picker-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: rgb(30 41 59);
+}
+
+:global(.app-dark) .background-picker-option {
+    border-color: rgb(51 65 85);
+    background: rgb(15 23 42 / 45%);
+}
+
+:global(.app-dark) .background-picker-option:hover {
+    border-color: rgb(56 189 248);
+}
+
+:global(.app-dark) .background-picker-image {
+    background: rgb(30 41 59);
+}
+
+:global(.app-dark) .background-picker-label {
+    color: rgb(241 245 249);
+}
+</style>

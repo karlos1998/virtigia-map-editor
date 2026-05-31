@@ -102,7 +102,7 @@ const confirmClearWater = (event) => {
 </script>
 
 <template>
-    <div class="card">
+    <div class="card mt-4">
         <div class="flex gap-2">
             <Button label="+" icon="pi pi-search-plus" @click="emit('zoomIn')" />
             <Button label="-" icon="pi pi-search-minus" @click="emit('zoomOut')" />
