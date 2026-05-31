@@ -9,6 +9,7 @@ use App\Enums\Profession;
 use App\Http\Resources\BaseItemResource;
 use App\Models\BaseItem;
 use App\Services\Traits\UpdateImage;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -26,15 +27,19 @@ final class BaseItemService extends BaseService
     public function __construct(private readonly BaseItem $baseItemModel) {}
 
     /**§
+     * @param  array{description?: string|null, legendary_bonus?: string|null}  $filters
+     *
      * @throws \Exception
      */
-    public function getAll(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    public function getAll(array $filters = []): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
         $baseItemsQuery = $this->baseItemModel
             ->newQuery()
             ->select('base_items.*')
             ->leftJoin('base_item_usage_views as usage_view', 'usage_view.base_item_id', '=', 'base_items.id')
             ->with('usageView');
+
+        $this->applyAttributeFilters($baseItemsQuery, $filters);
 
         return $this->fetchData(
             BaseItemResource::class,
@@ -100,6 +105,23 @@ final class BaseItemService extends BaseService
                 rowsPerPage: [100, 300, 500]
             )
         );
+    }
+
+    /**
+     * @param  array{description?: string|null, legendary_bonus?: string|null}  $filters
+     */
+    private function applyAttributeFilters(Builder $query, array $filters): void
+    {
+        $description = trim((string) ($filters['description'] ?? ''));
+        $legendaryBonus = trim((string) ($filters['legendary_bonus'] ?? ''));
+
+        if ($description !== '') {
+            $query->where('base_items.attributes->description', 'like', "%{$description}%");
+        }
+
+        if ($legendaryBonus !== '') {
+            $query->whereJsonContains('base_items.attributes->legendaryBon', $legendaryBonus);
+        }
     }
 
     public function search(string $search = '', ?Collection $ids = null, ?string $category = null): Collection

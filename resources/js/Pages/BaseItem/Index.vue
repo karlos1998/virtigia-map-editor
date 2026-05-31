@@ -4,17 +4,136 @@ import AppLayout from "@/layout/AppLayout.vue";
 import AdvanceTable from "@advance-table/Components/AdvanceTable.vue";
 import AdvanceColumn from "@advance-table/Components/AdvanceColumn.vue";
 import {BaseItemResource} from "@/Resources/BaseItem.resource";
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
+import {computed, ref} from "vue";
+import Dropdown from 'primevue/dropdown';
+import Fieldset from 'primevue/fieldset';
 
 type Data = {
     data: BaseItemResource
+}
+
+type BaseItemFilters = {
+    description: string | null
+    legendary_bonus: string | null
+}
+
+type LegendaryBonusOption = {
+    label: string
+    value: string
+    bonus_value: number
+}
+
+const props = withDefaults(defineProps<{
+    filters?: BaseItemFilters
+    legendaryBonusOptions?: LegendaryBonusOption[]
+}>(), {
+    filters: () => ({
+        description: null,
+        legendary_bonus: null,
+    }),
+    legendaryBonusOptions: () => [],
+})
+
+const description = ref(props.filters.description ?? '');
+const selectedLegendaryBonus = ref<string | null>(props.filters.legendary_bonus ?? null);
+const isAdvancedFiltersCollapsed = ref(!props.filters.description && !props.filters.legendary_bonus);
+
+const legendaryBonusFilterOptions = computed(() => [
+    {label: 'Dowolny bonus', value: null, bonus_value: 0},
+    ...props.legendaryBonusOptions,
+]);
+
+const hasActiveAdvancedFilters = computed(() => description.value.trim() !== '' || selectedLegendaryBonus.value !== null);
+
+const reloadWithAdvancedFilters = () => {
+    const descriptionValue = description.value.trim();
+    const filters: Record<string, string> = {};
+
+    if (descriptionValue !== '') {
+        filters.description = descriptionValue;
+    }
+
+    if (selectedLegendaryBonus.value !== null) {
+        filters.legendary_bonus = selectedLegendaryBonus.value;
+    }
+
+    router.get(route('base-items.index'), filters, {
+        only: ['items', 'filters'],
+        preserveState: true,
+        replace: true,
+    });
+}
+
+const clearAdvancedFilters = () => {
+    description.value = '';
+    selectedLegendaryBonus.value = null;
+    reloadWithAdvancedFilters();
 }
 </script>
 
 <template>
     <AppLayout>
         <div class="card">
+            <Fieldset
+                legend="Filtry zaawansowane"
+                :toggleable="true"
+                v-model:collapsed="isAdvancedFiltersCollapsed"
+                class="mb-4"
+            >
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-2">
+                        <i class="pi pi-filter text-primary" />
+                        <h5 class="m-0">Filtry atrybutów</h5>
+                        <Tag v-if="hasActiveAdvancedFilters" value="aktywne" severity="success" />
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        <div class="flex flex-col gap-2">
+                            <label for="description-filter" class="font-semibold">Opis</label>
+                            <InputText
+                                id="description-filter"
+                                v-model="description"
+                                placeholder="Wpisz fragment opisu"
+                                @keydown.enter="reloadWithAdvancedFilters"
+                            />
+                        </div>
+
+                        <div class="flex flex-col gap-2">
+                            <label for="legendary-bonus-filter" class="font-semibold">Bonus legendarny</label>
+                            <Dropdown
+                                id="legendary-bonus-filter"
+                                v-model="selectedLegendaryBonus"
+                                :options="legendaryBonusFilterOptions"
+                                option-label="label"
+                                option-value="value"
+                                placeholder="Wybierz bonus"
+                                show-clear
+                                class="w-full"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                        <Button
+                            label="Zastosuj"
+                            icon="pi pi-search"
+                            severity="success"
+                            @click="reloadWithAdvancedFilters"
+                        />
+                        <Button
+                            label="Wyczyść"
+                            icon="pi pi-times"
+                            severity="secondary"
+                            outlined
+                            :disabled="!hasActiveAdvancedFilters"
+                            @click="clearAdvancedFilters"
+                        />
+                    </div>
+                </div>
+            </Fieldset>
+
             <AdvanceTable
                 prop-name="items"
             >

@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Enums\BaseItemCategory;
 use App\Enums\BaseItemCurrency;
 use App\Enums\BaseItemRarity;
+use App\Enums\LegendaryBonus;
 use App\Http\Requests\CreateBaseItemRequest;
+use App\Http\Requests\IndexBaseItemRequest;
 use App\Http\Requests\UpdateBaseItemImageRequest;
 use App\Http\Requests\UpdateBaseItemRequest;
 use App\Http\Requests\UpdateItemAttributesRequest;
@@ -25,10 +27,16 @@ class BaseItemController extends Controller
     /**
      * @throws \Exception
      */
-    public function index(): \Inertia\Response
+    public function index(IndexBaseItemRequest $request): \Inertia\Response
     {
+        $filters = $request->filters();
+
         return Inertia::render('BaseItem/Index', [
-            'items' => $this->baseItemService->getAll(),
+            'items' => $this->baseItemService->getAll($filters),
+            'filters' => $filters,
+            'legendaryBonusOptions' => LegendaryBonus::toDropdownList(
+                fn (LegendaryBonus $bonus): array => ['bonus_value' => $bonus->bonusValue()],
+            ),
         ]);
     }
 
