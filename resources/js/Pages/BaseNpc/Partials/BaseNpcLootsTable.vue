@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import {BaseNpcWithLoots} from "../../../Resources/BaseNpc.resource";
-import {router} from "@inertiajs/vue3";
+import {Link, router} from "@inertiajs/vue3";
 import {route} from "ziggy-js";
 import AddShopItemDialog from "../../Shop/Components/AddShopItemDialog.vue";
 import AddBaseNpcLootsDialog from "../Components/AddBaseNpcLootsDialog.vue";
@@ -185,7 +185,17 @@ const getRarityColor = (rarity: string): string => {
                         <div class="font-medium text-color truncate">{{ item.name }}</div>
                         <div class="text-sm text-color-secondary">{{ item.category }}</div>
                     </div>
-                    <Button severity="danger" icon="pi pi-times" outlined size="small" @click="detachItem(item)"/>
+                    <div class="flex items-center gap-2">
+                        <Link :href="route('base-items.show', {baseItem: item.id})">
+                            <Button
+                                icon="pi pi-eye"
+                                label="Podgląd"
+                                outlined
+                                size="small"
+                            />
+                        </Link>
+                        <Button severity="danger" icon="pi pi-times" outlined size="small" @click="detachItem(item)"/>
+                    </div>
                 </div>
             </div>
         </div>
