@@ -1,12 +1,25 @@
 <script setup lang="ts">
-import { inject, onMounted, Ref, ref } from 'vue';
+import { computed, inject, onMounted, Ref, ref, watch } from 'vue';
 import { debounce } from 'chart.js/helpers';
 import axios from 'axios';
 import { route } from 'ziggy-js';
 import { MapResource } from '@/Resources/Map.resource';
+import { DoorResource } from '@/Resources/Door.resource';
+import { NpcWithLocationResource } from '@/Resources/Npc.resource';
 import { DynamicDialogInstance } from 'primevue/dynamicdialogoptions';
 import Button from 'primevue/button';
 import AutoComplete from 'primevue/autocomplete';
+import NpcRenderer from '@/Pages/Map/Components/NpcRenderer.vue';
+import DoorRenderer from '@/Pages/Map/Components/DoorRenderer.vue';
+import CollisionRenderer from '@/Pages/Map/Components/CollisionRenderer.vue';
+import WaterRenderer from '@/Pages/Map/Components/WaterRenderer.vue';
+
+type MapPreviewData = {
+    map: MapResource;
+    npcs: NpcWithLocationResource[];
+    doors: DoorResource[];
+    renewableItems: any[];
+};
 
 // Dialog reference injected by PrimeVue
 const dialogRef = inject<Ref<DynamicDialogInstance & {
@@ -25,6 +38,13 @@ const scale = ref(1);
 // Selected map and dropdown options
 const selectedMap = ref<MapResource | null>(null);
 const dropdownMaps = ref<MapResource[]>([]);
+const previewNpcs = ref<NpcWithLocationResource[]>([]);
+const previewDoors = ref<DoorResource[]>([]);
+const previewRenewableItems = ref<any[]>([]);
+const previewLoading = ref(false);
+const previewLoadError = ref('');
+const previewRequestId = ref(0);
+const previewLoadedMapId = ref<number | null>(null);
 
 // Tracker position for mouse hover
 const trackerPosition = ref({ x: 0, y: 0 });
@@ -44,28 +64,71 @@ const teleportData = ref<{
 
 // Track if data has been changed
 const changed = ref(false);
+const selectedMapId = computed(() => selectedMap.value?.id ?? null);
 
 // Initialize data from dialog
 onMounted(() => {
     if (!dialogRef.value) return;
     if (dialogRef.value.data?.teleportData) {
         teleportData.value = { ...dialogRef.value.data.teleportData };
-        // Try to load the map if mapId is provided
         if (teleportData.value.mapId) {
-            loadMapById(teleportData.value.mapId);
+            loadMapPreviewData(teleportData.value.mapId);
         }
     }
 });
 
-// Load map by ID
-const loadMapById = async (mapId: number) => {
+// Load map preview details by ID
+const loadMapPreviewData = async (mapId: number) => {
+    const requestId = previewRequestId.value + 1;
+    previewRequestId.value = requestId;
+    previewLoading.value = true;
+    previewLoadError.value = '';
+    previewNpcs.value = [];
+    previewDoors.value = [];
+    previewRenewableItems.value = [];
+
     try {
-        const response = await axios.get(route('maps.data', { map: mapId }));
-        selectedMap.value = response.data;
+        const response = await axios.get<MapPreviewData>(route('maps.preview-data', { map: mapId }));
+
+        if (requestId !== previewRequestId.value) {
+            return;
+        }
+
+        previewLoadedMapId.value = response.data.map.id;
+        selectedMap.value = response.data.map;
+        previewNpcs.value = response.data.npcs ?? [];
+        previewDoors.value = response.data.doors ?? [];
+        previewRenewableItems.value = response.data.renewableItems ?? [];
     } catch (error) {
-        console.error('Failed to load map:', error);
+        if (requestId !== previewRequestId.value) {
+            return;
+        }
+
+        previewLoadError.value = 'Nie udało się załadować podglądu mapy.';
+        console.error('Failed to load map preview:', error);
+    } finally {
+        if (requestId === previewRequestId.value) {
+            previewLoading.value = false;
+        }
     }
 };
+
+watch(selectedMapId, (mapId) => {
+    if (!mapId) {
+        previewNpcs.value = [];
+        previewDoors.value = [];
+        previewRenewableItems.value = [];
+        previewLoadError.value = '';
+        previewLoadedMapId.value = null;
+        return;
+    }
+
+    if (mapId === previewLoadedMapId.value) {
+        return;
+    }
+
+    loadMapPreviewData(mapId);
+});
 
 // Search maps with debounce
 const searchOptions = debounce((event: any) => {
@@ -106,7 +169,7 @@ const reset = () => {
     if (dialogRef.value.data?.teleportData) {
         teleportData.value = { ...dialogRef.value.data.teleportData };
         if (teleportData.value.mapId) {
-            loadMapById(teleportData.value.mapId);
+            loadMapPreviewData(teleportData.value.mapId);
         }
     } else {
         teleportData.value = {
@@ -116,6 +179,11 @@ const reset = () => {
             mapName: ''
         };
         selectedMap.value = null;
+        previewNpcs.value = [];
+        previewDoors.value = [];
+        previewRenewableItems.value = [];
+        previewLoadError.value = '';
+        previewLoadedMapId.value = null;
     }
     changed.value = false;
 };
@@ -248,6 +316,77 @@ const cancel = () => {
                         }"
                         @click.self="handleMapClick"
                     >
+                        <div v-if="previewLoadError" class="map-preview-error">
+                            {{ previewLoadError }}
+                        </div>
+
+                        <div v-if="previewLoading" class="map-preview-loading">
+                            <i class="pi pi-spin pi-spinner"></i>
+                            Ładowanie NPC i danych mapy...
+                        </div>
+
+                        <div class="pointer-events-none">
+                            <NpcRenderer
+                                :npcs="previewNpcs"
+                                :scale="scale"
+                                :npc-scale="true"
+                                :natural-npc-size="false"
+                                :add-to-group-mode="false"
+                                :source-npc="null"
+                                @show-npc-confirm-dialog="() => {}"
+                                @add-to-group="() => {}"
+                            />
+
+                            <DoorRenderer
+                                :doors="previewDoors"
+                                :scale="scale"
+                                @show-door-confirm-dialog="() => {}"
+                            />
+
+                            <div
+                                v-for="item in previewRenewableItems"
+                                :key="`renewable-${item.id}`"
+                                class="renewable-preview-item"
+                                :style="{
+                                    top: `${item.y * 32 * scale}px`,
+                                    left: `${item.x * 32 * scale}px`,
+                                    width: `${32 * scale}px`,
+                                    height: `${32 * scale}px`,
+                                }"
+                            >
+                                <img
+                                    v-if="item.item?.src"
+                                    :src="item.item.src"
+                                    :alt="item.item.name"
+                                    :style="{ width: `${32 * scale}px`, height: `${32 * scale}px` }"
+                                />
+                            </div>
+
+                            <CollisionRenderer
+                                :map="selectedMap"
+                                :scale="scale"
+                                :edit-cols-on="false"
+                            />
+
+                            <WaterRenderer
+                                :map="selectedMap"
+                                :scale="scale"
+                            />
+                        </div>
+
+                        <div
+                            v-if="selectedMap.id === teleportData.mapId && teleportData.x !== null && teleportData.y !== null"
+                            class="selected-teleport-marker"
+                            :style="{
+                                width: `${32 * scale}px`,
+                                height: `${32 * scale}px`,
+                                top: `${teleportData.y * 32 * scale}px`,
+                                left: `${teleportData.x * 32 * scale}px`,
+                            }"
+                        >
+                            <i class="pi pi-map-marker"></i>
+                        </div>
+
                         <!-- Mouse tracker with enhanced styling -->
                         <div
                             class="mouse-tracker"
@@ -283,7 +422,6 @@ const cancel = () => {
 <style scoped>
 /* Main container */
 .map-selection-modal {
-    //min-height: 400px;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
@@ -536,10 +674,75 @@ const cancel = () => {
     background-position: top left;
 }
 
+.map-preview-loading,
+.map-preview-error {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.16);
+}
+
+.map-preview-loading {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+}
+
+.map-preview-error {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+.renewable-preview-item {
+    position: absolute;
+    z-index: 2;
+    border: 2px solid #2196f3;
+    border-radius: 6px;
+    background: #eff8ff;
+    overflow: hidden;
+}
+
+.selected-teleport-marker {
+    position: absolute;
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    color: #ef4444;
+    font-size: 1.5rem;
+    text-shadow: 0 2px 6px rgba(15, 23, 42, 0.35);
+}
+
+.selected-teleport-marker::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border: 2px solid #ef4444;
+    border-radius: 6px;
+    background: rgba(239, 68, 68, 0.12);
+}
+
+.selected-teleport-marker i {
+    position: relative;
+    z-index: 1;
+    transform: translateY(-12px);
+}
+
 /* Enhanced mouse tracker */
 .mouse-tracker {
     position: absolute;
     pointer-events: none;
+    z-index: 16;
     background: rgba(59, 130, 246, 0.15);
     border: 2px solid #3b82f6;
     border-radius: 4px;

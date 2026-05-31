@@ -120,6 +120,7 @@ Route::middleware(['auth'])->group(function () {
                     Route::patch('web-api/minimap/nodes/{node}', [MapController::class, 'updateWorldMinimapNodePosition'])->name('web-api.minimap.nodes.update');
                     Route::delete('web-api/minimap/nodes/{node}', [MapController::class, 'deleteWorldMinimapNode'])->name('web-api.minimap.nodes.destroy');
                     Route::get('maps/{map}/data', [MapController::class, 'getMapData'])->name('maps.data');
+                    Route::get('maps/{map}/preview-data', [MapController::class, 'getPreviewData'])->name('maps.preview-data');
                     Route::get('maps/{map}', [MapController::class, 'show'])->name('maps.show');
 
                     Route::get('respawn-points', [\App\Http\Controllers\RespawnPointController::class, 'index'])->name('respawn-points.index');

@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PvpType;
-use App\Http\Requests\StoreMapRequest;
 use App\Http\Requests\AddWorldMinimapNodeRequest;
-use App\Http\Requests\UpdateWorldMinimapNodePositionRequest;
+use App\Http\Requests\StoreMapRequest;
 use App\Http\Requests\UpdateMapBattleground2Request;
 use App\Http\Requests\UpdateMapBattlegroundRequest;
 use App\Http\Requests\UpdateMapColsRequest;
@@ -14,19 +13,20 @@ use App\Http\Requests\UpdateMapNameRequest;
 use App\Http\Requests\UpdateMapPvpRequest;
 use App\Http\Requests\UpdateMapRespawnPointRequest;
 use App\Http\Requests\UpdateMapWaterRequest;
+use App\Http\Requests\UpdateWorldMinimapNodePositionRequest;
 use App\Http\Resources\DoorResource;
 use App\Http\Resources\MapResource;
 use App\Http\Resources\NpcResource;
-use App\Http\Resources\RespawnPointResource;
 use App\Http\Resources\RenewableMapItemResource;
+use App\Http\Resources\RespawnPointResource;
+use App\Jobs\RegenerateWorldMinimapJob;
 use App\Models\Map;
-use App\Models\Door;
 use App\Models\RespawnPoint;
 use App\Models\WorldMinimapNode;
-use App\Jobs\RegenerateWorldMinimapJob;
 use App\Services\MapService;
 use App\Services\NpcService;
 use App\Services\WorldMinimapService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -36,9 +36,7 @@ class MapController extends Controller
         private MapService $mapService,
         private NpcService $npcService,
         private WorldMinimapService $worldMinimapService,
-    )
-    {
-    }
+    ) {}
 
     public function create()
     {
@@ -50,6 +48,7 @@ class MapController extends Controller
     public function store(StoreMapRequest $request)
     {
         $map = $this->mapService->store($request->img, $request->fileName, $request->name);
+
         return to_route('maps.show', $map->id);
     }
 
@@ -68,6 +67,7 @@ class MapController extends Controller
     public function world()
     {
         $worldMinimap = $this->worldMinimapService->getData();
+
         return Inertia::render('Map/WorldMinimap', [
             'nodes' => $worldMinimap['nodes'],
         ]);
@@ -88,8 +88,8 @@ class MapController extends Controller
     public function addWorldMinimapNode(AddWorldMinimapNodeRequest $request)
     {
         $this->worldMinimapService->addNode(
-            (int)$request->integer('map_id'),
-            $request->filled('near_map_id') ? (int)$request->integer('near_map_id') : null
+            (int) $request->integer('map_id'),
+            $request->filled('near_map_id') ? (int) $request->integer('near_map_id') : null
         );
 
         return response()->json($this->worldMinimapService->getData());
@@ -99,8 +99,8 @@ class MapController extends Controller
     {
         $this->worldMinimapService->updateNodePosition(
             $node,
-            (int)$request->integer('x'),
-            (int)$request->integer('y'),
+            (int) $request->integer('x'),
+            (int) $request->integer('y'),
         );
 
         return response()->json(['ok' => true]);
@@ -145,13 +145,31 @@ class MapController extends Controller
 
     /**
      * Get map data as JSON (for API calls)
-     *
-     * @param Map $map
-     * @return MapResource
      */
     public function getMapData(Map $map): MapResource
     {
         return MapResource::make($map);
+    }
+
+    /**
+     * Get map preview data as JSON (for async map previews).
+     */
+    public function getPreviewData(Map $map): JsonResponse
+    {
+        $map->load([
+            'respawnPoint',
+            'npcs.base',
+            'doors.requiredBaseItem',
+            'doors.targetMap',
+            'renewableMapItems.baseItem',
+        ]);
+
+        return response()->json([
+            'map' => MapResource::make($map)->resolve(),
+            'npcs' => NpcResource::collection($map->npcs)->resolve(),
+            'doors' => DoorResource::collection($map->doors)->resolve(),
+            'renewableItems' => RenewableMapItemResource::collection($map->renewableMapItems)->resolve(),
+        ]);
     }
 
     public function updateCol(Map $map, UpdateMapColsRequest $request): void
@@ -181,9 +199,6 @@ class MapController extends Controller
 
     /**
      * Clear all collisions on the map
-     *
-     * @param Map $map
-     * @return void
      */
     public function clearCollisions(Map $map): void
     {
@@ -192,9 +207,6 @@ class MapController extends Controller
 
     /**
      * Clear all water on the map
-     *
-     * @param Map $map
-     * @return void
      */
     public function clearWater(Map $map): void
     {
@@ -203,10 +215,6 @@ class MapController extends Controller
 
     /**
      * Update the map image
-     *
-     * @param Map $map
-     * @param UpdateMapImageRequest $request
-     * @return void
      */
     public function updateImage(Map $map, UpdateMapImageRequest $request): void
     {
@@ -215,25 +223,21 @@ class MapController extends Controller
 
     /**
      * Remove the specified map from storage.
-     *
-     * @param Map $map
-     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy(Map $map): \Illuminate\Http\RedirectResponse
     {
         $this->mapService->destroy($map);
+
         return to_route('maps.index');
     }
 
     /**
      * Copy the specified map and redirect to the new map.
-     *
-     * @param Map $map
-     * @return \Illuminate\Http\RedirectResponse
      */
     public function copy(Map $map): \Illuminate\Http\RedirectResponse
     {
         $newMap = $this->mapService->copy($map);
+
         return to_route('maps.show', $newMap->id);
     }
 
@@ -249,6 +253,6 @@ class MapController extends Controller
 
     public function updateTeleportLocked(Map $map, Request $request): void
     {
-        $this->mapService->updateTeleportLocked($map, (bool)$request->input('is_teleport_locked', false));
+        $this->mapService->updateTeleportLocked($map, (bool) $request->input('is_teleport_locked', false));
     }
 }
