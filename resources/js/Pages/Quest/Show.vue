@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppLayout from "@/layout/AppLayout.vue";
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { route } from "ziggy-js";
 import { useToast, useConfirm } from "primevue";
 import { Link, router } from "@inertiajs/vue3";
@@ -22,6 +22,8 @@ const isCreateQuestStepModalVisible = ref(false);
 const isEditQuestStepModalVisible = ref(false);
 const isEditQuestNameModalVisible = ref(false);
 const selectedStep = ref<QuestStepResource | null>(null);
+const questStepSortDirectionStorageKey = 'quest-step-sort-direction';
+const questStepSortDirection = ref<'asc' | 'desc'>('asc');
 
 const editStep = (step: QuestStepResource) => {
     selectedStep.value = step;
@@ -112,6 +114,51 @@ const formatNodeContent = (content?: string | null) => {
 
     return content;
 }
+
+const isNewestStepFirst = computed({
+    get: () => questStepSortDirection.value === 'desc',
+    set: (value: boolean) => {
+        questStepSortDirection.value = value ? 'desc' : 'asc';
+    },
+});
+
+const questStepSortLabel = computed(() => {
+    return isNewestStepFirst.value ? 'Najnowsze na górze' : 'Najstarsze na górze';
+});
+
+const questStepSortHint = computed(() => {
+    return isNewestStepFirst.value ? 'Lista płynie od nowych do starszych.' : 'Lista płynie od starszych do nowych.';
+});
+
+const questStepSortIcon = computed(() => {
+    return isNewestStepFirst.value ? 'pi pi-arrow-down' : 'pi pi-arrow-up';
+});
+
+const sortedQuestSteps = computed(() => {
+    return [...props.quest.steps].sort((firstStep, secondStep) => {
+        const firstCreatedAt = new Date(firstStep.created_at).getTime();
+        const secondCreatedAt = new Date(secondStep.created_at).getTime();
+        const comparison = (firstCreatedAt - secondCreatedAt) || (firstStep.id - secondStep.id);
+
+        return isNewestStepFirst.value ? -comparison : comparison;
+    });
+});
+
+const toggleQuestStepSortDirection = () => {
+    isNewestStepFirst.value = !isNewestStepFirst.value;
+};
+
+onMounted(() => {
+    const savedSortDirection = window.localStorage.getItem(questStepSortDirectionStorageKey);
+
+    if (savedSortDirection === 'asc' || savedSortDirection === 'desc') {
+        questStepSortDirection.value = savedSortDirection;
+    }
+});
+
+watch(questStepSortDirection, (sortDirection) => {
+    window.localStorage.setItem(questStepSortDirectionStorageKey, sortDirection);
+});
 </script>
 
 <template>
@@ -207,8 +254,35 @@ const formatNodeContent = (content?: string | null) => {
                 Brak kroków dla tego questa. Dodaj pierwszy krok używając przycisku "Dodaj krok".
             </div>
 
-            <Accordion v-else>
-                <AccordionPanel v-for="step in quest.steps" :key="step.id" :header="step.name">
+            <div v-else class="flex flex-col gap-4 lg:flex-row lg:items-start">
+                <div class="rounded-lg border border-surface-200 bg-surface-50 p-4 dark:border-surface-700 dark:bg-surface-900/50 lg:sticky lg:top-4 lg:w-64 lg:shrink-0">
+                    <button
+                        type="button"
+                        class="flex w-full items-center gap-4 text-left"
+                        :aria-label="questStepSortLabel"
+                        @click="toggleQuestStepSortDirection"
+                    >
+                        <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-primary-200 bg-primary-50 text-primary-600 dark:border-primary-700 dark:bg-primary-950/40 dark:text-primary-300">
+                            <i :class="[questStepSortIcon, 'text-3xl']"></i>
+                        </span>
+                        <span class="min-w-0">
+                            <span class="block text-xs font-semibold uppercase text-surface-500 dark:text-surface-400">Sortowanie</span>
+                            <span class="block font-semibold text-surface-900 dark:text-surface-0">{{ questStepSortLabel }}</span>
+                            <span class="block text-sm text-surface-600 dark:text-surface-300">{{ questStepSortHint }}</span>
+                        </span>
+                    </button>
+
+                    <div class="mt-4 flex items-center justify-between gap-3 border-t border-surface-200 pt-4 dark:border-surface-700">
+                        <label for="quest-step-newest-first" class="text-sm font-medium text-surface-700 dark:text-surface-200">
+                            Nowe na górze
+                        </label>
+                        <ToggleSwitch id="quest-step-newest-first" v-model="isNewestStepFirst" />
+                    </div>
+                </div>
+
+                <div class="min-w-0 flex-1">
+                    <Accordion>
+                        <AccordionPanel v-for="step in sortedQuestSteps" :key="step.id" :header="step.name">
                     <div class="p-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
@@ -409,8 +483,10 @@ const formatNodeContent = (content?: string | null) => {
                             }}
                         </Message>
                     </div>
-                </AccordionPanel>
-            </Accordion>
+                        </AccordionPanel>
+                    </Accordion>
+                </div>
+            </div>
         </div>
 
         <!-- Debug section - can be removed in production -->
