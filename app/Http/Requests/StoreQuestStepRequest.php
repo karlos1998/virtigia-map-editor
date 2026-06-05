@@ -24,7 +24,7 @@ class StoreQuestStepRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'description' => 'required|string',
+            'description' => 'nullable|string',
             'visible_in_quest_list' => 'boolean',
             'auto_advance_next_day' => 'boolean',
             'auto_advance_to_step_id' => [

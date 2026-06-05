@@ -289,7 +289,7 @@ watch(questStepSortDirection, (sortDirection) => {
                                 <h3 class="text-lg font-semibold mb-2">Informacje podstawowe</h3>
                                 <p><strong>ID:</strong> {{ step.id }}</p>
                                 <p><strong>Nazwa:</strong> {{ step.name }}</p>
-                                <p><strong>Opis:</strong> <span class="whitespace-pre-wrap">{{ step.description }}</span></p>
+                                <p><strong>Opis:</strong> <span class="whitespace-pre-wrap">{{ step.description || '-' }}</span></p>
                                 <p><strong>Widoczny na liście questów:</strong> {{ step.visible_in_quest_list ? 'Tak' : 'Nie' }}</p>
                                 <p><strong>Automatyczny postęp:</strong> {{ formatAutoProgress(step.auto_progress) }}</p>
                             </div>

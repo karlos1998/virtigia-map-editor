@@ -51,7 +51,7 @@ const submit = () => {
             </div>
 
             <div>
-                <label for="description" class="font-semibold block mb-2">Opis</label>
+                <label for="description" class="font-semibold block mb-2">Opis (opcjonalnie)</label>
                 <Textarea id="description" class="w-full" rows="10" v-model="form.description" />
                 <Message severity="error" size="small" variant="simple">{{ form.errors.description }}</Message>
             </div>

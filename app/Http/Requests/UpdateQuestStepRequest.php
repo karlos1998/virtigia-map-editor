@@ -27,7 +27,7 @@ class UpdateQuestStepRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'description' => 'required|string',
+            'description' => 'nullable|string',
             'visible_in_quest_list' => 'boolean',
             'auto_advance_next_day' => 'boolean',
             'auto_advance_to_step_id' => [
@@ -45,8 +45,8 @@ class UpdateQuestStepRequest extends FormRequest
             'progress_time' => 'nullable|integer|min:0',
             'progress_mobs' => 'nullable|array',
             'progress_mobs.*.type' => 'required|string|in:base_npc,mob_species',
-            'progress_mobs.*.base_npc_id' => 'nullable|integer|exists:' . $this->selectedDatabase . '.base_npcs,id',
-            'progress_mobs.*.mob_species_id' => 'nullable|integer|exists:' . $this->selectedDatabase . '.mob_species,id',
+            'progress_mobs.*.base_npc_id' => 'nullable|integer|exists:'.$this->selectedDatabase.'.base_npcs,id',
+            'progress_mobs.*.mob_species_id' => 'nullable|integer|exists:'.$this->selectedDatabase.'.mob_species,id',
             'progress_mobs.*.quantity' => 'required|integer|min:1',
         ];
     }
@@ -55,7 +55,7 @@ class UpdateQuestStepRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $mobs = $this->input('progress_mobs', []);
-            if (!is_array($mobs)) {
+            if (! is_array($mobs)) {
                 return;
             }
 

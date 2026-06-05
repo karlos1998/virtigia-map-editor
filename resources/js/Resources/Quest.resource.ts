@@ -68,7 +68,7 @@ export interface QuestStepResource {
     id: number;
     quest_id: number;
     name: string;
-    description: string;
+    description: string | null;
     visible_in_quest_list: boolean;
     auto_progress?: QuestStepAutoProgress | null;
     guides: QuestStepGuide[];
