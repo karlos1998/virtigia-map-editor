@@ -11,4 +11,9 @@ export enum DialogNodeOptionRule {
     messageContent = 'messageContent',
     dialogCounter = 'dialogCounter',
     seasonalEvent = 'seasonalEvent',
+    timeAfter = 'timeAfter',
+    timeBefore = 'timeBefore',
+    weekday = 'weekday',
+    activePlayersOnMap = 'activePlayersOnMap',
+    hasActiveBlessing = 'hasActiveBlessing',
 }

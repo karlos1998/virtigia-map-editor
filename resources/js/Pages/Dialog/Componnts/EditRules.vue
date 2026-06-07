@@ -11,6 +11,7 @@ import axios from "axios"
 import TreeSelectAdapter from "@/Pages/Dialog/Componnts/TreeSelectAdapter.vue";
 import { useQuestStepSelection } from "@/Pages/Dialog/Composables/useQuestStepSelection";
 import InputText from 'primevue/inputtext';
+import MultiSelect from 'primevue/multiselect';
 import BaseItemSearchSelect from "@/Components/BaseItemSearchSelect.vue";
 
 const rules = defineModel<DialogNodeRulesResource>("rules", {
@@ -37,6 +38,16 @@ const resolvedRuleItems = ref<BaseItemResource[]>([])
 const dialogCounters = ref<DialogCounterResource[]>([])
 const seasonalEvents = ref<Array<{ id: number; name: string; is_currently_active: boolean }>>([])
 
+const weekdayOptions = [
+    { value: 1, label: 'Poniedziałek' },
+    { value: 2, label: 'Wtorek' },
+    { value: 3, label: 'Środa' },
+    { value: 4, label: 'Czwartek' },
+    { value: 5, label: 'Piątek' },
+    { value: 6, label: 'Sobota' },
+    { value: 7, label: 'Niedziela' },
+]
+
 const loadDialogCounters = async () => {
     const { data } = await axios.get<DialogCounterResource[]>(route("web-api.dialog-counters.index"))
     dialogCounters.value = data
@@ -56,7 +67,7 @@ const submitNewRule = () => {
 
     if (!newRule.value) return
 
-    let value: number | number[] | string | string[] | null = 0
+    let value: number | number[] | string | string[] | boolean | null = 0
     let value2: any = null
     if (newRule.value === DialogNodeOptionRule.items) {
         value = []
@@ -73,6 +84,15 @@ const submitNewRule = () => {
         value2 = ['=', 0]
     } else if (newRule.value === DialogNodeOptionRule.seasonalEvent) {
         value = null
+    } else if (
+        newRule.value === DialogNodeOptionRule.timeAfter ||
+        newRule.value === DialogNodeOptionRule.timeBefore
+    ) {
+        value = null
+    } else if (newRule.value === DialogNodeOptionRule.weekday) {
+        value = []
+    } else if (newRule.value === DialogNodeOptionRule.hasActiveBlessing) {
+        value = true
     }
 
     const data = {
@@ -215,7 +235,7 @@ watch(
         />
 
         <InputNumber
-            v-if="rules[name] && typeof rules[name].value === 'number' && (name === DialogNodeOptionRule.gold || name === DialogNodeOptionRule.level || name === DialogNodeOptionRule.dragonTears)"
+            v-if="rules[name] && typeof rules[name].value === 'number' && (name === DialogNodeOptionRule.gold || name === DialogNodeOptionRule.level || name === DialogNodeOptionRule.dragonTears || name === DialogNodeOptionRule.activePlayersOnMap)"
             v-model="rules[name].value"
             :max="2000000000"
             :min="0"
@@ -235,6 +255,29 @@ watch(
         <InputGroupAddon v-if="name === DialogNodeOptionRule.brotherhood">
             <b>Wymaga bycia członkiem</b>
         </InputGroupAddon>
+
+        <InputGroupAddon v-if="name === DialogNodeOptionRule.hasActiveBlessing">
+            <b>Wymaga aktywnego błogosławieństwa</b>
+        </InputGroupAddon>
+
+        <InputText
+            v-if="rules[name] && (name === DialogNodeOptionRule.timeAfter || name === DialogNodeOptionRule.timeBefore)"
+            v-model="rules[name].value"
+            type="time"
+            step="60"
+            class="w-full md:w-40"
+        />
+
+        <MultiSelect
+            v-if="rules[name] && name === DialogNodeOptionRule.weekday"
+            v-model="rules[name].value"
+            :options="weekdayOptions"
+            optionLabel="label"
+            optionValue="value"
+            display="chip"
+            placeholder="Wybierz dni tygodnia"
+            class="w-full md:w-96"
+        />
 
         <BaseItemSearchSelect
             v-if="rules[name] && name === DialogNodeOptionRule.items"

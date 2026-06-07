@@ -7,14 +7,13 @@ use App\Enums\Attributes\DialogNodeOption\CanBeUsed;
 use App\Enums\Attributes\GetAttributes;
 use App\Enums\Traits\ToDropdownList;
 use App\Enums\Traits\ValuesToList;
-use Illuminate\Support\Str;
 use ReflectionClassConstant;
 
 enum DialogNodeOptionRule: string
 {
-    use ValuesToList;
-    use ToDropdownList;
     use GetAttributes;
+    use ToDropdownList;
+    use ValuesToList;
     #[CanBeUsed]
     #[Description('Złoto')]
     case GOLD = 'gold';
@@ -54,6 +53,21 @@ enum DialogNodeOptionRule: string
     #[Description('Wydarzenie sezonowe')]
     case SEASONAL_EVENT = 'seasonalEvent';
 
+    #[Description('Po godzinie')]
+    case TIME_AFTER = 'timeAfter';
+
+    #[Description('Przed godziną')]
+    case TIME_BEFORE = 'timeBefore';
+
+    #[Description('Dzień tygodnia')]
+    case WEEKDAY = 'weekday';
+
+    #[Description('Aktywni gracze na mapie')]
+    case ACTIVE_PLAYERS_ON_MAP = 'activePlayersOnMap';
+
+    #[Description('Aktywne błogosławieństwo')]
+    case HAS_ACTIVE_BLESSING = 'hasActiveBlessing';
+
     public function canBeUsed(): bool
     {
         $ref = new ReflectionClassConstant(self::class, $this->name);
@@ -64,9 +78,9 @@ enum DialogNodeOptionRule: string
 
     public static function list()
     {
-        return self::toDropdownList(function($case) {
+        return self::toDropdownList(function ($case) {
             return [
-                'canBeUsed' => $case->canBeUsed()
+                'canBeUsed' => $case->canBeUsed(),
             ];
         });
     }
