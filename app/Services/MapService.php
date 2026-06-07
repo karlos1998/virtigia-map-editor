@@ -2,16 +2,16 @@
 
 namespace App\Services;
 
-use App\Http\Resources\MapResource;
 use App\Http\Resources\DoorResource;
-use App\Models\Map;
+use App\Http\Resources\MapResource;
 use App\Models\Door;
+use App\Models\Map;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownColumn;
-use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownOptions\TableDropdownOption;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableTextColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\TableService;
 
@@ -22,15 +22,10 @@ final class MapService extends BaseService
         private readonly AssetService $assetService,
         private readonly RespawnPointService $respawnPointService,
         private readonly ThumbnailService $thumbnailService,
-    )
-    {
-    }
+    ) {}
 
     /**
      * Get dialog nodes that teleport to the specified map
-     *
-     * @param Map $map
-     * @return Collection
      */
     public function getDialogNodesTeleportingToMap(Map $map): Collection
     {
@@ -42,9 +37,6 @@ final class MapService extends BaseService
 
     /**
      * Get base items that teleport to the specified map
-     *
-     * @param Map $map
-     * @return Collection
      */
     public function getItemsTeleportingToMap(Map $map): Collection
     {
@@ -53,34 +45,58 @@ final class MapService extends BaseService
     }
 
     /**
+     * @param  array{missing_battleground?: bool}  $filters
+     *
      * @throws \Exception
      */
-    public function getAll(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    public function getAll(array $filters = []): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
+        $mapsQuery = $this->mapModel->newQuery();
+
+        $this->applyFilters($mapsQuery, $filters);
+
         return $this->fetchData(
             MapResource::class,
-            $this->mapModel,
+            $mapsQuery,
             new TableService(
                 columns: [
-                  'id' => new TableTextColumn(
-                      placeholder: 'Wpisz szukane id',
-                      sortable: true,
-                  ),
+                    'id' => new TableTextColumn(
+                        placeholder: 'Wpisz szukane id',
+                        sortable: true,
+                    ),
                     'respawn_point' => new TableDropdownColumn(
                         placeholder: 'Punkt odrodzenia',
                         options: $this->respawnPointService->getRespawnPointsSelectOptions(),
                         sortable: true,
                         sortPath: 'respawn_point_id',
-                    )
+                    ),
                 ],
                 globalFilterColumns: ['name', 'src']
             )
         );
     }
 
+    /**
+     * @param  array{missing_battleground?: bool}  $filters
+     */
+    private function applyFilters(Builder $query, array $filters): void
+    {
+        if (($filters['missing_battleground'] ?? false) !== true) {
+            return;
+        }
+
+        $query->where(function (Builder $query): void {
+            $query
+                ->whereNull('battleground')
+                ->orWhere('battleground', '')
+                ->orWhereNull('battleground2')
+                ->orWhere('battleground2', '');
+        });
+    }
+
     public function search(string $search = ''): Collection
     {
-        return $this->mapModel->where('name', 'like', '%' . $search . '%')->limit(10)->get();
+        return $this->mapModel->where('name', 'like', '%'.$search.'%')->limit(10)->get();
     }
 
     /**
@@ -88,13 +104,13 @@ final class MapService extends BaseService
      */
     public function store(string $imgBase64, string $fileName, string $name)
     {
-        $imageData = $this->assetService->storeFromBase64('img/locations/' . session("world") . '/', $imgBase64, $fileName);
+        $imageData = $this->assetService->storeFromBase64('img/locations/'.session('world').'/', $imgBase64, $fileName);
         $width = $imageData['width'] / 32;
         $height = $imageData['height'] / 32;
 
         $map = $this->mapModel->create([
             'name' => $name,
-            'src' => session("world") . "/$fileName",
+            'src' => session('world')."/$fileName",
             'x' => $width,
             'y' => $height,
             'col' => str_repeat('0', $width * $height),
@@ -152,17 +168,13 @@ final class MapService extends BaseService
     /**
      * Update the map image
      *
-     * @param Map $map
-     * @param string $imgBase64
-     * @param string $fileName
-     * @return void
      * @throws ValidationException
      * @throws \Exception
      */
     public function updateImage(Map $map, string $imgBase64, string $fileName): void
     {
         // Store the new image
-        $imageData = $this->assetService->storeFromBase64('img/locations/' . session("world") . '/', $imgBase64, $fileName);
+        $imageData = $this->assetService->storeFromBase64('img/locations/'.session('world').'/', $imgBase64, $fileName);
 
         // Validate that the dimensions match the map's dimensions
         $width = $imageData['width'] / 32;
@@ -176,7 +188,7 @@ final class MapService extends BaseService
 
         // Update the map's src
         $map->update([
-            'src' => session("world") . "/$fileName",
+            'src' => session('world')."/$fileName",
         ]);
 
         $this->thumbnailService->generateThumbnail($map);
@@ -189,20 +201,17 @@ final class MapService extends BaseService
 
     /**
      * Remove the specified map from storage.
-     *
-     * @param Map $map
-     * @return void
      */
     public function destroy(Map $map): void
     {
 
-        if($this->getItemsTeleportingToMap($map)->isNotEmpty()) {
+        if ($this->getItemsTeleportingToMap($map)->isNotEmpty()) {
             throw ValidationException::withMessages([
                 'message' => 'Nie możesz usunąć mapy, na którą prowadzą jakieś przedmioty teleportacyjne',
             ]);
         }
 
-        if($this->getDialogNodesTeleportingToMap($map)->isNotEmpty()) {
+        if ($this->getDialogNodesTeleportingToMap($map)->isNotEmpty()) {
             throw ValidationException::withMessages([
                 'message' => 'Nie możesz usunąć mapy, na którą prowadzą dialogi teleportacyjne',
             ]);
@@ -215,15 +224,12 @@ final class MapService extends BaseService
 
     /**
      * Create a copy of the specified map.
-     *
-     * @param Map $map
-     * @return Map
      */
     public function copy(Map $map): Map
     {
         // Create a new map with the same properties
         $newMap = $this->mapModel->create([
-            'name' => $map->name . ' (kopia)',
+            'name' => $map->name.' (kopia)',
             'src' => $map->src,
             'x' => $map->x,
             'y' => $map->y,
@@ -259,7 +265,7 @@ final class MapService extends BaseService
         $collectedMaps = [];
         $collectedDoors = collect();
 
-        while (!empty($mapIdsToProcess)) {
+        while (! empty($mapIdsToProcess)) {
             $currentMapId = array_shift($mapIdsToProcess);
 
             if (in_array($currentMapId, $processedMapIds, true)) {
@@ -269,7 +275,7 @@ final class MapService extends BaseService
             $processedMapIds[] = $currentMapId;
 
             $map = $this->mapModel->find($currentMapId);
-            if (!$map) {
+            if (! $map) {
                 continue;
             }
 

@@ -6,9 +6,17 @@ import AdvanceColumn from "@advance-table/Components/AdvanceColumn.vue";
 import {BaseItemResource} from "@/Resources/BaseItem.resource";
 import { Link, router } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
-import {computed, ref} from "vue";
+import {computed, onMounted, ref} from "vue";
 import Dropdown from 'primevue/dropdown';
 import Fieldset from 'primevue/fieldset';
+import Checkbox from 'primevue/checkbox';
+import ProgressSpinner from 'primevue/progressspinner';
+import axios from 'axios';
+import {
+    additionalAttributes,
+    booleanAttributes,
+    type BaseItemAttributeOption,
+} from './AttributeOptions';
 
 type Data = {
     data: BaseItemResource
@@ -17,12 +25,23 @@ type Data = {
 type BaseItemFilters = {
     description: string | null
     legendary_bonus: string | null
+    attribute_keys: string[]
 }
 
 type LegendaryBonusOption = {
     label: string
     value: string
     bonus_value: number
+}
+
+type AttributePoint = {
+    name: string
+    description: string
+}
+
+type AttributeFilterGroup = {
+    label: string
+    options: BaseItemAttributeOption[]
 }
 
 const props = withDefaults(defineProps<{
@@ -32,24 +51,75 @@ const props = withDefaults(defineProps<{
     filters: () => ({
         description: null,
         legendary_bonus: null,
+        attribute_keys: [],
     }),
     legendaryBonusOptions: () => [],
 })
 
 const description = ref(props.filters.description ?? '');
 const selectedLegendaryBonus = ref<string | null>(props.filters.legendary_bonus ?? null);
-const isAdvancedFiltersCollapsed = ref(!props.filters.description && !props.filters.legendary_bonus);
+const selectedAttributeKeys = ref<string[]>([...(props.filters.attribute_keys ?? [])]);
+const isLoadingAttributePointOptions = ref(false);
+const attributePointOptions = ref<BaseItemAttributeOption[]>([]);
+const manualAttributePointOptions = ref<BaseItemAttributeOption[]>([]);
+const isAdvancedFiltersCollapsed = ref(!props.filters.description && !props.filters.legendary_bonus && selectedAttributeKeys.value.length === 0);
 
 const legendaryBonusFilterOptions = computed(() => [
     {label: 'Dowolny bonus', value: null, bonus_value: 0},
     ...props.legendaryBonusOptions,
 ]);
 
-const hasActiveAdvancedFilters = computed(() => description.value.trim() !== '' || selectedLegendaryBonus.value !== null);
+const attributeFilterGroups = computed<AttributeFilterGroup[]>(() => [
+    {
+        label: 'Punkty atrybutów',
+        options: attributePointOptions.value,
+    },
+    {
+        label: 'Manualne punkty atrybutów',
+        options: manualAttributePointOptions.value,
+    },
+    {
+        label: 'Atrybuty logiczne',
+        options: booleanAttributes,
+    },
+    {
+        label: 'Dodatkowe atrybuty',
+        options: additionalAttributes,
+    },
+].filter(group => group.options.length > 0));
+
+const hasActiveAdvancedFilters = computed(() => (
+    description.value.trim() !== ''
+    || selectedLegendaryBonus.value !== null
+    || selectedAttributeKeys.value.length > 0
+));
+
+const fetchAttributePointOptions = async () => {
+    try {
+        isLoadingAttributePointOptions.value = true;
+        const response = await axios.get('/api/base-items/attribute-points');
+        const attributePoints = response.data?.attributePoints ?? [];
+        const manualAttributePoints = response.data?.manualAttributePoints ?? [];
+
+        attributePointOptions.value = attributePoints.map((attribute: AttributePoint) => ({
+            key: attribute.name,
+            label: attribute.description,
+        }));
+        manualAttributePointOptions.value = manualAttributePoints.map((attribute: AttributePoint) => ({
+            key: attribute.name,
+            label: attribute.description,
+        }));
+    } catch {
+        attributePointOptions.value = [];
+        manualAttributePointOptions.value = [];
+    } finally {
+        isLoadingAttributePointOptions.value = false;
+    }
+}
 
 const reloadWithAdvancedFilters = () => {
     const descriptionValue = description.value.trim();
-    const filters: Record<string, string> = {};
+    const filters: Record<string, string | string[]> = {};
 
     if (descriptionValue !== '') {
         filters.description = descriptionValue;
@@ -57,6 +127,10 @@ const reloadWithAdvancedFilters = () => {
 
     if (selectedLegendaryBonus.value !== null) {
         filters.legendary_bonus = selectedLegendaryBonus.value;
+    }
+
+    if (selectedAttributeKeys.value.length > 0) {
+        filters.attribute_keys = selectedAttributeKeys.value;
     }
 
     router.get(route('base-items.index'), filters, {
@@ -69,8 +143,13 @@ const reloadWithAdvancedFilters = () => {
 const clearAdvancedFilters = () => {
     description.value = '';
     selectedLegendaryBonus.value = null;
+    selectedAttributeKeys.value = [];
     reloadWithAdvancedFilters();
 }
+
+onMounted(() => {
+    fetchAttributePointOptions();
+});
 </script>
 
 <template>
@@ -112,6 +191,47 @@ const clearAdvancedFilters = () => {
                                 show-clear
                                 class="w-full"
                             />
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-3">
+                        <div class="flex items-center gap-2">
+                            <h6 class="m-0 font-semibold">Atrybuty na przedmiocie</h6>
+                            <ProgressSpinner
+                                v-if="isLoadingAttributePointOptions"
+                                style="width: 1rem; height: 1rem"
+                            />
+                        </div>
+
+                        <div class="flex flex-col gap-4">
+                            <div
+                                v-for="group in attributeFilterGroups"
+                                :key="group.label"
+                                class="flex flex-col gap-2"
+                            >
+                                <div class="text-sm font-semibold text-surface-600 dark:text-surface-300">
+                                    {{ group.label }}
+                                </div>
+
+                                <div class="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
+                                    <label
+                                        v-for="option in group.options"
+                                        :key="`${group.label}-${option.key}`"
+                                        :for="`attribute-filter-${option.key}`"
+                                        class="flex min-h-12 cursor-pointer items-center gap-3 rounded border border-surface-200 px-3 py-2 text-sm transition-colors hover:border-primary dark:border-surface-700"
+                                    >
+                                        <Checkbox
+                                            v-model="selectedAttributeKeys"
+                                            :input-id="`attribute-filter-${option.key}`"
+                                            :value="option.key"
+                                        />
+                                        <span class="flex min-w-0 flex-col gap-1">
+                                            <span class="font-medium leading-tight">{{ option.label }}</span>
+                                            <span class="truncate text-xs text-surface-500 dark:text-surface-400">{{ option.key }}</span>
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

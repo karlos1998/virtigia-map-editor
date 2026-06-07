@@ -27,7 +27,7 @@ final class BaseItemService extends BaseService
     public function __construct(private readonly BaseItem $baseItemModel) {}
 
     /**§
-     * @param  array{description?: string|null, legendary_bonus?: string|null}  $filters
+     * @param  array{description?: string|null, legendary_bonus?: string|null, attribute_keys?: array<int, string>}  $filters
      *
      * @throws \Exception
      */
@@ -108,12 +108,13 @@ final class BaseItemService extends BaseService
     }
 
     /**
-     * @param  array{description?: string|null, legendary_bonus?: string|null}  $filters
+     * @param  array{description?: string|null, legendary_bonus?: string|null, attribute_keys?: array<int, string>}  $filters
      */
     private function applyAttributeFilters(Builder $query, array $filters): void
     {
         $description = trim((string) ($filters['description'] ?? ''));
         $legendaryBonus = trim((string) ($filters['legendary_bonus'] ?? ''));
+        $attributeKeys = $filters['attribute_keys'] ?? [];
 
         if ($description !== '') {
             $query->where('base_items.attributes->description', 'like', "%{$description}%");
@@ -122,6 +123,27 @@ final class BaseItemService extends BaseService
         if ($legendaryBonus !== '') {
             $query->whereJsonContains('base_items.attributes->legendaryBon', $legendaryBonus);
         }
+
+        foreach ($attributeKeys as $attributeKey) {
+            $query->where(function (Builder $attributeQuery) use ($attributeKey): void {
+                $this->whereJsonKeyHasValue($attributeQuery, 'base_items.attributes', $attributeKey);
+                $attributeQuery->orWhere(function (Builder $attributePointsQuery) use ($attributeKey): void {
+                    $this->whereJsonKeyHasValue($attributePointsQuery, 'base_items.attribute_points', $attributeKey);
+                });
+                $attributeQuery->orWhere(function (Builder $manualAttributePointsQuery) use ($attributeKey): void {
+                    $this->whereJsonKeyHasValue($manualAttributePointsQuery, 'base_items.manual_attribute_points', $attributeKey);
+                });
+            });
+        }
+    }
+
+    private function whereJsonKeyHasValue(Builder $query, string $column, string $attributeKey): void
+    {
+        $path = "{$column}->{$attributeKey}";
+
+        $query
+            ->whereNotNull($path)
+            ->where($path, '!=', '');
     }
 
     public function search(string $search = '', ?Collection $ids = null, ?string $category = null): Collection

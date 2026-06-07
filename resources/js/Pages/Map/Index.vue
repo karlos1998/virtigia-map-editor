@@ -5,10 +5,49 @@ import AdvanceTable from "@advance-table/Components/AdvanceTable.vue";
 import AdvanceColumn from "@advance-table/Components/AdvanceColumn.vue";
 import {MapResource} from "@/Resources/Map.resource";
 
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
+import {computed, ref} from "vue";
+import Fieldset from 'primevue/fieldset';
+import Checkbox from 'primevue/checkbox';
+
 type Data = {
     data: MapResource
+}
+
+type MapFilters = {
+    missing_battleground: boolean
+}
+
+const props = withDefaults(defineProps<{
+    filters?: MapFilters
+}>(), {
+    filters: () => ({
+        missing_battleground: false,
+    }),
+});
+
+const showMissingBattlegrounds = ref(props.filters.missing_battleground);
+const isAdvancedFiltersCollapsed = ref(!showMissingBattlegrounds.value);
+const hasActiveAdvancedFilters = computed(() => showMissingBattlegrounds.value);
+
+const reloadWithAdvancedFilters = () => {
+    const filters: Record<string, string> = {};
+
+    if (showMissingBattlegrounds.value) {
+        filters.missing_battleground = '1';
+    }
+
+    router.get(route('maps.index'), filters, {
+        only: ['maps', 'filters'],
+        preserveState: true,
+        replace: true,
+    });
+}
+
+const clearAdvancedFilters = () => {
+    showMissingBattlegrounds.value = false;
+    reloadWithAdvancedFilters();
 }
 </script>
 
@@ -22,6 +61,50 @@ type Data = {
         </div>
 
         <div class="card">
+            <Fieldset
+                legend="Filtry zaawansowane"
+                :toggleable="true"
+                v-model:collapsed="isAdvancedFiltersCollapsed"
+                class="mb-4"
+            >
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-2">
+                        <i class="pi pi-filter text-primary" />
+                        <h5 class="m-0">Tła walki</h5>
+                        <Tag v-if="hasActiveAdvancedFilters" value="aktywne" severity="success" />
+                    </div>
+
+                    <label
+                        for="missing-battleground-filter"
+                        class="flex cursor-pointer items-center gap-3 rounded border border-surface-200 px-3 py-2 text-sm transition-colors hover:border-primary dark:border-surface-700"
+                    >
+                        <Checkbox
+                            v-model="showMissingBattlegrounds"
+                            input-id="missing-battleground-filter"
+                            :binary="true"
+                        />
+                        <span class="font-medium">Pokaż mapy bez nadanego tła walki</span>
+                    </label>
+
+                    <div class="flex flex-wrap gap-2">
+                        <Button
+                            label="Zastosuj"
+                            icon="pi pi-search"
+                            severity="success"
+                            @click="reloadWithAdvancedFilters"
+                        />
+                        <Button
+                            label="Wyczyść"
+                            icon="pi pi-times"
+                            severity="secondary"
+                            outlined
+                            :disabled="!hasActiveAdvancedFilters"
+                            @click="clearAdvancedFilters"
+                        />
+                    </div>
+                </div>
+            </Fieldset>
+
             <AdvanceTable
                 prop-name="maps"
             >

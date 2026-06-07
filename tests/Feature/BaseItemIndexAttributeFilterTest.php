@@ -78,6 +78,7 @@ class BaseItemIndexAttributeFilterTest extends TestCase
                 'attributes' => json_encode([
                     'description' => 'Przedmiot wzmacnia leczenie po walce.',
                     'legendaryBon' => ['angelTouchHealingChance', 5],
+                    'combatFlee' => true,
                 ]),
                 'attribute_points' => null,
                 'manual_attribute_points' => null,
@@ -115,6 +116,56 @@ class BaseItemIndexAttributeFilterTest extends TestCase
                 'created_at' => now()->subSecond(),
                 'updated_at' => now()->subSecond(),
             ],
+            [
+                'id' => 12,
+                'name' => 'Zwinne rękawice',
+                'src' => 'items/gloves.gif',
+                'stats' => '',
+                'cl' => 0,
+                'pr' => 0,
+                'edited_manually' => false,
+                'attributes' => json_encode([
+                    'description' => 'Przedmiot podnosi zręczność.',
+                ]),
+                'attribute_points' => json_encode([
+                    'criticalChance' => 3,
+                ]),
+                'manual_attribute_points' => null,
+                'reverse_attributes' => null,
+                'rarity' => 'unique',
+                'category' => 'gloves',
+                'price' => null,
+                'currency' => null,
+                'specific_currency_price' => null,
+                'deleted_at' => null,
+                'created_at' => now()->subSeconds(2),
+                'updated_at' => now()->subSeconds(2),
+            ],
+            [
+                'id' => 13,
+                'name' => 'Ciężka zbroja',
+                'src' => 'items/armor.gif',
+                'stats' => '',
+                'cl' => 0,
+                'pr' => 0,
+                'edited_manually' => false,
+                'attributes' => json_encode([
+                    'description' => 'Przedmiot wzmacnia obronę.',
+                ]),
+                'attribute_points' => null,
+                'manual_attribute_points' => json_encode([
+                    'armor' => 2,
+                ]),
+                'reverse_attributes' => null,
+                'rarity' => 'unique',
+                'category' => 'armors',
+                'price' => null,
+                'currency' => null,
+                'specific_currency_price' => null,
+                'deleted_at' => null,
+                'created_at' => now()->subSeconds(3),
+                'updated_at' => now()->subSeconds(3),
+            ],
         ]);
 
         DB::connection('retro')->table('base_item_usage_views')->insert([
@@ -128,6 +179,22 @@ class BaseItemIndexAttributeFilterTest extends TestCase
             ],
             [
                 'base_item_id' => 11,
+                'is_in_use' => false,
+                'source_count' => 0,
+                'sources' => json_encode([]),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'base_item_id' => 12,
+                'is_in_use' => false,
+                'source_count' => 0,
+                'sources' => json_encode([]),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'base_item_id' => 13,
                 'is_in_use' => false,
                 'source_count' => 0,
                 'sources' => json_encode([]),
@@ -171,6 +238,57 @@ class BaseItemIndexAttributeFilterTest extends TestCase
             ->has('items.data', 1)
             ->where('items.data.0.id', 11)
             ->where('filters.legendary_bonus', 'pushBack'));
+    }
+
+    public function test_it_filters_base_items_by_attribute_key(): void
+    {
+        $response = $this
+            ->actingAs($this->makeUser())
+            ->withSession(['world' => 'retro'])
+            ->get(route('base-items.index', [
+                'attribute_keys' => ['combatFlee'],
+            ]));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page): Assert => $page
+            ->component('BaseItem/Index')
+            ->has('items.data', 1)
+            ->where('items.data.0.id', 10)
+            ->where('filters.attribute_keys.0', 'combatFlee'));
+    }
+
+    public function test_it_filters_base_items_by_attribute_point_key(): void
+    {
+        $response = $this
+            ->actingAs($this->makeUser())
+            ->withSession(['world' => 'retro'])
+            ->get(route('base-items.index', [
+                'attribute_keys' => ['criticalChance'],
+            ]));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page): Assert => $page
+            ->component('BaseItem/Index')
+            ->has('items.data', 1)
+            ->where('items.data.0.id', 12)
+            ->where('filters.attribute_keys.0', 'criticalChance'));
+    }
+
+    public function test_it_filters_base_items_by_manual_attribute_point_key(): void
+    {
+        $response = $this
+            ->actingAs($this->makeUser())
+            ->withSession(['world' => 'retro'])
+            ->get(route('base-items.index', [
+                'attribute_keys' => ['armor'],
+            ]));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page): Assert => $page
+            ->component('BaseItem/Index')
+            ->has('items.data', 1)
+            ->where('items.data.0.id', 13)
+            ->where('filters.attribute_keys.0', 'armor'));
     }
 
     private function makeUser(): User

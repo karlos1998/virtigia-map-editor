@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\PvpType;
 use App\Http\Requests\AddWorldMinimapNodeRequest;
+use App\Http\Requests\MapIndexRequest;
 use App\Http\Requests\StoreMapRequest;
 use App\Http\Requests\UpdateMapBattleground2Request;
 use App\Http\Requests\UpdateMapBattlegroundRequest;
@@ -52,10 +53,13 @@ class MapController extends Controller
         return to_route('maps.show', $map->id);
     }
 
-    public function index()
+    public function index(MapIndexRequest $request)
     {
+        $filters = $request->filters();
+
         return Inertia::render('Map/Index', [
-            'maps' => $this->mapService->getAll(),
+            'maps' => $this->mapService->getAll($filters),
+            'filters' => $filters,
         ]);
     }
 

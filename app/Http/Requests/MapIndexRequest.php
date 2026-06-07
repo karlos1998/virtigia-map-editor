@@ -23,6 +23,7 @@ class MapIndexRequest extends FormRequest
     {
         return [
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'missing_battleground' => ['nullable', 'boolean'],
         ];
     }
 
@@ -32,6 +33,16 @@ class MapIndexRequest extends FormRequest
             'per_page.integer' => 'Parametr per_page musi być liczbą.',
             'per_page.min' => 'Parametr per_page nie może być mniejszy niż 1.',
             'per_page.max' => 'Parametr per_page nie może być większy niż 100.',
+        ];
+    }
+
+    /**
+     * @return array{missing_battleground: bool}
+     */
+    public function filters(): array
+    {
+        return [
+            'missing_battleground' => $this->boolean('missing_battleground'),
         ];
     }
 }
