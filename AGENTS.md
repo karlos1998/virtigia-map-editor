@@ -24,6 +24,11 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - vue (VUE) - v3
 - tailwindcss (TAILWINDCSS) - v3
 
+## Local Development Environment
+- This project runs through Laravel Sail. Use Sail for Artisan, Composer, PHP, npm, and test commands, for example `./vendor/bin/sail artisan ...`, `./vendor/bin/sail test ...`, and `./vendor/bin/sail npm run build`.
+- Do not run this project's tests by forcing local SQLite settings such as `DB_CONNECTION=sqlite` or `DB_DATABASE=:memory:`. Use the Sail environment and its configured services instead.
+- If Sail is not running, start it with `./vendor/bin/sail up -d` before verification instead of inventing local database/cache overrides.
+
 
 ## Conventions
 - You must follow all existing code conventions used in this application. When creating or editing a file, check sibling files for the correct structure, approach, naming.

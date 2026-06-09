@@ -67,6 +67,7 @@ class HotelCrudTest extends TestCase
             $table->text('battleground')->nullable();
             $table->text('battleground2')->nullable();
             $table->boolean('is_teleport_locked')->default(false);
+            $table->boolean('is_grouping_locked')->default(false);
             $table->timestamps();
         });
 
@@ -137,6 +138,7 @@ class HotelCrudTest extends TestCase
                 'battleground' => null,
                 'battleground2' => null,
                 'is_teleport_locked' => false,
+                'is_grouping_locked' => false,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -152,6 +154,7 @@ class HotelCrudTest extends TestCase
                 'battleground' => null,
                 'battleground2' => null,
                 'is_teleport_locked' => false,
+                'is_grouping_locked' => false,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],

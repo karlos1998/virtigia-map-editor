@@ -53,6 +53,7 @@ class MapIndexAdvancedFilterTest extends TestCase
             $table->text('battleground2')->nullable();
             $table->foreignId('respawn_point_id')->nullable();
             $table->boolean('is_teleport_locked')->default(false);
+            $table->boolean('is_grouping_locked')->default(false);
             $table->timestamps();
         });
 
@@ -79,6 +80,7 @@ class MapIndexAdvancedFilterTest extends TestCase
                 'battleground2' => '007N.jpg',
                 'respawn_point_id' => null,
                 'is_teleport_locked' => false,
+                'is_grouping_locked' => false,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
@@ -95,6 +97,7 @@ class MapIndexAdvancedFilterTest extends TestCase
                 'battleground2' => '007N.jpg',
                 'respawn_point_id' => null,
                 'is_teleport_locked' => false,
+                'is_grouping_locked' => false,
                 'created_at' => now()->subSecond(),
                 'updated_at' => now()->subSecond(),
             ],
@@ -111,6 +114,7 @@ class MapIndexAdvancedFilterTest extends TestCase
                 'battleground2' => '',
                 'respawn_point_id' => null,
                 'is_teleport_locked' => false,
+                'is_grouping_locked' => false,
                 'created_at' => now()->subSeconds(2),
                 'updated_at' => now()->subSeconds(2),
             ],

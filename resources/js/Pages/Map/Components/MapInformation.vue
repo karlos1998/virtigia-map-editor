@@ -25,6 +25,7 @@ const selectedRespawnPointId = ref<number | null>(null);
 const toast = useToast();
 const showReplaceImageModal = ref(false);
 const isTeleportLocked = ref(props.map.is_teleport_locked ?? false);
+const isGroupingLocked = ref(props.map.is_grouping_locked ?? false);
 const isBackgroundSectionExpanded = ref(false);
 
 // Static list of battleground images (place these files under public/img/Backgrounds)
@@ -254,6 +255,29 @@ const updateMapTeleportLocked = () => {
         }
     });
 };
+
+const updateMapGroupingLocked = () => {
+    router.patch(route('maps.update.grouping-locked', props.map.id), {
+        is_grouping_locked: isGroupingLocked.value
+    }, {
+        onSuccess: () => {
+            toast.add({
+                severity: 'success',
+                summary: 'Sukces',
+                detail: 'Opcja grupowania została zaktualizowana',
+                life: 3000
+            });
+        },
+        onError: () => {
+            toast.add({
+                severity: 'error',
+                summary: 'Błąd',
+                detail: 'Nie udało się zaktualizować opcji grupowania',
+                life: 3000
+            });
+        }
+    });
+};
 </script>
 
 <template>
@@ -302,6 +326,20 @@ const updateMapTeleportLocked = () => {
                     </div>
                     <div v-else class="mt-2 text-green-600 text-sm">
                         Teleportacja dozwolona.
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold mb-2">Blokada grupowania</h3>
+                    <div class="flex items-center gap-2">
+                        <InputSwitch v-model="isGroupingLocked" />
+                        <Button label="Zapisz" @click="updateMapGroupingLocked"/>
+                    </div>
+                    <div v-if="isGroupingLocked" class="mt-2 text-red-600 text-sm">
+                        Gracze nie mogą grupować się w tej lokacji.
+                    </div>
+                    <div v-else class="mt-2 text-green-600 text-sm">
+                        Grupowanie dozwolone.
                     </div>
                 </div>
             </div>

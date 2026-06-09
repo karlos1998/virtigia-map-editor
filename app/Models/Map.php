@@ -18,11 +18,13 @@ class Map extends DynamicModel
         'water',
         'pvp',
         'is_teleport_locked',
+        'is_grouping_locked',
     ];
 
     protected $casts = [
         'pvp' => PvpType::class,
         'is_teleport_locked' => 'boolean',
+        'is_grouping_locked' => 'boolean',
     ];
 
     public function npcs() {

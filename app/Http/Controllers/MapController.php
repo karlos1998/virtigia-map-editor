@@ -259,4 +259,9 @@ class MapController extends Controller
     {
         $this->mapService->updateTeleportLocked($map, (bool) $request->input('is_teleport_locked', false));
     }
+
+    public function updateGroupingLocked(Map $map, Request $request): void
+    {
+        $this->mapService->updateGroupingLocked($map, (bool) $request->input('is_grouping_locked', false));
+    }
 }

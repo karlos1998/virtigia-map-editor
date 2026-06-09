@@ -199,6 +199,11 @@ final class MapService extends BaseService
         $map->update(['is_teleport_locked' => $isTeleportLocked]);
     }
 
+    public function updateGroupingLocked(Map $map, bool $isGroupingLocked): void
+    {
+        $map->update(['is_grouping_locked' => $isGroupingLocked]);
+    }
+
     /**
      * Remove the specified map from storage.
      */
