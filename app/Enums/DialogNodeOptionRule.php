@@ -18,8 +18,11 @@ enum DialogNodeOptionRule: string
     #[Description('Złoto')]
     case GOLD = 'gold';
 
-    #[Description('Poziom')]
+    #[Description('Poziom co najmniej')]
     case LEVEL = 'level';
+
+    #[Description('Poziom niższy niż')]
+    case LEVEL_BELOW = 'levelBelow';
 
     #[Description('Karmazynowe bractwo')]
     case BROTHERHOOD = 'brotherhood';

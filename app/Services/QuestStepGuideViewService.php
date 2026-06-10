@@ -122,7 +122,16 @@ class QuestStepGuideViewService
             if ($key === 'level' && is_numeric($value)) {
                 $descriptions[] = [
                     'type' => 'level',
-                    'text' => "Wymagany poziom: {$value}+",
+                    'text' => "Wymagany poziom co najmniej: {$value}",
+                ];
+
+                continue;
+            }
+
+            if ($key === 'levelBelow' && is_numeric($value)) {
+                $descriptions[] = [
+                    'type' => 'level',
+                    'text' => "Wymagany poziom niższy niż: {$value}",
                 ];
 
                 continue;

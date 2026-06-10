@@ -16,6 +16,7 @@ class DialogOptionRuleValidatorTest extends TestCase
             DialogNodeOptionRule::WEEKDAY->value => ['value' => [1, 7], 'consume' => false],
             DialogNodeOptionRule::ACTIVE_PLAYERS_ON_MAP->value => ['value' => 3, 'consume' => false],
             DialogNodeOptionRule::HAS_ACTIVE_BLESSING->value => ['value' => true, 'consume' => false],
+            DialogNodeOptionRule::LEVEL_BELOW->value => ['value' => 40, 'consume' => false],
         ]));
     }
 

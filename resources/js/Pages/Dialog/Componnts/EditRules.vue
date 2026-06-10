@@ -48,6 +48,16 @@ const weekdayOptions = [
     { value: 7, label: 'Niedziela' },
 ]
 
+const plainNumberRules = new Set<string>([
+    DialogNodeOptionRule.gold,
+    DialogNodeOptionRule.level,
+    DialogNodeOptionRule.levelBelow,
+    DialogNodeOptionRule.dragonTears,
+    DialogNodeOptionRule.activePlayersOnMap,
+])
+
+const isPlainNumberRule = (rule: string | number): boolean => plainNumberRules.has(String(rule))
+
 const loadDialogCounters = async () => {
     const { data } = await axios.get<DialogCounterResource[]>(route("web-api.dialog-counters.index"))
     dialogCounters.value = data
@@ -235,7 +245,7 @@ watch(
         />
 
         <InputNumber
-            v-if="rules[name] && typeof rules[name].value === 'number' && (name === DialogNodeOptionRule.gold || name === DialogNodeOptionRule.level || name === DialogNodeOptionRule.dragonTears || name === DialogNodeOptionRule.activePlayersOnMap)"
+            v-if="rules[name] && typeof rules[name].value === 'number' && isPlainNumberRule(name)"
             v-model="rules[name].value"
             :max="2000000000"
             :min="0"
