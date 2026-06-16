@@ -13,6 +13,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'id', type: 'integer'),
         new OA\Property(property: 'source_option_id', type: 'integer', nullable: true),
         new OA\Property(property: 'source_node_id', type: 'integer', nullable: true),
+        new OA\Property(property: 'source_handle', type: 'string', nullable: true),
         new OA\Property(property: 'target_node_id', type: 'integer'),
         new OA\Property(property: 'rules', type: 'object', nullable: true),
     ]
@@ -25,6 +26,7 @@ class ApiDialogEdgeResource extends JsonResource
             'id' => $this->id,
             'source_option_id' => $this->source_option_id,
             'source_node_id' => $this->source_node_id,
+            'source_handle' => $this->source_handle,
             'target_node_id' => $this->target_node_id,
             'rules' => $this->rules,
         ];

@@ -32,6 +32,9 @@ class DialogEdgeResource extends JsonResource
             $this->mergeWhen($sourceOptionExists, fn () => [
                 'sourceHandle' => "source-{$this->resource->sourceOption->id}",
             ]),
+            $this->mergeWhen(! $sourceOptionExists && $sourceNodeExists, fn () => [
+                'sourceHandle' => $this->resource->source_handle ?? 'source-source-1',
+            ]),
             'data' => (object) [
                 'dialog_id' => $this->resource->source_dialog_id,
             ],

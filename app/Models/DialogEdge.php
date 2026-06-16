@@ -9,7 +9,7 @@ class DialogEdge extends DynamicModel
 {
     use HasFactory;
 
-    protected $fillable = ['rules', 'source_node_id'];
+    protected $fillable = ['rules', 'source_node_id', 'source_handle'];
 
     protected $casts = [
         'rules' => 'json',

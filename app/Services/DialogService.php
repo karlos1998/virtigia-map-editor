@@ -53,6 +53,17 @@ class DialogService extends BaseService
             }
         }
 
+        if (($data['type'] ?? 'special') === 'minigame' && empty($node->action_data)) {
+            $node->update([
+                'action_data' => [
+                    'minigame' => [
+                        'type' => 'pipes',
+                        'difficulty' => 1,
+                    ],
+                ],
+            ]);
+        }
+
         return $node->fresh();
     }
 
@@ -66,6 +77,7 @@ class DialogService extends BaseService
                 'type' => $nodePayload['type'],
                 'position' => $nodePayload['position'],
                 'content' => $nodePayload['content'] ?? null,
+                'action_data' => $nodePayload['action_data'] ?? null,
                 'additional_actions' => $nodePayload['additional_actions'] ?? null,
             ]);
 
@@ -137,13 +149,32 @@ class DialogService extends BaseService
              * @var DialogNode $sourceNode
              */
             $sourceNode = $dialog->nodes()->find($data['sourceNodeId']);
-            if (! $sourceNode || ! in_array($sourceNode->type, ['start', 'randomizer'], true)) {
+            if (! $sourceNode || ! in_array($sourceNode->type, ['start', 'randomizer', 'minigame'], true)) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
                     'message' => 'Wybrane źródło połączenia nie obsługuje bezpośrednich wyjść.',
                 ]);
             }
 
+            $sourceHandle = $data['sourceHandle'] ?? null;
+            if ($sourceNode->type === 'minigame') {
+                if (! in_array($sourceHandle, ['source-success', 'source-fail'], true)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'message' => 'Minigra obsługuje tylko wyjścia sukces i porażka.',
+                    ]);
+                }
+
+                if ($dialog->edges()
+                    ->where('source_node_id', $sourceNode->id)
+                    ->where('source_handle', $sourceHandle)
+                    ->exists()) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'message' => 'To wyjście minigry ma już połączenie.',
+                    ]);
+                }
+            }
+
             $edge->sourceNode()->associate($sourceNode);
+            $edge->source_handle = $sourceHandle;
             //            if ($dialog->edges()->whereNull('source_option_id')->count() >= 1)
             //            {
             //                throw \Illuminate\Validation\ValidationException::withMessages([
@@ -371,9 +402,9 @@ class DialogService extends BaseService
 
     public function updateStartNodeEdges(Dialog $dialog, DialogNode $dialogNode, array $validated)
     {
-        if ($dialogNode->type !== 'start' && $dialogNode->type !== 'randomizer') {
+        if ($dialogNode->type !== 'start' && $dialogNode->type !== 'randomizer' && $dialogNode->type !== 'minigame') {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'message' => 'Tylko węzeł startowy lub losowania może mieć reguły przejścia do kolejnych dialogów.',
+                'message' => 'Tylko węzeł startowy, losowania lub minigry może mieć reguły przejścia do kolejnych dialogów.',
             ]);
         }
 
@@ -430,12 +461,13 @@ class DialogService extends BaseService
             }
         }
 
-        if (in_array($dialogNode->type, ['start', 'randomizer'], true)) {
+        if (in_array($dialogNode->type, ['start', 'randomizer', 'minigame'], true)) {
             $directEdges = $dialogNode->getEdges();
             foreach ($directEdges as $edge) {
                 $newEdge = $dialog->edges()->make();
                 $newEdge->sourceNode()->associate($newNode);
                 $newEdge->targetNode()->associate($edge->targetNode);
+                $newEdge->source_handle = $edge->source_handle;
                 $newEdge->rules = $edge->rules;
                 $newEdge->save();
             }
@@ -540,6 +572,7 @@ class DialogService extends BaseService
             $newEdge = $newDialog->edges()->make();
             $newEdge->source_node_id = $sourceNodeId;
             $newEdge->target_node_id = $targetNodeId;
+            $newEdge->source_handle = $edge->source_handle;
             $newEdge->rules = $edge->rules;
             $newEdge->save();
         }

@@ -12,6 +12,7 @@ export interface DialogOptionResource {
 
 export interface  DialogNodeOptionEdgeWithRules {
     edge_id: number
+    source_handle?: string|null
     node: {
         id: number
         type: string

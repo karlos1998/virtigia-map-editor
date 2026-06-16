@@ -92,6 +92,7 @@ class DialogNodeResource extends JsonResource
                         'edges' => $this->resource->getEdges()->map(function ($edge) {
                             return [
                                 'edge_id' => $edge->id,
+                                'source_handle' => $edge->source_handle,
                                 'node' => $this->when($edge->targetNode, function () use ($edge) {
                                     return [
                                         'id' => $edge->targetNode->id,
@@ -114,6 +115,36 @@ class DialogNodeResource extends JsonResource
                         'edges' => $this->resource->getEdges()->map(function ($edge) {
                             return [
                                 'edge_id' => $edge->id,
+                                'source_handle' => $edge->source_handle,
+                                'node' => $this->when($edge->targetNode, function () use ($edge) {
+                                    return [
+                                        'id' => $edge->targetNode->id,
+                                        'type' => $edge->targetNode->type,
+                                        'content' => $edge->targetNode->content,
+                                    ];
+                                }),
+                                'rules' => $edge->rules,
+                            ];
+                        }),
+                    ],
+                ];
+            }),
+
+            $this->mergeWhen($this->resource->type == 'minigame', function () {
+                return [
+                    'dragHandle' => '.node-drag-handle',
+                    'data' => [
+                        'dialog_id' => $this->resource->source_dialog_id,
+                        'action_data' => [
+                            'minigame' => $this->resource->action_data['minigame'] ?? [
+                                'type' => 'pipes',
+                                'difficulty' => 1,
+                            ],
+                        ],
+                        'edges' => $this->resource->getEdges()->map(function ($edge) {
+                            return [
+                                'edge_id' => $edge->id,
+                                'source_handle' => $edge->source_handle,
                                 'node' => $this->when($edge->targetNode, function () use ($edge) {
                                     return [
                                         'id' => $edge->targetNode->id,

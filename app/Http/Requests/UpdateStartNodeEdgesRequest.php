@@ -40,7 +40,7 @@ class UpdateStartNodeEdgesRequest extends FormRequest
                 'nullable',
                 'array',
                 new DialogOptionRuleValidator(),
-            ]
+            ],
         ];
     }
 }

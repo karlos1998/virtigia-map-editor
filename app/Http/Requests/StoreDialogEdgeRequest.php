@@ -42,6 +42,12 @@ class StoreDialogEdgeRequest extends FormRequest
                 'required',
                 'integer',
             ],
+
+            'sourceHandle' => [
+                'nullable',
+                'string',
+                'max:64',
+            ],
         ];
     }
 }

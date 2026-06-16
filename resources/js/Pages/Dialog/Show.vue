@@ -11,6 +11,7 @@ import ShopNode from '@/Pages/Dialog/ShopNode.vue';
 import HotelNode from '@/Pages/Dialog/HotelNode.vue';
 import RandomizerNode from '@/Pages/Dialog/RandomizerNode.vue';
 import ProfessionNode from '@/Pages/Dialog/ProfessionNode.vue';
+import MinigameNode from '@/Pages/Dialog/MinigameNode.vue';
 import DialogEdge from '@/Pages/Dialog/DialogEdge.vue';
 import DialogActivityLogsTable from '@/Pages/Dialog/Partials/DialogActivityLogsTable.vue';
 import { DialogResource } from '@/Resources/Dialog.resource';
@@ -109,6 +110,8 @@ function nodeStroke(n: NodeProps) {
             return '#1f4f64';
         case 'profession':
             return '#2563eb';
+        case 'minigame':
+            return '#0891b2';
         default:
             return '#999';
     }
@@ -128,13 +131,15 @@ function nodeColor(n: NodeProps) {
             return '#1f4f64';
         case 'profession':
             return '#2563eb';
+        case 'minigame':
+            return '#67e8f9';
         default:
             return '#888';
     }
 }
 
 const isDirectOutputNode = (type?: string): boolean => {
-    return type === 'start' || type === 'randomizer';
+    return type === 'start' || type === 'randomizer' || type === 'minigame';
 };
 
 const addNode = (type?: string, position?: { x: number; y: number }) => {
@@ -159,6 +164,7 @@ const draggableNodeTemplates = [
     { label: 'Teleport', type: 'teleportation', icon: 'pi pi-forward' },
     { label: 'Profesje', type: 'profession', icon: 'pi pi-users' },
     { label: 'Losowanie', type: 'randomizer', icon: 'pi pi-percentage' },
+    { label: 'Minigra', type: 'minigame', icon: 'pi pi-th-large' },
 ];
 
 const handleNodeTemplateDragStart = (event: DragEvent, type?: string): void => {
@@ -368,6 +374,24 @@ const allNodeJsonSamples = [
     "content": "Losowanie odpowiedzi."
   }
 }`
+    },
+    {
+        label: 'Minigame node',
+        payload: `{
+  "node": {
+    "type": "minigame",
+    "position": {
+      "x": 420,
+      "y": 260
+    },
+    "action_data": {
+      "minigame": {
+        "type": "pipes",
+        "difficulty": 1
+      }
+    }
+  }
+}`
     }
 ];
 
@@ -460,7 +484,8 @@ onEdgesChange(async (changes) => {
                 sourceNodeIsInput: isDirectOutputNode(change.item.sourceNode.type),
                 sourceNodeId: change.item.sourceNode.id,
                 sourceOptionId: !isDirectOutputNode(change.item.sourceNode.type) ? change.item.sourceHandle.substring(7) : null,
-                targetNodeId: change.item.targetNode.id
+                targetNodeId: change.item.targetNode.id,
+                sourceHandle: isDirectOutputNode(change.item.sourceNode.type) ? change.item.sourceHandle : null,
             }).then(({ data: { edge } }) => {
                 console.log(' add edge from backend ---<', edge, props.dialog)
                 let edgeTmp = change;
@@ -480,6 +505,7 @@ onEdgesChange(async (changes) => {
 
                         directEdges.push({
                             edge_id: edge.id,
+                            source_handle: change.item.sourceHandle ?? null,
                             node: {
                                 id: targetNodeId,
                                 type: change.item.targetNode.type,
@@ -572,8 +598,13 @@ const removeEdge = (edgeChange: EdgeRemoveChange) => {
 const executeRemoveEdge = (edgeChange: EdgeRemoveChange) => {
     // Find the edge in the edges array
     const edge = edges.value.find(e => e.id === edgeChange.id) ?? props.edges.find(e => e.id === edgeChange.id);
+    const directSourceNode = edge?.source ? nodes.value.find((node) => node.id === edge.source && isDirectOutputNode(node.type)) : null;
 
-    if (edge && edge.source && edge.sourceHandle) {
+    if (edge?.source && directSourceNode?.data?.edges) {
+        updateNodeData(edge.source, {
+            edges: directSourceNode.data.edges.filter((item) => item.edge_id != edgeChange.id)
+        });
+    } else if (edge && edge.source && edge.sourceHandle) {
         // Extract the source node ID and option ID from the edge
         const sourceNodeId = edge.source;
         const sourceOptionId = edge.sourceHandle.substring(7); // Remove "source-" prefix
@@ -610,13 +641,6 @@ const executeRemoveEdge = (edgeChange: EdgeRemoveChange) => {
                     options: [...sourceNode.data.options]
                 });
             }
-        }
-    } else if (edge?.source) {
-        const sourceNode = nodes.value.find((node) => node.id === edge.source);
-        if (sourceNode?.data?.edges) {
-            updateNodeData(edge.source, {
-                edges: sourceNode.data.edges.filter((item) => item.edge_id != edgeChange.id)
-            });
         }
     }
 
@@ -679,6 +703,13 @@ const items = ref([
         }
     },
     {
+        label: 'Minigra',
+        icon: 'pi pi-th-large',
+        command: () => {
+            addNode('minigame');
+        }
+    },
+    {
         label: 'JSON',
         icon: 'pi pi-code',
         command: () => {
@@ -728,9 +759,10 @@ const items = ref([
                             <div class="font-semibold mb-1">Schemat</div>
                             <pre class="bg-surface-100 dark:bg-surface-900 p-3 rounded overflow-auto">{
   "node": {
-    "type": "special|shop|hotel|teleportation|randomizer|profession",
+    "type": "special|shop|hotel|teleportation|randomizer|profession|minigame",
     "position": { "x": 220, "y": 120 },
     "content": "opcjonalny tekst",
+    "action_data": { "minigame": { "type": "pipes|saper|mastermind|random", "difficulty": 1 } },
     "additional_actions": { "...": { "value": 1 } }
   },
   "options": [
@@ -908,6 +940,10 @@ const items = ref([
                 <template #node-profession="professionNodeProps">
                     <!--suppress RequiredAttributes -->
                     <ProfessionNode v-bind="professionNodeProps" />
+                </template>
+                <template #node-minigame="minigameNodeProps">
+                    <!--suppress RequiredAttributes -->
+                    <MinigameNode v-bind="minigameNodeProps" />
                 </template>
                 <template #node-teleportation="teleportationNodeProps">
                     <!--suppress RequiredAttributes -->

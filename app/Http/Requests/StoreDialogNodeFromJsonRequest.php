@@ -20,7 +20,7 @@ class StoreDialogNodeFromJsonRequest extends FormRequest
     {
         return [
             'node' => ['required', 'array'],
-            'node.type' => ['required', 'in:special,shop,hotel,teleportation,randomizer,profession'],
+            'node.type' => ['required', 'in:special,shop,hotel,teleportation,randomizer,profession,minigame'],
             'node.position' => ['required', 'array'],
             'node.position.x' => ['required', 'numeric'],
             'node.position.y' => ['required', 'numeric'],
@@ -30,6 +30,10 @@ class StoreDialogNodeFromJsonRequest extends FormRequest
                 'array',
                 new DialogNodeAdditionalActionsValidator,
             ],
+            'node.action_data' => ['nullable', 'required_if:node.type,minigame', 'array'],
+            'node.action_data.minigame' => ['required_if:node.type,minigame', 'array'],
+            'node.action_data.minigame.type' => ['required_if:node.type,minigame', 'in:pipes,saper,mastermind,random'],
+            'node.action_data.minigame.difficulty' => ['required_if:node.type,minigame', 'integer', 'min:1', 'max:3'],
             'options' => [
                 'nullable',
                 'array',

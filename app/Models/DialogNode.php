@@ -50,10 +50,10 @@ class DialogNode extends DynamicModel
         return $this->hasMany(DialogEdge::class, 'source_node_id');
     }
 
-    // tylko dla type start / randomizer
+    // tylko dla type start / randomizer / minigame
     public function getEdges(): Collection
     {
-        if (! in_array($this->type, ['start', 'randomizer'], true)) {
+        if (! in_array($this->type, ['start', 'randomizer', 'minigame'], true)) {
             throw new \Exception('Próbowano pobrać edges do node, który nie wspiera bezpośrednich wyjść.');
         }
 

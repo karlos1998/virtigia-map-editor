@@ -17,6 +17,14 @@ class UpdateDialogNodeActionDataRequest extends FormRequest
 
     public function rules(): array
     {
+        if ($this->dialogNode->type === 'minigame') {
+            return [
+                'minigame' => ['required', 'array'],
+                'minigame.type' => ['required', 'in:pipes,saper,mastermind,random'],
+                'minigame.difficulty' => ['required', 'integer', 'min:1', 'max:3'],
+            ];
+        }
+
         if ($this->dialogNode->type !== 'teleportation') {
             return [];
         }

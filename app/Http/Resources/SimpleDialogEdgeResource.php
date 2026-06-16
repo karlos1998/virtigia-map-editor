@@ -19,6 +19,7 @@ class SimpleDialogEdgeResource extends JsonResource
             'rules' => $this->resource->rules,
             'source_dialog_id' => $this->resource->source_dialog_id,
             'source_node_id' => $this->resource->source_node_id,
+            'source_handle' => $this->resource->source_handle,
             'source_option_id' => $this->resource->source_option_id,
             'target_node_id' => $this->resource->target_node_id,
         ];
