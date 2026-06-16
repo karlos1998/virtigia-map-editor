@@ -63,6 +63,9 @@ services:
   mysql:
     image: mysql:8.0
     restart: unless-stopped
+    command:
+      - --binlog-expire-logs-seconds=86400
+      - --max-binlog-size=100M
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: ${DB_DATABASE}
