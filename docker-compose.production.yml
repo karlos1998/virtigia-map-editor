@@ -99,10 +99,8 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: redis-server --appendonly yes
+    command: redis-server --save "" --appendonly no
     stop_grace_period: 1m
-    volumes:
-      - redis_data:/data
     networks:
       - internal
     healthcheck:
@@ -138,6 +136,5 @@ networks:
 
 volumes:
   mysql_data:
-  redis_data:
   meilisearch_data:
   app_storage:
