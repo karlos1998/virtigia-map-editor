@@ -23,6 +23,8 @@ Schedule::command('horizon:snapshot')->everyFiveMinutes();
 
 Schedule::command('telescope:prune --hours=48')->daily();
 
+Schedule::command('queue:prune-failed --hours=6')->hourly();
+
 Schedule::job(new RecordQueueHeartbeatJob)->everyTenMinutes();
 
 Schedule::job(new DispatchFindNearestRespForMaps)->everyFourHours();
