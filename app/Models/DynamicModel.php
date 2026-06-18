@@ -8,7 +8,6 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 abstract class DynamicModel extends Model
 {
-
     use LogsActivity;
 
     protected static ?string $globalConnection = null;
@@ -16,6 +15,7 @@ abstract class DynamicModel extends Model
     public function setConnectionName(string $connection): self
     {
         $this->setConnection($connection);
+
         return $this;
     }
 
@@ -24,16 +24,16 @@ abstract class DynamicModel extends Model
         self::$globalConnection = $connection;
     }
 
-    public function getConnectionName(): ?string
+    public static function clearGlobalConnection(): void
     {
-        return static::$globalConnection ?? parent::getConnectionName();
+        self::$globalConnection = null;
     }
 
+    public function getConnectionName(): ?string
+    {
+        return parent::getConnectionName() ?? static::$globalConnection;
+    }
 
-    /**
-     * @return LogOptions
-     * Activity logs options
-     */
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()->logAll()->logOnlyDirty();
