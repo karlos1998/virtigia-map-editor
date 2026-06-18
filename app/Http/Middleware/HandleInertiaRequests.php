@@ -3,11 +3,17 @@
 namespace App\Http\Middleware;
 
 use App\Facades\AssetUrl;
+use App\Jobs\RecordQueueHeartbeatJob;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
+use Throwable;
 
 class HandleInertiaRequests extends Middleware
 {
+    private const int QUEUE_HEARTBEAT_MAX_AGE_MINUTES = 20;
+
     /**
      * The root template that's loaded on the first page visit.
      *
@@ -50,6 +56,38 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'newApiToken' => fn () => $request->session()->get('newApiToken'),
             ],
+            'queueHealth' => fn (): array => $this->queueHealth(),
         ]);
+    }
+
+    /**
+     * @return array{is_stale: bool, last_ran_at: string|null, checked_at: string, threshold_minutes: int, read_error: bool}
+     */
+    private function queueHealth(): array
+    {
+        $checkedAt = now();
+        $lastRanAt = null;
+        $isStale = true;
+        $readError = false;
+
+        try {
+            $cachedLastRanAt = Cache::store('redis')->get(RecordQueueHeartbeatJob::CACHE_KEY);
+
+            if (is_string($cachedLastRanAt) && $cachedLastRanAt !== '') {
+                $lastRanAt = $cachedLastRanAt;
+                $isStale = CarbonImmutable::parse($cachedLastRanAt)
+                    ->lt($checkedAt->copy()->subMinutes(self::QUEUE_HEARTBEAT_MAX_AGE_MINUTES));
+            }
+        } catch (Throwable) {
+            $readError = true;
+        }
+
+        return [
+            'is_stale' => $isStale,
+            'last_ran_at' => $lastRanAt,
+            'checked_at' => $checkedAt->toIso8601String(),
+            'threshold_minutes' => self::QUEUE_HEARTBEAT_MAX_AGE_MINUTES,
+            'read_error' => $readError,
+        ];
     }
 }

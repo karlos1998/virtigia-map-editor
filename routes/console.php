@@ -5,6 +5,7 @@ use App\Jobs\CheckBaseNpcsBatchJob;
 use App\Jobs\CombineNpcsIntoGroupsJob;
 use App\Jobs\DispatchFindNearestRespForMaps;
 use App\Jobs\FillMissingTeleportMapNamesForWorldJob;
+use App\Jobs\RecordQueueHeartbeatJob;
 use App\Jobs\RefreshBaseItemUsageViewBatchJob;
 use App\Jobs\RefreshQuestStepGuideViewBatchJob;
 use App\Jobs\ResetAggressiveNpcsJob;
@@ -21,6 +22,8 @@ Schedule::job(new CombineNpcsIntoGroupsJob)->hourly();
 Schedule::command('horizon:snapshot')->everyFiveMinutes();
 
 Schedule::command('telescope:prune --hours=48')->daily();
+
+Schedule::job(new RecordQueueHeartbeatJob)->everyTenMinutes();
 
 Schedule::job(new DispatchFindNearestRespForMaps)->everyFourHours();
 

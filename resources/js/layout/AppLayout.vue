@@ -10,6 +10,7 @@ import {usePage} from "@inertiajs/vue3";
 import {RockTip} from "virtigia-tips";
 
 const {watchSidebarActive, unbindOutsideClickListener, containerClass, onMenuToggle} = useLayout();
+const page = usePage();
 
 onMounted(() => {
     watchSidebarActive();
@@ -19,7 +20,33 @@ onBeforeUnmount(() => {
     unbindOutsideClickListener();
 });
 
-const world = computed(() => usePage().props.auth.world);
+const world = computed(() => page.props.auth.world);
+const queueHealth = computed(() => page.props.queueHealth ?? null);
+const showQueueWarning = computed(() => queueHealth.value?.is_stale === true);
+const queueHeartbeatLabel = computed(() => {
+    const lastRanAt = queueHealth.value?.last_ran_at;
+
+    if (!lastRanAt) {
+        return 'brak zapisu';
+    }
+
+    const date = new Date(lastRanAt);
+
+    if (Number.isNaN(date.getTime())) {
+        return lastRanAt;
+    }
+
+    return date.toLocaleString('pl-PL');
+});
+const queueWarningText = computed(() => {
+    const thresholdMinutes = queueHealth.value?.threshold_minutes ?? 20;
+
+    if (queueHealth.value?.read_error === true) {
+        return 'Nie można odczytać heartbeat queue z Redis.';
+    }
+
+    return `Queue nie potwierdziła działania od ponad ${thresholdMinutes} min. Ostatni heartbeat: ${queueHeartbeatLabel.value}.`;
+});
 </script>
 
 <template>
@@ -32,6 +59,10 @@ const world = computed(() => usePage().props.auth.world);
 
         <div class="layout-content-wrapper">
             <div class="layout-content">
+                <Message v-if="showQueueWarning" severity="warn" class="mb-4" :closable="false">
+                    {{ queueWarningText }}
+                </Message>
+
                 <div class="card mb-4 bg-gradient-to-r from-primary-500 to-primary-700 text-white">
                     <div class="flex items-center">
                         <i class="pi pi-map-marker text-2xl mr-3"></i>
