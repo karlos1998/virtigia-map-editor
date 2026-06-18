@@ -417,6 +417,8 @@ const getSyncStatusLabel = (status) => {
             return 'Zsynchronizowano';
         case 'started':
             return 'W trakcie';
+        case 'failed':
+            return 'Błąd';
         default:
             return 'Brak danych';
     }
@@ -428,6 +430,8 @@ const getSyncStatusSeverity = (status) => {
             return 'success';
         case 'started':
             return 'warning';
+        case 'failed':
+            return 'danger';
         default:
             return 'secondary';
     }

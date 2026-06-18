@@ -5,6 +5,7 @@ use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\AudioController;
 use App\Http\Controllers\BaseItemController;
+use App\Http\Controllers\BaseItemDuplicateViewController;
 use App\Http\Controllers\BaseNpcController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\CalendarDayController;
@@ -163,6 +164,7 @@ Route::middleware(['auth'])->group(function () {
                     Route::patch('base-items/{baseItem}/image', [BaseItemController::class, 'updateImage'])->name('base-items.image.update');
                     Route::patch('base-items/{baseItem}/pet-image', [BaseItemController::class, 'updatePetImage'])->name('base-items.pet-image.update');
                     Route::get('base-items/search', [BaseItemController::class, 'search'])->name('base-items.search');
+                    Route::get('base-items/duplicates', [BaseItemDuplicateViewController::class, 'index'])->name('base-items.duplicates.index');
                     Route::get('base-items/{baseItem}', [BaseItemController::class, 'show'])->name('base-items.show');
                     Route::get('base-items/{baseItem}/edit', [BaseItemController::class, 'edit'])->name('base-items.edit');
                     Route::patch('base-items/{baseItem}/attributes', [BaseItemController::class, 'updateAttributes'])->name('base-items.attributes.update');

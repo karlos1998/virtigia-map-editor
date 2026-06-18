@@ -264,6 +264,14 @@ onMounted(() => {
                     <div class="flex flex-wrap gap-2 items-center justify-between">
                         <h4 class="m-0">Lista Bazowych Przedmiotów</h4>
                         <div class="flex items-center gap-2">
+                            <Link :href="route('base-items.duplicates.index')">
+                                <Button
+                                    icon="pi pi-clone"
+                                    label="Duplikaty"
+                                    severity="secondary"
+                                    outlined
+                                />
+                            </Link>
                             <Link :href="route('base-items.create')">
                                 <Button
                                     icon="pi pi-plus"

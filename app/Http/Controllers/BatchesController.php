@@ -41,6 +41,11 @@ class BatchesController extends Controller
                     description: 'Synchronizacja widoku użycia bazowych przedmiotów'
                 ),
                 $this->resolveSyncStatus(
+                    cacheKey: "base_item_duplicate_view_{$world}_batch_status",
+                    label: 'Base item duplicate view',
+                    description: 'Synchronizacja potencjalnych duplikatów bazowych przedmiotów'
+                ),
+                $this->resolveSyncStatus(
                     cacheKey: "quest_step_guide_view_{$world}_batch_status",
                     label: 'Quest step guide view',
                     description: 'Synchronizacja widoku przewodników kroków questów'

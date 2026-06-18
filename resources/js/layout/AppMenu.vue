@@ -65,6 +65,11 @@ const model = ref([
                 route: 'base-items.index',
             },
             {
+                label: 'Duplikaty Przedmiotów',
+                icon: 'pi pi-clone',
+                route: 'base-items.duplicates.index',
+            },
+            {
                 label: 'Książki',
                 icon: 'pi pi-book',
                 route: 'books.index',
