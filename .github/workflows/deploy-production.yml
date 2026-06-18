@@ -76,4 +76,5 @@ jobs:
 
             docker compose -f docker-compose.production.yml up -d --wait --wait-timeout 180 mysql redis meilisearch
             docker compose -f docker-compose.production.yml run --rm app php artisan migrate --force --no-interaction
+            docker compose -f docker-compose.production.yml run --rm app php artisan horizon:terminate || true
             docker compose -f docker-compose.production.yml up -d --no-deps --force-recreate app worker scheduler phpmyadmin

@@ -2,11 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\RefreshBaseItemUsageViewChunkJob;
+use App\Models\BaseItem;
 use App\Models\DynamicModel;
 use App\Services\BaseItemUsageViewService;
+use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Mockery;
 use Tests\TestCase;
 
 class DynamicModelConnectionIsolationTest extends TestCase
@@ -44,6 +49,49 @@ class DynamicModelConnectionIsolationTest extends TestCase
         $this->assertTrue(
             (bool) DB::connection('legacy')->table('base_item_usage_views')->where('base_item_id', 1)->value('is_in_use')
         );
+    }
+
+    public function test_usage_refresh_chunk_job_uses_its_world_and_clears_global_connection(): void
+    {
+        $this->seedItem('retro', false);
+        $this->seedItem('legacy', true);
+
+        $cacheRepository = Mockery::mock(Repository::class);
+
+        Cache::shouldReceive('store')
+            ->times(3)
+            ->with('redis')
+            ->andReturn($cacheRepository);
+
+        $cacheRepository
+            ->shouldReceive('get')
+            ->once()
+            ->with('dialog-item-ids', [])
+            ->andReturn([]);
+
+        $cacheRepository
+            ->shouldReceive('get')
+            ->once()
+            ->with('base_item_usage_view_legacy_batch_status')
+            ->andReturn('{}');
+
+        $cacheRepository
+            ->shouldReceive('put')
+            ->once()
+            ->with('base_item_usage_view_legacy_batch_status', Mockery::type('string'), 7200);
+
+        DynamicModel::setGlobalConnection('retro');
+
+        (new RefreshBaseItemUsageViewChunkJob('legacy', 0, 500, 'dialog-item-ids'))
+            ->handle(app(BaseItemUsageViewService::class));
+
+        $this->assertFalse(
+            (bool) DB::connection('retro')->table('base_item_usage_views')->where('base_item_id', 1)->value('is_in_use')
+        );
+        $this->assertTrue(
+            (bool) DB::connection('legacy')->table('base_item_usage_views')->where('base_item_id', 1)->value('is_in_use')
+        );
+        $this->assertNull((new BaseItem)->getConnectionName());
     }
 
     private function configureSqliteWorld(string $connection, string $databaseFile): void

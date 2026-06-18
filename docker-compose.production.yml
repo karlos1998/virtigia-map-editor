@@ -24,6 +24,7 @@ services:
   worker:
     image: virtigia-map-editor:${TAG:-latest}
     restart: unless-stopped
+    stop_grace_period: 5m
     env_file:
       - .env
     depends_on:

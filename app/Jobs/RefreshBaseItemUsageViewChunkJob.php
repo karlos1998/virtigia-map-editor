@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\DynamicModel;
 use App\Services\BaseItemUsageViewService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
@@ -26,19 +27,25 @@ class RefreshBaseItemUsageViewChunkJob implements ShouldQueue
 
     public function handle(BaseItemUsageViewService $baseItemUsageViewService): void
     {
-        $dialogItemIds = Cache::store('redis')->get($this->dialogItemIdsCacheKey, []);
+        DynamicModel::setGlobalConnection($this->world);
 
-        $baseItemUsageViewService->refreshChunk(
-            $this->world,
-            $this->chunkIndex,
-            $this->chunkSize,
-            is_array($dialogItemIds) ? $dialogItemIds : []
-        );
+        try {
+            $dialogItemIds = Cache::store('redis')->get($this->dialogItemIdsCacheKey, []);
 
-        $statusKey = "base_item_usage_view_{$this->world}_batch_status";
-        $status = json_decode(Cache::store('redis')->get($statusKey) ?? '{}', true);
-        $status['processed_chunks'] = ($status['processed_chunks'] ?? 0) + 1;
-        $status['updated_at'] = now()->toDateTimeString();
-        Cache::store('redis')->put($statusKey, json_encode($status), 7200);
+            $baseItemUsageViewService->refreshChunk(
+                $this->world,
+                $this->chunkIndex,
+                $this->chunkSize,
+                is_array($dialogItemIds) ? $dialogItemIds : []
+            );
+
+            $statusKey = "base_item_usage_view_{$this->world}_batch_status";
+            $status = json_decode(Cache::store('redis')->get($statusKey) ?? '{}', true);
+            $status['processed_chunks'] = ($status['processed_chunks'] ?? 0) + 1;
+            $status['updated_at'] = now()->toDateTimeString();
+            Cache::store('redis')->put($statusKey, json_encode($status), 7200);
+        } finally {
+            DynamicModel::clearGlobalConnection();
+        }
     }
 }
