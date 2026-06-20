@@ -208,27 +208,14 @@ final class BaseNpcService extends BaseService
         return $updatedCount;
     }
 
-    public function attachLoot(BaseNpc $baseNpc, int $baseItemId)
+    public function attachLoot(BaseNpc $baseNpc, int $baseItemId): void
     {
         $baseItem = BaseItem::findOrFail($baseItemId);
-        $baseNpc->loots()->attach($baseItem);
 
-        activity()
-            ->causedBy(Auth::user())
-            ->performedOn($baseItem)
-            ->event('attach-to-base-npc-loots')
-            ->withProperty('base_npc', $baseNpc)
-            ->log('attach-to-base-npc-loots');
-
-        activity()
-            ->causedBy(Auth::user())
-            ->performedOn($baseNpc)
-            ->event('attach-base-npc-loots')
-            ->withProperty('base_item', $baseItem)
-            ->log('attach-base-npc-loots');
+        $this->attachLoots($baseNpc, [$baseItem->id]);
     }
 
-    public function detachLoot(BaseNpc $baseNpc, int $loot)
+    public function detachLoot(BaseNpc $baseNpc, int $loot): void
     {
         $baseItem = $baseNpc->loots()->findOrFail($loot);
         $baseNpc->loots()->detach($loot);
@@ -258,31 +245,70 @@ final class BaseNpcService extends BaseService
         $baseNpc->seasonalEvents()->sync($seasonalEventIds);
     }
 
-    public function attachLootsFromBaseNpc(BaseNpc $targetBaseNpc, int $sourceBaseNpcId)
+    /**
+     * @param  array<int, int>  $baseItemIds
+     * @return array{attached_count: int, skipped_count: int}
+     */
+    public function attachLoots(BaseNpc $baseNpc, array $baseItemIds): array
     {
-        $sourceBaseNpc = BaseNpc::findOrFail($sourceBaseNpcId);
-        $sourceLoots = $sourceBaseNpc->loots;
+        $uniqueBaseItemIds = collect($baseItemIds)
+            ->map(fn (int|string $baseItemId): int => (int) $baseItemId)
+            ->unique()
+            ->values();
 
-        foreach ($sourceLoots as $loot) {
-            // Check if the loot is already attached to the target base NPC
-            if (! $targetBaseNpc->loots()->where('base_item_id', $loot->id)->exists()) {
-                $targetBaseNpc->loots()->attach($loot);
+        if ($uniqueBaseItemIds->isEmpty()) {
+            return [
+                'attached_count' => 0,
+                'skipped_count' => 0,
+            ];
+        }
 
-                activity()
-                    ->causedBy(Auth::user())
-                    ->performedOn($loot)
-                    ->event('attach-to-base-npc-loots')
-                    ->withProperty('base_npc', $targetBaseNpc)
-                    ->log('attach-to-base-npc-loots');
+        $changes = $baseNpc->loots()->syncWithoutDetaching($uniqueBaseItemIds->all());
+        $attachedBaseItemIds = collect($changes['attached'] ?? [])
+            ->map(fn (int|string $baseItemId): int => (int) $baseItemId)
+            ->values();
 
-                activity()
-                    ->causedBy(Auth::user())
-                    ->performedOn($targetBaseNpc)
-                    ->event('attach-base-npc-loots')
-                    ->withProperty('base_item', $loot)
-                    ->log('attach-base-npc-loots');
+        if ($attachedBaseItemIds->isNotEmpty()) {
+            $attachedBaseItems = BaseItem::query()
+                ->whereIn('id', $attachedBaseItemIds)
+                ->get();
+
+            foreach ($attachedBaseItems as $baseItem) {
+                $this->logLootAttachment($baseNpc, $baseItem);
             }
         }
+
+        return [
+            'attached_count' => $attachedBaseItemIds->count(),
+            'skipped_count' => $uniqueBaseItemIds->count() - $attachedBaseItemIds->count(),
+        ];
+    }
+
+    /**
+     * @return array{attached_count: int, skipped_count: int}
+     */
+    public function attachLootsFromBaseNpc(BaseNpc $targetBaseNpc, int $sourceBaseNpcId): array
+    {
+        $sourceBaseNpc = BaseNpc::query()->with('loots')->findOrFail($sourceBaseNpcId);
+
+        return $this->attachLoots($targetBaseNpc, $sourceBaseNpc->loots->pluck('id')->all());
+    }
+
+    private function logLootAttachment(BaseNpc $baseNpc, BaseItem $baseItem): void
+    {
+        activity()
+            ->causedBy(Auth::user())
+            ->performedOn($baseItem)
+            ->event('attach-to-base-npc-loots')
+            ->withProperty('base_npc', $baseNpc)
+            ->log('attach-to-base-npc-loots');
+
+        activity()
+            ->causedBy(Auth::user())
+            ->performedOn($baseNpc)
+            ->event('attach-base-npc-loots')
+            ->withProperty('base_item', $baseItem)
+            ->log('attach-base-npc-loots');
     }
 
     public function storeSimple(mixed $validated)

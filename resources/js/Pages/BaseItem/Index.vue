@@ -4,9 +4,11 @@ import AppLayout from "@/layout/AppLayout.vue";
 import AdvanceTable from "@advance-table/Components/AdvanceTable.vue";
 import AdvanceColumn from "@advance-table/Components/AdvanceColumn.vue";
 import {BaseItemResource} from "@/Resources/BaseItem.resource";
+import type {BaseNpcResource} from "@/Resources/BaseNpc.resource";
 import { Link, router, useForm } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
 import {computed, onMounted, ref} from "vue";
+import AutoComplete from 'primevue/autocomplete';
 import Dropdown from 'primevue/dropdown';
 import Fieldset from 'primevue/fieldset';
 import Checkbox from 'primevue/checkbox';
@@ -68,12 +70,20 @@ const isAdvancedFiltersCollapsed = ref(!props.filters.description && !props.filt
 const selectedBaseItems = ref<BaseItemResource[]>([]);
 const bulkActionsMenu = ref();
 const isBulkDescriptionDialogVisible = ref(false);
+const isBulkLootDialogVisible = ref(false);
+const selectedBaseNpc = ref<BaseNpcResource | null>(null);
+const filteredBaseNpcs = ref<BaseNpcResource[]>([]);
 const toast = useToast();
 
 const bulkDescriptionForm = useForm({
     item_ids: [] as number[],
     search_phrase: '',
     replacement_phrase: '',
+});
+
+const bulkLootForm = useForm({
+    item_ids: [] as number[],
+    base_npc_id: null as number | null,
 });
 
 const legendaryBonusFilterOptions = computed(() => [
@@ -114,11 +124,22 @@ const canSubmitBulkDescriptionCorrection = computed(() => (
     && !bulkDescriptionForm.processing
 ));
 
+const canSubmitBulkLootAssignment = computed(() => (
+    selectedBaseItemIds.value.length > 0
+    && selectedBaseNpc.value !== null
+    && !bulkLootForm.processing
+));
+
 const bulkActionItems = computed(() => [
     {
         label: 'Poprawa opisu',
         icon: 'pi pi-align-left',
         command: () => openBulkDescriptionDialog(),
+    },
+    {
+        label: 'Przypisz loot do Base NPC',
+        icon: 'pi pi-sitemap',
+        command: () => openBulkLootDialog(),
     },
 ]);
 
@@ -187,6 +208,20 @@ const openBulkDescriptionDialog = () => {
     isBulkDescriptionDialogVisible.value = true;
 }
 
+const openBulkLootDialog = () => {
+    bulkLootForm.clearErrors();
+    bulkLootForm.item_ids = selectedBaseItemIds.value;
+    bulkLootForm.base_npc_id = null;
+    selectedBaseNpc.value = null;
+    filteredBaseNpcs.value = [];
+    isBulkLootDialogVisible.value = true;
+}
+
+const searchBaseNpcs = async ({ query }: { query: string }) => {
+    const { data } = await axios.get(route('base-npcs.search', { query }));
+    filteredBaseNpcs.value = Array.isArray(data) ? data : (data.data ?? []);
+}
+
 const submitBulkDescriptionCorrection = () => {
     bulkDescriptionForm.item_ids = selectedBaseItemIds.value;
 
@@ -208,6 +243,39 @@ const submitBulkDescriptionCorrection = () => {
                 severity: 'error',
                 summary: 'Błąd',
                 detail: Object.values(errors)[0] ?? 'Nie udało się poprawić opisów.',
+                life: 5000,
+            });
+        },
+    });
+}
+
+const submitBulkLootAssignment = () => {
+    if (!selectedBaseNpc.value) {
+        return;
+    }
+
+    bulkLootForm.item_ids = selectedBaseItemIds.value;
+    bulkLootForm.base_npc_id = selectedBaseNpc.value.id;
+
+    bulkLootForm.post(route('base-items.bulk.base-npc-loots.attach'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.add({
+                severity: 'success',
+                summary: 'Udało się',
+                detail: 'Wybrane przedmioty zostały przypisane jako loot.',
+                life: 3000,
+            });
+            isBulkLootDialogVisible.value = false;
+            selectedBaseItems.value = [];
+            selectedBaseNpc.value = null;
+            bulkLootForm.reset();
+        },
+        onError: (errors) => {
+            toast.add({
+                severity: 'error',
+                summary: 'Błąd',
+                detail: Object.values(errors)[0] ?? 'Nie udało się przypisać lootów.',
                 life: 5000,
             });
         },
@@ -602,6 +670,73 @@ onMounted(() => {
                         :disabled="!canSubmitBulkDescriptionCorrection"
                         :loading="bulkDescriptionForm.processing"
                         @click="submitBulkDescriptionCorrection"
+                    />
+                </template>
+            </Dialog>
+
+            <Dialog
+                v-model:visible="isBulkLootDialogVisible"
+                modal
+                header="Przypisz loot do Base NPC"
+                :style="{ width: '36rem' }"
+            >
+                <form class="flex flex-col gap-4" @submit.prevent="submitBulkLootAssignment">
+                    <Message severity="info" :closable="false">
+                        Wybrano {{ selectedBaseItems.length }} przedmiotów.
+                    </Message>
+
+                    <div class="flex flex-col gap-2">
+                        <label for="bulk-loot-base-npc" class="font-semibold">Base NPC</label>
+                        <AutoComplete
+                            input-id="bulk-loot-base-npc"
+                            v-model="selectedBaseNpc"
+                            :suggestions="filteredBaseNpcs"
+                            @complete="searchBaseNpcs"
+                            :option-label="(baseNpc) => baseNpc?.name || ''"
+                            placeholder="Wyszukaj Base NPC"
+                            class="w-full"
+                            :class="{ 'p-invalid': bulkLootForm.errors.base_npc_id }"
+                            force-selection
+                            dropdown
+                            fluid
+                        >
+                            <template #option="slotProps">
+                                <div class="flex items-center gap-3">
+                                    <img
+                                        class="h-12 w-12 object-cover"
+                                        :src="slotProps.option.src"
+                                        :alt="slotProps.option.name"
+                                        v-tip.npc.top.show-id="slotProps.option"
+                                    />
+                                    <span class="font-semibold text-gray-800 dark:text-surface-100">
+                                        [{{ slotProps.option.id }}] {{ slotProps.option.name }}
+                                    </span>
+                                </div>
+                            </template>
+                        </AutoComplete>
+                        <small v-if="bulkLootForm.errors.base_npc_id" class="text-red-500">
+                            {{ bulkLootForm.errors.base_npc_id }}
+                        </small>
+                        <small v-if="bulkLootForm.errors.item_ids" class="text-red-500">
+                            {{ bulkLootForm.errors.item_ids }}
+                        </small>
+                    </div>
+                </form>
+
+                <template #footer>
+                    <Button
+                        label="Anuluj"
+                        severity="secondary"
+                        outlined
+                        :disabled="bulkLootForm.processing"
+                        @click="isBulkLootDialogVisible = false"
+                    />
+                    <Button
+                        label="Przypisz"
+                        icon="pi pi-check"
+                        :disabled="!canSubmitBulkLootAssignment"
+                        :loading="bulkLootForm.processing"
+                        @click="submitBulkLootAssignment"
                     />
                 </template>
             </Dialog>

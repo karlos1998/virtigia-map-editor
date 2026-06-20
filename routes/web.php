@@ -159,6 +159,7 @@ Route::middleware(['auth'])->group(function () {
                     Route::get('base-items/create', [BaseItemController::class, 'create'])->name('base-items.create');
                     Route::post('base-items', [BaseItemController::class, 'store'])->name('base-items.store');
                     Route::patch('base-items/bulk/description', [BaseItemController::class, 'bulkUpdateDescription'])->name('base-items.bulk.description.update');
+                    Route::post('base-items/bulk/base-npc-loots', [BaseItemController::class, 'bulkAttachToBaseNpcLoots'])->name('base-items.bulk.base-npc-loots.attach');
                     Route::post('base-items/{baseItem}/copy', [BaseItemController::class, 'copy'])->name('base-items.copy');
                     Route::delete('base-items/{baseItem}', [BaseItemController::class, 'delete'])->name('base-items.delete');
                     Route::patch('base-items/{baseItem}', [BaseItemController::class, 'update'])->name('base-items.update');

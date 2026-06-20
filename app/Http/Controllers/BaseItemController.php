@@ -6,6 +6,7 @@ use App\Enums\BaseItemCategory;
 use App\Enums\BaseItemCurrency;
 use App\Enums\BaseItemRarity;
 use App\Enums\LegendaryBonus;
+use App\Http\Requests\BulkAttachBaseItemsToBaseNpcLootRequest;
 use App\Http\Requests\BulkUpdateBaseItemDescriptionRequest;
 use App\Http\Requests\CreateBaseItemRequest;
 use App\Http\Requests\IndexBaseItemRequest;
@@ -16,7 +17,9 @@ use App\Http\Requests\UpdatePetImageRequest;
 use App\Http\Resources\ActivityLogResource;
 use App\Http\Resources\BaseItemResource;
 use App\Models\BaseItem;
+use App\Models\BaseNpc;
 use App\Services\BaseItemService;
+use App\Services\BaseNpcService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -24,7 +27,10 @@ use Spatie\Activitylog\Models\Activity;
 
 class BaseItemController extends Controller
 {
-    public function __construct(private readonly BaseItemService $baseItemService) {}
+    public function __construct(
+        private readonly BaseItemService $baseItemService,
+        private readonly BaseNpcService $baseNpcService,
+    ) {}
 
     /**
      * @throws \Exception
@@ -148,6 +154,19 @@ class BaseItemController extends Controller
         );
 
         return back()->with('success', "Poprawiono opisy w {$updatedCount} przedmiotach.");
+    }
+
+    public function bulkAttachToBaseNpcLoots(BulkAttachBaseItemsToBaseNpcLootRequest $request): RedirectResponse
+    {
+        $validated = $request->validated();
+        $baseNpc = BaseNpc::query()->findOrFail($validated['base_npc_id']);
+
+        $result = $this->baseNpcService->attachLoots($baseNpc, $validated['item_ids']);
+
+        return back()->with(
+            'success',
+            "Dodano {$result['attached_count']} przedmiotów jako loot. Pominięto {$result['skipped_count']} już przypisanych."
+        );
     }
 
     public function create(): \Inertia\Response
