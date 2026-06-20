@@ -720,7 +720,7 @@ const items = ref([
 </script>
 
 <template>
-    <AppLayout>
+    <AppLayout focus>
         <ConfirmDialog group="dialog-show-modal" />
 
         <EditDialogNameDialog :dialog="props.dialog" v-model:visible="isEditDialogNameVisible" />
@@ -814,202 +814,321 @@ const items = ref([
             </div>
         </Dialog>
 
-        <DetailsCardList title="Informacje o dialogu" class="mb-4">
-            <DetailsCardListItem label="Nazwa">
-                <template #value>
-                    <div class="flex items-center justify-between">
-                        <span>{{ props.dialog.name }}</span>
-                        <div class="flex gap-2">
-                            <Button @click="isEditDialogNameVisible = true" label="Edytuj nazwę" size="small" />
-                            <Button @click="copyDialog" :loading="copyForm.processing" label="Kopiuj dialog" size="small" severity="secondary" />
-                        </div>
-                    </div>
-                </template>
-            </DetailsCardListItem>
-        </DetailsCardList>
+        <Tabs value="tree" class="dialog-tabs">
+            <TabList>
+                <Tab value="general">
+                    <i class="pi pi-info-circle mr-2" />
+                    Ogólne
+                </Tab>
+                <Tab value="tree">
+                    <i class="pi pi-sitemap mr-2" />
+                    Drzewo
+                </Tab>
+                <Tab value="relations">
+                    <i class="pi pi-link mr-2" />
+                    Powiązania
+                </Tab>
+                <Tab value="history">
+                    <i class="pi pi-history mr-2" />
+                    Historia
+                </Tab>
+            </TabList>
 
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4">
-            <div class="card">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-semibold">Powiązane NPC</h2>
-                    <Tag :value="String(props.npcs.length)" severity="info" />
-                </div>
-
-                <Message v-if="props.npcs.length === 0" severity="secondary">
-                    Ten dialog nie jest jeszcze przypisany do żadnego NPC.
-                </Message>
-
-                <div v-else class="flex flex-col gap-3">
-                    <Link
-                        v-for="npc in props.npcs"
-                        :key="npc.id"
-                        :href="route('npcs.show', { npc: npc.id })"
-                        class="related-card"
-                    >
-                        <img :src="npc.src" :alt="npc.name" class="w-12 h-12 rounded-md object-cover bg-surface-100" />
-                        <div class="min-w-0 grow">
-                            <div class="font-semibold truncate">#{{ npc.id }} - {{ npc.name }}</div>
-                            <div class="text-sm text-surface-500">Poziom {{ npc.lvl }}</div>
-                            <div v-if="npc.locations?.length" class="text-sm text-surface-500 truncate">
-                                [{{ npc.locations[0].map_id }}] {{ npc.locations[0].map_name }} ({{ npc.locations[0].x }},{{ npc.locations[0].y }})
+            <TabPanels>
+                <TabPanel value="tree" class="dialog-tree-panel">
+                    <div class="dialog-flow-shell" @dragover="handleFlowDragOver" @drop="handleFlowDrop">
+                        <div class="dialog-flow-toolbar">
+                            <div class="flex min-w-0 items-center gap-3">
+                                <Link :href="route('dialogs.index')">
+                                    <Button
+                                        icon="pi pi-arrow-left"
+                                        label="Powrót"
+                                        severity="secondary"
+                                        outlined
+                                    />
+                                </Link>
+                                <div class="min-w-0">
+                                    <div class="text-sm text-surface-500">Dialog #{{ props.dialog.id }}</div>
+                                    <h2 class="m-0 truncate text-xl font-semibold">{{ props.dialog.name }}</h2>
+                                </div>
                             </div>
-                            <div v-else class="text-sm text-surface-400">
-                                Brak lokalizacji
-                            </div>
-                        </div>
-                        <Tag :value="npc.enabled ? 'Aktywny' : 'Wyłączony'" :severity="npc.enabled ? 'success' : 'danger'" />
-                    </Link>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-semibold">Powiązane Questy</h2>
-                    <Tag :value="String(props.quests.length)" severity="contrast" />
-                </div>
-
-                <Message v-if="props.quests.length === 0" severity="secondary">
-                    W tym dialogu nie wykryto powiązań questowych.
-                </Message>
-
-                <div v-else class="flex flex-col gap-3">
-                    <Link
-                        v-for="quest in props.quests"
-                        :key="quest.id"
-                        :href="route('quests.show', { quest: quest.id })"
-                        class="related-card"
-                    >
-                        <div class="quest-icon">
-                            <i class="pi pi-book" />
-                        </div>
-                        <div class="min-w-0 grow">
-                            <div class="font-semibold truncate">#{{ quest.id }} - {{ quest.name }}</div>
-                            <div class="text-sm text-surface-500">
-                                {{ quest.is_daily ? 'Quest dzienny' : 'Quest standardowy' }}
+                            <div class="flex flex-wrap items-center gap-2">
+                                <Tag :value="`${startNodes.length} node`" severity="info" />
+                                <Tag :value="`${startEdges.length} połączeń`" severity="secondary" />
+                                <Button
+                                    label="JSON"
+                                    icon="pi pi-code"
+                                    severity="secondary"
+                                    outlined
+                                    @click="isAddNodeFromJsonVisible = true"
+                                />
                             </div>
                         </div>
-                        <Tag :value="quest.is_daily ? 'Daily' : 'Quest'" :severity="quest.is_daily ? 'warn' : 'info'" />
-                    </Link>
-                </div>
-            </div>
-        </div>
 
-<!--        <pre v-text="startEdges" />-->
-<!--        <pre v-text="edges" />-->
-        <div class="" @dragover="handleFlowDragOver" @drop="handleFlowDrop">
-
-
-            <VueFlow
-                :nodes="startNodes"
-                :edges="startEdges"
-                :connection-mode="ConnectionMode.Strict"
-                :max-zoom="1"
-                :delete-key-code="'Backspace'"
-                :elements-selectable="true"
-                :edges-focusable="true"
-                fit-view-on-init
-                :apply-default="false"
-                :default-edge-options="{
-                    type: 'bezier',
-                    style: { strokeWidth: '2px', stroke: '#6366f1' },
-                    animated: true
-                }"
-                :elevate-edges-on-select="true"
-            >
-                <!-- bind your custom node type to a component by using slots, slot names are always `node-<type>` -->
-                <template #node-special="specialNodeProps">
-                    <!--suppress RequiredAttributes -->
-                    <SpecialNode v-bind="specialNodeProps" />
-                </template>
-                <template #node-start="startNodeProps">
-                    <!--suppress RequiredAttributes -->
-                    <StartNode v-bind="startNodeProps" />
-                </template>
-                <template #node-shop="shopNodeProps">
-                    <!--suppress RequiredAttributes -->
-                    <ShopNode v-bind="shopNodeProps" />
-                </template>
-                <template #node-hotel="hotelNodeProps">
-                    <!--suppress RequiredAttributes -->
-                    <HotelNode v-bind="hotelNodeProps" />
-                </template>
-                <template #node-randomizer="randomizerNodeProps">
-                    <!--suppress RequiredAttributes -->
-                    <RandomizerNode v-bind="randomizerNodeProps" />
-                </template>
-                <template #node-profession="professionNodeProps">
-                    <!--suppress RequiredAttributes -->
-                    <ProfessionNode v-bind="professionNodeProps" />
-                </template>
-                <template #node-minigame="minigameNodeProps">
-                    <!--suppress RequiredAttributes -->
-                    <MinigameNode v-bind="minigameNodeProps" />
-                </template>
-                <template #node-teleportation="teleportationNodeProps">
-                    <!--suppress RequiredAttributes -->
-                    <TeleporationNode v-bind="teleportationNodeProps" />
-                </template>
-
-                <template #edge-default="customEdgeProps">
-                    <DialogEdge v-bind="customEdgeProps" />
-                </template>
-
-                <Controls position="top-left">
-                    <!--                    <Button @click="addNode">-->
-                    <!--                        <FontAwesomeIcon icon="plus" />-->
-                    <!--                    </Button>-->
-
-                    <SpeedDial :model="items" direction="up" />
-                    <div class="node-dnd-palette ml-2">
-                        <div class="node-dnd-title">Przeciągnij node</div>
-                        <button
-                            v-for="template in draggableNodeTemplates"
-                            :key="template.label"
-                            type="button"
-                            draggable="true"
-                            class="node-dnd-item"
-                            @dragstart="handleNodeTemplateDragStart($event, template.type)"
+                        <VueFlow
+                            class="dialog-flow"
+                            :nodes="startNodes"
+                            :edges="startEdges"
+                            :connection-mode="ConnectionMode.Strict"
+                            :max-zoom="1"
+                            :delete-key-code="'Backspace'"
+                            :elements-selectable="true"
+                            :edges-focusable="true"
+                            fit-view-on-init
+                            :apply-default="false"
+                            :default-edge-options="{
+                                type: 'bezier',
+                                style: { strokeWidth: '2px', stroke: '#6366f1' },
+                                animated: true
+                            }"
+                            :elevate-edges-on-select="true"
                         >
-                            <i class="pi" :class="template.icon" />
-                            <span>{{ template.label }}</span>
-                        </button>
+                            <template #node-special="specialNodeProps">
+                                <SpecialNode v-bind="specialNodeProps" />
+                            </template>
+                            <template #node-start="startNodeProps">
+                                <StartNode v-bind="startNodeProps" />
+                            </template>
+                            <template #node-shop="shopNodeProps">
+                                <ShopNode v-bind="shopNodeProps" />
+                            </template>
+                            <template #node-hotel="hotelNodeProps">
+                                <HotelNode v-bind="hotelNodeProps" />
+                            </template>
+                            <template #node-randomizer="randomizerNodeProps">
+                                <RandomizerNode v-bind="randomizerNodeProps" />
+                            </template>
+                            <template #node-profession="professionNodeProps">
+                                <ProfessionNode v-bind="professionNodeProps" />
+                            </template>
+                            <template #node-minigame="minigameNodeProps">
+                                <MinigameNode v-bind="minigameNodeProps" />
+                            </template>
+                            <template #node-teleportation="teleportationNodeProps">
+                                <TeleporationNode v-bind="teleportationNodeProps" />
+                            </template>
+
+                            <template #edge-default="customEdgeProps">
+                                <DialogEdge v-bind="customEdgeProps" />
+                            </template>
+
+                            <Controls position="top-left">
+                                <SpeedDial :model="items" direction="up" />
+                                <div class="node-dnd-palette ml-2">
+                                    <div class="node-dnd-title">Node</div>
+                                    <button
+                                        v-for="template in draggableNodeTemplates"
+                                        :key="template.label"
+                                        type="button"
+                                        draggable="true"
+                                        class="node-dnd-item"
+                                        @dragstart="handleNodeTemplateDragStart($event, template.type)"
+                                    >
+                                        <i class="pi" :class="template.icon" />
+                                        <span>{{ template.label }}</span>
+                                    </button>
+                                </div>
+                            </Controls>
+
+                            <MiniMap :node-stroke-color="nodeStroke" :node-color="nodeColor" />
+                        </VueFlow>
                     </div>
+                </TabPanel>
 
-                    <!--                    <Button @click="saveDialog">-->
-                    <!--                        <FontAwesomeIcon icon="save" />-->
-                    <!--                    </Button>-->
-                </Controls>
+                <TabPanel value="general" class="dialog-scroll-panel">
+                    <DetailsCardList title="Ogólne">
+                        <DetailsCardListItem label="ID" :value="String(props.dialog.id)" />
+                        <DetailsCardListItem label="Nazwa">
+                            <template #value>
+                                <span class="font-medium">{{ props.dialog.name }}</span>
+                            </template>
+                        </DetailsCardListItem>
+                        <DetailsCardListItem label="Akcje">
+                            <template #value>
+                                <div class="flex flex-wrap gap-2">
+                                    <Button
+                                        label="Edytuj nazwę"
+                                        icon="pi pi-pencil"
+                                        size="small"
+                                        @click="isEditDialogNameVisible = true"
+                                    />
+                                    <Button
+                                        label="Kopiuj dialog"
+                                        icon="pi pi-copy"
+                                        size="small"
+                                        severity="secondary"
+                                        :loading="copyForm.processing"
+                                        @click="copyDialog"
+                                    />
+                                </div>
+                            </template>
+                        </DetailsCardListItem>
+                    </DetailsCardList>
+                </TabPanel>
 
-                <MiniMap :node-stroke-color="nodeStroke" :node-color="nodeColor" />
-            </VueFlow>
-        </div>
+                <TabPanel value="relations" class="dialog-scroll-panel">
+                    <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                        <section class="dialog-section">
+                            <div class="mb-4 flex items-center justify-between gap-3">
+                                <h2 class="m-0 text-xl font-semibold">Powiązane NPC</h2>
+                                <Tag :value="String(props.npcs.length)" severity="info" />
+                            </div>
 
-        <DialogActivityLogsTable :logs="props.logs" />
+                            <Message v-if="props.npcs.length === 0" severity="secondary">
+                                Ten dialog nie jest jeszcze przypisany do żadnego NPC.
+                            </Message>
+
+                            <div v-else class="flex flex-col gap-3">
+                                <Link
+                                    v-for="npc in props.npcs"
+                                    :key="npc.id"
+                                    :href="route('npcs.show', { npc: npc.id })"
+                                    class="related-card"
+                                >
+                                    <img :src="npc.src" :alt="npc.name" class="h-12 w-12 rounded-md bg-surface-100 object-cover" />
+                                    <div class="min-w-0 grow">
+                                        <div class="truncate font-semibold">#{{ npc.id }} - {{ npc.name }}</div>
+                                        <div class="text-sm text-surface-500">Poziom {{ npc.lvl }}</div>
+                                        <div v-if="npc.locations?.length" class="truncate text-sm text-surface-500">
+                                            [{{ npc.locations[0].map_id }}] {{ npc.locations[0].map_name }} ({{ npc.locations[0].x }},{{ npc.locations[0].y }})
+                                        </div>
+                                        <div v-else class="text-sm text-surface-400">
+                                            Brak lokalizacji
+                                        </div>
+                                    </div>
+                                    <Tag :value="npc.enabled ? 'Aktywny' : 'Wyłączony'" :severity="npc.enabled ? 'success' : 'danger'" />
+                                </Link>
+                            </div>
+                        </section>
+
+                        <section class="dialog-section">
+                            <div class="mb-4 flex items-center justify-between gap-3">
+                                <h2 class="m-0 text-xl font-semibold">Powiązane Questy</h2>
+                                <Tag :value="String(props.quests.length)" severity="contrast" />
+                            </div>
+
+                            <Message v-if="props.quests.length === 0" severity="secondary">
+                                W tym dialogu nie wykryto powiązań questowych.
+                            </Message>
+
+                            <div v-else class="flex flex-col gap-3">
+                                <Link
+                                    v-for="quest in props.quests"
+                                    :key="quest.id"
+                                    :href="route('quests.show', { quest: quest.id })"
+                                    class="related-card"
+                                >
+                                    <div class="quest-icon">
+                                        <i class="pi pi-book" />
+                                    </div>
+                                    <div class="min-w-0 grow">
+                                        <div class="truncate font-semibold">#{{ quest.id }} - {{ quest.name }}</div>
+                                        <div class="text-sm text-surface-500">
+                                            {{ quest.is_daily ? 'Quest dzienny' : 'Quest standardowy' }}
+                                        </div>
+                                    </div>
+                                    <Tag :value="quest.is_daily ? 'Daily' : 'Quest'" :severity="quest.is_daily ? 'warn' : 'info'" />
+                                </Link>
+                            </div>
+                        </section>
+                    </div>
+                </TabPanel>
+
+                <TabPanel value="history" class="dialog-scroll-panel">
+                    <DialogActivityLogsTable :logs="props.logs" />
+                </TabPanel>
+            </TabPanels>
+        </Tabs>
     </AppLayout>
 </template>
 
 <style scoped>
-/* Custom edge styling */
+.dialog-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: calc(100vh - 1.5rem);
+    min-height: 0;
+}
+
+.dialog-tabs :deep(.p-tabpanels) {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding: 1rem 0 0;
+    background: transparent;
+}
+
+.dialog-tabs :deep(.p-tabpanel) {
+    width: 100%;
+    min-height: 0;
+}
+
+.dialog-tree-panel {
+    height: 100%;
+    overflow: hidden;
+}
+
+.dialog-scroll-panel {
+    height: 100%;
+    overflow: auto;
+}
+
+.dialog-flow-shell,
+.dialog-section {
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    background: var(--surface-card);
+}
+
+.dialog-flow-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.dialog-flow-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--surface-border);
+}
+
+.dialog-flow {
+    flex: 1;
+    height: auto;
+    min-height: 0;
+}
+
+.dialog-section {
+    padding: 1rem;
+}
+
 :deep(.vue-flow__edge) {
     transition: stroke 0.3s, stroke-width 0.3s;
 }
 
 :deep(.vue-flow__edge:hover) {
     stroke-width: 3px !important;
-    stroke: #4f46e5 !important; /* Darker indigo on hover */
+    stroke: #4f46e5 !important;
 }
 
 :deep(.vue-flow__edge.selected) {
     stroke-width: 3px !important;
-    stroke: #4f46e5 !important; /* Darker indigo when selected */
+    stroke: #4f46e5 !important;
 }
 
 :deep(.vue-flow__edge-path) {
-    stroke-dasharray: none; /* Remove any dash pattern */
+    stroke-dasharray: none;
 }
 
 :deep(.vue-flow__edge.animated .vue-flow__edge-path) {
-    stroke-dasharray: 5, 5; /* Add dash pattern for animated edges */
+    stroke-dasharray: 5, 5;
     animation: dashdraw 0.5s linear infinite;
 }
 
@@ -1019,20 +1138,13 @@ const items = ref([
     }
 }
 
-.card {
-    background-color: var(--surface-card);
-    border-radius: 12px;
-    padding: 1.25rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
 .related-card {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     padding: 0.875rem;
     border: 1px solid var(--surface-border);
-    border-radius: 12px;
+    border-radius: 8px;
     background: color-mix(in srgb, var(--surface-card) 92%, white 8%);
     transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
@@ -1046,11 +1158,11 @@ const items = ref([
 .quest-icon {
     width: 3rem;
     height: 3rem;
-    border-radius: 0.75rem;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+    background: #ede9fe;
     color: #6d28d9;
     flex-shrink: 0;
 }
@@ -1061,7 +1173,7 @@ const items = ref([
     gap: 0.35rem;
     padding: 0.5rem;
     border: 1px solid var(--surface-border);
-    border-radius: 10px;
+    border-radius: 8px;
     background: color-mix(in srgb, var(--surface-card) 92%, white 8%);
 }
 

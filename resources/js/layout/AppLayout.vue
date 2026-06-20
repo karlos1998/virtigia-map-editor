@@ -9,14 +9,28 @@ import DynamicDialog from 'primevue/dynamicdialog';
 import {usePage} from "@inertiajs/vue3";
 import {RockTip} from "virtigia-tips";
 
+const props = defineProps({
+    focus: {
+        type: Boolean,
+        default: false,
+    },
+});
+
 const {watchSidebarActive, unbindOutsideClickListener, containerClass, onMenuToggle} = useLayout();
 const page = usePage();
 
 onMounted(() => {
+    if (props.focus) {
+        document.body.classList.add('layout-focus-active');
+
+        return;
+    }
+
     watchSidebarActive();
 });
 
 onBeforeUnmount(() => {
+    document.body.classList.remove('layout-focus-active');
     unbindOutsideClickListener();
 });
 
@@ -50,40 +64,49 @@ const queueWarningText = computed(() => {
 </script>
 
 <template>
-    <div class="layout-container" :class="containerClass">
-        <AppTopbar></AppTopbar>
+    <div class="layout-container" :class="[containerClass, { 'layout-focus': props.focus }]">
+        <template v-if="!props.focus">
+            <AppTopbar></AppTopbar>
 
-        <AppConfig></AppConfig>
+            <AppConfig></AppConfig>
 
-        <RockTip />
+            <RockTip />
 
-        <div class="layout-content-wrapper">
-            <div class="layout-content">
-                <Message v-if="showQueueWarning" severity="warn" class="mb-4" :closable="false">
-                    {{ queueWarningText }}
-                </Message>
+            <div class="layout-content-wrapper">
+                <div class="layout-content">
+                    <Message v-if="showQueueWarning" severity="warn" class="mb-4" :closable="false">
+                        {{ queueWarningText }}
+                    </Message>
 
-                <div class="card mb-4 bg-gradient-to-r from-primary-500 to-primary-700 text-white">
-                    <div class="flex items-center">
-                        <i class="pi pi-map-marker text-2xl mr-3"></i>
-                        <div>
-                            <h2 class="text-xl font-bold text-white">Edytujesz układ map</h2>
-                            <p class="text-primary-100">Aktualny świat: <span class="font-bold text-white">{{ world }}</span></p>
+                    <div class="card mb-4 bg-gradient-to-r from-primary-500 to-primary-700 text-white">
+                        <div class="flex items-center">
+                            <i class="pi pi-map-marker text-2xl mr-3"></i>
+                            <div>
+                                <h2 class="text-xl font-bold text-white">Edytujesz układ map</h2>
+                                <p class="text-primary-100">Aktualny świat: <span class="font-bold text-white">{{ world }}</span></p>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <AppBreadcrumb class="mb-4"></AppBreadcrumb>
+                    <AppBreadcrumb class="mb-4"></AppBreadcrumb>
 
-                <div class="transition-all duration-300 ease-in-out">
-                    <slot/>
+                    <div class="transition-all duration-300 ease-in-out">
+                        <slot/>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <AppRightMenu></AppRightMenu>
+            <AppRightMenu></AppRightMenu>
 
-        <div class="layout-mask" @click="onMenuToggle"></div>
+            <div class="layout-mask" @click="onMenuToggle"></div>
+        </template>
+
+        <template v-else>
+            <RockTip />
+            <main class="layout-focus-content">
+                <slot />
+            </main>
+        </template>
     </div>
     <Toast position="bottom-right"></Toast>
     <DynamicDialog/>
@@ -99,6 +122,22 @@ primevue Message = TODO . nie wiadomo czemu height ustawil sie na 100%.
 
 .layout-container {
     @apply min-h-screen;
+}
+
+.layout-focus {
+    height: 100vh;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.layout-focus-content {
+    height: 100vh;
+    overflow: hidden;
+    padding: 0.75rem;
+}
+
+:global(body.layout-focus-active) {
+    overflow: hidden;
 }
 
 .layout-content-wrapper {
