@@ -4,13 +4,15 @@ import AppLayout from "@/layout/AppLayout.vue";
 import AdvanceTable from "@advance-table/Components/AdvanceTable.vue";
 import AdvanceColumn from "@advance-table/Components/AdvanceColumn.vue";
 import {BaseItemResource} from "@/Resources/BaseItem.resource";
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, useForm } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
 import {computed, onMounted, ref} from "vue";
 import Dropdown from 'primevue/dropdown';
 import Fieldset from 'primevue/fieldset';
 import Checkbox from 'primevue/checkbox';
 import ProgressSpinner from 'primevue/progressspinner';
+import Menu from 'primevue/menu';
+import {useToast} from "primevue";
 import axios from 'axios';
 import {
     additionalAttributes,
@@ -63,6 +65,16 @@ const isLoadingAttributePointOptions = ref(false);
 const attributePointOptions = ref<BaseItemAttributeOption[]>([]);
 const manualAttributePointOptions = ref<BaseItemAttributeOption[]>([]);
 const isAdvancedFiltersCollapsed = ref(!props.filters.description && !props.filters.legendary_bonus && selectedAttributeKeys.value.length === 0);
+const selectedBaseItems = ref<BaseItemResource[]>([]);
+const bulkActionsMenu = ref();
+const isBulkDescriptionDialogVisible = ref(false);
+const toast = useToast();
+
+const bulkDescriptionForm = useForm({
+    item_ids: [] as number[],
+    search_phrase: '',
+    replacement_phrase: '',
+});
 
 const legendaryBonusFilterOptions = computed(() => [
     {label: 'Dowolny bonus', value: null, bonus_value: 0},
@@ -93,6 +105,22 @@ const hasActiveAdvancedFilters = computed(() => (
     || selectedLegendaryBonus.value !== null
     || selectedAttributeKeys.value.length > 0
 ));
+
+const selectedBaseItemIds = computed(() => selectedBaseItems.value.map((baseItem) => baseItem.id));
+
+const canSubmitBulkDescriptionCorrection = computed(() => (
+    selectedBaseItemIds.value.length > 0
+    && bulkDescriptionForm.search_phrase.length > 0
+    && !bulkDescriptionForm.processing
+));
+
+const bulkActionItems = computed(() => [
+    {
+        label: 'Poprawa opisu',
+        icon: 'pi pi-align-left',
+        command: () => openBulkDescriptionDialog(),
+    },
+]);
 
 const fetchAttributePointOptions = async () => {
     try {
@@ -145,6 +173,45 @@ const clearAdvancedFilters = () => {
     selectedLegendaryBonus.value = null;
     selectedAttributeKeys.value = [];
     reloadWithAdvancedFilters();
+}
+
+const toggleBulkActionsMenu = (event: Event) => {
+    bulkActionsMenu.value?.toggle(event);
+}
+
+const openBulkDescriptionDialog = () => {
+    bulkDescriptionForm.clearErrors();
+    bulkDescriptionForm.item_ids = selectedBaseItemIds.value;
+    bulkDescriptionForm.search_phrase = '';
+    bulkDescriptionForm.replacement_phrase = '';
+    isBulkDescriptionDialogVisible.value = true;
+}
+
+const submitBulkDescriptionCorrection = () => {
+    bulkDescriptionForm.item_ids = selectedBaseItemIds.value;
+
+    bulkDescriptionForm.patch(route('base-items.bulk.description.update'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.add({
+                severity: 'success',
+                summary: 'Udało się',
+                detail: 'Opisy wybranych przedmiotów zostały poprawione.',
+                life: 3000,
+            });
+            isBulkDescriptionDialogVisible.value = false;
+            selectedBaseItems.value = [];
+            bulkDescriptionForm.reset();
+        },
+        onError: (errors) => {
+            toast.add({
+                severity: 'error',
+                summary: 'Błąd',
+                detail: Object.values(errors)[0] ?? 'Nie udało się poprawić opisów.',
+                life: 5000,
+            });
+        },
+    });
 }
 
 onMounted(() => {
@@ -254,9 +321,36 @@ onMounted(() => {
                 </div>
             </Fieldset>
 
+            <div
+                v-if="selectedBaseItems.length > 0"
+                class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded border border-surface-200 p-3 dark:border-surface-700"
+            >
+                <div class="flex items-center gap-2 text-sm font-medium">
+                    <i class="pi pi-check-square text-primary" />
+                    <span>Wybrano {{ selectedBaseItems.length }} przedmiotów</span>
+                </div>
+
+                <div>
+                    <Button
+                        label="Operacje masowe"
+                        icon="pi pi-bars"
+                        severity="secondary"
+                        outlined
+                        @click="toggleBulkActionsMenu"
+                    />
+                    <Menu
+                        ref="bulkActionsMenu"
+                        :model="bulkActionItems"
+                        popup
+                    />
+                </div>
+            </div>
+
             <AdvanceTable
+                v-model:selection="selectedBaseItems"
                 prop-name="items"
             >
+                <Column selection-mode="multiple" style="width: 3rem" />
                 <AdvanceColumn field="id" header="ID" style="width: 5%" />
 
                 <template #header="{ globalFilterValue, globalFilterUpdated }">
@@ -454,6 +548,63 @@ onMounted(() => {
                 </AdvanceColumn>
 
             </AdvanceTable>
+
+            <Dialog
+                v-model:visible="isBulkDescriptionDialogVisible"
+                modal
+                header="Poprawa opisu"
+                :style="{ width: '34rem' }"
+            >
+                <form class="flex flex-col gap-4" @submit.prevent="submitBulkDescriptionCorrection">
+                    <Message severity="info" :closable="false">
+                        Wybrano {{ selectedBaseItems.length }} przedmiotów.
+                    </Message>
+
+                    <div class="flex flex-col gap-2">
+                        <label for="bulk-description-search" class="font-semibold">Fraza do poprawy</label>
+                        <InputText
+                            id="bulk-description-search"
+                            v-model="bulkDescriptionForm.search_phrase"
+                            :class="{ 'p-invalid': bulkDescriptionForm.errors.search_phrase }"
+                            autofocus
+                            placeholder="Wigilia 2025 r."
+                        />
+                        <small v-if="bulkDescriptionForm.errors.search_phrase" class="text-red-500">
+                            {{ bulkDescriptionForm.errors.search_phrase }}
+                        </small>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label for="bulk-description-replacement" class="font-semibold">Fraza docelowa</label>
+                        <InputText
+                            id="bulk-description-replacement"
+                            v-model="bulkDescriptionForm.replacement_phrase"
+                            :class="{ 'p-invalid': bulkDescriptionForm.errors.replacement_phrase }"
+                            placeholder="Wigilia #YEAR r."
+                        />
+                        <small v-if="bulkDescriptionForm.errors.replacement_phrase" class="text-red-500">
+                            {{ bulkDescriptionForm.errors.replacement_phrase }}
+                        </small>
+                    </div>
+                </form>
+
+                <template #footer>
+                    <Button
+                        label="Anuluj"
+                        severity="secondary"
+                        outlined
+                        :disabled="bulkDescriptionForm.processing"
+                        @click="isBulkDescriptionDialogVisible = false"
+                    />
+                    <Button
+                        label="Zapisz"
+                        icon="pi pi-check"
+                        :disabled="!canSubmitBulkDescriptionCorrection"
+                        :loading="bulkDescriptionForm.processing"
+                        @click="submitBulkDescriptionCorrection"
+                    />
+                </template>
+            </Dialog>
         </div>
     </AppLayout>
 

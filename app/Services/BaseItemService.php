@@ -293,6 +293,37 @@ final class BaseItemService extends BaseService
         ]);
     }
 
+    /**
+     * @param  array<int, int>  $baseItemIds
+     */
+    public function bulkUpdateDescriptions(array $baseItemIds, string $searchPhrase, string $replacementPhrase): int
+    {
+        $query = $this->baseItemModel
+            ->newQuery()
+            ->whereIn('id', $baseItemIds)
+            ->where('attributes->description', 'like', "%{$searchPhrase}%");
+
+        $connection = $query->getModel()->getConnection();
+
+        return $query->update([
+            'attributes' => $connection->raw($this->bulkDescriptionReplacementExpression(
+                $connection->getDriverName(),
+                $connection->escape($searchPhrase),
+                $connection->escape($replacementPhrase),
+            )),
+            'edited_manually' => true,
+        ]);
+    }
+
+    private function bulkDescriptionReplacementExpression(string $driverName, string $searchPhrase, string $replacementPhrase): string
+    {
+        if ($driverName === 'sqlite') {
+            return "json_set(coalesce(attributes, json('{}')), '$.description', replace(json_extract(attributes, '$.description'), {$searchPhrase}, {$replacementPhrase}))";
+        }
+
+        return "json_set(coalesce(attributes, json_object()), '$.description', replace(json_unquote(json_extract(attributes, '$.description')), {$searchPhrase}, {$replacementPhrase}))";
+    }
+
     public function create(array $validated)
     {
         // Extract image data before creating the item

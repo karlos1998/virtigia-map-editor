@@ -6,6 +6,7 @@ use App\Enums\BaseItemCategory;
 use App\Enums\BaseItemCurrency;
 use App\Enums\BaseItemRarity;
 use App\Enums\LegendaryBonus;
+use App\Http\Requests\BulkUpdateBaseItemDescriptionRequest;
 use App\Http\Requests\CreateBaseItemRequest;
 use App\Http\Requests\IndexBaseItemRequest;
 use App\Http\Requests\UpdateBaseItemImageRequest;
@@ -16,6 +17,7 @@ use App\Http\Resources\ActivityLogResource;
 use App\Http\Resources\BaseItemResource;
 use App\Models\BaseItem;
 use App\Services\BaseItemService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Spatie\Activitylog\Models\Activity;
@@ -133,6 +135,19 @@ class BaseItemController extends Controller
     public function update(BaseItem $baseItem, UpdateBaseItemRequest $request): void
     {
         $this->baseItemService->update($baseItem, $request->validated());
+    }
+
+    public function bulkUpdateDescription(BulkUpdateBaseItemDescriptionRequest $request): RedirectResponse
+    {
+        $validated = $request->validated();
+
+        $updatedCount = $this->baseItemService->bulkUpdateDescriptions(
+            $validated['item_ids'],
+            $validated['search_phrase'],
+            $validated['replacement_phrase'] ?? '',
+        );
+
+        return back()->with('success', "Poprawiono opisy w {$updatedCount} przedmiotach.");
     }
 
     public function create(): \Inertia\Response
