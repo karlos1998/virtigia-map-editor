@@ -77,6 +77,11 @@ const editNode = () => {
 
         <div v-if="data.action_data.teleportation">
             [{{data.action_data.teleportation.mapId}}] {{data.action_data.teleportation.mapName}} ({{data.action_data.teleportation.x}}, {{data.action_data.teleportation.y}})
+            <div v-if="data.action_data.teleportation.createInstance" class="text-xs mt-1">
+                Instancja
+                <span v-if="data.action_data.teleportation.includeNpcs">+ NPC</span>
+                <span v-if="data.action_data.teleportation.includeNpcs && data.action_data.teleportation.scaleNpcsToPlayerLevel">+ skalowanie lvl</span>
+            </div>
         </div>
 
     </div>

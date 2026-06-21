@@ -3,4 +3,7 @@ export interface DialogNodeTeleportationDataResource {
     mapName: string
     x: number
     y: number
+    createInstance?: boolean
+    includeNpcs?: boolean
+    scaleNpcsToPlayerLevel?: boolean
 }

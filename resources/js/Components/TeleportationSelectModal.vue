@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {inject, onMounted, Ref, ref, watch} from "vue";
+import {inject, onMounted, Ref, ref} from "vue";
 import {debounce} from "chart.js/helpers";
 import axios from "axios";
 import {route} from "ziggy-js";
@@ -11,6 +11,7 @@ import {DynamicDialogInstance} from "primevue/dynamicdialogoptions";
 
 const dialogRef = inject<Ref<DynamicDialogInstance & {
     data: {
+        teleportation?: DialogNodeTeleportationDataResource,
         option: {
             label: string,
             id: string
@@ -28,7 +29,7 @@ onMounted(() => {
 
 const scale = ref(1);
 
-const teleportation = ref(null);
+const teleportation = ref<DialogNodeTeleportationDataResource | null>(null);
 
 const selectedMap = ref<MapResource | null>(null);
 const dropdownMaps = ref<MapResource[]>([]);
@@ -67,11 +68,33 @@ const handleClick = (event: MouseEvent) => {
         y: trackerPosition.value.y,
         mapId: selectedMap.value.id,
         mapName: selectedMap.value.name,
+        createInstance: teleportation.value?.createInstance ?? false,
+        includeNpcs: teleportation.value?.includeNpcs ?? false,
+        scaleNpcsToPlayerLevel: teleportation.value?.scaleNpcsToPlayerLevel ?? false,
     }
     changed.value = true;
 }
 
 const changed = ref(false);
+
+const markChanged = () => {
+    changed.value = true;
+}
+
+const markCreateInstanceChanged = () => {
+    if (!teleportation.value?.createInstance) {
+        teleportation.value.includeNpcs = false;
+        teleportation.value.scaleNpcsToPlayerLevel = false;
+    }
+    markChanged();
+}
+
+const markIncludeNpcsChanged = () => {
+    if (!teleportation.value?.includeNpcs) {
+        teleportation.value.scaleNpcsToPlayerLevel = false;
+    }
+    markChanged();
+}
 
 const reset = () => {
     teleportation.value = dialogRef.value.data?.teleportation;
@@ -92,6 +115,40 @@ const cancel = () => {
 <template>
     <span v-if="teleportation" class="text-surface-500 dark:text-surface-400 block mb-8">Aktualna teleportacja: [{{teleportation.mapId}}] {{teleportation.mapName}} ({{teleportation.x}}, {{teleportation.y}})</span>
     <span v-else class="text-surface-500 dark:text-surface-400 block mb-8">Brak ustawionej teleportacji</span>
+
+    <div v-if="teleportation" class="flex flex-column gap-3 mb-4">
+        <div class="flex align-items-center gap-2">
+            <Checkbox
+                v-model="teleportation.createInstance"
+                input-id="teleport-create-instance"
+                :binary="true"
+                @change="markCreateInstanceChanged"
+            />
+            <label for="teleport-create-instance">Twórz osobną instancję tej mapy</label>
+        </div>
+
+        <div class="flex align-items-center gap-2" :class="{ 'opacity-50': !teleportation.createInstance }">
+            <Checkbox
+                v-model="teleportation.includeNpcs"
+                input-id="teleport-include-npcs"
+                :binary="true"
+                :disabled="!teleportation.createInstance"
+                @change="markIncludeNpcsChanged"
+            />
+            <label for="teleport-include-npcs">Dodaj NPC z bazowej mapy do instancji</label>
+        </div>
+
+        <div class="flex align-items-center gap-2" :class="{ 'opacity-50': !teleportation.createInstance || !teleportation.includeNpcs }">
+            <Checkbox
+                v-model="teleportation.scaleNpcsToPlayerLevel"
+                input-id="teleport-scale-npcs"
+                :binary="true"
+                :disabled="!teleportation.createInstance || !teleportation.includeNpcs"
+                @change="markChanged"
+            />
+            <label for="teleport-scale-npcs">Skaluj poziom mobów do poziomu gracza</label>
+        </div>
+    </div>
 
     <div v-if="changed" class="flex justify-end gap-2">
             <Button type="button" label="Anuluj" severity="secondary" @click="cancel" />

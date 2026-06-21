@@ -38,7 +38,10 @@ class UpdateDialogNodeActionDataRequest extends FormRequest
             'teleportation' => ['required', 'array'],
             'teleportation.mapId' => ['required', "exists:$this->selectedDatabase.maps,id"],
             'teleportation.x' => ['required', 'integer', 'min:0', 'max:' . $maxX],
-            'teleportation.y' => ['required', 'integer', 'min:0', 'max:' . $maxY]
+            'teleportation.y' => ['required', 'integer', 'min:0', 'max:' . $maxY],
+            'teleportation.createInstance' => ['sometimes', 'boolean'],
+            'teleportation.includeNpcs' => ['sometimes', 'boolean'],
+            'teleportation.scaleNpcsToPlayerLevel' => ['sometimes', 'boolean'],
         ];
     }
 }

@@ -71,7 +71,7 @@ class DialogNodeResource extends JsonResource
                     if (isset(self::$maps[$teleportation['mapId']])) {
                         $teleportation['mapName'] = self::$maps[$teleportation['mapId']]->name;
                     } else {
-                        $teleportation['mapName'] = Map::find($teleportation['mapId'])->name;
+                        $teleportation['mapName'] = Map::find($teleportation['mapId'])?->name;
                     }
                 }
 
