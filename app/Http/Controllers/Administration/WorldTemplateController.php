@@ -25,16 +25,22 @@ class WorldTemplateController extends Controller
             'templates' => WorldTemplate::query()
                 ->orderBy('name')
                 ->get()
-                ->map(fn (WorldTemplate $template): array => [
-                    'id' => $template->id,
-                    'name' => $template->name,
-                    'slug' => $template->slug,
-                    'connection_name' => $template->connection_name,
-                    'remote_database_server' => $template->remote_database_server,
-                    'database_name' => $template->database_name,
-                    'is_active' => $template->is_active,
-                    'is_visible' => $template->is_visible,
-                ]),
+                ->map(function (WorldTemplate $template): array {
+                    $databaseStatus = $this->connectionResolver->databaseStatus($template);
+
+                    return [
+                        'id' => $template->id,
+                        'name' => $template->name,
+                        'slug' => $template->slug,
+                        'connection_name' => $template->connection_name,
+                        'remote_database_server' => $template->remote_database_server,
+                        'database_name' => $template->database_name,
+                        'is_active' => $template->is_active,
+                        'is_visible' => $template->is_visible,
+                        'database_status' => $databaseStatus['status'],
+                        'database_status_message' => $databaseStatus['message'],
+                    ];
+                }),
             'remoteDatabaseServers' => $this->connectionResolver->remoteDatabaseServerOptions(),
             'defaultRemoteDatabaseServer' => config('world_templates.default_remote_database_server'),
         ]);

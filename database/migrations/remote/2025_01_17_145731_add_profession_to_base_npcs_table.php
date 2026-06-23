@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('base_npcs', 'profession')) {
+            return;
+        }
+
         Schema::table('base_npcs', function (Blueprint $table) {
             $table->enum('profession', \App\Enums\Profession::valuesToList())->default(\App\Enums\Profession::w->value);
         });
@@ -21,6 +25,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (! Schema::hasColumn('base_npcs', 'profession')) {
+            return;
+        }
+
         Schema::table('base_npcs', function (Blueprint $table) {
             $table->dropColumn('profession');
         });

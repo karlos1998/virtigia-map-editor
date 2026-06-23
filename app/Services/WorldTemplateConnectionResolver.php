@@ -117,6 +117,33 @@ class WorldTemplateConnectionResolver
     }
 
     /**
+     * @return array{status: 'ok'|'error', message: string|null}
+     */
+    public function databaseStatus(WorldTemplate $template): array
+    {
+        try {
+            if (! $this->registerTemplateConnection($template)) {
+                return [
+                    'status' => 'error',
+                    'message' => "Nie znaleziono konfiguracji zdalnej bazy [{$template->remote_database_server}].",
+                ];
+            }
+
+            DB::connection($template->connection_name)->getPdo();
+
+            return [
+                'status' => 'ok',
+                'message' => null,
+            ];
+        } catch (Throwable $throwable) {
+            return [
+                'status' => 'error',
+                'message' => $throwable->getMessage(),
+            ];
+        }
+    }
+
+    /**
      * @return array<string, mixed>|null
      */
     public function remoteDatabaseServer(string $serverKey): ?array

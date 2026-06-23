@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasColumn('base_npcs', 'is_aggressive')) {
+            return;
+        }
+
         Schema::table('base_npcs', function (Blueprint $table) {
             $table->boolean('is_aggressive')->default(true)->after('profession');
         });
@@ -21,6 +25,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (! Schema::hasColumn('base_npcs', 'is_aggressive')) {
+            return;
+        }
+
         Schema::table('base_npcs', function (Blueprint $table) {
             $table->dropColumn('is_aggressive');
         });

@@ -12,6 +12,7 @@ import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
 import Tag from 'primevue/tag';
+import { useToast } from 'primevue/usetoast';
 
 type WorldTemplate = {
     id: number;
@@ -22,6 +23,8 @@ type WorldTemplate = {
     database_name: string;
     is_active: boolean;
     is_visible: boolean;
+    database_status: 'ok' | 'error';
+    database_status_message: string | null;
 };
 
 type RemoteDatabaseServer = {
@@ -36,6 +39,7 @@ const props = defineProps<{
 }>();
 
 const page = usePage();
+const toast = useToast();
 const success = computed(() => (page.props.flash as { success?: string | null } | undefined)?.success ?? null);
 const form = useForm({
     name: '',
@@ -69,6 +73,19 @@ const submit = (): void => {
 const serverLabel = (server: string): string => {
     return props.remoteDatabaseServers.find((option) => option.value === server)?.label ?? server;
 };
+
+const showDatabaseStatus = (template: WorldTemplate): void => {
+    if (!template.database_status_message) {
+        return;
+    }
+
+    toast.add({
+        severity: template.database_status === 'ok' ? 'success' : 'error',
+        summary: template.database_status === 'ok' ? 'Baza OK' : 'Błąd bazy',
+        detail: template.database_status_message,
+        life: 10000,
+    });
+};
 </script>
 
 <template>
@@ -100,9 +117,15 @@ const serverLabel = (server: string): string => {
                         <Column field="database_name" header="Database" sortable />
                         <Column header="Status">
                             <template #body="{ data }">
-                                <div class="flex gap-2">
+                                <div class="flex flex-wrap gap-2">
                                     <Tag :value="data.is_active ? 'Aktywny' : 'Wyłączony'" :severity="data.is_active ? 'success' : 'secondary'" />
                                     <Tag v-if="!data.is_visible" value="Ukryty" severity="warn" />
+                                    <Tag
+                                        :value="data.database_status === 'ok' ? 'Baza OK' : 'Błąd bazy'"
+                                        :severity="data.database_status === 'ok' ? 'success' : 'danger'"
+                                        class="cursor-pointer"
+                                        @click="showDatabaseStatus(data)"
+                                    />
                                 </div>
                             </template>
                         </Column>
