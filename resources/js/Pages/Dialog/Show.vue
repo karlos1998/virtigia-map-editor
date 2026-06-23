@@ -955,9 +955,9 @@ const items = ref([
                             fit-view-on-init
                             :apply-default="false"
                             :default-edge-options="{
-                                type: 'bezier',
+                                type: 'default',
                                 style: { strokeWidth: '2px', stroke: '#6366f1' },
-                                animated: true
+                                animated: false
                             }"
                             :elevate-edges-on-select="true"
                         >
@@ -1187,22 +1187,18 @@ const items = ref([
     padding: 1rem;
 }
 
-:deep(.vue-flow__edge) {
-    transition: stroke 0.3s, stroke-width 0.3s;
-}
-
-:deep(.vue-flow__edge:hover) {
-    stroke-width: 3px !important;
-    stroke: #4f46e5 !important;
-}
-
-:deep(.vue-flow__edge.selected) {
-    stroke-width: 3px !important;
-    stroke: #4f46e5 !important;
-}
-
 :deep(.vue-flow__edge-path) {
-    stroke-dasharray: none;
+    transition: stroke 0.3s, stroke-width 0.3s, stroke-opacity 0.3s;
+}
+
+:deep(.vue-flow__edge:hover .vue-flow__edge-path) {
+    stroke-width: 3px !important;
+    stroke-opacity: 0.95 !important;
+}
+
+:deep(.vue-flow__edge.selected .vue-flow__edge-path) {
+    stroke-width: 3px !important;
+    stroke-opacity: 0.95 !important;
 }
 
 :deep(.vue-flow__edge.animated .vue-flow__edge-path) {
