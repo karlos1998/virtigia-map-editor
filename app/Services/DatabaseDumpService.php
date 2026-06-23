@@ -442,7 +442,9 @@ class DatabaseDumpService
         $driver = (string) ($connection['driver'] ?? '');
 
         return match ($driver) {
-            'mysql' => $this->makeMySqlDumper($connection),
+            'mysql' => $this->hasMariaDbDumpBinary()
+                ? $this->makeMariaDbDumper($connection)
+                : $this->makeMySqlDumper($connection),
             'mariadb' => $this->makeMariaDbDumper($connection),
             'sqlite' => $this->makeSqliteDumper($connection),
             default => throw new InvalidArgumentException("Unsupported database driver [{$driver}]."),
@@ -466,6 +468,13 @@ class DatabaseDumpService
     private function makeMariaDbDumper(array $connection): MariaDb
     {
         $dumper = MariaDb::create();
+
+        $mariaDbDumpBinaryPath = $this->mariaDbDumpBinaryPath();
+
+        if ($mariaDbDumpBinaryPath !== null) {
+            $dumper->setDumpBinaryPath(dirname($mariaDbDumpBinaryPath));
+        }
+
         $this->configureMySqlDumper($dumper, $connection);
 
         return $dumper;
@@ -513,5 +522,21 @@ class DatabaseDumpService
         if ($socket !== '') {
             $dumper->setSocket($socket);
         }
+    }
+
+    private function hasMariaDbDumpBinary(): bool
+    {
+        return $this->mariaDbDumpBinaryPath() !== null;
+    }
+
+    private function mariaDbDumpBinaryPath(): ?string
+    {
+        foreach (['/usr/bin/mariadb-dump', '/usr/local/bin/mariadb-dump'] as $path) {
+            if (is_executable($path)) {
+                return $path;
+            }
+        }
+
+        return null;
     }
 }
