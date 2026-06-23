@@ -28,6 +28,7 @@ use App\Models\DialogEdge;
 use App\Models\DialogNode;
 use App\Models\DialogNodeOption;
 use App\Services\DialogActivityLogService;
+use App\Services\DialogLayoutService;
 use App\Services\DialogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -39,6 +40,7 @@ class DialogController extends Controller
     public function __construct(
         private readonly DialogService $dialogService,
         private readonly DialogActivityLogService $dialogActivityLogService,
+        private readonly DialogLayoutService $dialogLayoutService,
     ) {}
 
     public function index()
@@ -58,6 +60,24 @@ class DialogController extends Controller
     public function update(Dialog $dialog, UpdateDialogRequest $request)
     {
         $this->dialogService->update($dialog, $request->validated());
+    }
+
+    public function layoutNodes(Dialog $dialog): JsonResponse
+    {
+        $dialog->load(['nodes.options', 'edges']);
+
+        $positions = $this->dialogLayoutService->calculate($dialog);
+        $this->dialogLayoutService->save($dialog, $positions);
+
+        return response()->json([
+            'positions' => collect($positions)
+                ->mapWithKeys(fn (array $position, int $nodeId): array => [
+                    (string) $nodeId => [
+                        'x' => $position['x'],
+                        'y' => $position['y'],
+                    ],
+                ]),
+        ]);
     }
 
     public function show(Dialog $dialog): \Inertia\Response

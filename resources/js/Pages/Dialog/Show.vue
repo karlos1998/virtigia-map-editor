@@ -23,13 +23,18 @@ import { computed, nextTick, ref } from 'vue';
 import axios from 'axios';
 import { route } from 'ziggy-js';
 import TeleporationNode from '@/Pages/Dialog/TeleporationNode.vue';
-import {useToast} from "primevue";
+import { useToast } from 'primevue';
 import EditDialogNameDialog from '@/Pages/Dialog/Modals/EditDialogNameDialog.vue';
 import DetailsCardList from "@/Components/DetailsCardList.vue";
 import DetailsCardListItem from "@/Components/DetailsCardListItem.vue";
 import { Link, useForm } from '@inertiajs/vue3';
 import ConfirmDialog from 'primevue/confirmdialog';
 import { useConfirm } from 'primevue/useconfirm';
+
+type DialogNodeLayoutPositions = Record<string, {
+    x: number;
+    y: number;
+}>;
 
 const props = defineProps<{
     dialog: DialogResource,
@@ -46,10 +51,12 @@ const props = defineProps<{
 const isEditDialogNameVisible = ref(false);
 const isAddNodeFromJsonVisible = ref(false);
 const nodeFromJsonProcessing = ref(false);
+const isLayoutProcessing = ref(false);
 const nodeFromJsonInput = ref('');
 const isJsonDocumentationVisible = ref(false);
 const addNodeFromJsonModalContentRef = ref<HTMLElement | null>(null);
 const confirm = useConfirm();
+const toast = useToast();
 
 // Form for copying the dialog
 const copyForm = useForm({});
@@ -82,7 +89,67 @@ const {
     onNodesChange,
     applyNodeChanges,
     updateNodeData,
+    setNodes,
+    fitView,
 } = useVueFlow();
+
+const applyLayoutPositions = (positions: DialogNodeLayoutPositions): void => {
+    setNodes(nodes.value.map((node) => {
+        const position = positions[node.id.toString()];
+
+        if (!position) {
+            return node;
+        }
+
+        return {
+            ...node,
+            position: {
+                x: position.x,
+                y: position.y,
+            },
+        };
+    }));
+};
+
+const executeLayoutNodes = async (): Promise<void> => {
+    isLayoutProcessing.value = true;
+
+    try {
+        const { data } = await axios.post<{ positions: DialogNodeLayoutPositions }>(
+            route('dialogs.layout-nodes', { dialog: props.dialog.id })
+        );
+
+        applyLayoutPositions(data.positions ?? {});
+
+        await nextTick();
+        await fitView({ padding: 0.2 });
+
+        toast.add({ severity: 'success', summary: 'Gotowe', detail: 'Nody zostały poukładane', life: 3000 });
+    } catch ({ response }: any) {
+        toast.add({ severity: 'error', summary: 'Błąd', detail: response?.data?.message || 'Nie udało się poukładać nodów', life: 6000 });
+    } finally {
+        isLayoutProcessing.value = false;
+    }
+};
+
+const layoutNodes = (): void => {
+    confirm.require({
+        group: 'dialog-show-modal',
+        message: 'Poukładać automatycznie pozycje nodów w tym dialogu? Obecne pozycje zostaną nadpisane.',
+        header: 'Potwierdzenie',
+        icon: 'pi pi-sitemap',
+        rejectProps: {
+            label: 'Anuluj',
+            severity: 'secondary',
+            outlined: true
+        },
+        acceptProps: {
+            label: 'Poukładaj',
+            severity: 'primary'
+        },
+        accept: executeLayoutNodes,
+    });
+};
 
 onConnect(({ source, target, sourceHandle, targetHandle }) => {
     addEdges([
@@ -573,7 +640,6 @@ onEdgesChange(async (changes) => {
     applyEdgeChanges(nextChanges);
 });
 
-const toast = useToast();
 const removeEdge = (edgeChange: EdgeRemoveChange) => {
     confirm.require({
         group: 'dialog-show-modal',
@@ -855,6 +921,12 @@ const items = ref([
                             <div class="flex flex-wrap items-center gap-2">
                                 <Tag :value="`${startNodes.length} node`" severity="info" />
                                 <Tag :value="`${startEdges.length} połączeń`" severity="secondary" />
+                                <Button
+                                    label="Poukładaj"
+                                    icon="pi pi-sitemap"
+                                    :loading="isLayoutProcessing"
+                                    @click="layoutNodes"
+                                />
                                 <Button
                                     label="JSON"
                                     icon="pi pi-code"

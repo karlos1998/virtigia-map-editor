@@ -77,6 +77,7 @@ Route::middleware(['auth'])->group(function () {
                     Route::get('dialogs/search', [DialogController::class, 'search'])->name('dialogs.search');
                     Route::get('dialogs/{dialog}', [DialogController::class, 'show'])->name('dialogs.show');
                     Route::patch('dialogs/{dialog}', [DialogController::class, 'update'])->name('dialogs.update');
+                    Route::post('dialogs/{dialog}/layout-nodes', [DialogController::class, 'layoutNodes'])->name('dialogs.layout-nodes');
                     Route::post('dialogs/{dialog}/copy', [DialogController::class, 'copyDialog'])->name('dialogs.copy');
                     Route::post('dialogs/{dialog}/nodes', [DialogController::class, 'addNode'])->name('dialogs.nodes.store');
                     Route::post('dialogs/{dialog}/nodes/import-json', [DialogController::class, 'addNodeFromJson'])->name('dialogs.nodes.import-json');
