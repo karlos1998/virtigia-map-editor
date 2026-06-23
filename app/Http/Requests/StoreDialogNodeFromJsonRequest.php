@@ -48,6 +48,7 @@ class StoreDialogNodeFromJsonRequest extends FormRequest
             'options.*' => ['required', 'array'],
             'options.*.label' => ['required', 'string', 'min:3', 'max:1000'],
             'options.*.additional_action' => ['nullable', new Enum(DialogNodeOptionAdditionalAction::class)],
+            'options.*.additional_actions' => ['nullable', 'array', new DialogNodeAdditionalActionsValidator],
             'options.*.cooldown' => ['nullable', 'integer', 'min:1'],
             'options.*.rules' => ['nullable', 'array', new DialogOptionRuleValidator],
         ];

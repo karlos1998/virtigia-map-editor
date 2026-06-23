@@ -69,12 +69,18 @@ class QuestStep extends DynamicModel
         ];
 
         return Dialog::distinct()
-            ->whereHas('nodes.options', function ($query) use ($stepId, $rulePaths) {
-                $this->scopeWhereJsonContainsInPaths($query, 'rules', $rulePaths, $stepId);
+            ->whereHas('nodes.options', function ($query) use ($numericStepId, $stepId, $rulePaths) {
+                $query->where(function ($subQuery) use ($stepId, $rulePaths) {
+                    $this->scopeWhereJsonContainsInPaths($subQuery, 'rules', $rulePaths, $stepId);
+                })
+                    ->orWhere(function ($subQuery) use ($numericStepId, $stepId) {
+                        $this->scopeWhereJsonContains($subQuery, 'additional_actions', '$.setQuestStep.value', $stepId);
+                        $subQuery->orWhereRaw('JSON_CONTAINS(additional_actions, ?, \'$.setQuestStep.value\')', [$numericStepId]);
+                    });
             })
             ->orWhereHas('nodes', function ($query) use ($stepId, $numericStepId) {
                 // Check for string format with s- prefix
-                $query->whereRaw('JSON_CONTAINS(additional_actions, ?, \'$.setQuestStep.value\')', [$stepId])
+                $this->scopeWhereJsonContains($query, 'additional_actions', '$.setQuestStep.value', $stepId)
                     // Also check for numeric format without prefix
                     ->orWhereRaw('JSON_CONTAINS(additional_actions, ?, \'$.setQuestStep.value\')', [$numericStepId]);
             })
@@ -113,6 +119,7 @@ class QuestStep extends DynamicModel
         }
 
         $stepId = 's-'.$this->id;
+        $numericStepId = $this->id;
         $rulePaths = [
             '$.questBeforeStep.value',
             '$.questAfterStep.value',
@@ -120,8 +127,10 @@ class QuestStep extends DynamicModel
         ];
 
         return DialogNodeOption::distinct()
-            ->where(function ($query) use ($stepId, $rulePaths) {
+            ->where(function ($query) use ($numericStepId, $stepId, $rulePaths) {
                 $this->scopeWhereJsonContainsInPaths($query, 'rules', $rulePaths, $stepId);
+                $this->scopeWhereJsonContains($query, 'additional_actions', '$.setQuestStep.value', $stepId, 'or');
+                $query->orWhereRaw('JSON_CONTAINS(additional_actions, ?, \'$.setQuestStep.value\')', [$numericStepId]);
             })
             ->get();
     }

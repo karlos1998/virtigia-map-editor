@@ -193,6 +193,7 @@ class DynamicModelConnectionIsolationTest extends TestCase
         $schema->create('dialog_node_options', function (Blueprint $table): void {
             $table->id();
             $table->json('rules')->nullable();
+            $table->json('additional_actions')->nullable();
         });
 
         $schema->create('npcs', function (Blueprint $table): void {

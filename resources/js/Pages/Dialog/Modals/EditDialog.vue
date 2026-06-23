@@ -1,134 +1,68 @@
 <script setup lang="ts">
+import { inject, onMounted, reactive, Ref, ref } from 'vue';
 import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
-import {computed, reactive, Ref, ref, watch} from "vue";
-
-import {inject, onMounted} from "vue";
-import {DynamicDialogInstance} from "primevue/dynamicdialogoptions";
-import {route} from "ziggy-js";
-import axios from "axios";
-import {useToast} from "primevue";
-import {usePage} from "@inertiajs/vue3";
-import {DropdownListType} from "@/Resources/DropdownList.type";
-import {DialogNodeAdditionalAction} from "@/types/DialogNodeAdditionalAction";
-import {BaseItemResource} from "@/Resources/BaseItem.resource";
-import {DialogNodeAdditionalActionsResource} from "@/Resources/DialogNodeAdditionalActions.resource";
-import TreeSelectAdapter from "../Componnts/TreeSelectAdapter.vue";
-import { useQuestStepSelection } from "../Composables/useQuestStepSelection";
-import InputSwitch from 'primevue/inputswitch';
-import InputText from 'primevue/inputtext';
-import InputNumber from 'primevue/inputnumber';
-import OutfitBrowserDialog from '../../BaseItem/Components/OutfitBrowserDialog.vue';
-import { DialogCounterResource } from "@/Resources/DialogCounter.resource";
-import BaseItemSearchSelect from "@/Components/BaseItemSearchSelect.vue";
+import { DynamicDialogInstance } from 'primevue/dynamicdialogoptions';
+import { route } from 'ziggy-js';
+import axios from 'axios';
+import { useToast } from 'primevue';
+import { DialogNodeAdditionalActionsResource } from '@/Resources/DialogNodeAdditionalActions.resource';
+import AdditionalActionsEditor from '@/Pages/Dialog/Componnts/AdditionalActionsEditor.vue';
 
 const dialogRef = inject<Ref<DynamicDialogInstance & {
     data: {
-        label: string,
         content: string,
+        dialog_id: number,
+        node_id: number,
         additional_actions: DialogNodeAdditionalActionsResource
     }
 }> | null>('dialogRef');
 
 const form = reactive<{
-    content: '',
+    content: string,
     additional_actions: DialogNodeAdditionalActionsResource,
 }>({
     content: '',
     additional_actions: {},
-})
-
-onMounted(async () => {
-    if(!dialogRef) return;
-
-    form.content = dialogRef.value.data?.content ?? '';
-    form.additional_actions = !Array.isArray(dialogRef.value.data?.additional_actions) ? dialogRef.value.data?.additional_actions ?? {} : {};
-
-    if (form.additional_actions[DialogNodeAdditionalAction.blessing]) {
-        const current = form.additional_actions[DialogNodeAdditionalAction.blessing];
-        const rawVal = (current && typeof current === 'object' && 'value' in current) ? current.value : current;
-        const id = typeof rawVal === 'number' ? rawVal : parseInt(String(rawVal));
-        if (!isNaN(id)) {
-            const {data} = await axios.get<BaseItemResource[]>(route('base-items.search', {
-                query: '',
-                ids: [id],
-                category: 'blessings'
-            }));
-            const item = data[0];
-            selectedBlessingItem.value = item ?? null;
-            // ensure form stores numeric id (not string) and preserves scale
-            if (form.additional_actions[DialogNodeAdditionalAction.blessing]) {
-                const current2 = form.additional_actions[DialogNodeAdditionalAction.blessing];
-                if (current2 && typeof current2 === 'object') {
-                    current2.value = id;
-                } else {
-                    form.additional_actions[DialogNodeAdditionalAction.blessing] = {value: id, scale: false} as any;
-                }
-            }
-        }
-    }
-
-    // Load quests for the TreeSelect
-    loadQuests();
-
-    // Load dialog counters
-    loadDialogCounters();
-
-    // Check if a quest step is already selected and load its details
-    if (form.additional_actions[DialogNodeAdditionalAction.setQuestStep]) {
-        const questStepValue = form.additional_actions[DialogNodeAdditionalAction.setQuestStep].value;
-        let stepId: number | null = null;
-
-        if (typeof questStepValue === 'string' && questStepValue.startsWith('s-')) {
-            // Extract step ID from the value (format: "s-{id}")
-            stepId = parseInt(questStepValue.substring(2));
-        } else if (typeof questStepValue === 'number') {
-            // If the value is already a number, use it directly
-            stepId = questStepValue;
-            // Convert the numeric ID to the 's-{id}' format for the TreeSelectAdapter
-            form.additional_actions[DialogNodeAdditionalAction.setQuestStep].value = `s-${stepId}`;
-        }
-
-        if (stepId !== null && !isNaN(stepId)) {
-            loadQuestStepById(stepId);
-        }
-    }
-})
+});
 
 const toast = useToast();
-
-// Use the quest step selection composable
-const { questNodes, loading, loadQuests, loadQuestStepById, onQuestNodeExpand } = useQuestStepSelection();
-
-// Dialog counters
-const dialogCounters = ref<DialogCounterResource[]>([]);
-const currentOutfitPreviewUrl = ref('');
-
-const loadDialogCounters = async () => {
-    const { data } = await axios.get<DialogCounterResource[]>(route("web-api.dialog-counters.index"));
-    dialogCounters.value = data;
-};
-
 const processing = ref(false);
 const copyProcessing = ref(false);
+const additionalActionsEditor = ref<{
+    getPayload: () => DialogNodeAdditionalActionsResource | null;
+} | null>(null);
 
-const copyDialog = () => {
-    if(!dialogRef) return;
+onMounted(() => {
+    if (!dialogRef) {
+        return;
+    }
+
+    form.content = dialogRef.value.data?.content ?? '';
+    form.additional_actions = !Array.isArray(dialogRef.value.data?.additional_actions)
+        ? dialogRef.value.data?.additional_actions ?? {}
+        : {};
+});
+
+const copyDialog = (): void => {
+    if (!dialogRef) {
+        return;
+    }
 
     copyProcessing.value = true;
     axios.post(route('dialogs.nodes.copy', {
         dialog: dialogRef.value.data.dialog_id,
         dialogNode: dialogRef.value.data.node_id,
     }))
-        .then(({data}) => {
+        .then(({ data }) => {
             toast.add({ severity: 'success', summary: 'Operacja powiodła się', detail: 'Pomyślnie skopiowano dialog', life: 6000 });
             dialogRef.value.close({
                 content: form.content,
                 copied: true,
-                newNode: data.node
+                newNode: data.node,
             });
         })
-        .catch(({response}) => {
+        .catch(({ response }) => {
             toast.add({ severity: 'error', summary: 'Błąd', detail: response.data.message, life: 6000 });
         })
         .finally(() => {
@@ -136,522 +70,53 @@ const copyDialog = () => {
         });
 };
 
-const save = () => {
-    if(!dialogRef) return;
-
-    // Validate setQuestStep action data
-    if (form.additional_actions[DialogNodeAdditionalAction.setQuestStep]) {
-        const questStepValue = form.additional_actions[DialogNodeAdditionalAction.setQuestStep].value;
-        if (!questStepValue) {
-            toast.add({ severity: 'error', summary: 'Błąd', detail: 'Wybierz krok questa', life: 3000 });
-            return;
-        }
-
-        // Make sure only quest steps (s-X) are selected, not quests (q-X)
-        if (typeof questStepValue === 'string' && questStepValue.startsWith('q-')) {
-            toast.add({ severity: 'error', summary: 'Błąd', detail: 'Wybierz krok questa, nie cały quest', life: 3000 });
-            return;
-        }
+const save = (): void => {
+    if (!dialogRef) {
+        return;
     }
 
-    // Validate blessing action: ensure selected blessing item exists and has correct category
-    if (form.additional_actions[DialogNodeAdditionalAction.blessing]) {
-        if (!selectedBlessingItem.value) {
-            toast.add({severity: 'error', summary: 'Błąd', detail: 'Wybierz błogosławieństwo', life: 3000});
-            return;
-        }
+    const additionalActionsPayload = additionalActionsEditor.value?.getPayload();
 
-        if (selectedBlessingItem.value.category !== 'blessings') {
-            toast.add({
-                severity: 'error',
-                summary: 'Błąd',
-                detail: 'Wybrany przedmiot nie jest błogosławieństwem',
-                life: 3000
-            });
-            return;
-        }
-    }
-
-    // Validate setOutfit action: ensure src is provided
-    if (form.additional_actions[DialogNodeAdditionalAction.setOutfit]) {
-        const outfitAction = form.additional_actions[DialogNodeAdditionalAction.setOutfit] as any;
-        if (!outfitAction.value || outfitAction.value.trim() === '') {
-            toast.add({severity: 'error', summary: 'Błąd', detail: 'Podaj źródło grafiki stroju', life: 3000});
-            return;
-        }
-    }
-
-    // Validate addDialogCounter action: ensure counter is selected
-    if (form.additional_actions[DialogNodeAdditionalAction.addDialogCounter]) {
-        const counterAction = form.additional_actions[DialogNodeAdditionalAction.addDialogCounter];
-        if (!counterAction.value) {
-            toast.add({severity: 'error', summary: 'Błąd', detail: 'Wybierz licznik dialogowy', life: 3000});
-            return;
-        }
-    }
-
-    // Validate resetDialogCounter action: ensure counter is selected
-    if (form.additional_actions[DialogNodeAdditionalAction.resetDialogCounter]) {
-        const counterAction = form.additional_actions[DialogNodeAdditionalAction.resetDialogCounter];
-        if (!counterAction.value) {
-            toast.add({severity: 'error', summary: 'Błąd', detail: 'Wybierz licznik dialogowy do wyczyszczenia', life: 3000});
-            return;
-        }
-    }
-
-    // Create a deep copy of the form data
-    const formData = JSON.parse(JSON.stringify(form));
-
-    // Transform setQuestStep value from 's-1' to just the ID number
-    if (formData.additional_actions[DialogNodeAdditionalAction.setQuestStep]) {
-        const questStepValue = formData.additional_actions[DialogNodeAdditionalAction.setQuestStep].value;
-        if (typeof questStepValue === 'string' && questStepValue.startsWith('s-')) {
-            // Extract the ID from the string (e.g., 's-1' -> 1)
-            const stepId = parseInt(questStepValue.substring(2));
-            if (!isNaN(stepId)) {
-                formData.additional_actions[DialogNodeAdditionalAction.setQuestStep].value = stepId;
-            }
-        }
-    }
-
-    // Assign blessing id from selectedBlessingItem into payload
-    if (formData.additional_actions[DialogNodeAdditionalAction.blessing]) {
-        formData.additional_actions[DialogNodeAdditionalAction.blessing].value = selectedBlessingItem.value ? selectedBlessingItem.value.id : null;
-    }
-
-    if (formData.additional_actions[DialogNodeAdditionalAction.addItems] && Array.isArray(formData.additional_actions[DialogNodeAdditionalAction.addItems].value)) {
-        formData.additional_actions[DialogNodeAdditionalAction.addItems].value = formData.additional_actions[DialogNodeAdditionalAction.addItems].value
-            .map((item: unknown) => {
-                if (typeof item === 'number') {
-                    return item;
-                }
-
-                if (item && typeof item === 'object' && 'id' in item) {
-                    const parsed = Number((item as { id: unknown }).id);
-                    return Number.isInteger(parsed) ? parsed : null;
-                }
-
-                return null;
-            })
-            .filter((itemId: number | null): itemId is number => itemId !== null);
+    if (!additionalActionsPayload) {
+        return;
     }
 
     processing.value = true;
     axios.patch(route('dialogs.nodes.update', {
         dialog: dialogRef.value.data.dialog_id,
         dialogNode: dialogRef.value.data.node_id,
-    }), formData)
+    }), {
+        content: form.content,
+        additional_actions: additionalActionsPayload,
+    })
         .then(() => {
             toast.add({ severity: 'success', summary: 'Operacja powiodła się', detail: 'Pomyślnie zmieniono treść dialogu npc', life: 6000 });
             dialogRef.value.close({
                 content: form.content,
+                additional_actions: additionalActionsPayload,
             });
         })
-        .catch(({response}) => {
+        .catch(({ response }) => {
             toast.add({ severity: 'error', summary: 'Błąd', detail: response.data.message, life: 6000 });
         })
         .finally(() => {
             processing.value = false;
-        })
-}
-
-const dialogNodeAdditionalActionsList = usePage<{
-    dialogNodeAdditionalActionsList: DropdownListType<DialogNodeAdditionalAction>
-}>().props.dialogNodeAdditionalActionsList
-
-const availableDialogNodeAdditionalActionsList = computed( () => dialogNodeAdditionalActionsList.filter(action => !form.additional_actions[action.value]))
-
-const newAdditionalAction = ref<DialogNodeAdditionalAction>();
-
-const addAdditionalAction = () => {
-    if(!newAdditionalAction.value) return;
-
-    if(form.additional_actions[newAdditionalAction.value]) return;
-
-    let value: number|number[]|string|null = 1;
-
-    if(newAdditionalAction.value == DialogNodeAdditionalAction.addItems) {
-        value = [];
-    } else if(newAdditionalAction.value == DialogNodeAdditionalAction.addGold) {
-        value = 1;
-    } else if (newAdditionalAction.value == DialogNodeAdditionalAction.addHonorPoints) {
-        value = 1;
-    } else if (newAdditionalAction.value == DialogNodeAdditionalAction.addExp) {
-        value = 1;
-    } else if (newAdditionalAction.value == DialogNodeAdditionalAction.addExpPercent) {
-        value = 1;
-    } else if (newAdditionalAction.value == DialogNodeAdditionalAction.blessing) {
-        value = {value: 0, scale: false};
-    } else if(newAdditionalAction.value == DialogNodeAdditionalAction.setQuestStep) {
-        value = "";
-    } else if (newAdditionalAction.value == DialogNodeAdditionalAction.setOutfit) {
-        value = "";
-        // duration will be set separately
-    } else if (newAdditionalAction.value == DialogNodeAdditionalAction.addDialogCounter) {
-        value = null;
-    } else if (newAdditionalAction.value == DialogNodeAdditionalAction.resetAdditionalAttributePoints) {
-        value = 1;
-    }
-
-    form.additional_actions[newAdditionalAction.value] = {
-        value,
-    }
-
-    // Initialize duration for setOutfit
-    if (newAdditionalAction.value == DialogNodeAdditionalAction.setOutfit) {
-        (form.additional_actions[newAdditionalAction.value] as any).duration = 0;
-    }
-
-    newAdditionalAction.value = undefined;
+        });
 };
-
-/// powtarzajacy sie kod
-const resolvedAddItems = ref<BaseItemResource[]>([]);
-const selectedBlessingItem = ref<BaseItemResource | null>(null);
-const handleResolvedAddItems = (items: BaseItemResource[]): void => {
-    resolvedAddItems.value = items;
-};
-
-watch(selectedBlessingItem, (newVal) => {
-    if (!form.additional_actions[DialogNodeAdditionalAction.blessing]) return;
-    const current = form.additional_actions[DialogNodeAdditionalAction.blessing];
-    const id = newVal ? newVal.id : null;
-    if (current && typeof current === 'object') {
-        current.value = id;
-    } else {
-        form.additional_actions[DialogNodeAdditionalAction.blessing] = {value: id, scale: false} as any;
-    }
-});
-
-// Modal ilości przedmiotów (analogicznie do EditRules.vue)
-const showItemsAmountModal = ref(false)
-const itemAmounts = ref<number[]>([])
-
-const openItemsAmountModal = () => {
-    const action = form.additional_actions[DialogNodeAdditionalAction.addItems]
-    if (!action || !Array.isArray(action.value)) return
-
-    itemAmounts.value = action.value.map((_: any, i: number) => action.value2?.[i] ?? 1)
-    showItemsAmountModal.value = true
-}
-
-const saveItemAmounts = () => {
-    const action = form.additional_actions[DialogNodeAdditionalAction.addItems]
-    if (action) {
-        (action as any).value2 = [...itemAmounts.value]
-    }
-    showItemsAmountModal.value = false
-}
-
-watch(
-    () => {
-        const action = form.additional_actions[DialogNodeAdditionalAction.addItems]
-        if (!action) return undefined
-        // if action itself is an array (legacy), return it
-        if (Array.isArray(action)) return action as number[]
-        // otherwise assume object with .value
-        return (action as any).value as number[] | undefined
-    },
-    (current: Array<number | { id?: number }> | undefined, previous: Array<number | { id?: number }> | undefined) => {
-        if (!Array.isArray(current)) return
-        // don't run on initial population where we don't have a previous value
-        if (typeof previous === 'undefined') return
-
-        const action = form.additional_actions[DialogNodeAdditionalAction.addItems]
-        if (!action) return
-
-        const toItemId = (item: number | { id?: number }): number | null => {
-            if (typeof item === 'number') {
-                return item;
-            }
-
-            if (item && typeof item === 'object' && typeof item.id === 'number') {
-                return item.id;
-            }
-
-            return null;
-        };
-
-        const oldIds = Array.isArray(previous) ? previous.map(toItemId).filter((id): id is number => id !== null) : []
-        const oldValue2 = Array.isArray((action as any).value2) ? (action as any).value2 : []
-
-        const newValue2: number[] = []
-
-        for (let idx = 0; idx < current.length; idx++) {
-            const id = toItemId(current[idx])
-            if (id === null) {
-                newValue2[idx] = 1
-                continue
-            }
-
-            const prevIndex = oldIds.indexOf(id)
-            newValue2[idx] = prevIndex !== -1 ? oldValue2[prevIndex] : 1
-        }
-
-        (action as any).value2 = newValue2
-    },
-    {deep: true}
-)
-
-// Outfit browser dialog
-const showOutfitBrowserModal = ref(false)
-
-const openOutfitBrowserModal = () => {
-    showOutfitBrowserModal.value = true
-}
-
-const handleOutfitSelected = (filePath: string) => {
-    currentOutfitSrc.value = filePath;
-    showOutfitBrowserModal.value = false
-}
-
-// Computed properties for outfit values to ensure reactivity
-const currentOutfitSrc = computed({
-    get: () => {
-        const outfitAction = form.additional_actions[DialogNodeAdditionalAction.setOutfit];
-        return outfitAction ? (outfitAction.value as string) || '' : '';
-    },
-    set: (value: string) => {
-        const outfitAction = form.additional_actions[DialogNodeAdditionalAction.setOutfit];
-        if (outfitAction) {
-            outfitAction.value = value;
-        }
-    }
-});
-
-const currentOutfitDuration = computed({
-    get: () => {
-        const outfitAction = form.additional_actions[DialogNodeAdditionalAction.setOutfit];
-        return outfitAction ? (outfitAction as any).duration || 0 : 0;
-    },
-    set: (value: number) => {
-        const outfitAction = form.additional_actions[DialogNodeAdditionalAction.setOutfit];
-        if (outfitAction) {
-            (outfitAction as any).duration = value;
-        }
-    }
-});
-
-watch(currentOutfitSrc, async (value) => {
-    if (! value || value.trim() === '') {
-        currentOutfitPreviewUrl.value = '';
-
-        return;
-    }
-
-    const { data } = await axios.get<{ url: string }>(route('assets.sign-url', {
-        path: `img/outfits/${value.trim()}`,
-    }));
-
-    currentOutfitPreviewUrl.value = data.url;
-}, { immediate: true });
 </script>
 
 <template>
-    <div class="flex flex-col gap-2">
-
+    <div class="flex flex-col gap-4">
         <Textarea v-model="form.content" rows="5" cols="50" />
 
-        <InputGroup v-for="name in Object.keys(form.additional_actions)" :key="name">
-
-            <Button icon="pi pi-times" severity="danger" aria-label="Cancel"  @click="delete form.additional_actions[name]" />
-
-            <InputGroupAddon style="min-width: 220px;">
-                {{dialogNodeAdditionalActionsList.find(action => action.value == name)?.label}}
-            </InputGroupAddon>
-
-            <InputNumber
-                v-if="form.additional_actions[name] && typeof form.additional_actions[name].value == 'number' && (name == DialogNodeAdditionalAction.addGold || name == DialogNodeAdditionalAction.addHonorPoints || name == DialogNodeAdditionalAction.addExp)"
-                v-model="form.additional_actions[name].value"
-                :max="2000000000"
-                :min="0"
-            />
-
-            <InputNumber
-                v-if="form.additional_actions[name] && typeof form.additional_actions[name].value == 'number' && name == DialogNodeAdditionalAction.addExpPercent"
-                v-model="form.additional_actions[name].value"
-                :step="0.01"
-                :minFractionDigits="0"
-                :maxFractionDigits="2"
-                :max="100"
-                :min="0"
-                suffix="%"
-            />
-
-            <BaseItemSearchSelect
-                v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.addItems"
-                v-model="form.additional_actions[name].value"
-                value-mode="id"
-                multiple
-                placeholder="Szukaj przedmiotów (nazwa lub #id)"
-                class="w-full md:w-80"
-                @resolved-items="handleResolvedAddItems"
-            />
-            <Button
-                v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.addItems"
-                @click="openItemsAmountModal"
-                severity="secondary"
-                icon="pi pi-pencil"
-            >
-                Ustaw ilości
-            </Button>
-
-            <Dialog
-                v-model:visible="showItemsAmountModal"
-                modal
-                header="Ilości przedmiotów"
-                :style="{ width: '36rem', maxWidth: '95vw' }"
-            >
-                <div
-                    v-if="Array.isArray(form.additional_actions[DialogNodeAdditionalAction.addItems]?.value)"
-                    class="space-y-4 max-h-[60vh] overflow-y-auto"
-                >
-                    <div
-                        v-for="(itemId, idx) in form.additional_actions[DialogNodeAdditionalAction.addItems]?.value"
-                        :key="itemId"
-                        class="border border-gray-200 rounded-xl p-4 shadow-sm"
-                    >
-                        <div class="text-sm text-gray-500 mb-1 font-medium">[#{{ itemId }}]</div>
-                        <div class="text-base font-semibold mb-3">
-                            {{ resolvedAddItems.find(i => i.id === itemId)?.name ?? 'Nieznany' }}
-                        </div>
-                        <InputNumber
-                            v-model="itemAmounts[idx]"
-                            :min="1"
-                            :max="1000"
-                            showButtons
-                            buttonLayout="horizontal"
-                            suffix=" szt."
-                            class="w-full"
-                        />
-                    </div>
-                </div>
-
-                <template #footer>
-                    <div class="flex justify-end gap-2">
-                        <Button label="Anuluj" severity="secondary" @click="showItemsAmountModal = false"/>
-                        <Button label="Zapisz" icon="pi pi-check" severity="primary" @click="saveItemAmounts"/>
-                    </div>
-                </template>
-            </Dialog>
-
-            <BaseItemSearchSelect
-                v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.blessing"
-                v-model="selectedBlessingItem"
-                value-mode="object"
-                category="blessings"
-                placeholder="Szukaj błogosławieństwa (nazwa lub #id)"
-                class="w-full p-0"
-            />
-
-            <div v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.blessing"
-                 class="flex items-center gap-2">
-                <InputSwitch v-model="(form.additional_actions[name] as any).scale"/>
-                <small>Skaluj poziom przedmiotu</small>
-            </div>
-
-            <!-- TreeSelectAdapter for setQuestStep action -->
-            <TreeSelectAdapter
-                v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.setQuestStep"
-                v-model="form.additional_actions[name].value"
-                :loading="loading"
-                :options="questNodes"
-                :onNodeExpand="onQuestNodeExpand"
-            />
-
-            <!-- Select for addDialogCounter action -->
-            <Select
-                v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.addDialogCounter"
-                v-model="form.additional_actions[name].value"
-                :options="dialogCounters"
-                optionLabel="name"
-                optionValue="id"
-                placeholder="Wybierz licznik dialogowy"
-                class="w-full md:w-80"
-            />
-
-            <!-- Select for resetDialogCounter action -->
-            <Select
-                v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.resetDialogCounter"
-                v-model="form.additional_actions[name].value"
-                :options="dialogCounters"
-                optionLabel="name"
-                optionValue="id"
-                placeholder="Wybierz licznik do wyczyszczenia"
-                class="w-full md:w-80"
-            />
-
-            <!-- Input for setOutfit action -->
-            <div v-if="form.additional_actions[name] && name == DialogNodeAdditionalAction.setOutfit"
-                 class="space-y-3 p-3 bg-gray-50 rounded-lg border">
-                <div>
-                    <label class="block text-sm font-medium mb-2 text-gray-700">Źródło grafiki stroju</label>
-                    <div class="flex gap-2">
-                        <InputText
-                            v-model="currentOutfitSrc"
-                            placeholder="np. grzyb.gif"
-                            class="flex-1"
-                        />
-                        <Button
-                            @click="openOutfitBrowserModal"
-                            severity="secondary"
-                            icon="pi pi-folder-open"
-                            label="Przeglądaj"
-                            size="small"
-                        />
-                    </div>
-                    <!-- Preview image -->
-                    <div v-if="currentOutfitSrc" class="mt-2">
-                        <img
-                            :src="currentOutfitPreviewUrl"
-                            alt="Podgląd stroju"
-                            class="h-16 w-16 object-contain border border-gray-300 rounded"
-                            @error="(e: Event) => ((e.target as HTMLImageElement).style.display = 'none')"
-                        />
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-2 text-gray-700">Czas trwania (minuty)</label>
-                    <InputNumber
-                        style="width:60px"
-                        v-model="currentOutfitDuration"
-                        :min="0"
-                        placeholder="Czas w minutach"
-                    />
-                    <small class="text-gray-500 text-xs mt-1 block">0 = permanentny strój</small>
-                </div>
-            </div>
-
-        </InputGroup>
-
-        <InputGroup>
-            <Select
-                class="flex-auto"
-                name="category"
-                v-model="newAdditionalAction"
-                :options="availableDialogNodeAdditionalActionsList"
-                option-value="value"
-                option-label="label"
-            />
-            <Button
-                severity="info"
-                @click="addAdditionalAction"
-            >
-                Dodaj akcję
-            </Button>
-        </InputGroup>
+        <div class="flex flex-col gap-2">
+            <h3 class="text-lg font-semibold m-0">Akcje dodatkowe</h3>
+            <AdditionalActionsEditor ref="additionalActionsEditor" v-model:actions="form.additional_actions" />
+        </div>
 
         <div class="flex gap-2">
             <Button :loading="processing" class="flex-1" @click="save">Zapisz</Button>
             <Button :loading="copyProcessing" severity="secondary" class="flex-1" @click="copyDialog">Kopiuj dialog</Button>
         </div>
-        <OutfitBrowserDialog
-            v-model:visible="showOutfitBrowserModal"
-            @select="handleOutfitSelected"
-        />
     </div>
 </template>
-
-<style scoped>
-
-</style>

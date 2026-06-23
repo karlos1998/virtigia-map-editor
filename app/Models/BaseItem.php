@@ -103,7 +103,8 @@ class BaseItem extends DynamicModel
             ->distinct()
             ->whereRaw('1=0') // Start with an impossible condition
             ->orWhereHas('nodes.options', function ($query) {
-                $query->whereRaw('JSON_CONTAINS(rules, ?, \'$.items.value\')', [$this->id]);
+                $query->whereRaw('JSON_CONTAINS(rules, ?, \'$.items.value\')', [$this->id])
+                    ->orWhereRaw('JSON_CONTAINS(additional_actions, ?, \'$.addItems.value\')', [$this->id]);
             })
             ->orWhereHas('nodes', function ($query) {
                 $query->whereRaw('JSON_CONTAINS(additional_actions, ?, \'$.addItems.value\')', [$this->id]);

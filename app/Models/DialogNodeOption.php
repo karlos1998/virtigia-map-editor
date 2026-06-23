@@ -4,18 +4,18 @@ namespace App\Models;
 
 use App\Enums\DialogNodeOptionAdditionalAction;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DialogNodeOption extends DynamicModel
 {
     use HasFactory;
 
-    protected $fillable = ['label', 'rules', 'additional_action', 'order', 'cooldown'];
+    protected $fillable = ['label', 'rules', 'additional_action', 'additional_actions', 'order', 'cooldown'];
 
     protected $casts = [
         'rules' => 'json',
         'additional_action' => DialogNodeOptionAdditionalAction::class,
+        'additional_actions' => 'json',
         'cooldown' => 'integer',
     ];
 

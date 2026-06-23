@@ -39,6 +39,10 @@ const editOption = (option: DialogOptionResource) => {
     showEditOption.value = true;
 };
 
+const optionHasAction = (option: DialogOptionResource): boolean => {
+    return Boolean(option.additional_action) || Object.keys(option.additional_actions ?? {}).length > 0;
+};
+
 const handleEditOptionClose = (closeData: { remove?: boolean, dialogOption?: DialogOptionResource }) => {
 
     console.log('handleEditOptionClose', closeData);
@@ -53,6 +57,7 @@ const handleEditOptionClose = (closeData: { remove?: boolean, dialogOption?: Dia
     if (closeData?.dialogOption) {
         currentOption.value.label = closeData.dialogOption.label;
         currentOption.value.additional_action = closeData.dialogOption.additional_action;
+        currentOption.value.additional_actions = closeData.dialogOption.additional_actions;
         currentOption.value.rules = closeData.dialogOption.rules;
         currentOption.value.edges = closeData.dialogOption.edges;
         console.log('new option data ', currentOption.value);
@@ -104,6 +109,10 @@ const editNode = () => {
         onClose(options) {
             if (options.data.content) {
                 state.value.content = options.data.content;
+            }
+
+            if (options.data.additional_actions) {
+                props.data.additional_actions = options.data.additional_actions;
             }
 
             // If the dialog was copied, refresh the page to show the new node
@@ -166,7 +175,7 @@ export default {
                 <template #item="{element: option}">
                     <div class="option flex items-center gap-2"
                          :class="{
-                         exit: !handleHasConnections[`source-${option.id}`] && !option.additional_action
+                         exit: !handleHasConnections[`source-${option.id}`] && !optionHasAction(option)
                      }" @click="editOption(option)">
                         <span class="drag-handle cursor-grab select-none text-xl mr-2"
                               @mousedown.stop
@@ -196,7 +205,6 @@ export default {
         :option="currentOption"
         :parent="props.id"
         :dialog_id="props.data.dialog_id"
-        :additional_action="props.data.additional_actions"
     />
 </template>
 

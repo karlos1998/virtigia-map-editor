@@ -9,31 +9,27 @@ import Accordion from 'primevue/accordion';
 import AccordionPanel from 'primevue/accordionpanel';
 import Checkbox from 'primevue/checkbox';
 import InputNumber from 'primevue/inputnumber';
-import {computed, Ref, ref, watch} from "vue";
+import { computed, ref, watch } from 'vue';
+import { useForm, usePage } from '@inertiajs/vue3';
+import { route } from 'ziggy-js';
+import { useToast } from 'primevue';
+import axios from 'axios';
+import { DialogNodeOptionEdgeWithRules, DialogOptionResource } from '@/Resources/DialogOption.resource';
+import { DropdownListType } from '@/Resources/DropdownList.type';
+import EditRules from '../Componnts/EditRules.vue';
+import { DialogNodeRulesResource } from '@/Resources/DialogNodeRules.resource';
+import TreeSelectAdapter from '../Componnts/TreeSelectAdapter.vue';
+import { useQuestStepSelection } from '../Composables/useQuestStepSelection';
+import AdditionalActionsEditor from '@/Pages/Dialog/Componnts/AdditionalActionsEditor.vue';
+import { DialogNodeAdditionalActionsResource } from '@/Resources/DialogNodeAdditionalActions.resource';
 
-import { inject, onMounted } from "vue";
-import {DynamicDialogInstance} from "primevue/dynamicdialogoptions";
-import {useForm, usePage} from "@inertiajs/vue3";
-import {route} from "ziggy-js";
-import {MultiSelectFilterEvent, useToast} from "primevue";
-import axios from "axios";
-import {DialogNodeOptionEdgeWithRules, DialogOptionResource} from "@/Resources/DialogOption.resource";
-import {DropdownListType} from "@/Resources/DropdownList.type";
-import EditRules from "../Componnts/EditRules.vue";
-import {DialogNodeRulesResource} from "@/Resources/DialogNodeRules.resource";
-import TreeSelectAdapter from "../Componnts/TreeSelectAdapter.vue";
-import { useQuestStepSelection } from "../Composables/useQuestStepSelection";
+const dialogNodeOptionAdditionalActionsList = ref(usePage<{dialogNodeOptionAdditionalActionsList: DropdownListType}>().props.dialogNodeOptionAdditionalActionsList);
 
-const dialogNodeOptionAdditionalActionsList = ref(usePage<{dialogNodeOptionAdditionalActionsList: DropdownListType}>().props.dialogNodeOptionAdditionalActionsList)
-
-
-// Define props and emits
 const props = defineProps<{
     visible: boolean,
     option: DialogOptionResource,
     parent: string,
     dialog_id: number,
-    additional_action?: any
 }>();
 
 const emit = defineEmits<{
@@ -41,11 +37,11 @@ const emit = defineEmits<{
     close: [data: { remove?: boolean, dialogOption?: DialogOptionResource }]
 }>();
 
-
 type FormOptionData = {
     label: string
     additional_action: any// todo
     additional_action_data?: string
+    additional_actions: DialogNodeAdditionalActionsResource
     cooldown: number|null
     rules: DialogNodeRulesResource
     edges: DialogNodeOptionEdgeWithRules[]
@@ -55,24 +51,25 @@ const form = useForm<FormOptionData>({
     label: '',
     additional_action: null,
     additional_action_data: '',
+    additional_actions: {},
     cooldown: null,
     rules: {},
     edges: [],
-})
+});
 
 const toast = useToast();
+const additionalActionsEditor = ref<{
+    getPayload: () => DialogNodeAdditionalActionsResource | null;
+} | null>(null);
 
-// Use the quest step selection composable
 const { questNodes, loading, loadQuests, loadQuestStepById, onQuestNodeExpand } = useQuestStepSelection();
 
 const formLoaded = ref(false);
-// Use the visible prop to control the drawer's visibility
 const drawerVisible = computed({
     get: () => props.visible,
     set: (value) => emit('update:visible', value)
 });
 
-// Watch for changes to additional_action and clear additional_action_data if needed
 watch(() => form.additional_action, (newValue) => {
     if (newValue !== 'setQuestStep') {
         form.additional_action_data = '';
@@ -80,34 +77,29 @@ watch(() => form.additional_action, (newValue) => {
 });
 
 const closeDrawer = () => {
-    // Update the visible prop through the computed property
     drawerVisible.value = false;
-
-    // Emit close event
     emit('close', {});
 };
 
-watch(() => props.visible, () => {
-    // Initialize form with option data from props
+watch(() => props.visible, (visible) => {
+    if (!visible || !props.option) {
+        return;
+    }
+
     form.label = props.option?.label ?? '';
     form.additional_action = props.option?.additional_action ?? '';
     form.additional_action_data = props.option?.additional_action_data ?? '';
+    form.additional_actions = !Array.isArray(props.option?.additional_actions) ? props.option?.additional_actions ?? {} : {};
     form.cooldown = props.option?.cooldown ?? null;
     form.rules = Object.keys(props.option?.rules || {}).length > 0 ? props.option?.rules : {};
-
-    console.log('form.rules', form.rules)
-
     form.edges = props.option?.edges.map(edge => ({
         ...edge,
         rules: edge.rules || {}
     })) || [];
 
-    // Load quests for the TreeSelect
     loadQuests();
 
-    // Check if a quest step is already selected and load its details
     if (form.additional_action === 'setQuestStep' && form.additional_action_data && form.additional_action_data.startsWith('s-')) {
-        // Extract step ID from the value (format: "s-{id}")
         const stepId = parseInt(form.additional_action_data.substring(2));
         if (!isNaN(stepId)) {
             loadQuestStepById(stepId);
@@ -115,11 +107,10 @@ watch(() => props.visible, () => {
     }
 
     formLoaded.value = true
-})
+});
 
 const processing = ref(false);
 
-// Computed property to format cooldown time
 const formattedCooldown = computed(() => {
     const seconds = form.cooldown;
     if (!seconds || seconds <= 0) return '';
@@ -136,7 +127,6 @@ const formattedCooldown = computed(() => {
     return parts.join(' ');
 });
 
-// Computed for checkbox state
 const hasCooldown = computed({
     get: () => form.cooldown !== null && form.cooldown > 0,
     set: (value: boolean) => {
@@ -145,40 +135,36 @@ const hasCooldown = computed({
 });
 
 const save = () => {
-    //axios zeby form inertia nie przeladowywal strony
-
     if(!props.option) return;
 
-    // Update the visible prop through the computed property
-    drawerVisible.value = false;
-
-    // Validate setQuestStep action data
     if (form.additional_action === 'setQuestStep') {
         if (!form.additional_action_data) {
             toast.add({ severity: 'error', summary: 'Błąd', detail: 'Wybierz krok questa', life: 3000 });
             return;
         }
 
-        // Make sure only quest steps (s-X) are selected, not quests (q-X)
         if (form.additional_action_data.startsWith('q-')) {
             toast.add({ severity: 'error', summary: 'Błąd', detail: 'Wybierz krok questa, nie cały quest', life: 3000 });
             return;
         }
     }
 
+    const additionalActionsPayload = additionalActionsEditor.value?.getPayload();
+
+    if (!additionalActionsPayload) {
+        return;
+    }
+
+    drawerVisible.value = false;
     processing.value = true;
 
-    console.log('save option', form.data())
-
     const transformData = (data: FormOptionData) => {
-        const d = { ...data };
+        const d = { ...data, additional_actions: additionalActionsPayload };
 
-        // If additional_action is not setQuestStep, remove additional_action_data
         if (d.additional_action !== 'setQuestStep') {
             d.additional_action_data = undefined;
         }
 
-        // If cooldown is not set (checkbox unchecked), send null
         if (!hasCooldown.value) {
             d.cooldown = null;
         }
@@ -194,8 +180,6 @@ const save = () => {
     }), data)
         .then(({data}) => {
             toast.add({ severity: 'success', summary: 'Udało się', detail: 'Opcja dialogowa została edytowana', life: 3000 });
-
-            // Emit close event with the updated dialog option
             emit('close', { dialogOption: data });
         })
         .catch(() => {
@@ -203,41 +187,13 @@ const save = () => {
         })
         .finally(() => {
             processing.value = false;
-        })
-
-    // form
-    //     .transform(data => {
-    //         const d = data;
-    //         for(const ruleId in data.rules) {
-    //             if(ruleId == 'questStep' && d.rules[ruleId] && d.rules[ruleId].value && typeof d.rules[ruleId].value == 'object') {
-    //                 d.rules[ruleId].value = Object.keys(data.rules[ruleId].value)[0];
-    //             }
-    //         }
-    //         return d;
-    //     })
-    //     .patch(route('dialogs.nodes.options.update', {
-    //     dialogNodeOption: dialogRef.value.data?.option?.id,
-    //     dialog: dialogRef.value.data.dialog_id,
-    //     dialogNode: dialogRef.value.data?.option?.node_id,
-    // }), {
-    //     preserveState: true,
-    //     onSuccess: () => {
-    //         toast.add({ severity: 'success', summary: 'Udało się', detail: 'Opcja dialogowa została edytowana', life: 3000 });
-    //         dialogRef.value.close({
-    //             dialogOption: form.data(),
-    //         });
-    //     },
-    //     onError: () => {
-    //         toast.add({ severity: 'error', summary: 'Błąd', detail: 'Wystąpił problem podczas edycji opcji dialogowej', life: 3000 });
-    //     }
-    // })
-}
+        });
+};
 
 const remove = () => {
 
     if(!props.option) return;
 
-    // Update the visible prop through the computed property
     drawerVisible.value = false;
     processing.value = true;
 
@@ -248,8 +204,6 @@ const remove = () => {
     }))
         .then(() => {
             toast.add({ severity: 'success', summary: 'Udało się', detail: 'Opcja dialogowa została usunięta', life: 3000 });
-
-            // Emit close event with remove flag
             emit('close', { remove: true });
         })
         .catch(({response}) => {
@@ -257,11 +211,8 @@ const remove = () => {
         })
         .finally(() => {
             processing.value = false;
-        })
-
-}
-
-
+        });
+};
 </script>
 
 <template>
@@ -327,6 +278,11 @@ const remove = () => {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div class="card">
+                <h3 class="text-xl mb-3">Akcje dodatkowe opcji</h3>
+                <AdditionalActionsEditor ref="additionalActionsEditor" v-model:actions="form.additional_actions" />
             </div>
 
             <div class="card">

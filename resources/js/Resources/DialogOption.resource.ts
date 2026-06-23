@@ -1,10 +1,12 @@
 import {DialogNodeRulesResource} from "./DialogNodeRules.resource";
+import { DialogNodeAdditionalActionsResource } from "@/Resources/DialogNodeAdditionalActions.resource";
 
 export interface DialogOptionResource {
     id: number
     label: string
     node_id: number
     additional_action: string|null; //todo ? moze enum
+    additional_actions: DialogNodeAdditionalActionsResource|null;
     cooldown: number|null;
     rules: DialogNodeRulesResource
     edges: DialogNodeOptionEdgeWithRules[]

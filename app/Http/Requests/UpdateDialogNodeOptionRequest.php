@@ -4,15 +4,15 @@ namespace App\Http\Requests;
 
 use App\Enums\DialogNodeOptionAdditionalAction;
 use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
-use App\Models\BaseItem;
+use App\Rules\DialogNodeAdditionalActionsValidator;
 use App\Rules\DialogOptionRuleValidator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
-use App\Enums\DialogNodeOptionRule;
 
 class UpdateDialogNodeOptionRequest extends FormRequest
 {
     use LoadCurrentWorldTemplate;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -37,7 +37,12 @@ class UpdateDialogNodeOptionRequest extends FormRequest
             ],
             'additional_action' => [
                 'nullable',
-                new Enum(DialogNodeOptionAdditionalAction::class)
+                new Enum(DialogNodeOptionAdditionalAction::class),
+            ],
+            'additional_actions' => [
+                'nullable',
+                'array',
+                new DialogNodeAdditionalActionsValidator,
             ],
             'cooldown' => [
                 'nullable',
@@ -47,7 +52,7 @@ class UpdateDialogNodeOptionRequest extends FormRequest
             'rules' => [
                 'nullable',
                 'array',
-                new DialogOptionRuleValidator()
+                new DialogOptionRuleValidator,
             ],
 
             'edges' => [
@@ -57,17 +62,16 @@ class UpdateDialogNodeOptionRequest extends FormRequest
 
             'edges.*.edge_id' => [
                 'required',
-                "exists:$this->selectedDatabase.dialog_edges,id"
-                //todo - sprwadzac czy source_dialog_id to nasz dialog
+                "exists:$this->selectedDatabase.dialog_edges,id",
+                // todo - sprwadzac czy source_dialog_id to nasz dialog
             ],
 
             'edges.*.rules' => [
                 'nullable',
                 'array',
-                new DialogOptionRuleValidator(),
-            ]
+                new DialogOptionRuleValidator,
+            ],
 
         ];
     }
-
 }

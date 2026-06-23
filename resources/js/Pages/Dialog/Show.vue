@@ -347,6 +347,11 @@ const advancedNodeFromJsonSamples = [
     {
       "label": "Ulecz mnie",
       "additional_action": "HEAL",
+      "additional_actions": {
+        "addGold": {
+          "value": 100
+        }
+      },
       "cooldown": 5
     },
     {
@@ -366,7 +371,7 @@ const advancedNodeFromJsonSamples = [
     },
     "content": "Dostaniesz bonus doświadczenia.",
     "additional_actions": {
-      "ADD_EXP_PERCENT": {
+      "addExpPercent": {
         "value": 12.5
       }
     }
@@ -835,6 +840,7 @@ const items = ref([
     {
       "label": "Treść opcji",
       "additional_action": "HEAL",
+      "additional_actions": { "...": { "value": 1 } },
       "cooldown": 5,
       "rules": { "...": {} }
     }
@@ -842,7 +848,7 @@ const items = ref([
 }</pre>
                         </div>
                         <div class="flex flex-col gap-1">
-                            <div class="font-semibold">Dostępne `node.additional_actions`</div>
+                            <div class="font-semibold">Dostępne `node.additional_actions` i `options[].additional_actions`</div>
                             <div class="text-surface-600 dark:text-surface-300">
                                 {{ props.dialogNodeAdditionalActionsList.map((item) => item.value).join(', ') || '-' }}
                             </div>

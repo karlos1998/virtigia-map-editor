@@ -84,6 +84,11 @@ class Dialog extends DynamicModel
 
             foreach ($node->options as $option) {
                 $collectQuestReferences($option->rules ?? []);
+
+                $optionSetQuestStepValue = data_get($option->additional_actions, 'setQuestStep.value');
+                if (is_numeric($optionSetQuestStepValue)) {
+                    $questStepIds->push((int) $optionSetQuestStepValue);
+                }
             }
         }
 

@@ -58,6 +58,7 @@ class DebugBaseItemUsageViewCommand extends Command
             ['base_npc_loots', (string) $directUsage['loot_count'], $directUsage['loot_sample']],
             ['shop_items', (string) $directUsage['shop_count'], $directUsage['shop_sample']],
             ['dialog_node_options.rules', (string) $directUsage['dialog_rules_count'], $directUsage['dialog_rules_sample']],
+            ['dialog_node_options.additional_actions', (string) $directUsage['dialog_option_actions_count'], $directUsage['dialog_option_actions_sample']],
             ['dialog_nodes.additional_actions', (string) $directUsage['dialog_actions_count'], $directUsage['dialog_actions_sample']],
         ]);
 
@@ -136,6 +137,8 @@ class DebugBaseItemUsageViewCommand extends Command
      *     shop_sample: string,
      *     dialog_rules_count: int,
      *     dialog_rules_sample: string,
+     *     dialog_option_actions_count: int,
+     *     dialog_option_actions_sample: string,
      *     dialog_actions_count: int,
      *     dialog_actions_sample: string
      * }
@@ -171,7 +174,14 @@ class DebugBaseItemUsageViewCommand extends Command
             $baseItemId,
             $baseItemUsageViewService
         );
-        $dialogActions = $this->collectDialogPayloadHits(
+        $dialogOptionActions = $this->collectDialogPayloadHits(
+            $world,
+            'dialog_node_options',
+            'additional_actions',
+            $baseItemId,
+            $baseItemUsageViewService
+        );
+        $dialogNodeActions = $this->collectDialogPayloadHits(
             $world,
             'dialog_nodes',
             'additional_actions',
@@ -192,8 +202,10 @@ class DebugBaseItemUsageViewCommand extends Command
             'shop_sample' => $this->formatNamedRows($shopRows),
             'dialog_rules_count' => $dialogRules['count'],
             'dialog_rules_sample' => $dialogRules['sample'],
-            'dialog_actions_count' => $dialogActions['count'],
-            'dialog_actions_sample' => $dialogActions['sample'],
+            'dialog_option_actions_count' => $dialogOptionActions['count'],
+            'dialog_option_actions_sample' => $dialogOptionActions['sample'],
+            'dialog_actions_count' => $dialogNodeActions['count'],
+            'dialog_actions_sample' => $dialogNodeActions['sample'],
         ];
     }
 
@@ -243,6 +255,7 @@ class DebugBaseItemUsageViewCommand extends Command
      *     loot_count: int,
      *     shop_count: int,
      *     dialog_rules_count: int,
+     *     dialog_option_actions_count: int,
      *     dialog_actions_count: int
      * }  $directUsage
      */
@@ -251,6 +264,7 @@ class DebugBaseItemUsageViewCommand extends Command
         return $directUsage['loot_count'] > 0
             || $directUsage['shop_count'] > 0
             || $directUsage['dialog_rules_count'] > 0
+            || $directUsage['dialog_option_actions_count'] > 0
             || $directUsage['dialog_actions_count'] > 0;
     }
 

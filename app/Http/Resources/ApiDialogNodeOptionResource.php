@@ -14,6 +14,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'label', type: 'string', nullable: true),
         new OA\Property(property: 'rules', type: 'object', nullable: true),
         new OA\Property(property: 'additional_action', type: 'string', nullable: true),
+        new OA\Property(property: 'additional_actions', type: 'object', nullable: true),
         new OA\Property(property: 'cooldown', type: 'integer', nullable: true),
         new OA\Property(property: 'order', type: 'integer', nullable: true),
         new OA\Property(
@@ -32,6 +33,7 @@ class ApiDialogNodeOptionResource extends JsonResource
             'label' => $this->label,
             'rules' => $this->rules,
             'additional_action' => $this->additional_action?->value ?? $this->additional_action,
+            'additional_actions' => $this->additional_actions,
             'cooldown' => $this->cooldown,
             'order' => $this->order,
             'edges' => ApiDialogEdgeResource::collection($this->whenLoaded('edges')),

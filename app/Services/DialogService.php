@@ -85,6 +85,7 @@ class DialogService extends BaseService
                 $node->options()->create([
                     'label' => $optionPayload['label'],
                     'additional_action' => $optionPayload['additional_action'] ?? null,
+                    'additional_actions' => $optionPayload['additional_actions'] ?? null,
                     'cooldown' => $optionPayload['cooldown'] ?? null,
                     'rules' => $optionPayload['rules'] ?? null,
                     'order' => $index,
@@ -439,6 +440,7 @@ class DialogService extends BaseService
                 'y' => $dialogNode->position['y'] + 50,
             ],
             'action_data' => $dialogNode->action_data,
+            'additional_actions' => $dialogNode->additional_actions,
             'shop_id' => $dialogNode->shop_id,
             'hotel_id' => $dialogNode->hotel_id,
         ]);
@@ -448,6 +450,7 @@ class DialogService extends BaseService
             $newOption = $newNode->options()->create([
                 'label' => $option->label,
                 'additional_action' => $option->additional_action,
+                'additional_actions' => $option->additional_actions,
                 'rules' => $option->rules,
             ]);
 
@@ -515,6 +518,7 @@ class DialogService extends BaseService
                 'content' => $node->content,
                 'position' => $node->position,
                 'action_data' => $node->action_data,
+                'additional_actions' => $node->additional_actions,
                 'shop_id' => $node->shop_id,
                 'hotel_id' => $node->hotel_id,
             ]);
@@ -526,6 +530,7 @@ class DialogService extends BaseService
                 $newOption = $newNode->options()->create([
                     'label' => $option->label,
                     'additional_action' => $option->additional_action,
+                    'additional_actions' => $option->additional_actions,
                     'rules' => $option->rules,
                 ]);
 

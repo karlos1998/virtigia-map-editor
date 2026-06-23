@@ -44,6 +44,7 @@ class Quest extends DynamicModel
         $questStepIds = $this->steps->map(function ($value) {
             return "s-$value->id";
         });
+        $numericQuestStepIds = $this->steps->pluck('id');
 
         $allIds = collect([$questId])->merge($questStepIds);
         $rulePaths = [
@@ -53,17 +54,35 @@ class Quest extends DynamicModel
         ];
 
         $query = Dialog::distinct()
-            ->whereHas('nodes.options', function ($query) use ($allIds, $rulePaths) {
-                $this->scopeWhereJsonContainsAnyInPaths($query, 'rules', $rulePaths, $allIds->all());
+            ->whereHas('nodes.options', function ($query) use ($allIds, $numericQuestStepIds, $questStepIds, $rulePaths) {
+                $query->where(function ($subQuery) use ($allIds, $rulePaths) {
+                    $this->scopeWhereJsonContainsAnyInPaths($subQuery, 'rules', $rulePaths, $allIds->all());
+                });
+
+                if ($questStepIds->isNotEmpty()) {
+                    $query->orWhere(function ($subQuery) use ($numericQuestStepIds, $questStepIds) {
+                        foreach ($questStepIds as $index => $stepId) {
+                            $this->scopeWhereJsonContains($subQuery, 'additional_actions', '$.setQuestStep.value', $stepId, $index === 0 ? 'and' : 'or');
+                        }
+
+                        foreach ($numericQuestStepIds as $stepId) {
+                            $subQuery->orWhereRaw('JSON_CONTAINS(additional_actions, ?, \'$.setQuestStep.value\')', [$stepId]);
+                        }
+                    });
+                }
             });
 
         // Only add the orWhereHas clause if there are quest steps
         if ($questStepIds->isNotEmpty()) {
-            $query->orWhereHas('nodes', function ($query) use ($questStepIds) {
+            $query->orWhereHas('nodes', function ($query) use ($numericQuestStepIds, $questStepIds) {
                 // Handle matches for quest step IDs in additional_actions
-                $query->where(function ($subQuery) use ($questStepIds) {
-                    foreach ($questStepIds as $stepId) {
-                        $this->scopeWhereJsonContains($subQuery, 'additional_actions', '$.setQuestStep.value', $stepId, 'or');
+                $query->where(function ($subQuery) use ($numericQuestStepIds, $questStepIds) {
+                    foreach ($questStepIds as $index => $stepId) {
+                        $this->scopeWhereJsonContains($subQuery, 'additional_actions', '$.setQuestStep.value', $stepId, $index === 0 ? 'and' : 'or');
+                    }
+
+                    foreach ($numericQuestStepIds as $stepId) {
+                        $subQuery->orWhereRaw('JSON_CONTAINS(additional_actions, ?, \'$.setQuestStep.value\')', [$stepId]);
                     }
                 });
             });
@@ -86,6 +105,7 @@ class Quest extends DynamicModel
         $questStepIds = $this->steps->map(function ($value) {
             return "s-$value->id";
         });
+        $numericQuestStepIds = $this->steps->pluck('id');
 
         // If there are no quest steps, return an empty collection
         if ($questStepIds->isEmpty()) {
@@ -93,10 +113,14 @@ class Quest extends DynamicModel
         }
 
         return DialogNode::distinct()
-            ->where(function ($query) use ($questStepIds) {
+            ->where(function ($query) use ($numericQuestStepIds, $questStepIds) {
                 // Handle matches for quest step IDs in additional_actions
-                foreach ($questStepIds as $stepId) {
-                    $this->scopeWhereJsonContains($query, 'additional_actions', '$.setQuestStep.value', $stepId, 'or');
+                foreach ($questStepIds as $index => $stepId) {
+                    $this->scopeWhereJsonContains($query, 'additional_actions', '$.setQuestStep.value', $stepId, $index === 0 ? 'and' : 'or');
+                }
+
+                foreach ($numericQuestStepIds as $stepId) {
+                    $query->orWhereRaw('JSON_CONTAINS(additional_actions, ?, \'$.setQuestStep.value\')', [$stepId]);
                 }
             })
             ->get();
@@ -117,6 +141,7 @@ class Quest extends DynamicModel
         $questStepIds = $this->steps->map(function ($value) {
             return "s-$value->id";
         });
+        $numericQuestStepIds = $this->steps->pluck('id');
 
         $allIds = collect([$questId])->merge($questStepIds);
         $rulePaths = [
@@ -126,8 +151,16 @@ class Quest extends DynamicModel
         ];
 
         return DialogNodeOption::distinct()
-            ->where(function ($query) use ($allIds, $rulePaths) {
+            ->where(function ($query) use ($allIds, $numericQuestStepIds, $questStepIds, $rulePaths) {
                 $this->scopeWhereJsonContainsAnyInPaths($query, 'rules', $rulePaths, $allIds->all());
+
+                foreach ($questStepIds as $stepId) {
+                    $this->scopeWhereJsonContains($query, 'additional_actions', '$.setQuestStep.value', $stepId, 'or');
+                }
+
+                foreach ($numericQuestStepIds as $stepId) {
+                    $query->orWhereRaw('JSON_CONTAINS(additional_actions, ?, \'$.setQuestStep.value\')', [$stepId]);
+                }
             })
             ->get();
     }

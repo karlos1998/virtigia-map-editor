@@ -278,6 +278,18 @@ class BaseItemUsageViewService
             });
 
         DB::connection($connection)
+            ->table('dialog_node_options')
+            ->whereNotNull('additional_actions')
+            ->select(['id', 'additional_actions'])
+            ->orderBy('id')
+            ->chunkById(500, function (Collection $rows) use (&$itemIds): void {
+                foreach ($rows as $row) {
+                    $payload = json_decode($row->additional_actions ?? 'null', true);
+                    $itemIds = [...$itemIds, ...$this->extractItemIdsFromPayload($payload)];
+                }
+            });
+
+        DB::connection($connection)
             ->table('dialog_nodes')
             ->whereNotNull('additional_actions')
             ->select(['id', 'additional_actions'])
