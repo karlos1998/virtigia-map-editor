@@ -2,14 +2,10 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
 use App\Models\Map;
-use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateDialogNodeActionDataRequest extends FormRequest
+class UpdateDialogNodeActionDataRequest extends CurrentWorldRequest
 {
-    use LoadCurrentWorldTemplate;
-
     public function authorize(): bool
     {
         return true;
@@ -36,9 +32,9 @@ class UpdateDialogNodeActionDataRequest extends FormRequest
 
         return [
             'teleportation' => ['required', 'array'],
-            'teleportation.mapId' => ['required', "exists:$this->selectedDatabase.maps,id"],
-            'teleportation.x' => ['required', 'integer', 'min:0', 'max:' . $maxX],
-            'teleportation.y' => ['required', 'integer', 'min:0', 'max:' . $maxY],
+            'teleportation.mapId' => ['required', $this->existsOnCurrentWorld('maps')],
+            'teleportation.x' => ['required', 'integer', 'min:0', 'max:'.$maxX],
+            'teleportation.y' => ['required', 'integer', 'min:0', 'max:'.$maxY],
             'teleportation.createInstance' => ['sometimes', 'boolean'],
             'teleportation.includeNpcs' => ['sometimes', 'boolean'],
             'teleportation.scaleNpcsToPlayerLevel' => ['sometimes', 'boolean'],

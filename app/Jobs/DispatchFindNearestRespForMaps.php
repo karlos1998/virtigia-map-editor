@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\DynamicModel;
 use App\Models\Map;
+use App\Services\WorldTemplateConnectionResolver;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -27,9 +28,7 @@ class DispatchFindNearestRespForMaps implements ShouldQueue
      */
     public function handle(): void
     {
-        $worlds = ['retro', 'legacy'];
-
-        foreach ($worlds as $world) {
+        foreach (app(WorldTemplateConnectionResolver::class)->visibleSlugs() as $world) {
             DynamicModel::setGlobalConnection($world);
 
             $maps = Map::whereNull('respawn_point_id')->get();

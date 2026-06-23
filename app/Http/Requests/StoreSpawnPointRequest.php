@@ -3,15 +3,11 @@
 namespace App\Http\Requests;
 
 use App\Enums\Profession;
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
 use App\Models\Map;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreSpawnPointRequest extends FormRequest
+class StoreSpawnPointRequest extends CurrentWorldRequest
 {
-    use LoadCurrentWorldTemplate;
-
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -28,7 +24,7 @@ class StoreSpawnPointRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'map_id' => ['required', "exists:$this->selectedDatabase.maps,id"],
+            'map_id' => ['required', $this->existsOnCurrentWorld('maps')],
             'x' => [
                 'required',
                 'integer',
@@ -53,7 +49,7 @@ class StoreSpawnPointRequest extends FormRequest
             ],
             'profession' => [
                 'required',
-                Rule::in(Profession::valuesToList())
+                Rule::in(Profession::valuesToList()),
             ],
         ];
     }

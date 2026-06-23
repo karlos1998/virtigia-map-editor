@@ -31,7 +31,18 @@ class BulkAttachBaseItemsToBaseNpcLootTest extends TestCase
 
         parent::setUp();
 
-        $this->worldConnection = config('database.default');
+        $this->worldConnection = 'retro';
+
+        config()->set('database.connections.retro', [
+            'driver' => 'sqlite',
+            'database' => database_path('testing-bulk-loot-retro.sqlite'),
+            'prefix' => '',
+            'foreign_key_constraints' => true,
+        ]);
+
+        if (! file_exists(database_path('testing-bulk-loot-retro.sqlite'))) {
+            touch(database_path('testing-bulk-loot-retro.sqlite'));
+        }
 
         Schema::connection($this->worldConnection)->dropIfExists('base_npc_loots');
         Schema::connection($this->worldConnection)->dropIfExists('base_items');

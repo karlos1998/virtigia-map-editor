@@ -202,6 +202,11 @@ const administrationModel = computed(() => {
                     icon: 'pi pi-database',
                     route: 'administration.database-dumps.index',
                 },
+                {
+                    label: 'Template\'y światów',
+                    icon: 'pi pi-globe',
+                    route: 'administration.world-templates.index',
+                },
             ],
         },
     ];

@@ -2,14 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-
-class UpdateHotelRoomRequest extends FormRequest
+class UpdateHotelRoomRequest extends CurrentWorldRequest
 {
-    use LoadCurrentWorldTemplate;
-
     public function authorize(): bool
     {
         return true;
@@ -20,13 +14,13 @@ class UpdateHotelRoomRequest extends FormRequest
         $hotelRoomId = (int) $this->route('hotelRoom')?->id;
 
         return [
-            'base_item_id' => ['required', 'integer', "exists:{$this->selectedDatabase}.base_items,id"],
+            'base_item_id' => ['required', 'integer', $this->existsOnCurrentWorld('base_items')],
             'price' => ['required', 'integer', 'min:0'],
             'door_id' => [
                 'required',
                 'integer',
-                "exists:{$this->selectedDatabase}.doors,id",
-                Rule::unique("{$this->selectedDatabase}.hotel_rooms", 'door_id')
+                $this->existsOnCurrentWorld('doors'),
+                $this->uniqueOnCurrentWorld('hotel_rooms', 'door_id')
                     ->where('hotel_id', (int) $this->route('hotel')?->id)
                     ->ignore($hotelRoomId),
             ],

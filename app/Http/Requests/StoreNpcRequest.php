@@ -2,17 +2,11 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-use App\Models\NpcLocation;
 use App\Models\Map;
+use App\Models\NpcLocation;
 
-class StoreNpcRequest extends FormRequest
+class StoreNpcRequest extends CurrentWorldRequest
 {
-
-    use LoadCurrentWorldTemplate;
-
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -31,7 +25,7 @@ class StoreNpcRequest extends FormRequest
         return [
             'npc' => [
                 'required',
-                "exists:$this->selectedDatabase.base_npcs,id",
+                $this->existsOnCurrentWorld('base_npcs'),
             ],
             'location' => [
                 'required',
@@ -56,7 +50,7 @@ class StoreNpcRequest extends FormRequest
 
             'location.mapId' => [
                 'required',
-                "exists:$this->selectedDatabase.maps,id",
+                $this->existsOnCurrentWorld('maps'),
                 function ($attribute, $value, $fail) {
                     $map = Map::find($value);
                     if ($map) {

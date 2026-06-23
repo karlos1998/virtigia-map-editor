@@ -2,14 +2,10 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
 use App\Rules\DialogOptionRuleValidator;
-use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateStartNodeEdgesRequest extends FormRequest
+class UpdateStartNodeEdgesRequest extends CurrentWorldRequest
 {
-    use LoadCurrentWorldTemplate;
-
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -33,13 +29,13 @@ class UpdateStartNodeEdgesRequest extends FormRequest
 
             'edges.*.edge_id' => [
                 'required',
-                "exists:$this->selectedDatabase.dialog_edges,id"
+                $this->existsOnCurrentWorld('dialog_edges'),
             ],
 
             'edges.*.rules' => [
                 'nullable',
                 'array',
-                new DialogOptionRuleValidator(),
+                new DialogOptionRuleValidator,
             ],
         ];
     }

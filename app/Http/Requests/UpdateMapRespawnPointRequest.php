@@ -2,12 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
-use Illuminate\Foundation\Http\FormRequest;
-
-class UpdateMapRespawnPointRequest extends FormRequest
+class UpdateMapRespawnPointRequest extends CurrentWorldRequest
 {
-    use LoadCurrentWorldTemplate;
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -24,7 +20,7 @@ class UpdateMapRespawnPointRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'respawn_point_id' => ['required', 'integer', "exists:$this->selectedDatabase.respawn_points,id"],
+            'respawn_point_id' => ['required', 'integer', $this->existsOnCurrentWorld('respawn_points')],
         ];
     }
 }

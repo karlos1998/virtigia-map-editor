@@ -27,7 +27,7 @@ class WorldInfoController extends Controller
             $migrationFileNames[] = pathinfo($file, PATHINFO_FILENAME);
         }
 
-        $executedMigrations = DB::connection(session('world'))->table('migrations')
+        $executedMigrations = DB::connection(get_current_world_template_connection())->table('migrations')
             ->select('migration', 'batch')
             ->get()
             ->keyBy('migration')

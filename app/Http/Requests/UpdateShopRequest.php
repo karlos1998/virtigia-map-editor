@@ -2,12 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
-use Illuminate\Foundation\Http\FormRequest;
-
-class UpdateShopRequest extends FormRequest
+class UpdateShopRequest extends CurrentWorldRequest
 {
-    use LoadCurrentWorldTemplate;
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -27,7 +23,7 @@ class UpdateShopRequest extends FormRequest
             'buy_price_percent' => 'required|integer|min:0|max:100',
             'sell_price_percent' => 'required|integer|min:100|max:1000',
             'max_buy_price' => 'required|integer|min:0|max:1000000',
-            'currency_item_id' => "nullable|integer|exists:{$this->selectedDatabase}.base_items,id",
+            'currency_item_id' => ['nullable', 'integer', $this->existsOnCurrentWorld('base_items')],
         ];
     }
 }

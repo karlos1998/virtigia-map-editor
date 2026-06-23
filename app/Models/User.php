@@ -76,6 +76,8 @@ class User extends Authenticatable
     public function hasRole(string $roleName): bool
     {
         return collect($this->roles ?? [])
-            ->contains(fn (array $role): bool => ($role['name'] ?? null) === $roleName);
+            ->contains(fn (array|string $role): bool => is_array($role)
+                ? ($role['name'] ?? null) === $roleName
+                : $role === $roleName);
     }
 }

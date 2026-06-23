@@ -1,16 +1,9 @@
 <?php
 
-
 namespace App\Http\Requests;
 
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
-use Illuminate\Foundation\Http\FormRequest;
-
-class AddBaseItemToShopRequest extends FormRequest
+class AddBaseItemToShopRequest extends CurrentWorldRequest
 {
-
-    use LoadCurrentWorldTemplate;
-
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -27,7 +20,7 @@ class AddBaseItemToShopRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'baseItemId' => ['required', 'integer', "exists:$this->selectedDatabase.base_items,id"],
+            'baseItemId' => ['required', 'integer', $this->existsOnCurrentWorld('base_items')],
             'position' => [
                 'required',
                 'integer',

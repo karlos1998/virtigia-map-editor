@@ -3,12 +3,15 @@
 namespace App\Http\Middleware;
 
 use App\Models\DynamicModel;
+use App\Services\WorldTemplateConnectionResolver;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class SetDynamicModelConnection
 {
+    public function __construct(private readonly WorldTemplateConnectionResolver $connectionResolver) {}
+
     /**
      * Handle an incoming request.
      *
@@ -16,15 +19,23 @@ class SetDynamicModelConnection
      */
     public function handle(Request $request, Closure $next): Response
     {
+        $world = session('world');
 
-//        $connectionName = auth()->check() ? 'retro' : config('database.default');
-        $connectionName = session("world");
-
-        if(!$connectionName) {
-            return response()->redirectToRoute("login");
+        if (! $world) {
+            return response()->redirectToRoute('login');
         }
 
-        DynamicModel::setGlobalConnection($connectionName);
+        $template = $this->connectionResolver->resolve((string) $world);
+
+        if ($template === null) {
+            $request->session()->forget('world');
+
+            return response()->redirectToRoute('login');
+        }
+
+        $this->connectionResolver->registerTemplateConnection($template);
+        DynamicModel::setGlobalConnection($template->connection_name);
+        $request->attributes->set('world_template', $template);
 
         return $next($request);
     }

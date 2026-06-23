@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\BaseItem;
 use App\Services\BaseItemUsageViewService;
+use App\Services\WorldTemplateConnectionResolver;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -24,8 +25,10 @@ class DebugBaseItemUsageViewCommand extends Command
         $baseItemId = (int) $this->argument('id');
         $chunkSize = max(1, (int) $this->option('chunk-size'));
 
-        if (! in_array($world, ['retro', 'legacy'], true)) {
-            $this->error("Unsupported world [{$world}]. Allowed values: retro, legacy.");
+        $availableWorlds = app(WorldTemplateConnectionResolver::class)->visibleSlugs();
+
+        if (! in_array($world, $availableWorlds, true)) {
+            $this->error('Unsupported world ['.$world.']. Allowed values: '.implode(', ', $availableWorlds).'.');
 
             return self::FAILURE;
         }

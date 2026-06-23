@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\WorldType;
+use App\Services\WorldTemplateConnectionResolver;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,7 +24,7 @@ class SwitchWorldRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'world' => ['required', 'string', Rule::in(WorldType::getAll())],
+            'world' => ['required', 'string', Rule::in(app(WorldTemplateConnectionResolver::class)->visibleSlugs())],
         ];
     }
 }

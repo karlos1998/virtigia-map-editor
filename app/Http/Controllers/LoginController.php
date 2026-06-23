@@ -4,23 +4,24 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Services\OAuthPermissionPayload;
+use App\Services\WorldTemplateConnectionResolver;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Laravel\Socialite\Facades\Socialite;
 
 class LoginController extends Controller
 {
-
     public function show()
     {
         return Inertia::render('Login', []);
     }
+
     public function redirectToLogin()
     {
         return Socialite::driver('laravelpassport')->redirect();
     }
 
-    public function handleCallback(OAuthPermissionPayload $permissionPayload)
+    public function handleCallback(OAuthPermissionPayload $permissionPayload, WorldTemplateConnectionResolver $connectionResolver)
     {
         $oauthUser = Socialite::driver('laravelpassport')->user();
         $payload = (array) $oauthUser->user;
@@ -36,13 +37,15 @@ class LoginController extends Controller
 
         Auth::login($user);
 
-        Auth::getSession()->put("world", "retro");
+        Auth::getSession()->put('world', $connectionResolver->defaultWorldSlug());
 
         return to_route('dashboard');
     }
 
-    public function logout() {
+    public function logout()
+    {
         Auth::logout();
+
         return to_route('home');
     }
 }

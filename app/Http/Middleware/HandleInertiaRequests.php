@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Facades\AssetUrl;
 use App\Jobs\RecordQueueHeartbeatJob;
+use App\Services\WorldTemplateConnectionResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -53,9 +54,11 @@ class HandleInertiaRequests extends Middleware
                 'permissions' => $request->user()->permissions,
                 'is_administrator' => $request->user()->hasAdministratorRole(),
                 'world' => session('world'),
+                'world_templates' => fn (): array => app(WorldTemplateConnectionResolver::class)->visibleOptions(),
             ] : null,
             'flash' => [
                 'newApiToken' => fn () => $request->session()->get('newApiToken'),
+                'success' => fn () => $request->session()->get('success'),
             ],
             'queueHealth' => fn (): array => $this->queueHealth(),
         ]);

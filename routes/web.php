@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Administration\DatabaseDumpController;
+use App\Http\Controllers\Administration\WorldTemplateController;
 use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\AudioController;
@@ -329,6 +330,8 @@ Route::middleware(['auth'])->group(function () {
                 Route::post('database-dumps/{world}', [DatabaseDumpController::class, 'start'])->name('database-dumps.start');
                 Route::get('database-dumps/{world}/status', [DatabaseDumpController::class, 'status'])->name('database-dumps.status');
                 Route::get('database-dumps/{world}/{dump}/download', [DatabaseDumpController::class, 'download'])->name('database-dumps.download');
+                Route::get('world-templates', [WorldTemplateController::class, 'index'])->name('world-templates.index');
+                Route::post('world-templates', [WorldTemplateController::class, 'store'])->name('world-templates.store');
             });
         Route::get('users', [\App\Http\Controllers\UsersController::class, 'index'])->name('users.index');
         Route::get('users/{user}', [\App\Http\Controllers\UsersController::class, 'show'])->name('users.show');

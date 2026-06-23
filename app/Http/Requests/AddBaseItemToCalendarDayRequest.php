@@ -2,13 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
-use Illuminate\Foundation\Http\FormRequest;
-
-class AddBaseItemToCalendarDayRequest extends FormRequest
+class AddBaseItemToCalendarDayRequest extends CurrentWorldRequest
 {
-    use LoadCurrentWorldTemplate;
-
     public function authorize(): bool
     {
         return true;
@@ -17,8 +12,8 @@ class AddBaseItemToCalendarDayRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'calendarDayId' => ['required', 'integer', "exists:$this->selectedDatabase.calendar_days,id"],
-            'baseItemId' => ['required', 'integer', "exists:$this->selectedDatabase.base_items,id"],
+            'calendarDayId' => ['required', 'integer', $this->existsOnCurrentWorld('calendar_days')],
+            'baseItemId' => ['required', 'integer', $this->existsOnCurrentWorld('base_items')],
             'quantity' => ['nullable', 'integer', 'min:1'],
         ];
     }

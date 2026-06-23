@@ -12,7 +12,6 @@ use App\Models\Map;
 use App\Models\Quest;
 use App\Models\Shop;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class SearchController extends Controller
 {
@@ -24,15 +23,14 @@ class SearchController extends Controller
     public function search(Request $request)
     {
         $query = $request->input('query');
-        $world = Auth::getSession()->get('world', 'retro');
+        $connection = get_current_world_template_connection();
 
-        // Set the connection for all models to the current world
-        Map::setGlobalConnection($world);
-        BaseItem::setGlobalConnection($world);
-        BaseNpc::setGlobalConnection($world);
-        Dialog::setGlobalConnection($world);
-        Quest::setGlobalConnection($world);
-        Shop::setGlobalConnection($world);
+        Map::setGlobalConnection($connection);
+        BaseItem::setGlobalConnection($connection);
+        BaseNpc::setGlobalConnection($connection);
+        Dialog::setGlobalConnection($connection);
+        Quest::setGlobalConnection($connection);
+        Shop::setGlobalConnection($connection);
 
         // Search in maps
         $maps = Map::where('name', 'like', "%{$query}%")

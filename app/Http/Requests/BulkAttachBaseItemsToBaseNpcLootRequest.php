@@ -2,12 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\BaseItem;
-use App\Models\BaseNpc;
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-
-class BulkAttachBaseItemsToBaseNpcLootRequest extends FormRequest
+class BulkAttachBaseItemsToBaseNpcLootRequest extends CurrentWorldRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,9 +20,9 @@ class BulkAttachBaseItemsToBaseNpcLootRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'base_npc_id' => ['required', 'integer', Rule::exists($this->baseNpcsTable(), 'id')],
+            'base_npc_id' => ['required', 'integer', $this->existsOnCurrentWorld('base_npcs')],
             'item_ids' => ['required', 'array', 'min:1', 'max:500'],
-            'item_ids.*' => ['integer', 'distinct', Rule::exists($this->baseItemsTable(), 'id')],
+            'item_ids.*' => ['integer', 'distinct', $this->existsOnCurrentWorld('base_items')],
         ];
     }
 
@@ -43,19 +38,5 @@ class BulkAttachBaseItemsToBaseNpcLootRequest extends FormRequest
             'item_ids.min' => 'Wybierz przynajmniej jeden przedmiot.',
             'item_ids.*.exists' => 'Jeden z wybranych przedmiotów nie istnieje.',
         ];
-    }
-
-    private function baseNpcsTable(): string
-    {
-        $connectionName = (new BaseNpc)->getConnectionName() ?? config('database.default');
-
-        return "{$connectionName}.base_npcs";
-    }
-
-    private function baseItemsTable(): string
-    {
-        $connectionName = (new BaseItem)->getConnectionName() ?? config('database.default');
-
-        return "{$connectionName}.base_items";
     }
 }

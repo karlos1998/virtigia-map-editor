@@ -2,11 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\BaseItem;
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-
-class BulkUpdateBaseItemDescriptionRequest extends FormRequest
+class BulkUpdateBaseItemDescriptionRequest extends CurrentWorldRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,7 +21,7 @@ class BulkUpdateBaseItemDescriptionRequest extends FormRequest
     {
         return [
             'item_ids' => ['required', 'array', 'min:1', 'max:500'],
-            'item_ids.*' => ['integer', 'distinct', Rule::exists($this->baseItemsTable(), 'id')],
+            'item_ids.*' => ['integer', 'distinct', $this->existsOnCurrentWorld('base_items')],
             'search_phrase' => ['required', 'string', 'min:1', 'max:1000'],
             'replacement_phrase' => ['present', 'nullable', 'string', 'max:1000'],
         ];
@@ -43,12 +39,5 @@ class BulkUpdateBaseItemDescriptionRequest extends FormRequest
             'search_phrase.min' => 'Fraza do poprawy musi mieć przynajmniej 1 znak.',
             'replacement_phrase.present' => 'Podaj frazę docelową.',
         ];
-    }
-
-    private function baseItemsTable(): string
-    {
-        $connectionName = (new BaseItem)->getConnectionName() ?? config('database.default');
-
-        return "{$connectionName}.base_items";
     }
 }

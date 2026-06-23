@@ -3,16 +3,12 @@
 namespace App\Http\Requests;
 
 use App\Enums\DialogNodeOptionAdditionalAction;
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
 use App\Rules\DialogNodeAdditionalActionsValidator;
 use App\Rules\DialogOptionRuleValidator;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 
-class UpdateDialogNodeOptionRequest extends FormRequest
+class UpdateDialogNodeOptionRequest extends CurrentWorldRequest
 {
-    use LoadCurrentWorldTemplate;
-
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -62,7 +58,7 @@ class UpdateDialogNodeOptionRequest extends FormRequest
 
             'edges.*.edge_id' => [
                 'required',
-                "exists:$this->selectedDatabase.dialog_edges,id",
+                $this->existsOnCurrentWorld('dialog_edges'),
                 // todo - sprwadzac czy source_dialog_id to nasz dialog
             ],
 

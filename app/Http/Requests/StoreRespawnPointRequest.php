@@ -2,14 +2,10 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
 use App\Models\Map;
-use Illuminate\Foundation\Http\FormRequest;
 
-class StoreRespawnPointRequest extends FormRequest
+class StoreRespawnPointRequest extends CurrentWorldRequest
 {
-    use LoadCurrentWorldTemplate;
-
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -26,7 +22,7 @@ class StoreRespawnPointRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'map_id' => ['required', "exists:$this->selectedDatabase.maps,id"],
+            'map_id' => ['required', $this->existsOnCurrentWorld('maps')],
             'x' => [
                 'required',
                 'integer',

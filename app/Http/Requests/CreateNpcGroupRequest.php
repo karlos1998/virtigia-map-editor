@@ -2,13 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
-use Illuminate\Foundation\Http\FormRequest;
-
-class CreateNpcGroupRequest extends FormRequest
+class CreateNpcGroupRequest extends CurrentWorldRequest
 {
-    use LoadCurrentWorldTemplate;
-
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -26,7 +21,7 @@ class CreateNpcGroupRequest extends FormRequest
     {
         return [
             'npc_ids' => ['required', 'array', 'min:2'],
-            'npc_ids.*' => ["exists:$this->selectedDatabase.npcs,id"],
+            'npc_ids.*' => [$this->existsOnCurrentWorld('npcs')],
         ];
     }
 }

@@ -2,16 +2,12 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
 use App\Models\Door;
 use App\Models\Map;
 use App\Models\NpcLocation;
-use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateNpcLocationRequest extends FormRequest
+class UpdateNpcLocationRequest extends CurrentWorldRequest
 {
-    use LoadCurrentWorldTemplate;
-
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -27,15 +23,14 @@ class UpdateNpcLocationRequest extends FormRequest
      */
     public function rules(): array
     {
-        //todo - validacja sie powtarza, np przy drzwiach, przy dowaniu npc tez powinna byc.. trzeba pod to zrobic jakas regule.
-
+        // todo - validacja sie powtarza, np przy drzwiach, przy dowaniu npc tez powinna byc.. trzeba pod to zrobic jakas regule.
 
         $map = Map::findOrFail($this->input('map_id'));
 
         return [
             'map_id' => [
                 'required',
-                "exists:$this->selectedDatabase.maps,id",
+                $this->existsOnCurrentWorld('maps'),
                 function ($attribute, $value, $fail) {
                     if (
                         Door::where('map_id', $value)
@@ -56,13 +51,13 @@ class UpdateNpcLocationRequest extends FormRequest
                 'required',
                 'integer',
                 'min:0',
-                'max:' . ($map->x - 1),
+                'max:'.($map->x - 1),
             ],
             'y' => [
                 'required',
                 'integer',
                 'min:0',
-                'max:' . ($map->y - 1)
+                'max:'.($map->y - 1),
             ],
 
         ];

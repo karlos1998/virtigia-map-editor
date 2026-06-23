@@ -2,13 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
-use Illuminate\Foundation\Http\FormRequest;
-
-class AttachBaseNpcToMobSpeciesRequest extends FormRequest
+class AttachBaseNpcToMobSpeciesRequest extends CurrentWorldRequest
 {
-    use LoadCurrentWorldTemplate;
-
     public function authorize(): bool
     {
         return true;
@@ -17,8 +12,7 @@ class AttachBaseNpcToMobSpeciesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'base_npc_id' => ['required', 'integer', "exists:$this->selectedDatabase.base_npcs,id"],
+            'base_npc_id' => ['required', 'integer', $this->existsOnCurrentWorld('base_npcs')],
         ];
     }
 }
-

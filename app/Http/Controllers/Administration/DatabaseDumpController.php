@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Administration;
 
-use App\Enums\WorldType;
 use App\Http\Controllers\Controller;
 use App\Jobs\BuildDatabaseDumpJob;
 use App\Services\DatabaseDumpService;
+use App\Services\WorldTemplateConnectionResolver;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
@@ -22,7 +22,7 @@ class DatabaseDumpController extends Controller
     public function index(): Response
     {
         return Inertia::render('Administration/DatabaseDumps', [
-            'worlds' => collect(WorldType::getLabels())
+            'worlds' => collect(app(WorldTemplateConnectionResolver::class)->visibleLabels())
                 ->map(fn (string $label, string $value): array => [
                     'value' => $value,
                     'label' => $label,
@@ -106,6 +106,6 @@ class DatabaseDumpController extends Controller
 
     private function ensureWorldExists(string $world): void
     {
-        abort_unless(in_array($world, WorldType::getAll(), true), 404);
+        abort_unless(in_array($world, app(WorldTemplateConnectionResolver::class)->visibleSlugs(), true), 404);
     }
 }

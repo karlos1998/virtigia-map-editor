@@ -2,14 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
-use Illuminate\Foundation\Http\FormRequest;
-
-class StoreRenewableMapItemRequest extends FormRequest
+class StoreRenewableMapItemRequest extends CurrentWorldRequest
 {
-
-    use LoadCurrentWorldTemplate;
-
     public function authorize(): bool
     {
         return true;
@@ -18,8 +12,8 @@ class StoreRenewableMapItemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'map_id' => ['required', "exists:{$this->selectedDatabase}.maps,id"],
-            'base_item_id' => ['required', "exists:{$this->selectedDatabase}.base_items,id"],
+            'map_id' => ['required', $this->existsOnCurrentWorld('maps')],
+            'base_item_id' => ['required', $this->existsOnCurrentWorld('base_items')],
             'x' => ['required', 'integer', 'min:0'],
             'y' => ['required', 'integer', 'min:0'],
             'respawn_time_seconds' => ['required', 'integer', 'min:1', 'max:604800'], // do tygodnia

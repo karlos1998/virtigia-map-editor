@@ -41,6 +41,7 @@ class ProfileApiTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer '.$plainToken,
+            'X-World' => 'retro',
         ])->getJson('/api/v1/profile');
 
         $response

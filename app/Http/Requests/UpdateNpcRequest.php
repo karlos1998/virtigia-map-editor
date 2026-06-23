@@ -2,13 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
-use Illuminate\Foundation\Http\FormRequest;
-
-class UpdateNpcRequest extends FormRequest
+class UpdateNpcRequest extends CurrentWorldRequest
 {
-    use LoadCurrentWorldTemplate;
-
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -27,8 +22,8 @@ class UpdateNpcRequest extends FormRequest
         return [
             'dialog' => [
                 'nullable',
-                "exists:$this->selectedDatabase.dialogs,id",
-            ]
+                $this->existsOnCurrentWorld('dialogs'),
+            ],
         ];
     }
 }

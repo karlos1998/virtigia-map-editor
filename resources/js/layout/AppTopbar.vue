@@ -2,7 +2,7 @@
 import AppSidebar from '@/layout/AppSidebar.vue';
 import { useLayout } from '@/layout/composables/layout';
 import { usePage, router } from '@inertiajs/vue3';
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
 import AppLogo from '@/Components/AppLogo.vue';
@@ -11,17 +11,16 @@ import axios from 'axios';
 
 const { isHorizontal, onMenuToggle, showConfigSidebar, showSidebar } = useLayout();
 
-const user = computed(() => usePage().props.auth.user);
-const world = computed(() => usePage().props.auth.world);
-
-const worldOptions = ref([
-    { label: 'Retro', value: 'retro' },
-    { label: 'Classic', value: 'classic' },
-    { label: 'Legacy', value: 'legacy' },
-    { label: 'Demo', value: 'demo' },
-]);
+const page = usePage();
+const user = computed(() => page.props.auth.user);
+const world = computed(() => page.props.auth.world);
+const worldOptions = computed(() => page.props.auth.world_templates ?? []);
 
 const selectedWorld = ref(world.value);
+
+watch(world, (value) => {
+    selectedWorld.value = value;
+});
 
 const switchWorld = () => {
     router.post(route('switch-world'), {

@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\BaseNpc;
-use Illuminate\Bus\Batch;
+use App\Services\WorldTemplateConnectionResolver;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -13,14 +13,13 @@ use Illuminate\Support\Facades\Cache;
 
 class CheckBaseNpcsBatchJob implements ShouldQueue
 {
-    use Dispatchable, Queueable, Batchable;
+    use Batchable, Dispatchable, Queueable;
 
-    protected array $worlds = ['retro', 'legacy'];
     protected int $chunkSize = 300;
 
     public function handle()
     {
-        foreach ($this->worlds as $world) {
+        foreach (app(WorldTemplateConnectionResolver::class)->visibleSlugs() as $world) {
             Cache::store('redis')->put("problem_base_npcs_{$world}_batch_status", json_encode([
                 'started_at' => now()->toDateTimeString(),
                 'status' => 'started',
@@ -31,7 +30,7 @@ class CheckBaseNpcsBatchJob implements ShouldQueue
             $total = BaseNpc::on($world)->count();
             $chunks = ceil($total / $this->chunkSize);
             $chunkJobs = [];
-            for ($i = 0; $i < $chunks; ++$i) {
+            for ($i = 0; $i < $chunks; $i++) {
                 $chunkJobs[] = new CheckBaseNpcsChunkJob($world, $i, $this->chunkSize);
             }
             Bus::batch($chunkJobs)->dispatch();

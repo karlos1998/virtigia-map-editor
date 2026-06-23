@@ -10,6 +10,7 @@ use App\Jobs\RefreshBaseItemDuplicateViewJob;
 use App\Jobs\RefreshBaseItemUsageViewBatchJob;
 use App\Jobs\RefreshQuestStepGuideViewBatchJob;
 use App\Jobs\ResetAggressiveNpcsJob;
+use App\Services\WorldTemplateConnectionResolver;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -34,11 +35,9 @@ Schedule::job(new ResetAggressiveNpcsJob)->hourly();
 
 Schedule::job(new CheckBaseItemsBatchJob)->hourly();
 Schedule::job(new CheckBaseNpcsBatchJob)->hourly();
-Schedule::job(new FillMissingTeleportMapNamesForWorldJob('retro'))->hourly();
-Schedule::job(new FillMissingTeleportMapNamesForWorldJob('legacy'))->hourly();
-Schedule::job(new RefreshBaseItemUsageViewBatchJob('retro'))->hourly();
-Schedule::job(new RefreshBaseItemUsageViewBatchJob('legacy'))->hourly();
-Schedule::job(new RefreshBaseItemDuplicateViewJob('retro'))->everyThirtyMinutes();
-Schedule::job(new RefreshBaseItemDuplicateViewJob('legacy'))->everyThirtyMinutes();
-Schedule::job(new RefreshQuestStepGuideViewBatchJob('retro'))->hourly();
-Schedule::job(new RefreshQuestStepGuideViewBatchJob('legacy'))->hourly();
+foreach (app(WorldTemplateConnectionResolver::class)->visibleSlugs() as $world) {
+    Schedule::job(new FillMissingTeleportMapNamesForWorldJob($world))->hourly();
+    Schedule::job(new RefreshBaseItemUsageViewBatchJob($world))->hourly();
+    Schedule::job(new RefreshBaseItemDuplicateViewJob($world))->everyThirtyMinutes();
+    Schedule::job(new RefreshQuestStepGuideViewBatchJob($world))->hourly();
+}

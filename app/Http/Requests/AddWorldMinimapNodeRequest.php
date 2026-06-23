@@ -2,19 +2,13 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
-use Illuminate\Foundation\Http\FormRequest;
-
-class AddWorldMinimapNodeRequest extends FormRequest
+class AddWorldMinimapNodeRequest extends CurrentWorldRequest
 {
-    use LoadCurrentWorldTemplate;
-
     public function rules(): array
     {
         return [
-            'map_id' => ['required', 'integer', 'exists:' . $this->selectedDatabase . '.maps,id'],
-            'near_map_id' => ['nullable', 'integer', 'exists:' . $this->selectedDatabase . '.maps,id'],
+            'map_id' => ['required', 'integer', $this->existsOnCurrentWorld('maps')],
+            'near_map_id' => ['nullable', 'integer', $this->existsOnCurrentWorld('maps')],
         ];
     }
 }
-

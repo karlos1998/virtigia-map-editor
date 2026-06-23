@@ -2,11 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Enums\WorldType;
 use App\Jobs\BuildDatabaseDumpJob;
 use App\Models\User;
 use App\Services\DatabaseDumpService;
+use App\Services\WorldTemplateConnectionResolver;
 use Illuminate\Bus\PendingBatch;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -14,13 +15,15 @@ use Tests\TestCase;
 
 class AdministrationDatabaseDumpTest extends TestCase
 {
+    use RefreshDatabase;
+
     protected function setUp(): void
     {
         parent::setUp();
 
         $databaseDumpService = app(DatabaseDumpService::class);
 
-        foreach (WorldType::getAll() as $world) {
+        foreach (app(WorldTemplateConnectionResolver::class)->visibleSlugs() as $world) {
             Cache::store('redis')->forget($databaseDumpService->statusKey($world));
         }
     }

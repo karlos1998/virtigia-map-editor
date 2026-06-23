@@ -2,12 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
-use Illuminate\Foundation\Http\FormRequest;
-
-class UpdateDoorRequiredItemRequest extends FormRequest
+class UpdateDoorRequiredItemRequest extends CurrentWorldRequest
 {
-    use LoadCurrentWorldTemplate;
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -27,7 +23,7 @@ class UpdateDoorRequiredItemRequest extends FormRequest
             'base_item_id' => [
                 'nullable',
                 'integer',
-                "exists:$this->selectedDatabase.base_items,id",
+                $this->existsOnCurrentWorld('base_items'),
             ],
         ];
     }

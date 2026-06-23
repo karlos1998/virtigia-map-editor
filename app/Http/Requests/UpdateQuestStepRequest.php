@@ -2,14 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
-
-class UpdateQuestStepRequest extends FormRequest
+class UpdateQuestStepRequest extends CurrentWorldRequest
 {
-    use LoadCurrentWorldTemplate;
-
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -33,7 +27,7 @@ class UpdateQuestStepRequest extends FormRequest
             'auto_advance_to_step_id' => [
                 'nullable',
                 'integer',
-                Rule::exists('quest_steps', 'id')->where(function ($query) {
+                $this->existsOnCurrentWorld('quest_steps')->where(function ($query) {
                     $quest = $this->route('quest');
                     if ($quest) {
                         $query->where('quest_id', $quest->id);
@@ -45,8 +39,8 @@ class UpdateQuestStepRequest extends FormRequest
             'progress_time' => 'nullable|integer|min:0',
             'progress_mobs' => 'nullable|array',
             'progress_mobs.*.type' => 'required|string|in:base_npc,mob_species',
-            'progress_mobs.*.base_npc_id' => 'nullable|integer|exists:'.$this->selectedDatabase.'.base_npcs,id',
-            'progress_mobs.*.mob_species_id' => 'nullable|integer|exists:'.$this->selectedDatabase.'.mob_species,id',
+            'progress_mobs.*.base_npc_id' => ['nullable', 'integer', $this->existsOnCurrentWorld('base_npcs')],
+            'progress_mobs.*.mob_species_id' => ['nullable', 'integer', $this->existsOnCurrentWorld('mob_species')],
             'progress_mobs.*.quantity' => 'required|integer|min:1',
         ];
     }

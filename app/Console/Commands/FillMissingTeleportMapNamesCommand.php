@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Jobs\FillMissingTeleportMapNamesForWorldJob;
+use App\Services\WorldTemplateConnectionResolver;
 use Illuminate\Console\Command;
 
 class FillMissingTeleportMapNamesCommand extends Command
@@ -15,11 +16,12 @@ class FillMissingTeleportMapNamesCommand extends Command
     public function handle(): int
     {
         $world = (string) $this->argument('world');
-        $worlds = $world === 'all' ? ['retro', 'legacy'] : [$world];
+        $availableWorlds = app(WorldTemplateConnectionResolver::class)->visibleSlugs();
+        $worlds = $world === 'all' ? $availableWorlds : [$world];
 
         foreach ($worlds as $selectedWorld) {
-            if (! in_array($selectedWorld, ['retro', 'legacy'], true)) {
-                $this->error("Unsupported world [$selectedWorld]. Allowed values: retro, legacy, all.");
+            if (! in_array($selectedWorld, $availableWorlds, true)) {
+                $this->error('Unsupported world ['.$selectedWorld.']. Allowed values: '.implode(', ', $availableWorlds).', all.');
 
                 return self::FAILURE;
             }

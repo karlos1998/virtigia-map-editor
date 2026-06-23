@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\WorldType;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -95,7 +94,7 @@ class DatabaseDumpService
      */
     public function publicStatuses(): array
     {
-        return collect(WorldType::getAll())
+        return collect(app(WorldTemplateConnectionResolver::class)->visibleSlugs())
             ->mapWithKeys(fn (string $world): array => [
                 $world => $this->publicStatus($world),
             ])
@@ -225,7 +224,7 @@ class DatabaseDumpService
             if (in_array($driver, ['mysql', 'mariadb'], true)) {
                 $database = (string) ($connection['database'] ?? '');
 
-                $row = DB::connection($world)->selectOne(
+                $row = DB::connection($this->connectionName($world))->selectOne(
                     'select coalesce(sum(data_length), 0) as bytes from information_schema.tables where table_schema = ?',
                     [$database]
                 );
@@ -312,7 +311,7 @@ class DatabaseDumpService
 
     public function validateWorld(string $world): void
     {
-        if (! in_array($world, WorldType::getAll(), true)) {
+        if (! in_array($world, app(WorldTemplateConnectionResolver::class)->visibleSlugs(), true)) {
             throw new InvalidArgumentException("Unsupported world [{$world}].");
         }
     }
@@ -418,15 +417,21 @@ class DatabaseDumpService
     private function connectionConfig(string $world): array
     {
         $this->validateWorld($world);
+        $connectionName = $this->connectionName($world);
 
         /** @var array<string, mixed>|null $connection */
-        $connection = config("database.connections.{$world}");
+        $connection = config("database.connections.{$connectionName}");
 
         if ($connection === null) {
-            throw new InvalidArgumentException("Database connection [{$world}] is not configured.");
+            throw new InvalidArgumentException("Database connection [{$connectionName}] is not configured.");
         }
 
         return $connection;
+    }
+
+    private function connectionName(string $world): string
+    {
+        return app(WorldTemplateConnectionResolver::class)->connectionNameFor($world) ?? $world;
     }
 
     /**

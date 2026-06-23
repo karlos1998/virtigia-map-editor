@@ -2,15 +2,12 @@
 
 namespace App\Http\Requests;
 
-use App\Http\Requests\Traits\LoadCurrentWorldTemplate;
-use App\Models\Map;
 use App\Models\Door;
+use App\Models\Map;
 use App\Models\NpcLocation;
-use Illuminate\Foundation\Http\FormRequest;
 
-class StoreDoorRequest extends FormRequest
+class StoreDoorRequest extends CurrentWorldRequest
 {
-    use LoadCurrentWorldTemplate;
     public function authorize(): bool
     {
         return true;
@@ -24,7 +21,7 @@ class StoreDoorRequest extends FormRequest
         return [
             'map_id' => [
                 'required',
-                "exists:$this->selectedDatabase.maps,id",
+                $this->existsOnCurrentWorld('maps'),
                 function ($attribute, $value, $fail) {
                     if (
                         Door::where('map_id', $value)
@@ -45,30 +42,28 @@ class StoreDoorRequest extends FormRequest
                 'required',
                 'integer',
                 'min:0',
-                'max:' . ($map->x - 1),
+                'max:'.($map->x - 1),
             ],
             'y' => [
                 'required',
                 'integer',
                 'min:0',
-                'max:' . ($map->y - 1)
+                'max:'.($map->y - 1),
             ],
 
-
-
-            'go_map_id' => ['required', "exists:$this->selectedDatabase.maps,id"],
+            'go_map_id' => ['required', $this->existsOnCurrentWorld('maps')],
             'go_x' => [
                 'required',
                 'integer',
                 'min:0',
-                'max:' . ($goMap->x - 1)
+                'max:'.($goMap->x - 1),
             ],
             'go_y' => [
                 'required',
                 'integer',
                 'min:0',
-                'max:' . ($goMap->y - 1)
-            ]
+                'max:'.($goMap->y - 1),
+            ],
         ];
     }
 }

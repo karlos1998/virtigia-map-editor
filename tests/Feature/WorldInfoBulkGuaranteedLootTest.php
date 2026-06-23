@@ -28,7 +28,23 @@ class WorldInfoBulkGuaranteedLootTest extends TestCase
             touch(database_path('testing-retro.sqlite'));
         }
 
+        Schema::connection('retro')->disableForeignKeyConstraints();
+        Schema::connection('retro')->dropIfExists('base_npc_loots');
+        Schema::connection('retro')->dropIfExists('base_items');
         Schema::connection('retro')->dropIfExists('base_npcs');
+        Schema::connection('retro')->enableForeignKeyConstraints();
+
+        Schema::connection('retro')->create('base_items', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('src')->default('');
+            $table->text('stats')->default('');
+            $table->unsignedInteger('cl')->default(0);
+            $table->unsignedInteger('pr')->default(0);
+            $table->boolean('edited_manually')->default(false);
+            $table->softDeletes();
+            $table->timestamps();
+        });
 
         Schema::connection('retro')->create('base_npcs', function (Blueprint $table): void {
             $table->id();
@@ -36,7 +52,15 @@ class WorldInfoBulkGuaranteedLootTest extends TestCase
             $table->string('name')->nullable();
             $table->string('src')->default('retro/example.gif');
             $table->integer('lvl')->default(0);
+            $table->string('category')->default('MOB');
             $table->boolean('guaranteed_loot')->default(false);
+        });
+
+        Schema::connection('retro')->create('base_npc_loots', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('base_npc_id');
+            $table->foreignId('base_item_id');
+            $table->timestamps();
         });
     }
 
@@ -72,7 +96,7 @@ class WorldInfoBulkGuaranteedLootTest extends TestCase
 
         $response->assertRedirect();
 
-        $this->assertSame(16, DB::connection('retro')->table('base_npcs')->where('guaranteed_loot', true)->count());
+        $this->assertSame(17, DB::connection('retro')->table('base_npcs')->where('guaranteed_loot', true)->count());
         $this->assertDatabaseHas('base_npcs', [
             'id' => 17,
             'guaranteed_loot' => false,
@@ -133,5 +157,28 @@ class WorldInfoBulkGuaranteedLootTest extends TestCase
         ];
 
         DB::connection('retro')->table('base_npcs')->insert($records);
+
+        DB::connection('retro')->table('base_items')->insert([
+            'id' => 1,
+            'name' => 'Loot',
+            'src' => 'items/loot.gif',
+            'stats' => '',
+            'cl' => 0,
+            'pr' => 0,
+            'edited_manually' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::connection('retro')->table('base_npc_loots')->insert(
+            collect($records)
+                ->map(fn (array $record): array => [
+                    'base_npc_id' => $record['id'],
+                    'base_item_id' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ])
+                ->all()
+        );
     }
 }
