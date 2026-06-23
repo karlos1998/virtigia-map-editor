@@ -65,7 +65,17 @@ class User extends Authenticatable
 
     public function hasGameMasterRole(): bool
     {
+        return $this->hasRole('game_master');
+    }
+
+    public function hasAdministratorRole(): bool
+    {
+        return $this->hasRole('administrator');
+    }
+
+    public function hasRole(string $roleName): bool
+    {
         return collect($this->roles ?? [])
-            ->contains(fn (array $role): bool => ($role['name'] ?? null) === 'game_master');
+            ->contains(fn (array $role): bool => ($role['name'] ?? null) === $roleName);
     }
 }

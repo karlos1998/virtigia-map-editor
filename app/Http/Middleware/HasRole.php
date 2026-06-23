@@ -14,15 +14,17 @@ class HasRole
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, ?string $roleName = null): Response
     {
-        /**
-         * @var User $user
-         */
-        $user = auth()->user();
+        /** @var User|null $user */
+        $user = $request->user();
 
-        if(count($user->roles) === 0 ) { //todo
+        if ($user === null || count($user->roles ?? []) === 0) {
             return to_route('locked');
+        }
+
+        if ($roleName !== null) {
+            abort_unless($user->hasRole($roleName), 403);
         }
 
         return $next($request);

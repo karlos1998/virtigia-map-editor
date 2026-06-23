@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\Administration\DatabaseDumpController;
 use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\AudioController;
@@ -25,6 +26,7 @@ use App\Http\Controllers\RenewableMapItemController;
 use App\Http\Controllers\SeasonalEventController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SpecialAttackController;
+use App\Http\Middleware\HasRole;
 use App\Http\Middleware\RemoveWorldTemplateNameFromRouteParameters;
 use App\Http\Middleware\SetDynamicModelConnection;
 use App\Models\DynamicModel;
@@ -59,7 +61,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
-    Route::middleware(\App\Http\Middleware\HasRole::class)->group(function () {
+    Route::middleware(HasRole::class)->group(function () {
 
         Route
 //        ->where(['retro', 'classic'])
@@ -319,6 +321,15 @@ Route::middleware(['auth'])->group(function () {
                 });
 
         Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+        Route::prefix('administration')
+            ->name('administration.')
+            ->middleware(HasRole::class.':administrator')
+            ->group(function () {
+                Route::get('database-dumps', [DatabaseDumpController::class, 'index'])->name('database-dumps.index');
+                Route::post('database-dumps/{world}', [DatabaseDumpController::class, 'start'])->name('database-dumps.start');
+                Route::get('database-dumps/{world}/status', [DatabaseDumpController::class, 'status'])->name('database-dumps.status');
+                Route::get('database-dumps/{world}/{dump}/download', [DatabaseDumpController::class, 'download'])->name('database-dumps.download');
+            });
         Route::get('users', [\App\Http\Controllers\UsersController::class, 'index'])->name('users.index');
         Route::get('users/{user}', [\App\Http\Controllers\UsersController::class, 'show'])->name('users.show');
         Route::get('/problem-assets', [ProblemAssetsController::class, 'index'])->name('problem-assets.index');

@@ -1,10 +1,13 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import AppMenuItem from './AppMenuItem.vue';
 import { useLayout } from '@/layout/composables/layout';
+import { usePage } from '@inertiajs/vue3';
 // import { hasRole } from '@/roles.ts';
 
 const { isHorizontal, isSlim, isSlimPlus } = useLayout();
+const page = usePage();
+const isAdministrator = computed(() => page.props.auth?.is_administrator === true);
 
 const model = ref([
     {
@@ -183,11 +186,30 @@ const model = ref([
         ],
     },
 ]);
+
+const administrationModel = computed(() => {
+    if (!isAdministrator.value) {
+        return [];
+    }
+
+    return [
+        {
+            label: 'Administracja',
+            icon: 'pi pi-shield',
+            items: [
+                {
+                    label: 'Dump bazy danych',
+                    icon: 'pi pi-database',
+                    route: 'administration.database-dumps.index',
+                },
+            ],
+        },
+    ];
+});
 </script>
 
 <template>
     <div class="menu-wrapper" :class="{ 'horizontal': isHorizontal, 'slim': isSlim, 'slim-plus': isSlimPlus }">
-
         <ul class="layout-menu" :class="{ 'horizontal-menu': isHorizontal }">
             <template v-for="(item, i) in model" :key="item">
                 <div class="menu-category" v-if="!isSlim && !isSlimPlus && !isHorizontal">
@@ -199,12 +221,24 @@ const model = ref([
                 <li class="menu-separator" v-if="i < model.length - 1 && !isHorizontal"></li>
             </template>
         </ul>
+
+        <ul v-if="administrationModel.length" class="layout-menu administration-menu" :class="{ 'horizontal-menu': isHorizontal }">
+            <template v-for="(item, i) in administrationModel" :key="item.label">
+                <li class="menu-separator" v-if="!isHorizontal"></li>
+
+                <div class="menu-category" v-if="!isSlim && !isSlimPlus && !isHorizontal">
+                    <span class="menu-category-label">{{ item.label }}</span>
+                </div>
+
+                <AppMenuItem :item="item" root :index="model.length + i" />
+            </template>
+        </ul>
     </div>
 </template>
 
 <style lang="scss" scoped>
 .menu-wrapper {
-    @apply w-full;
+    @apply flex min-h-full w-full flex-col;
 }
 
 .menu-wrapper.horizontal {
@@ -214,6 +248,10 @@ const model = ref([
 .menu-wrapper.slim,
 .menu-wrapper.slim-plus {
     @apply w-full flex flex-col items-center;
+}
+
+.administration-menu {
+    @apply mt-auto pt-3;
 }
 
 .menu-search {

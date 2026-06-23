@@ -51,6 +51,7 @@ class HandleInertiaRequests extends Middleware
                 ],
                 'roles' => $request->user()->roles,
                 'permissions' => $request->user()->permissions,
+                'is_administrator' => $request->user()->hasAdministratorRole(),
                 'world' => session('world'),
             ] : null,
             'flash' => [
