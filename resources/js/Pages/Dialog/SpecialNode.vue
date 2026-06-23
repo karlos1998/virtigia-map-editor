@@ -26,7 +26,7 @@ const props = defineProps<NodeProps<{
     additional_actions: DialogNodeAdditionalActionsResource
 }>>();
 
-const { updateNodeData, edges, removeEdges, removeNodes, connectionLookup } = useVueFlow();
+const { updateNodeData, edges, nodes, removeEdges, removeNodes, connectionLookup } = useVueFlow();
 
 const state = ref({
     label: props.data.label ?? '',
@@ -39,8 +39,62 @@ const editOption = (option: DialogOptionResource) => {
     showEditOption.value = true;
 };
 
+const optionHasAdditionalActions = (option: DialogOptionResource): boolean => {
+    return Object.keys(option.additional_actions ?? {}).length > 0;
+};
+
 const optionHasAction = (option: DialogOptionResource): boolean => {
-    return Boolean(option.additional_action) || Object.keys(option.additional_actions ?? {}).length > 0;
+    return Boolean(option.additional_action) || optionHasAdditionalActions(option);
+};
+
+const optionIsHealAction = (option: DialogOptionResource): boolean => {
+    return option.additional_action === 'HEAL';
+};
+
+const optionHasConnection = (option: DialogOptionResource): boolean => {
+    return Boolean(handleHasConnections[`source-${option.id}`]);
+};
+
+const optionLeadsToNodeType = (option: DialogOptionResource, nodeType: string): boolean => {
+    const sourceHandle = `source-${option.id}`;
+    const liveTargetTypes = edges.value
+        .filter((edge) => edge.source === props.id && edge.sourceHandle === sourceHandle)
+        .map((edge) => nodes.value.find((node) => node.id === edge.target)?.type)
+        .filter(Boolean);
+
+    if (liveTargetTypes.length > 0) {
+        return liveTargetTypes.includes(nodeType);
+    }
+
+    if (!optionHasConnection(option)) {
+        return false;
+    }
+
+    return option.edges?.some((edge) => edge.node?.type === nodeType) ?? false;
+};
+
+const isContinueOption = (option: DialogOptionResource): boolean => {
+    return options.value.length === 1 && (optionHasConnection(option) || optionHasAdditionalActions(option));
+};
+
+const optionClass = (option: DialogOptionResource): string => {
+    if (optionIsHealAction(option)) {
+        return 'heal';
+    }
+
+    if (optionLeadsToNodeType(option, 'minigame')) {
+        return 'minigame';
+    }
+
+    if (!optionHasConnection(option) && !optionHasAction(option)) {
+        return 'exit';
+    }
+
+    if (isContinueOption(option)) {
+        return 'continue';
+    }
+
+    return 'normal';
 };
 
 const handleEditOptionClose = (closeData: { remove?: boolean, dialogOption?: DialogOptionResource }) => {
@@ -174,9 +228,7 @@ export default {
                        handle=".drag-handle">
                 <template #item="{element: option}">
                     <div class="option flex items-center gap-2"
-                         :class="{
-                         exit: !handleHasConnections[`source-${option.id}`] && !optionHasAction(option)
-                     }" @click="editOption(option)">
+                         :class="optionClass(option)" @click="editOption(option)">
                         <span class="drag-handle cursor-grab select-none text-xl mr-2"
                               @mousedown.stop
                               @touchstart.stop
@@ -248,6 +300,24 @@ export default {
 
             &:before {
                 background-position: -12px 0;
+            }
+        }
+
+        &.minigame {
+            &:before {
+                background-position: -72px 0;
+            }
+        }
+
+        &.heal {
+            &:before {
+                background-position: -84px 0;
+            }
+        }
+
+        &.continue {
+            &:before {
+                background-position: -108px 0;
             }
         }
 
