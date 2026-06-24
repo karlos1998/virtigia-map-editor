@@ -88,6 +88,7 @@ const handleClick = (event: MouseEvent) => {
         includeNpcs: teleportation.value?.includeNpcs ?? false,
         scaleNpcsToPlayerLevel: teleportation.value?.scaleNpcsToPlayerLevel ?? false,
         npcLevelOffset: normalizeLevelOffset(teleportation.value?.npcLevelOffset),
+        scaleNpcLootItemLevels: teleportation.value?.scaleNpcLootItemLevels ?? false,
     }
     changed.value = true;
 }
@@ -103,6 +104,7 @@ const markCreateInstanceChanged = () => {
         teleportation.value.includeNpcs = false;
         teleportation.value.scaleNpcsToPlayerLevel = false;
         teleportation.value.npcLevelOffset = 0;
+        teleportation.value.scaleNpcLootItemLevels = false;
     }
     markChanged();
 }
@@ -111,6 +113,7 @@ const markIncludeNpcsChanged = () => {
     if (!teleportation.value?.includeNpcs) {
         teleportation.value.scaleNpcsToPlayerLevel = false;
         teleportation.value.npcLevelOffset = 0;
+        teleportation.value.scaleNpcLootItemLevels = false;
     }
     markChanged();
 }
@@ -195,6 +198,17 @@ const cancel = () => {
                 @update:modelValue="markChanged"
             />
             <small class="text-surface-500 dark:text-surface-400">0 oznacza poziom gracza, 10 oznacza gracz +10, -20 oznacza gracz -20.</small>
+        </div>
+
+        <div class="flex align-items-center gap-2" :class="{ 'opacity-50': !teleportation.createInstance || !teleportation.includeNpcs }">
+            <Checkbox
+                v-model="teleportation.scaleNpcLootItemLevels"
+                input-id="teleport-scale-loot-items"
+                :binary="true"
+                :disabled="!teleportation.createInstance || !teleportation.includeNpcs"
+                @change="markChanged"
+            />
+            <label for="teleport-scale-loot-items">Skaluj poziom przedmiotów z lootu NPC</label>
         </div>
     </div>
 

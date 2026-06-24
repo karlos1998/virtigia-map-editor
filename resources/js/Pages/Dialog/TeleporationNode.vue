@@ -28,6 +28,7 @@ const hasInstance = computed(() => Boolean(teleportation.value?.createInstance))
 const includeNpcs = computed(() => Boolean(teleportation.value?.includeNpcs));
 const scaleNpcs = computed(() => Boolean(teleportation.value?.scaleNpcsToPlayerLevel));
 const npcLevelOffset = computed(() => Number(teleportation.value?.npcLevelOffset ?? 0));
+const scaleLootItems = computed(() => Boolean(teleportation.value?.scaleNpcLootItemLevels));
 const mapTitle = computed(() => teleportation.value?.mapName || 'Nie wybrano mapy');
 const mapIdLabel = computed(() => teleportation.value?.mapId ? `#${teleportation.value.mapId}` : 'Brak ID');
 const coordinateLabel = computed(() => teleportation.value ? `${teleportation.value.x}, ${teleportation.value.y}` : '--, --');
@@ -48,12 +49,13 @@ const instanceDescription = computed(() => {
     }
 
     if (!scaleNpcs.value) {
-        return 'NPC z bazowej mapy';
+        return scaleLootItems.value ? 'loot skaluje poziom' : 'NPC z bazowej mapy';
     }
 
-    return npcLevelOffset.value === 0
+    const npcDescription = npcLevelOffset.value === 0
         ? 'NPC na poziomie gracza'
         : `NPC: gracz ${npcLevelOffset.value > 0 ? '+' : ''}${npcLevelOffset.value}`;
+    return scaleLootItems.value ? `${npcDescription}, loot też` : npcDescription;
 });
 
 const editNode = () => {
@@ -140,6 +142,9 @@ const editNode = () => {
                     </span>
                     <span v-if="hasInstance && includeNpcs" class="teleport-node__badge" :class="{ 'teleport-node__badge--active': scaleNpcs }">
                         {{ npcScalingLabel }}
+                    </span>
+                    <span v-if="hasInstance && includeNpcs" class="teleport-node__badge" :class="{ 'teleport-node__badge--active': scaleLootItems }">
+                        {{ scaleLootItems ? 'Loot lvl' : 'Loot stały' }}
                     </span>
                 </div>
             </template>
