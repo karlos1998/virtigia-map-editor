@@ -6,4 +6,5 @@ export interface DialogNodeTeleportationDataResource {
     createInstance?: boolean
     includeNpcs?: boolean
     scaleNpcsToPlayerLevel?: boolean
+    npcLevelOffset?: number
 }

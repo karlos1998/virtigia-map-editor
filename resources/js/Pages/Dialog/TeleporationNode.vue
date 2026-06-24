@@ -27,9 +27,34 @@ const teleportation = computed(() => props.data.action_data?.teleportation ?? nu
 const hasInstance = computed(() => Boolean(teleportation.value?.createInstance));
 const includeNpcs = computed(() => Boolean(teleportation.value?.includeNpcs));
 const scaleNpcs = computed(() => Boolean(teleportation.value?.scaleNpcsToPlayerLevel));
+const npcLevelOffset = computed(() => Number(teleportation.value?.npcLevelOffset ?? 0));
 const mapTitle = computed(() => teleportation.value?.mapName || 'Nie wybrano mapy');
 const mapIdLabel = computed(() => teleportation.value?.mapId ? `#${teleportation.value.mapId}` : 'Brak ID');
 const coordinateLabel = computed(() => teleportation.value ? `${teleportation.value.x}, ${teleportation.value.y}` : '--, --');
+const npcScalingLabel = computed(() => {
+    if (!scaleNpcs.value) {
+        return 'Stały lvl';
+    }
+
+    if (npcLevelOffset.value === 0) {
+        return '= lvl gracza';
+    }
+
+    return `${npcLevelOffset.value > 0 ? '+' : ''}${npcLevelOffset.value} lvl`;
+});
+const instanceDescription = computed(() => {
+    if (!includeNpcs.value) {
+        return 'bez NPC z bazowej mapy';
+    }
+
+    if (!scaleNpcs.value) {
+        return 'NPC z bazowej mapy';
+    }
+
+    return npcLevelOffset.value === 0
+        ? 'NPC na poziomie gracza'
+        : `NPC: gracz ${npcLevelOffset.value > 0 ? '+' : ''}${npcLevelOffset.value}`;
+});
 
 const editNode = () => {
     primeDialog.open(TeleportationSelectModal, {
@@ -92,7 +117,7 @@ const editNode = () => {
                     <i class="pi pi-sitemap" />
                     <div>
                         <strong>INSTANCJA MAPY</strong>
-                        <span>osobna kopia lokacji</span>
+                        <span>{{ instanceDescription }}</span>
                     </div>
                 </div>
 
@@ -114,7 +139,7 @@ const editNode = () => {
                         {{ includeNpcs ? 'NPC z mapy' : 'Bez NPC' }}
                     </span>
                     <span v-if="hasInstance && includeNpcs" class="teleport-node__badge" :class="{ 'teleport-node__badge--active': scaleNpcs }">
-                        {{ scaleNpcs ? 'Skalowanie lvl' : 'Stały lvl' }}
+                        {{ npcScalingLabel }}
                     </span>
                 </div>
             </template>

@@ -24,7 +24,7 @@ const dialogRef = inject<Ref<DynamicDialogInstance & {
 const emit = defineEmits(['selected']);
 
 onMounted(() => {
-    teleportation.value = dialogRef.value.data?.teleportation;
+    teleportation.value = withTeleportationDefaults(dialogRef.value.data?.teleportation);
 })
 
 const scale = ref(1);
@@ -33,6 +33,22 @@ const teleportation = ref<DialogNodeTeleportationDataResource | null>(null);
 
 const selectedMap = ref<MapResource | null>(null);
 const dropdownMaps = ref<MapResource[]>([]);
+
+const normalizeLevelOffset = (value?: number | null) => {
+    const numberValue = Number(value ?? 0);
+    return Number.isFinite(numberValue) ? Math.trunc(numberValue) : 0;
+};
+
+const withTeleportationDefaults = (value?: DialogNodeTeleportationDataResource | null): DialogNodeTeleportationDataResource | null => {
+    if (!value) {
+        return null;
+    }
+
+    return {
+        ...value,
+        npcLevelOffset: normalizeLevelOffset(value.npcLevelOffset),
+    };
+};
 
 const searchOptions = debounce((event) => {
     axios.get(route('maps.search', { search: event[0].query }))
@@ -71,6 +87,7 @@ const handleClick = (event: MouseEvent) => {
         createInstance: teleportation.value?.createInstance ?? false,
         includeNpcs: teleportation.value?.includeNpcs ?? false,
         scaleNpcsToPlayerLevel: teleportation.value?.scaleNpcsToPlayerLevel ?? false,
+        npcLevelOffset: normalizeLevelOffset(teleportation.value?.npcLevelOffset),
     }
     changed.value = true;
 }
@@ -85,6 +102,7 @@ const markCreateInstanceChanged = () => {
     if (!teleportation.value?.createInstance) {
         teleportation.value.includeNpcs = false;
         teleportation.value.scaleNpcsToPlayerLevel = false;
+        teleportation.value.npcLevelOffset = 0;
     }
     markChanged();
 }
@@ -92,16 +110,30 @@ const markCreateInstanceChanged = () => {
 const markIncludeNpcsChanged = () => {
     if (!teleportation.value?.includeNpcs) {
         teleportation.value.scaleNpcsToPlayerLevel = false;
+        teleportation.value.npcLevelOffset = 0;
+    }
+    markChanged();
+}
+
+const markScaleNpcsChanged = () => {
+    if (!teleportation.value?.scaleNpcsToPlayerLevel) {
+        teleportation.value.npcLevelOffset = 0;
+    } else {
+        teleportation.value.npcLevelOffset = normalizeLevelOffset(teleportation.value.npcLevelOffset);
     }
     markChanged();
 }
 
 const reset = () => {
-    teleportation.value = dialogRef.value.data?.teleportation;
+    teleportation.value = withTeleportationDefaults(dialogRef.value.data?.teleportation);
     changed.value = false;
 }
 
 const save = () => {
+    if (teleportation.value) {
+        teleportation.value.npcLevelOffset = normalizeLevelOffset(teleportation.value.npcLevelOffset);
+    }
+
     dialogRef.value.close({
         teleportation: teleportation.value,
     });
@@ -144,9 +176,25 @@ const cancel = () => {
                 input-id="teleport-scale-npcs"
                 :binary="true"
                 :disabled="!teleportation.createInstance || !teleportation.includeNpcs"
-                @change="markChanged"
+                @change="markScaleNpcsChanged"
             />
             <label for="teleport-scale-npcs">Skaluj poziom mobów do poziomu gracza</label>
+        </div>
+
+        <div
+            v-if="teleportation.createInstance && teleportation.includeNpcs && teleportation.scaleNpcsToPlayerLevel"
+            class="flex flex-column gap-2"
+        >
+            <label for="teleport-npc-level-offset" class="font-semibold">Różnica poziomu NPC</label>
+            <InputNumber
+                id="teleport-npc-level-offset"
+                v-model="teleportation.npcLevelOffset"
+                :useGrouping="false"
+                showButtons
+                class="w-full"
+                @update:modelValue="markChanged"
+            />
+            <small class="text-surface-500 dark:text-surface-400">0 oznacza poziom gracza, 10 oznacza gracz +10, -20 oznacza gracz -20.</small>
         </div>
     </div>
 

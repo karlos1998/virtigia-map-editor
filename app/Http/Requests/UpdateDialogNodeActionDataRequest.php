@@ -38,6 +38,7 @@ class UpdateDialogNodeActionDataRequest extends CurrentWorldRequest
             'teleportation.createInstance' => ['sometimes', 'boolean'],
             'teleportation.includeNpcs' => ['sometimes', 'boolean'],
             'teleportation.scaleNpcsToPlayerLevel' => ['sometimes', 'boolean'],
+            'teleportation.npcLevelOffset' => ['sometimes', 'integer'],
         ];
     }
 }
