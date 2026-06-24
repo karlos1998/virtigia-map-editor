@@ -8,11 +8,11 @@ import { DialogCounterResource } from "@/Resources/DialogCounter.resource"
 import { DialogNodeRulesResource } from "@/Resources/DialogNodeRules.resource"
 import { route } from "ziggy-js"
 import axios from "axios"
-import TreeSelectAdapter from "@/Pages/Dialog/Componnts/TreeSelectAdapter.vue";
 import { useQuestStepSelection } from "@/Pages/Dialog/Composables/useQuestStepSelection";
 import InputText from 'primevue/inputtext';
 import MultiSelect from 'primevue/multiselect';
 import BaseItemSearchSelect from "@/Components/BaseItemSearchSelect.vue";
+import QuestRuleSelector from "@/Pages/Dialog/Componnts/QuestRuleSelector.vue";
 
 const rules = defineModel<DialogNodeRulesResource>("rules", {
     required: true,
@@ -56,7 +56,19 @@ const plainNumberRules = new Set<string>([
     DialogNodeOptionRule.activePlayersOnMap,
 ])
 
+const questRuleDescriptions: Record<string, string> = {
+    [DialogNodeOptionRule.questStep]: "Jeśli wybierzesz cały quest, gracz musi mieć ten quest rozpoczęty. Jeśli wybierzesz krok, aktualny krok gracza musi być dokładnie tym krokiem.",
+    [DialogNodeOptionRule.questBeforeStep]: "Jeśli wybierzesz cały quest, gracz nie może mieć go rozpoczętego. Jeśli wybierzesz krok, gracz musi być w tym queście na wcześniejszym kroku.",
+    [DialogNodeOptionRule.questAfterStep]: "Najbezpieczniej wybierz konkretny krok: reguła przejdzie, gdy gracz jest już na jednym z kolejnych kroków tego questa. Dla całego questa silnik traktuje ten warunek jak quest nierozpoczęty.",
+}
+
 const isPlainNumberRule = (rule: string | number): boolean => plainNumberRules.has(String(rule))
+
+const getRuleLabel = (rule: string | number): string =>
+    staticAvailableRules.find(availableRule => String(availableRule.value) === String(rule))?.label ?? String(rule)
+
+const getQuestRuleDescription = (rule: string | number): string | null =>
+    questRuleDescriptions[String(rule)] ?? null
 
 const loadDialogCounters = async () => {
     const { data } = await axios.get<DialogCounterResource[]>(route("web-api.dialog-counters.index"))
@@ -69,7 +81,7 @@ const loadSeasonalEvents = async () => {
 }
 
 // Use the quest step selection composable
-const { questNodes, loading, loadQuests, loadQuestStepById, onQuestNodeExpand } = useQuestStepSelection()
+const { questNodes, loading, loadQuests } = useQuestStepSelection()
 
 const newRule = ref<DialogNodeOptionRule>()
 
@@ -151,36 +163,11 @@ const saveItemAmounts = () => {
 }
 
 onMounted(() => {
-    // Load quests for the TreeSelect
-    loadQuests()
+    loadQuests({ withSteps: true })
 
     // Load dialog counters
     loadDialogCounters()
     loadSeasonalEvents()
-
-    // Check if quest steps are already selected and load their details
-    if (rules.value[DialogNodeOptionRule.questStep]) {
-        const value = rules.value[DialogNodeOptionRule.questStep].value
-
-        // Handle both string (legacy) and array (new) formats
-        if (typeof value === 'string' && value.startsWith('s-')) {
-            // Legacy format: single string
-            const stepId = parseInt(value.substring(2))
-            if (!isNaN(stepId)) {
-                loadQuestStepById(stepId)
-            }
-        } else if (Array.isArray(value)) {
-            // New format: array of strings
-            value.forEach(stepValue => {
-                if (typeof stepValue === 'string' && stepValue.startsWith('s-')) {
-                    const stepId = parseInt(stepValue.substring(2))
-                    if (!isNaN(stepId)) {
-                        loadQuestStepById(stepId)
-                    }
-                }
-            })
-        }
-    }
 })
 
 
@@ -228,19 +215,27 @@ watch(
 </script>
 
 <template>
-    <InputGroup v-for="(_, name) in rules" :key="name">
-        <Button icon="pi pi-times" severity="danger" @click="delete rules[name]" />
+    <div v-for="(_, name) in rules" :key="name" class="dialog-editor-row">
+        <Button
+            icon="pi pi-times"
+            severity="danger"
+            aria-label="Usuń regułę"
+            class="dialog-editor-remove"
+            @click="delete rules[name]"
+        />
 
-        <InputGroupAddon style="min-width: 220px">
+        <div class="dialog-editor-label">
             {{ staticAvailableRules.find(rule => rule.value === name)?.label }}
-        </InputGroupAddon>
+        </div>
+
+        <div class="dialog-editor-controls">
 
         <Select
             v-if="staticAvailableRules.find(rule => rule.value === name)?.canBeUsed && rules[name]"
             v-model="rules[name].consume"
             optionLabel="label"
             optionValue="value"
-            class="w-full md:w-80"
+            class="dialog-editor-control dialog-editor-control--compact"
             :options="canBeUsedOptions"
         />
 
@@ -249,6 +244,7 @@ watch(
             v-model="rules[name].value"
             :max="2000000000"
             :min="0"
+            class="dialog-editor-control dialog-editor-control--compact"
         />
 
         <InputNumber
@@ -260,22 +256,23 @@ watch(
             :max="100"
             :min="0"
             suffix="%"
+            class="dialog-editor-control dialog-editor-control--compact"
         />
 
-        <InputGroupAddon v-if="name === DialogNodeOptionRule.brotherhood">
+        <div v-if="name === DialogNodeOptionRule.brotherhood" class="dialog-editor-hint">
             <b>Wymaga bycia członkiem</b>
-        </InputGroupAddon>
+        </div>
 
-        <InputGroupAddon v-if="name === DialogNodeOptionRule.hasActiveBlessing">
+        <div v-if="name === DialogNodeOptionRule.hasActiveBlessing" class="dialog-editor-hint">
             <b>Wymaga aktywnego błogosławieństwa</b>
-        </InputGroupAddon>
+        </div>
 
         <InputText
             v-if="rules[name] && (name === DialogNodeOptionRule.timeAfter || name === DialogNodeOptionRule.timeBefore)"
             v-model="rules[name].value"
             type="time"
             step="60"
-            class="w-full md:w-40"
+            class="dialog-editor-control dialog-editor-control--compact"
         />
 
         <MultiSelect
@@ -286,7 +283,7 @@ watch(
             optionValue="value"
             display="chip"
             placeholder="Wybierz dni tygodnia"
-            class="w-full md:w-96"
+            class="dialog-editor-control dialog-editor-control--wide"
         />
 
         <BaseItemSearchSelect
@@ -295,25 +292,29 @@ watch(
             value-mode="id"
             multiple
             placeholder="Szukaj przedmiotów (nazwa lub #id)"
-            class="w-full md:w-80"
+            class="dialog-editor-control dialog-editor-control--full"
             @resolved-items="handleResolvedRuleItems"
         />
 
-        <Button
-            v-if="rules[name] && name === DialogNodeOptionRule.items"
-            label="Ustaw ilości"
-            icon="pi pi-pencil"
-            severity="secondary"
-            @click="openItemsAmountModal"
-        />
+        <div v-if="rules[name] && name === DialogNodeOptionRule.items" class="dialog-editor-button-line">
+            <Button
+                label="Ustaw ilości"
+                icon="pi pi-pencil"
+                severity="secondary"
+                class="dialog-editor-action-button"
+                @click="openItemsAmountModal"
+            />
+        </div>
 
-        <TreeSelectAdapter
+        <QuestRuleSelector
             v-if="rules[name] && (name === DialogNodeOptionRule.questStep || name === DialogNodeOptionRule.questBeforeStep || name === DialogNodeOptionRule.questAfterStep)"
             v-model="rules[name].value"
             :loading="loading"
-            :options="questNodes"
-            :onNodeExpand="onQuestNodeExpand"
+            :quests="questNodes"
             :returnList="true"
+            :context-label="getRuleLabel(name)"
+            :context-description="getQuestRuleDescription(name)"
+            class="dialog-editor-control dialog-editor-control--full"
         />
 
         <InputText
@@ -321,7 +322,7 @@ watch(
             v-model="rules[name].value"
             :maxlength="100"
             placeholder="Podaj treść odpowiedzi (max 100 znaków)"
-            class="w-full md:w-80"
+            class="dialog-editor-control dialog-editor-control--wide"
         />
 
         <!-- Dialog Counter UI -->
@@ -332,7 +333,7 @@ watch(
                 optionLabel="name"
                 optionValue="id"
                 placeholder="Wybierz licznik"
-                class="w-full md:w-56"
+                class="dialog-editor-control dialog-editor-control--medium"
             />
             <Select
                 v-if="rules[name].value2"
@@ -340,7 +341,7 @@ watch(
                 :options="[{value: '>', label: '>'}, {value: '=', label: '='}, {value: '<', label: '<'}]"
                 optionLabel="label"
                 optionValue="value"
-                class="w-full md:w-24"
+                class="dialog-editor-control dialog-editor-control--operator"
             />
             <InputNumber
                 v-if="rules[name].value2"
@@ -348,7 +349,7 @@ watch(
                 :min="0"
                 :max="2000000000"
                 placeholder="Wartość"
-                class="w-full md:w-32"
+                class="dialog-editor-control dialog-editor-control--compact"
             />
         </template>
 
@@ -358,7 +359,7 @@ watch(
             :options="seasonalEvents"
             optionLabel="name"
             optionValue="id"
-            class="w-full md:w-80"
+            class="dialog-editor-control dialog-editor-control--wide"
             placeholder="Wybierz wydarzenie"
         >
             <template #option="{ option }">
@@ -369,19 +370,20 @@ watch(
             </template>
         </Select>
 
-    </InputGroup>
+        </div>
+    </div>
 
-    <InputGroup>
+    <div class="dialog-editor-add-row">
         <Select
             v-model="newRule"
             :options="availableRules"
             optionLabel="label"
             optionValue="value"
             placeholder="Wybierz dodatkową regułę"
-            class="w-full md:w-56"
+            class="min-w-0 flex-auto"
         />
         <Button severity="info" label="Dodaj regułę" @click="submitNewRule" />
-    </InputGroup>
+    </div>
 
     <Dialog
         v-model:visible="showItemsAmountModal"
@@ -428,3 +430,109 @@ watch(
 
 
 </template>
+
+<style scoped>
+.dialog-editor-row {
+    align-items: start;
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: 3rem minmax(0, 1fr);
+    margin-bottom: 0.75rem;
+}
+
+.dialog-editor-remove {
+    border-radius: 8px;
+    height: 3rem;
+    min-width: 3rem;
+    width: 3rem;
+}
+
+.dialog-editor-label {
+    align-items: center;
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    color: var(--text-color-secondary);
+    display: flex;
+    justify-content: flex-start;
+    min-height: 3rem;
+    padding: 0.625rem 0.875rem;
+    text-align: left;
+}
+
+.dialog-editor-controls {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    grid-column: 2 / -1;
+    min-width: 0;
+}
+
+.dialog-editor-control {
+    flex: 1 1 18rem;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.dialog-editor-control--operator {
+    flex: 0 0 5rem;
+}
+
+.dialog-editor-control--compact {
+    flex-basis: 12rem;
+    max-width: 16rem;
+}
+
+.dialog-editor-control--medium {
+    flex-basis: 16rem;
+}
+
+.dialog-editor-control--wide {
+    flex-basis: 18rem;
+}
+
+.dialog-editor-control--full {
+    flex-basis: 100%;
+}
+
+.dialog-editor-action-button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.dialog-editor-button-line {
+    display: flex;
+    flex: 0 0 100%;
+}
+
+.dialog-editor-hint {
+    align-items: center;
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    display: flex;
+    min-height: 3rem;
+    padding: 0.625rem 0.875rem;
+}
+
+.dialog-editor-add-row {
+    display: flex;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+:deep(.dialog-editor-control .p-autocomplete),
+:deep(.dialog-editor-control .p-dropdown),
+:deep(.dialog-editor-control .p-select),
+:deep(.dialog-editor-control .p-multiselect),
+:deep(.dialog-editor-control .p-inputnumber),
+:deep(.dialog-editor-control .p-inputtext) {
+    max-width: 100%;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .dialog-editor-add-row {
+        flex-direction: column;
+    }
+}
+</style>

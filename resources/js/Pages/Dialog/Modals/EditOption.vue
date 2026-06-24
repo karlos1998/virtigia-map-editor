@@ -97,7 +97,7 @@ watch(() => props.visible, (visible) => {
         rules: edge.rules || {}
     })) || [];
 
-    loadQuests();
+    loadQuests({ withSteps: true });
 
     if (form.additional_action === 'setQuestStep' && form.additional_action_data && form.additional_action_data.startsWith('s-')) {
         const stepId = parseInt(form.additional_action_data.substring(2));

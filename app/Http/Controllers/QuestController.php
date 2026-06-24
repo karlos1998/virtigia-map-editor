@@ -89,8 +89,12 @@ class QuestController extends Controller
     {
         $query = $request->get('query', '');
 
-        $quests = Quest::where('name', 'like', "%{$query}%")
+        $quests = Quest::query()
+            ->where('name', 'like', "%{$query}%")
             ->select(['id', 'name'])
+            ->when($request->boolean('with_steps'), function ($questQuery): void {
+                $questQuery->with(['steps:id,quest_id,name']);
+            })
             ->get();
 
         return response()->json(QuestSearchResource::collection($quests));

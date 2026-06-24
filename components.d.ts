@@ -28,8 +28,6 @@ declare module 'vue' {
     FileUpload: typeof import('primevue/fileupload')['default']
     IconField: typeof import('primevue/iconfield')['default']
     IftaLabel: typeof import('primevue/iftalabel')['default']
-    InputGroup: typeof import('primevue/inputgroup')['default']
-    InputGroupAddon: typeof import('primevue/inputgroupaddon')['default']
     InputIcon: typeof import('primevue/inputicon')['default']
     InputNumber: typeof import('primevue/inputnumber')['default']
     InputSwitch: typeof import('primevue/inputswitch')['default']

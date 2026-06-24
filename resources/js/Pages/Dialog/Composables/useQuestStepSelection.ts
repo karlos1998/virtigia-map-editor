@@ -3,28 +3,99 @@ import axios from "axios"
 import { route } from "ziggy-js"
 import { QuestResource } from "@/Resources/Quest.resource"
 
-export function useQuestStepSelection() {
-    const questNodes = ref<{ key: string, label: string, children?: any[], leaf?: boolean, loading?: boolean }[]>([])
-    const loading = ref(false)
+export type QuestStepNode = {
+    key: string
+    label: string
+    leaf: true
+    questId: number
+    stepId: number
+}
 
-    const loadQuests = async () => {
-        loading.value = true
-        try {
-            const { data } = await axios.get<QuestResource[]>(route("quests.search"))
-            questNodes.value = data.map(quest => ({
-                key: `q-${quest.id}`,
-                label: quest.name,
-                leaf: false,
-                loading: false
-            }))
-        } catch (error) {
-            console.error("Error loading quests:", error)
-        } finally {
-            loading.value = false
+export type QuestNode = {
+    key: string
+    label: string
+    children?: QuestStepNode[]
+    leaf: false
+    loading: boolean
+    questId: number
+}
+
+type QuestSearchResource = QuestResource & {
+    steps?: {
+        id: number
+        quest_id: number
+        name: string
+    }[]
+}
+
+const questNodes = ref<QuestNode[]>([])
+const loading = ref(false)
+let loadedWithSteps = false
+let pendingLoad: Promise<void> | null = null
+let pendingLoadIncludesSteps = false
+
+const mapQuestToNode = (quest: QuestSearchResource): QuestNode => ({
+    key: `q-${quest.id}`,
+    label: quest.name,
+    leaf: false,
+    loading: false,
+    questId: quest.id,
+    children: quest.steps?.map(step => ({
+        key: `s-${step.id}`,
+        label: step.name,
+        leaf: true,
+        questId: quest.id,
+        stepId: step.id
+    }))
+})
+
+export function useQuestStepSelection() {
+    const loadQuests = async (options: { withSteps?: boolean, force?: boolean } = {}) => {
+        if (!options.force && questNodes.value.length > 0 && (!options.withSteps || loadedWithSteps)) {
+            return
         }
+
+        if (pendingLoad && (!options.withSteps || pendingLoadIncludesSteps)) {
+            return pendingLoad
+        }
+
+        if (pendingLoad && options.withSteps && !pendingLoadIncludesSteps) {
+            return pendingLoad.finally(() => loadQuests({ ...options, force: true }))
+        }
+
+        loading.value = true
+        pendingLoadIncludesSteps = Boolean(options.withSteps)
+        pendingLoad = axios
+            .get<QuestSearchResource[]>(route("quests.search"), {
+                params: {
+                    with_steps: options.withSteps ? 1 : undefined
+                }
+            })
+            .then(({ data }) => {
+                questNodes.value = data.map(mapQuestToNode)
+                loadedWithSteps = Boolean(options.withSteps)
+            })
+            .catch((error) => {
+                console.error("Error loading quests:", error)
+            })
+            .finally(() => {
+                loading.value = false
+                pendingLoad = null
+                pendingLoadIncludesSteps = false
+            })
+
+        return pendingLoad
     }
 
     const loadQuestStepById = async (stepId: number) => {
+        const existingQuest = questNodes.value.find(quest =>
+            quest.children?.some(step => step.stepId === stepId)
+        )
+
+        if (existingQuest) {
+            return
+        }
+
         loading.value = true
         try {
             const { data } = await axios.get(route("quest.steps.show", { step: stepId }))
@@ -33,14 +104,15 @@ export function useQuestStepSelection() {
 
             // First, make sure the quest is loaded
             if (!questNodes.value.some(q => q.key === `q-${questId}`)) {
-                const questResponse = await axios.get<QuestResource[]>(route("quests.search"))
+                const questResponse = await axios.get<QuestSearchResource[]>(route("quests.search"))
                 const quest = questResponse.data.find(q => q.id === questId)
                 if (quest) {
                     questNodes.value.push({
                         key: `q-${quest.id}`,
                         label: quest.name,
                         leaf: false,
-                        loading: false
+                        loading: false,
+                        questId: quest.id
                     })
                 }
             }
@@ -55,7 +127,7 @@ export function useQuestStepSelection() {
                         key: `s-${s.id}`,
                         label: s.name,
                         leaf: true,
-                        questId: questId,
+                        questId: Number(questId),
                         stepId: s.id
                     }))
                 }
@@ -66,7 +138,7 @@ export function useQuestStepSelection() {
                         key: `s-${stepId}`,
                         label: step.name,
                         leaf: true,
-                        questId: questId,
+                        questId: Number(questId),
                         stepId: stepId
                     })
                 }
@@ -90,7 +162,7 @@ export function useQuestStepSelection() {
                     key: `s-${step.id}`,
                     label: step.name,
                     leaf: true,
-                    questId: questId,
+                    questId: Number(questId),
                     stepId: step.id
                 }))
             } catch (error) {

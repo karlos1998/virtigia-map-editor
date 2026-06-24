@@ -6,8 +6,6 @@ import { route } from 'ziggy-js';
 import { useToast } from 'primevue';
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
-import InputGroup from 'primevue/inputgroup';
-import InputGroupAddon from 'primevue/inputgroupaddon';
 import InputNumber from 'primevue/inputnumber';
 import InputSwitch from 'primevue/inputswitch';
 import InputText from 'primevue/inputtext';
@@ -19,7 +17,7 @@ import { DialogCounterResource } from '@/Resources/DialogCounter.resource';
 import { DialogNodeAdditionalActionsResource } from '@/Resources/DialogNodeAdditionalActions.resource';
 import BaseItemSearchSelect from '@/Components/BaseItemSearchSelect.vue';
 import OutfitBrowserDialog from '@/Pages/BaseItem/Components/OutfitBrowserDialog.vue';
-import TreeSelectAdapter from './TreeSelectAdapter.vue';
+import QuestRuleSelector from '@/Pages/Dialog/Componnts/QuestRuleSelector.vue';
 import { useQuestStepSelection } from '../Composables/useQuestStepSelection';
 
 const actions = defineModel<DialogNodeAdditionalActionsResource>('actions', {
@@ -47,7 +45,7 @@ const showOutfitBrowserModal = ref(false);
 const currentOutfitPreviewUrl = ref('');
 const dialogCounters = ref<DialogCounterResource[]>([]);
 
-const { questNodes, loading, loadQuests, loadQuestStepById, onQuestNodeExpand } = useQuestStepSelection();
+const { questNodes, loading, loadQuests, loadQuestStepById } = useQuestStepSelection();
 
 const loadDialogCounters = async (): Promise<void> => {
     const { data } = await axios.get<DialogCounterResource[]>(route('web-api.dialog-counters.index'));
@@ -136,7 +134,7 @@ const syncExistingActionState = async (): Promise<void> => {
 };
 
 onMounted(() => {
-    void loadQuests();
+    void loadQuests({ withSteps: true });
     void loadDialogCounters();
     void syncExistingActionState();
 });
@@ -404,19 +402,28 @@ defineExpose({
 </script>
 
 <template>
-    <div class="flex flex-col gap-2">
-        <InputGroup v-for="name in Object.keys(actions)" :key="name">
-            <Button icon="pi pi-times" severity="danger" aria-label="Usuń akcję" @click="delete actions[name]" />
+    <div class="flex flex-col gap-3">
+        <div v-for="name in Object.keys(actions)" :key="name" class="dialog-editor-row">
+            <Button
+                icon="pi pi-times"
+                severity="danger"
+                aria-label="Usuń akcję"
+                class="dialog-editor-remove"
+                @click="delete actions[name]"
+            />
 
-            <InputGroupAddon style="min-width: 220px;">
+            <div class="dialog-editor-label">
                 {{ dialogNodeAdditionalActionsList.find(action => action.value === name)?.label }}
-            </InputGroupAddon>
+            </div>
+
+            <div class="dialog-editor-controls">
 
             <InputNumber
                 v-if="actions[name] && typeof actions[name].value === 'number' && (name === DialogNodeAdditionalAction.addGold || name === DialogNodeAdditionalAction.addHonorPoints || name === DialogNodeAdditionalAction.addExp)"
                 v-model="actions[name].value"
                 :max="2000000000"
                 :min="0"
+                class="dialog-editor-control dialog-editor-control--compact"
             />
 
             <InputNumber
@@ -428,6 +435,7 @@ defineExpose({
                 :max="100"
                 :min="0"
                 suffix="%"
+                class="dialog-editor-control dialog-editor-control--compact"
             />
 
             <BaseItemSearchSelect
@@ -436,18 +444,19 @@ defineExpose({
                 value-mode="id"
                 multiple
                 placeholder="Szukaj przedmiotów (nazwa lub #id)"
-                class="w-full md:w-80"
+                class="dialog-editor-control dialog-editor-control--full"
                 @resolved-items="handleResolvedAddItems"
             />
 
-            <Button
-                v-if="actions[name] && name === DialogNodeAdditionalAction.addItems"
-                @click="openItemsAmountModal"
-                severity="secondary"
-                icon="pi pi-pencil"
-            >
-                Ustaw ilości
-            </Button>
+            <div v-if="actions[name] && name === DialogNodeAdditionalAction.addItems" class="dialog-editor-button-line">
+                <Button
+                    @click="openItemsAmountModal"
+                    severity="secondary"
+                    icon="pi pi-pencil"
+                    label="Ustaw ilości"
+                    class="dialog-editor-action-button"
+                />
+            </div>
 
             <BaseItemSearchSelect
                 v-if="actions[name] && name === DialogNodeAdditionalAction.blessing"
@@ -455,7 +464,7 @@ defineExpose({
                 value-mode="object"
                 category="blessings"
                 placeholder="Szukaj błogosławieństwa (nazwa lub #id)"
-                class="w-full p-0"
+                class="dialog-editor-control dialog-editor-control--wide"
             />
 
             <div v-if="actions[name] && name === DialogNodeAdditionalAction.blessing" class="flex items-center gap-2">
@@ -463,12 +472,16 @@ defineExpose({
                 <small>Skaluj poziom przedmiotu</small>
             </div>
 
-            <TreeSelectAdapter
+            <QuestRuleSelector
                 v-if="actions[name] && name === DialogNodeAdditionalAction.setQuestStep"
                 v-model="actions[name].value"
                 :loading="loading"
-                :options="questNodes"
-                :onNodeExpand="onQuestNodeExpand"
+                :quests="questNodes"
+                :returnList="false"
+                :allowQuestSelection="false"
+                context-label="Ustaw postęp questa"
+                context-description="Po wybraniu tej opcji dialogowej gracz dostanie wskazany krok questa. W tym miejscu wybierasz konkretny krok, nie cały quest."
+                class="dialog-editor-control dialog-editor-control--full"
             />
 
             <Select
@@ -478,7 +491,7 @@ defineExpose({
                 optionLabel="name"
                 optionValue="id"
                 placeholder="Wybierz licznik dialogowy"
-                class="w-full md:w-80"
+                class="dialog-editor-control dialog-editor-control--wide"
             />
 
             <Select
@@ -488,10 +501,10 @@ defineExpose({
                 optionLabel="name"
                 optionValue="id"
                 placeholder="Wybierz licznik do wyczyszczenia"
-                class="w-full md:w-80"
+                class="dialog-editor-control dialog-editor-control--wide"
             />
 
-            <div v-if="actions[name] && name === DialogNodeAdditionalAction.setOutfit" class="space-y-3 p-3 bg-gray-50 rounded-lg border">
+            <div v-if="actions[name] && name === DialogNodeAdditionalAction.setOutfit" class="dialog-editor-control dialog-editor-control--wide space-y-3 rounded-lg border bg-gray-50 p-3">
                 <div>
                     <label class="block text-sm font-medium mb-2 text-gray-700">Źródło grafiki stroju</label>
                     <div class="flex gap-2">
@@ -528,11 +541,12 @@ defineExpose({
                     <small class="text-gray-500 text-xs mt-1 block">0 = permanentny strój</small>
                 </div>
             </div>
-        </InputGroup>
+            </div>
+        </div>
 
-        <InputGroup>
+        <div class="dialog-editor-add-row">
             <Select
-                class="flex-auto"
+                class="min-w-0 flex-auto"
                 name="category"
                 v-model="newAdditionalAction"
                 :options="availableDialogNodeAdditionalActionsList"
@@ -542,7 +556,7 @@ defineExpose({
             <Button severity="info" @click="addAdditionalAction">
                 Dodaj akcję
             </Button>
-        </InputGroup>
+        </div>
 
         <Dialog
             v-model:visible="showItemsAmountModal"
@@ -589,3 +603,89 @@ defineExpose({
         />
     </div>
 </template>
+
+<style scoped>
+.dialog-editor-row {
+    align-items: start;
+    display: grid;
+    gap: 0.5rem;
+    grid-template-columns: 3rem minmax(0, 1fr);
+}
+
+.dialog-editor-remove {
+    border-radius: 8px;
+    height: 3rem;
+    min-width: 3rem;
+    width: 3rem;
+}
+
+.dialog-editor-label {
+    align-items: center;
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    color: var(--text-color-secondary);
+    display: flex;
+    justify-content: flex-start;
+    min-height: 3rem;
+    padding: 0.625rem 0.875rem;
+    text-align: left;
+}
+
+.dialog-editor-controls {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    grid-column: 2 / -1;
+    min-width: 0;
+}
+
+.dialog-editor-control {
+    flex: 1 1 18rem;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.dialog-editor-control--compact {
+    flex-basis: 12rem;
+    max-width: 16rem;
+}
+
+.dialog-editor-control--wide {
+    flex-basis: 18rem;
+}
+
+.dialog-editor-control--full {
+    flex-basis: 100%;
+}
+
+.dialog-editor-action-button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.dialog-editor-button-line {
+    display: flex;
+    flex: 0 0 100%;
+}
+
+.dialog-editor-add-row {
+    display: flex;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+:deep(.dialog-editor-control .p-autocomplete),
+:deep(.dialog-editor-control .p-dropdown),
+:deep(.dialog-editor-control .p-select),
+:deep(.dialog-editor-control .p-inputnumber) {
+    max-width: 100%;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .dialog-editor-add-row {
+        flex-direction: column;
+    }
+}
+</style>

@@ -416,3 +416,42 @@ onBeforeUnmount(() => {
         </template>
     </AutoComplete>
 </template>
+
+<style scoped>
+:deep(.p-autocomplete) {
+    max-width: 100%;
+    min-width: 0;
+    width: 100%;
+}
+
+:deep(.p-autocomplete-multiple-container) {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    max-width: 100%;
+    min-width: 0;
+    width: 100%;
+}
+
+:deep(.p-autocomplete-token) {
+    max-width: 100%;
+    min-width: 0;
+}
+
+:deep(.p-autocomplete-token-label) {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+:deep(.p-autocomplete-input-token) {
+    flex: 1 1 12rem;
+    min-width: 10rem;
+}
+
+:deep(.p-autocomplete-input-token input) {
+    min-width: 0;
+    width: 100%;
+}
+</style>

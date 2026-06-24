@@ -17,6 +17,11 @@ class QuestSearchResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'steps' => $this->whenLoaded('steps', fn () => $this->steps->map(fn ($step): array => [
+                'id' => $step->id,
+                'quest_id' => $step->quest_id,
+                'name' => $step->name,
+            ])),
         ];
     }
 }
