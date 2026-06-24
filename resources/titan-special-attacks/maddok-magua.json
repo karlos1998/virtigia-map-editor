@@ -1,0 +1,132 @@
+{
+    "id": 3328,
+    "name": "Maddok Magua",
+    "level": 231,
+    "rank": {
+        "value": "TITAN",
+        "label": "Tytan"
+    },
+    "profession": {
+        "value": "h",
+        "label": "Łowca"
+    },
+    "special_attacks": [
+        {
+            "id": 267,
+            "name": "Cios w serce",
+            "charge_turns": 0,
+            "target": "single",
+            "damages": [
+                {
+                    "element": "fire",
+                    "min_damage": 6,
+                    "max_damage": 8
+                }
+            ]
+        },
+        {
+            "id": 266,
+            "name": "Elektryczne wyładowanie",
+            "charge_turns": 0,
+            "target": "single",
+            "damages": [
+                {
+                    "element": "lightning",
+                    "min_damage": 0,
+                    "max_damage": 9
+                }
+            ]
+        },
+        {
+            "id": 265,
+            "name": "Potężny grad",
+            "charge_turns": 0,
+            "target": "line",
+            "damages": [
+                {
+                    "element": "frost",
+                    "min_damage": 5,
+                    "max_damage": 5
+                }
+            ]
+        },
+        {
+            "id": 269,
+            "name": "Gromowładne uderzenie włócznią",
+            "charge_turns": 3,
+            "target": "all",
+            "damages": [
+                {
+                    "element": "physical",
+                    "min_damage": 90,
+                    "max_damage": 100
+                },
+                {
+                    "element": "lightning",
+                    "min_damage": 0,
+                    "max_damage": 130
+                }
+            ]
+        },
+        {
+            "id": 271,
+            "name": "Błotny wywar",
+            "charge_turns": 0,
+            "target": "self",
+            "effects": [
+                {
+                    "type": "healing",
+                    "value": 11
+                }
+            ]
+        },
+        {
+            "id": 272,
+            "name": "Krzyk cierpienia",
+            "charge_turns": 2,
+            "target": "single",
+            "effects": [
+                {
+                    "type": "pushBack",
+                    "value": 2
+                }
+            ]
+        },
+        {
+            "id": 274,
+            "name": "Aura bagiennej odporności",
+            "charge_turns": 0,
+            "target": "self",
+            "effects": [
+                {
+                    "type": "addArmor",
+                    "value": 1500,
+                    "duration": 10
+                },
+                {
+                    "type": "healingPerTurn",
+                    "value": 11250,
+                    "duration": 10
+                },
+                {
+                    "type": "addResistancePercent",
+                    "value": 19,
+                    "duration": 10
+                }
+            ]
+        },
+        {
+            "id": 275,
+            "name": "Klepsydra trzęsawisk",
+            "charge_turns": 0,
+            "target": "self",
+            "effects": [
+                {
+                    "type": "addSA",
+                    "value": 7.5,
+                    "duration": 5
+                }
+            ]
+        }
+    ]
+}
