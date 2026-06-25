@@ -11,12 +11,20 @@ import InputText from 'primevue/inputtext';
 import Calendar from 'primevue/calendar';
 import Dropdown from 'primevue/dropdown';
 import Textarea from 'primevue/textarea';
+import InputSwitch from 'primevue/inputswitch';
 import {
     additionalAttributes,
     booleanAttributes,
     type AdditionalAttribute,
     type AdditionalAttributeType,
 } from '../AttributeOptions';
+import {
+    isAttributeAllowedForCategory,
+    RAW_ATTRIBUTE_TO_ATTACK_ELEMENT,
+    RAW_ATTRIBUTE_TO_ATTRIBUTE_POINT,
+    RAW_ATTRIBUTE_TO_MANUAL_ATTRIBUTE_POINT,
+    type AttributeCategoryGroup,
+} from '../AttributeCategoryRules';
 
 /*
 |--------------------------------------------------------------------------
@@ -55,6 +63,12 @@ interface LegendaryBonusOption {
     value: number;
 }
 
+interface IncompatibleAttribute {
+    key: string;
+    label: string;
+    group: string;
+}
+
 /*
 |--------------------------------------------------------------------------
 | Component Setup
@@ -80,6 +94,7 @@ const toast = useToast();
 const isLoading = ref(true);
 const isCalculating = ref(false);
 const scaleResult = ref<any>(null);
+const showIncompatibleAttributes = ref(false);
 const attributeData = ref<AttributeData>({
     attributePoints: [],
     manualAttributePoints: [],
@@ -243,6 +258,99 @@ const enabledBooleanAttributesCount = computed(() => {
     return booleanAttributes.filter(attr => getBooleanAttributeValue(attr.key)).length;
 });
 
+const itemCategory = computed(() => props.baseItem?.category || null);
+
+const visibleAttributePoints = computed(() => {
+    return attributeData.value.attributePoints.filter(attr => shouldShowAttribute('attributePoint', attr.name, isAttributePointActive(attr.name)));
+});
+
+const visibleManualAttributePoints = computed(() => {
+    return attributeData.value.manualAttributePoints.filter(attr => shouldShowAttribute('manualAttributePoint', attr.name, isManualAttributeActive(attr.name)));
+});
+
+const visibleAttackElements = computed(() => {
+    return attributeData.value.attackElements.filter(attr => shouldShowAttribute('attackElement', attr.name, selectedAttackElements.value.includes(attr.name)));
+});
+
+const visibleBooleanAttributes = computed(() => {
+    return booleanAttributes.filter(attr => shouldShowAttribute('booleanAttribute', attr.key, getBooleanAttributeValue(attr.key)));
+});
+
+const visibleAdditionalAttributes = computed(() => {
+    return additionalAttributes.filter(attr => shouldShowAttribute('additionalAttribute', attr.key, isAdditionalAttributeActive(attr)));
+});
+
+const incompatibleActiveAttributes = computed<IncompatibleAttribute[]>(() => {
+    const items: IncompatibleAttribute[] = [];
+    const seen = new Set<string>();
+
+    const add = (group: string, key: string, label: string) => {
+        const id = `${group}:${key}`;
+        if (!seen.has(id)) {
+            seen.add(id);
+            items.push({group, key, label});
+        }
+    };
+
+    attributeData.value.attributePoints.forEach(attr => {
+        if (isAttributePointActive(attr.name) && !isAttributeAllowed('attributePoint', attr.name)) {
+            add('Punkty atrybutów', attr.name, getAttributePointLabel(attr.name));
+        }
+    });
+
+    attributeData.value.manualAttributePoints.forEach(attr => {
+        if (isManualAttributeActive(attr.name) && !isAttributeAllowed('manualAttributePoint', attr.name)) {
+            add('Manualne punkty', attr.name, getManualAttributePointLabel(attr.name));
+        }
+    });
+
+    selectedAttackElements.value.forEach(attackElement => {
+        if (!isAttributeAllowed('attackElement', attackElement)) {
+            add('Elementy ataku', attackElement, getAttackElementLabel(attackElement));
+        }
+    });
+
+    booleanAttributes.forEach(attr => {
+        if (getBooleanAttributeValue(attr.key) && !isAttributeAllowed('booleanAttribute', attr.key)) {
+            add('Atrybuty logiczne', attr.key, attr.label);
+        }
+    });
+
+    additionalAttributes.forEach(attr => {
+        if (isAdditionalAttributeActive(attr) && !isAttributeAllowed('additionalAttribute', attr.key)) {
+            add('Dodatkowe atrybuty', attr.key, attr.label);
+        }
+    });
+
+    const attributes = form.value?.attributes ?? {};
+    Object.entries(RAW_ATTRIBUTE_TO_ATTRIBUTE_POINT).forEach(([attributeKey, attributePointKey]) => {
+        if (hasFilledAttributeValue(attributes[attributeKey]) && !isAttributeAllowed('attributePoint', attributePointKey)) {
+            add('Atrybuty JSON', attributeKey, `${attributeKey} -> ${getAttributePointLabel(attributePointKey)}`);
+        }
+    });
+    Object.entries(RAW_ATTRIBUTE_TO_MANUAL_ATTRIBUTE_POINT).forEach(([attributeKey, manualAttributePointKey]) => {
+        if (hasFilledAttributeValue(attributes[attributeKey]) && !isAttributeAllowed('manualAttributePoint', manualAttributePointKey)) {
+            add('Atrybuty JSON', attributeKey, `${attributeKey} -> ${getManualAttributePointLabel(manualAttributePointKey)}`);
+        }
+    });
+    Object.entries(RAW_ATTRIBUTE_TO_ATTACK_ELEMENT).forEach(([attributeKey, attackElement]) => {
+        if (hasFilledAttributeValue(attributes[attributeKey]) && !isAttributeAllowed('attackElement', attackElement)) {
+            add('Atrybuty JSON', attributeKey, `${attributeKey} -> ${getAttackElementLabel(attackElement)}`);
+        }
+    });
+
+    return items;
+});
+
+const incompatibleAttributesPreview = computed(() => {
+    const visibleItems = incompatibleActiveAttributes.value.slice(0, 8).map(attr => `${attr.group}: ${attr.label}`);
+    const restCount = incompatibleActiveAttributes.value.length - visibleItems.length;
+
+    return restCount > 0
+        ? `${visibleItems.join(', ')} oraz ${restCount} więcej`
+        : visibleItems.join(', ');
+});
+
 /*
 |--------------------------------------------------------------------------
 | Helper Functions
@@ -257,6 +365,96 @@ function getAttributeValue(attributeName: string, isManual: boolean = false): nu
         return form.value?.manual_attribute_points?.[attributeName] || 0;
     }
     return form.value?.attribute_points?.[attributeName] || 0;
+}
+
+function isAttributeAllowed(group: AttributeCategoryGroup, key: string): boolean {
+    return isAttributeAllowedForCategory(group, key, itemCategory.value);
+}
+
+function shouldShowAttribute(group: AttributeCategoryGroup, key: string, isActive: boolean): boolean {
+    return showIncompatibleAttributes.value || isAttributeAllowed(group, key) || isActive;
+}
+
+function isAttributePointActive(attributeName: string): boolean {
+    return getAttributeValue(attributeName, false) !== 0;
+}
+
+function isAttributeIncompatible(group: AttributeCategoryGroup, key: string): boolean {
+    return !isAttributeAllowed(group, key);
+}
+
+function getAttributePointLabel(attributeName: string): string {
+    const attr = attributeData.value.attributePoints.find(option => option.name === attributeName);
+    return attr?.description || attr?.name || attributeName;
+}
+
+function getManualAttributePointLabel(attributeName: string): string {
+    const attr = attributeData.value.manualAttributePoints.find(option => option.name === attributeName);
+    return attr?.description || attr?.name || attributeName;
+}
+
+function getAttackElementLabel(attackElement: string): string {
+    return attributeData.value.attackElements.find(option => option.name === attackElement)?.description || attackElement;
+}
+
+function getAttributePointCardClass(attributeName: string): Array<string | Record<string, boolean>> {
+    const isActive = isAttributePointActive(attributeName);
+    const isIncompatible = isAttributeIncompatible('attributePoint', attributeName);
+
+    return [
+        'flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-all duration-200',
+        {
+            'bg-orange-50 border-orange-400 ring-1 ring-orange-300': isActive && isIncompatible,
+            'bg-blue-50 border-blue-200': isActive && !isIncompatible,
+            'border-orange-200': !isActive && isIncompatible,
+            'border-gray-200': !isActive && !isIncompatible,
+        },
+    ];
+}
+
+function getManualAttributeCardClass(attributeName: string): Array<string | Record<string, boolean>> {
+    const isActive = isManualAttributeActive(attributeName);
+    const isIncompatible = isAttributeIncompatible('manualAttributePoint', attributeName);
+
+    return [
+        'flex flex-col p-4 border rounded-lg hover:shadow-md transition-all duration-200',
+        {
+            'bg-orange-50 border-orange-400 ring-1 ring-orange-300': isActive && isIncompatible,
+            'bg-emerald-100 border-emerald-300 ring-1 ring-emerald-300': isActive && !isIncompatible,
+            'border-orange-200': !isActive && isIncompatible,
+            'border-gray-200': !isActive && !isIncompatible,
+        },
+    ];
+}
+
+function getBooleanAttributeCardClass(attributeKey: string): Array<string | Record<string, boolean>> {
+    const isActive = getBooleanAttributeValue(attributeKey);
+    const isIncompatible = isAttributeIncompatible('booleanAttribute', attributeKey);
+
+    return [
+        'flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-all duration-200 active:ring-2 active:ring-blue-400 cursor-pointer',
+        {
+            'bg-orange-50 border-orange-400 ring-1 ring-orange-300': isActive && isIncompatible,
+            'bg-blue-100 border-blue-200': isActive && !isIncompatible,
+            'border-orange-200': !isActive && isIncompatible,
+            'border-gray-200': !isActive && !isIncompatible,
+        },
+    ];
+}
+
+function getAdditionalAttributeCardClass(attribute: AdditionalAttribute): Array<string | Record<string, boolean>> {
+    const isActive = isAdditionalAttributeActive(attribute);
+    const isIncompatible = isAttributeIncompatible('additionalAttribute', attribute.key);
+
+    return [
+        'flex flex-col p-4 border rounded-lg hover:shadow-md transition-all duration-200',
+        {
+            'bg-orange-50 border-orange-400 ring-1 ring-orange-300': isActive && isIncompatible,
+            'bg-amber-100 border-amber-300 ring-1 ring-amber-300': isActive && !isIncompatible,
+            'border-orange-200': !isActive && isIncompatible,
+            'border-gray-200': !isActive && !isIncompatible,
+        },
+    ];
 }
 
 /**
@@ -995,6 +1193,30 @@ watch(selectedLegendaryBonus, async () => {
                 </div>
             </div>
 
+            <div class="flex flex-wrap items-center gap-3 rounded-lg border border-blue-100 bg-white/70 p-3">
+                <div class="flex items-center gap-3">
+                    <InputSwitch v-model="showIncompatibleAttributes" />
+                    <span class="text-sm font-medium text-gray-700">Pokaż niepasujące atrybuty</span>
+                </div>
+            </div>
+
+            <div
+                v-if="incompatibleActiveAttributes.length > 0"
+                class="rounded-lg border border-red-300 bg-red-100 p-3 text-sm text-red-800"
+            >
+                <div class="flex items-start gap-2">
+                    <i class="pi pi-exclamation-triangle mt-0.5"></i>
+                    <div>
+                        <div class="font-semibold">
+                            Ten item ma aktywne atrybuty niepasujące do kategorii {{ props.baseItem?.category || 'brak' }}
+                        </div>
+                        <div class="mt-1">
+                            {{ incompatibleAttributesPreview }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Bonus Validation -->
             <div v-if="bonusValidation.expected > 0"
                  :class="{
@@ -1042,7 +1264,7 @@ watch(selectedLegendaryBonus, async () => {
                 <!-- Attack Element Selection -->
                 <div>
                     <div class="font-semibold text-blue-800 mb-2">Elementy ataku:</div>
-                    <MultiSelect v-model="selectedAttackElements" :options="attributeData.attackElements"
+                    <MultiSelect v-model="selectedAttackElements" :options="visibleAttackElements"
                                  optionLabel="description" optionValue="name"
                                  placeholder="Wybierz elementy ataku"
                                  class="w-full"/>
@@ -1084,9 +1306,9 @@ watch(selectedLegendaryBonus, async () => {
             </h4>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div
-                    v-for="attr in attributeData.attributePoints"
+                    v-for="attr in visibleAttributePoints"
                     :key="attr.name"
-                    class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200"
+                    :class="getAttributePointCardClass(attr.name)"
                 >
                     <div class="flex-1 min-w-0">
                         <div class="font-medium text-sm text-gray-800 truncate">{{ attr.name }}</div>
@@ -1126,14 +1348,9 @@ watch(selectedLegendaryBonus, async () => {
             </h4>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div
-                    v-for="attr in attributeData.manualAttributePoints"
+                    v-for="attr in visibleManualAttributePoints"
                     :key="attr.name"
-                    :class="[
-                        'flex flex-col p-4 border rounded-lg hover:shadow-md transition-all duration-200',
-                        isManualAttributeActive(attr.name)
-                            ? 'bg-emerald-100 border-emerald-300 ring-1 ring-emerald-300'
-                            : 'border-gray-200'
-                    ]"
+                    :class="getManualAttributeCardClass(attr.name)"
                 >
                     <div class="mb-3">
                         <div class="font-medium text-sm text-gray-800">{{ attr.name }}</div>
@@ -1158,12 +1375,9 @@ watch(selectedLegendaryBonus, async () => {
             </h4>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div
-                    v-for="attr in booleanAttributes"
+                    v-for="attr in visibleBooleanAttributes"
                     :key="attr.key"
-                    :class="[
-                        'flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 active:ring-2 active:ring-blue-400 cursor-pointer',
-                        {'bg-blue-100 border-blue-200': getBooleanAttributeValue(attr.key)}
-                    ]"
+                    :class="getBooleanAttributeCardClass(attr.key)"
                     @click="updateBooleanAttribute(attr.key, !getBooleanAttributeValue(attr.key))"
                 >
                     <div class="flex-1 min-w-0">
@@ -1188,14 +1402,9 @@ watch(selectedLegendaryBonus, async () => {
             </h4>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div
-                    v-for="attr in additionalAttributes"
+                    v-for="attr in visibleAdditionalAttributes"
                     :key="attr.key"
-                    :class="[
-                        'flex flex-col p-4 border rounded-lg hover:shadow-md transition-all duration-200',
-                        isAdditionalAttributeActive(attr)
-                            ? 'bg-amber-100 border-amber-300 ring-1 ring-amber-300'
-                            : 'border-gray-200'
-                    ]"
+                    :class="getAdditionalAttributeCardClass(attr)"
                 >
                     <div class="mb-3">
                         <div class="font-medium text-sm text-gray-800">{{ attr.label }}</div>
