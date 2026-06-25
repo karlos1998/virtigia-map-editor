@@ -109,9 +109,11 @@ const selectedLevel = ref(
 );
 
 const selectedAttackElements = ref(
-    form.value?.attributes?.needAttackElements ||
-    props.baseItem?.attributes?.needAttackElements ||
-    []
+    getSelectableAttackElementValues(
+        form.value?.attributes?.needAttackElements ||
+        props.baseItem?.attributes?.needAttackElements ||
+        []
+    )
 );
 
 const legendaryBonuses: LegendaryBonusOption[] = [
@@ -413,6 +415,56 @@ function getAdditionalAttributeValueAsArray(attributeKey: string): number[] {
     return Array.isArray(value) ? value : [];
 }
 
+function isDeepWoundAttackElement(attackElement: string | AttackElement): boolean {
+    return (typeof attackElement === 'string' ? attackElement : attackElement.name) === 'DEEP_WOUND';
+}
+
+function getSelectableAttackElementValues(attackElements: unknown): string[] {
+    if (!Array.isArray(attackElements)) {
+        return [];
+    }
+
+    return attackElements.filter((attackElement): attackElement is string => {
+        return typeof attackElement === 'string' && !isDeepWoundAttackElement(attackElement);
+    });
+}
+
+function getSelectableAttackElementOptions(attackElements: AttackElement[] = []): AttackElement[] {
+    return attackElements.filter(attackElement => !isDeepWoundAttackElement(attackElement));
+}
+
+function isManualAttributeActive(attributeName: string): boolean {
+    return getAttributeValue(attributeName, true) !== 0;
+}
+
+function hasFilledAttributeValue(value: unknown): boolean {
+    if (value === null || value === undefined) {
+        return false;
+    }
+
+    if (typeof value === 'number') {
+        return value !== 0;
+    }
+
+    if (typeof value === 'string') {
+        return value.trim() !== '';
+    }
+
+    if (Array.isArray(value)) {
+        return value.some(item => hasFilledAttributeValue(item));
+    }
+
+    if (value instanceof Date) {
+        return true;
+    }
+
+    return Boolean(value);
+}
+
+function isAdditionalAttributeActive(attribute: AdditionalAttribute): boolean {
+    return hasFilledAttributeValue(form.value?.attributes?.[attribute.key]);
+}
+
 /**
  * Build API parameters from current form state and base item data
  */
@@ -440,9 +492,11 @@ function buildApiParameters(): Record<string, any> {
         params.itemProfessions = '';
     }
 
+
     // Attack elements from selectedAttackElements, default to empty string
-    if (selectedAttackElements.value.length > 0) {
-        params.attackElements = selectedAttackElements.value.join(',');
+    const attackElements = getSelectableAttackElementValues(selectedAttackElements.value);
+    if (attackElements.length > 0) {
+        params.attackElements = attackElements.join(',');
     } else {
         params.attackElements = '';
     }
@@ -458,46 +512,6 @@ function buildApiParameters(): Record<string, any> {
             });
         });
 
-    // Add boolean attributes
-    booleanAttributes.forEach(attr => {
-        if (getBooleanAttributeValue(attr.key)) {
-            params[attr.key] = true;
-        }
-    });
-
-    // Add additional attributes
-    additionalAttributes.forEach(attr => {
-        const value = getAdditionalAttributeValue(attr.key, attr.type);
-        if (value !== null && value !== undefined && value !== '') {
-            // For arrays, check if all elements are 0 - if so, don't include
-            if (attr.type === 'array' && Array.isArray(value)) {
-                if (value.every(v => v === 0)) {
-                    return; // Skip empty arrays (all zeros)
-                }
-            }
-            // For numbers, don't include if value is 0
-            else if ((attr.type === 'int' || attr.type === 'decimal') && value === 0) {
-                return; // Skip zero values
-            }
-
-            if (attr.type === 'timestamp' && value instanceof Date) {
-                params[attr.key] = Math.floor(value.getTime() / 1000);
-            } else if (attr.type === 'decimal') {
-                params[attr.key] = normalizeDecimalAttribute(value);
-            } else {
-                params[attr.key] = value;
-            }
-        }
-    });
-
-    // Add legendary bonus
-    if (selectedLegendaryBonus.value !== 'none') {
-        const bonus = legendaryBonuses.find(b => b.name === selectedLegendaryBonus.value);
-        if (bonus) {
-            params.legendaryBonus = [bonus.name, bonus.value];
-        }
-    }
-
     return params;
 }
 
@@ -505,8 +519,15 @@ function buildApiParameters(): Record<string, any> {
  * Check if parameters contain any attribute points (not just base item data)
  */
 function hasAttributeParameters(params: Record<string, any>): boolean {
-    const baseItemKeys = ['lvl', 'itemCategory', 'itemProfessions', 'attackElements', 'rarity', 'legendaryBonus'];
-    return Object.keys(params).some(key => !baseItemKeys.includes(key));
+    const baseItemKeys = ['lvl', 'itemCategory', 'itemProfessions', 'rarity'];
+
+    return Object.entries(params).some(([key, value]) => {
+        if (key === 'attackElements') {
+            return typeof value === 'string' ? value.trim() !== '' : Array.isArray(value) && value.length > 0;
+        }
+
+        return !baseItemKeys.includes(key);
+    });
 }
 
 /**
@@ -703,7 +724,11 @@ async function fetchAttributePoints(): Promise<void> {
     try {
         isLoading.value = true;
         const response = await axios.get('/api/base-items/attribute-points');
-        attributeData.value = response.data;
+        attributeData.value = {
+            ...response.data,
+            attackElements: getSelectableAttackElementOptions(response.data?.attackElements ?? [])
+        };
+        selectedAttackElements.value = getSelectableAttackElementValues(selectedAttackElements.value);
     } catch (error) {
         console.error('Error fetching attribute points:', error);
         toast.add({
@@ -792,7 +817,7 @@ async function loadReverseAttributes() {
 
     // Set attack elements if present
     if (reverseData.attackElements && Array.isArray(reverseData.attackElements)) {
-        selectedAttackElements.value = [...reverseData.attackElements];
+        selectedAttackElements.value = getSelectableAttackElementValues(reverseData.attackElements);
     }
 
     // await calculateScaleAttributes();
@@ -883,13 +908,21 @@ watch(selectedLevel, async () => {
 });
 
 watch(selectedAttackElements, async () => {
+    const attackElements = getSelectableAttackElementValues(selectedAttackElements.value);
+    if (
+        attackElements.length !== selectedAttackElements.value.length ||
+        attackElements.some((attackElement, index) => attackElement !== selectedAttackElements.value[index])
+    ) {
+        selectedAttackElements.value = attackElements;
+        return;
+    }
 
     // Save to form data - preserve existing attributes by modifying in place
     if (!form.value.attributes) {
         form.value.attributes = {};
     }
     // Modify existing attributes object in place instead of reassigning
-    form.value.attributes.needAttackElements = selectedAttackElements.value;
+    form.value.attributes.needAttackElements = attackElements;
 
 
     await calculateScaleAttributes();
@@ -1095,7 +1128,12 @@ watch(selectedLegendaryBonus, async () => {
                 <div
                     v-for="attr in attributeData.manualAttributePoints"
                     :key="attr.name"
-                    class="flex flex-col p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200"
+                    :class="[
+                        'flex flex-col p-4 border rounded-lg hover:shadow-md transition-all duration-200',
+                        isManualAttributeActive(attr.name)
+                            ? 'bg-emerald-100 border-emerald-300 ring-1 ring-emerald-300'
+                            : 'border-gray-200'
+                    ]"
                 >
                     <div class="mb-3">
                         <div class="font-medium text-sm text-gray-800">{{ attr.name }}</div>
@@ -1152,7 +1190,12 @@ watch(selectedLegendaryBonus, async () => {
                 <div
                     v-for="attr in additionalAttributes"
                     :key="attr.key"
-                    class="flex flex-col p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200"
+                    :class="[
+                        'flex flex-col p-4 border rounded-lg hover:shadow-md transition-all duration-200',
+                        isAdditionalAttributeActive(attr)
+                            ? 'bg-amber-100 border-amber-300 ring-1 ring-amber-300'
+                            : 'border-gray-200'
+                    ]"
                 >
                     <div class="mb-3">
                         <div class="font-medium text-sm text-gray-800">{{ attr.label }}</div>
