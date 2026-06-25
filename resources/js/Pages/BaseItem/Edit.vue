@@ -12,6 +12,7 @@ import AttributePointsEditor from './Components/AttributePointsEditor.vue';
 import TeleportToEditor from './Components/TeleportToEditor.vue';
 import OutfitEditor from './Components/OutfitEditor.vue';
 import PetEditor from './Components/PetEditor.vue';
+import {calculateBaseItemPrice} from './BaseItemPriceCalculator';
 import JsonEditorVue from 'json-editor-vue'
 
 const props = defineProps<{
@@ -50,6 +51,31 @@ const isPet = computed(() => props.baseItem.category === 'pets');
 const isBook = computed(() => props.baseItem.category === 'books');
 const isMusicBox = computed(() => props.baseItem.category === 'musicBoxes');
 const baseItem = computed(() => props.baseItem);
+const persistedPrice = ref(Number(props.baseItem.price ?? 0));
+const price = ref<number | null>(Number(props.baseItem.price ?? 0));
+const isSavingPrice = ref(false);
+
+const normalizePrice = (value: number | null): number => {
+    const numericValue = Number(value ?? 0);
+
+    if (!Number.isFinite(numericValue)) {
+        return 0;
+    }
+
+    return Math.min(1_000_000_000, Math.max(0, Math.round(numericValue)));
+};
+
+const calculatedPrice = computed(() => calculateBaseItemPrice({
+    category: baseItem.value.category,
+    rarity: baseItem.value.rarity,
+    currency: baseItem.value.currency,
+    attributes: form.attributes,
+    attributePoints: form.attribute_points,
+    manualAttributePoints: form.manual_attribute_points,
+}));
+
+const isPriceChanged = computed(() => normalizePrice(price.value) !== persistedPrice.value);
+const priceCurrencyLabel = computed(() => baseItem.value.currency_name || baseItem.value.currency);
 
 // Set default active tab based on category
 const activeTab = ref(isPet.value ? '4' : '0');
@@ -181,7 +207,87 @@ const syncFromJsonEditor = () => {
     }
 };
 
-const save = () => {
+const getRequestErrorMessage = (error: any, fallback: string): string => {
+    const errors = error?.response?.data?.errors ?? {};
+    const firstError = Object.values(errors)[0];
+
+    if (Array.isArray(firstError)) {
+        return String(firstError[0] ?? fallback);
+    }
+
+    if (typeof firstError === 'string') {
+        return firstError;
+    }
+
+    return error?.response?.data?.message ?? fallback;
+};
+
+const saveBasePrice = async (showToast = true): Promise<boolean> => {
+    const normalizedPrice = normalizePrice(price.value);
+    price.value = normalizedPrice;
+
+    if (normalizedPrice === persistedPrice.value) {
+        return true;
+    }
+
+    isSavingPrice.value = true;
+
+    try {
+        await axios.patch(route('base-items.update', {baseItem: baseItem.value.id}), {
+            name: baseItem.value.name,
+            category: baseItem.value.category,
+            rarity: baseItem.value.rarity,
+            currency: baseItem.value.currency,
+            price: normalizedPrice,
+        });
+
+        persistedPrice.value = normalizedPrice;
+
+        if (showToast) {
+            toast.add({
+                severity: 'success',
+                summary: 'Sukces',
+                detail: 'Cena przedmiotu została zapisana',
+                life: 3000
+            });
+        }
+
+        return true;
+    } catch (error) {
+        toast.add({
+            severity: 'error',
+            summary: 'Błąd',
+            detail: getRequestErrorMessage(error, 'Nie udało się zapisać ceny przedmiotu'),
+            life: 5000
+        });
+
+        return false;
+    } finally {
+        isSavingPrice.value = false;
+    }
+};
+
+const calculatePrice = () => {
+    price.value = calculatedPrice.value;
+    toast.add({
+        severity: 'info',
+        summary: 'Wyliczono cenę',
+        detail: `Proponowana wartość: ${calculatedPrice.value} ${priceCurrencyLabel.value}`,
+        life: 3000
+    });
+};
+
+const savePrice = async () => {
+    await saveBasePrice(true);
+};
+
+const save = async () => {
+    const isPriceSaved = await saveBasePrice(false);
+
+    if (!isPriceSaved) {
+        return;
+    }
+
     // Prepare the final attributes by merging current attributes with scale result
     let finalAttributes = { ...form.attributes };
 
@@ -284,6 +390,8 @@ watch(
         form.attributes = cleanAttributes(updatedBaseItem.attributes);
         form.attribute_points = updatedBaseItem.attribute_points || {};
         form.manual_attribute_points = updatedBaseItem.manual_attribute_points || {};
+        persistedPrice.value = Number(updatedBaseItem.price ?? 0);
+        price.value = Number(updatedBaseItem.price ?? 0);
         specificCurrencyPrice.value = updatedBaseItem.specific_currency_price ?? null;
 
         if (activeTab.value === '3') {
@@ -340,7 +448,7 @@ const clearCurrency = () => {
                 <button
                     class="px-4 py-2 text-white bg-green-500 hover:bg-green-600 rounded shadow mr-2"
                     @click="save"
-                    :loading="form.processing"
+                    :disabled="form.processing || isSavingPrice"
                 >
                     <i class="pi pi-save mr-2"></i>
                     Zapisz
@@ -356,6 +464,35 @@ const clearCurrency = () => {
             /> ^ Podgląd edytowanego przedmiotu
             <div v-if="scaleResult" class="mt-2 text-sm text-green-600">
                 Wyświetlane są przeskalowane atrybuty z kalkulatora punktów
+            </div>
+        </div>
+        <div class="card my-4 p-3">
+            <h4 class="font-semibold mb-2">Cena przedmiotu</h4>
+            <div class="flex flex-wrap items-end gap-3">
+                <div class="flex flex-col gap-1">
+                    <label for="base-item-price" class="text-sm font-medium text-surface-700">Wartość</label>
+                    <InputNumber
+                        input-id="base-item-price"
+                        v-model="price"
+                        :min="0"
+                        :max="1000000000"
+                        :step="1000"
+                        show-buttons
+                    />
+                </div>
+                <Button label="Wylicz cenę" icon="pi pi-calculator" severity="info" @click="calculatePrice"/>
+                <Button
+                    label="Zapisz cenę"
+                    icon="pi pi-save"
+                    severity="success"
+                    @click="savePrice"
+                    :loading="isSavingPrice"
+                    :disabled="!isPriceChanged || isSavingPrice"
+                />
+            </div>
+            <div class="mt-2 text-xs text-gray-700">
+                Aktualnie zapisana wartość: <strong>{{ persistedPrice }}</strong> {{ priceCurrencyLabel }}.
+                Propozycja z aktualnych pól: <strong>{{ calculatedPrice }}</strong> {{ priceCurrencyLabel }}.
             </div>
         </div>
         <div class="card my-4 p-3">

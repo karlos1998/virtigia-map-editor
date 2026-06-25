@@ -31,16 +31,24 @@ export interface BaseItemResource {
 
     src: string
 
-    attributes: object
+    attributes: Record<string, any>
 
     in_use: boolean
 
     category: string //todo to moze byc enum w sumie
+    category_name?: string
 
     rarity: string
 
     price: number
+    currency: string
+    currency_name?: string
     specific_currency_price: number | null;
+    attribute_points?: Record<string, any> | null
+    manual_attribute_points?: Record<string, any> | null
+    reverse_attributes?: Record<string, any> | null
+    need_professions?: (string | null)[]
+    need_level?: number | null
     usage_sources: BaseItemUsageSource[]
     usage_source_count: number
     // ...
