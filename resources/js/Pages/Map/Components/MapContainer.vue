@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { MapResource } from '@/Resources/Map.resource';
 import { NpcWithLocationResource } from '@/Resources/Npc.resource';
 import { DoorResource } from '@/Resources/Door.resource';
@@ -21,6 +21,59 @@ type NpcDrawOffset = {
     y: number;
 };
 
+type TileEditorLayer = 'cols' | 'water';
+type TileEditorTool = 'brush' | 'rectangle' | 'preset';
+type TileEditorAction = 'paint' | 'erase';
+type TileEditorCommand = 'undo' | 'redo' | 'fill-selection' | 'erase-selection' | 'clear-selection' | 'save-preset' | 'apply-preset';
+
+type TilePosition = {
+    x: number;
+    y: number;
+};
+
+type TileEditorSettings = {
+    tool: TileEditorTool;
+    brushSize: number;
+    waterDepth: number;
+    selectedPresetId: string | null;
+};
+
+type TileSnapshot = {
+    col: string;
+    water: string;
+};
+
+type TileEditorPresetTile = {
+    x: number;
+    y: number;
+    depth?: number;
+};
+
+type TileEditorPreset = {
+    id: string;
+    name: string;
+    layer: TileEditorLayer;
+    width: number;
+    height: number;
+    tiles: TileEditorPresetTile[];
+};
+
+type TileEditorPresetOption = {
+    id: string;
+    name: string;
+    layer: TileEditorLayer;
+    width: number;
+    height: number;
+    tileCount: number;
+};
+
+type TileEditorState = {
+    canUndo: boolean;
+    canRedo: boolean;
+    presets: TileEditorPresetOption[];
+    selectionSummary: string | null;
+};
+
 const props = defineProps<{
     map: MapResource;
     npcs: NpcWithLocationResource[];
@@ -35,6 +88,7 @@ const emit = defineEmits<{
     (e: 'showNpcConfirmDialog', event: MouseEvent, npc: NpcWithLocationResource): void;
     (e: 'showDoorConfirmDialog', event: MouseEvent, door: DoorResource): void;
     (e: 'trackerPositionChanged', position: { x: number, y: number }): void;
+    (e: 'tileEditorStateChanged', state: TileEditorState): void;
 }>();
 
 const primeDialog = useDialog();
@@ -56,10 +110,24 @@ const isPanning = ref(false);
 const panStart = ref({ x: 0, y: 0 });
 const mapOffset = ref({ x: 0, y: 0 });
 
-// Collision painting
-const isPaintingCollision = ref(false);
-const paintingMode = ref<'add' | 'remove' | null>(null);
-const paintingStart = ref<{ x: number, y: number } | null>(null);
+// Tile editor
+const mapElementRef = ref<HTMLElement | null>(null);
+const tileEditorSettings = ref<TileEditorSettings>({
+    tool: 'brush',
+    brushSize: 1,
+    waterDepth: 1,
+    selectedPresetId: null,
+});
+const isPaintingTiles = ref(false);
+const activeBrushAction = ref<TileEditorAction | null>(null);
+const activeHistorySnapshot = ref<TileSnapshot | null>(null);
+const rectangleSelection = ref<{ start: TilePosition; end: TilePosition } | null>(null);
+const isSelectingRectangle = ref(false);
+const undoStack = ref<TileSnapshot[]>([]);
+const redoStack = ref<TileSnapshot[]>([]);
+const tileEditorPresets = ref<TileEditorPreset[]>([]);
+const presetStorageKey = 'virtigia-map-editor.tile-editor-presets';
+const historyLimit = 80;
 
 // NPC and Door movement
 const moveNpcLocationData = ref<NpcWithLocationResource>(null);
@@ -73,146 +141,752 @@ const sourceNpc = ref<NpcWithLocationResource>(null);
 const addNpcToMapDialogInstance = ref<DynamicDialogInstance>();
 const lastSelectedNpc = ref<NpcWithLocationResource>();
 
-// Set tracker position based on mouse coordinates
-const setTrackerPosition = (event: MouseEvent) => {
-    if (event.target !== event.currentTarget) {
-        trackerPosition.value = { x: -32, y: -32 };
+const activeTileLayer = computed<TileEditorLayer | null>(() => {
+    if (editColsOn.value) {
+        return 'cols';
+    }
+
+    if (editWaterOn.value) {
+        return 'water';
+    }
+
+    return null;
+});
+
+const isTileEditingOn = computed(() => activeTileLayer.value !== null);
+
+const clampInteger = (value: number, min: number, max: number): number => {
+    if (!Number.isFinite(value)) {
+        return min;
+    }
+
+    return Math.max(min, Math.min(max, Math.trunc(value)));
+};
+
+const tileKey = (tile: TilePosition): string => `${tile.x},${tile.y}`;
+
+const isInsideMap = (tile: TilePosition): boolean => {
+    return tile.x >= 0 && tile.y >= 0 && tile.x < props.map.x && tile.y < props.map.y;
+};
+
+const getCollisionArray = (): string[] => {
+    const expectedLength = props.map.x * props.map.y;
+
+    return (props.map.col ?? '')
+        .padEnd(expectedLength, '0')
+        .slice(0, expectedLength)
+        .split('');
+};
+
+const getCollisionAt = (tile: TilePosition): boolean => {
+    if (!isInsideMap(tile)) {
+        return false;
+    }
+
+    return getCollisionArray()[tile.y * props.map.x + tile.x] === '1';
+};
+
+const parseWaterData = (water: string | undefined): Map<string, number> => {
+    const waterMap = new Map<string, number>();
+
+    if (!water) {
+        return waterMap;
+    }
+
+    water.split('|').forEach((segment) => {
+        const [x1, x2, y, depth] = segment.split(',').map(Number);
+
+        if (![x1, x2, y, depth].every(Number.isFinite)) {
+            return;
+        }
+
+        const normalizedDepth = clampInteger(depth, 1, 9);
+        const startX = clampInteger(Math.min(x1, x2), 0, props.map.x - 1);
+        const endX = clampInteger(Math.max(x1, x2), 0, props.map.x - 1);
+
+        if (y < 0 || y >= props.map.y) {
+            return;
+        }
+
+        for (let x = startX; x <= endX; x++) {
+            waterMap.set(`${x},${y}`, normalizedDepth);
+        }
+    });
+
+    return waterMap;
+};
+
+const serializeWaterData = (waterMap: Map<string, number>): string => {
+    const waterTiles = Array.from(waterMap.entries())
+        .map(([key, depth]) => {
+            const [x, y] = key.split(',').map(Number);
+
+            return { x, y, depth };
+        })
+        .filter((tile) => isInsideMap(tile) && tile.depth > 0)
+        .sort((a, b) => a.y - b.y || a.depth - b.depth || a.x - b.x);
+
+    const segments: string[] = [];
+    let activeSegment: { x1: number; x2: number; y: number; depth: number } | null = null;
+
+    waterTiles.forEach((tile) => {
+        if (
+            activeSegment
+            && activeSegment.y === tile.y
+            && activeSegment.depth === tile.depth
+            && activeSegment.x2 + 1 === tile.x
+        ) {
+            activeSegment.x2 = tile.x;
+            return;
+        }
+
+        if (activeSegment) {
+            segments.push(`${activeSegment.x1},${activeSegment.x2},${activeSegment.y},${activeSegment.depth}`);
+        }
+
+        activeSegment = {
+            x1: tile.x,
+            x2: tile.x,
+            y: tile.y,
+            depth: clampInteger(tile.depth, 1, 9),
+        };
+    });
+
+    if (activeSegment) {
+        segments.push(`${activeSegment.x1},${activeSegment.x2},${activeSegment.y},${activeSegment.depth}`);
+    }
+
+    return segments.join('|');
+};
+
+const createSnapshot = (): TileSnapshot => ({
+    col: props.map.col,
+    water: props.map.water ?? '',
+});
+
+const snapshotsAreEqual = (snapshot: TileSnapshot): boolean => {
+    return snapshot.col === props.map.col && snapshot.water === (props.map.water ?? '');
+};
+
+const restoreSnapshot = (snapshot: TileSnapshot): void => {
+    props.map.col = snapshot.col;
+    props.map.water = snapshot.water;
+};
+
+const pushUndoSnapshot = (snapshot: TileSnapshot): void => {
+    undoStack.value = [...undoStack.value.slice(-(historyLimit - 1)), snapshot];
+    redoStack.value = [];
+};
+
+const beginHistoryEntry = (): void => {
+    if (activeHistorySnapshot.value) {
         return;
     }
-    trackerPosition.value = {
-        x: (event.offsetX / props.scale / 32) | 0,
-        y: (event.offsetY / props.scale / 32) | 0
-    };
-    emit('trackerPositionChanged', trackerPosition.value);
+
+    activeHistorySnapshot.value = createSnapshot();
 };
 
-// Handle mouse movement
-const handleMouseMove = (event: MouseEvent) => {
-    if (isPanning.value) {
-        mapOffset.value = {
-            x: event.clientX - panStart.value.x,
-            y: event.clientY - panStart.value.y,
-        };
-    } else {
-        setTrackerPosition(event);
+const finishHistoryEntry = (): void => {
+    if (!activeHistorySnapshot.value) {
+        return;
+    }
+
+    if (!snapshotsAreEqual(activeHistorySnapshot.value)) {
+        pushUndoSnapshot(activeHistorySnapshot.value);
+    }
+
+    activeHistorySnapshot.value = null;
+};
+
+const runWithHistory = (callback: () => void): void => {
+    const snapshot = createSnapshot();
+
+    callback();
+
+    if (!snapshotsAreEqual(snapshot)) {
+        pushUndoSnapshot(snapshot);
     }
 };
 
-// Start panning the map
-const startPanning = (event: MouseEvent) => {
-    if (event.button === 2 && !editWaterOn.value) { // Right mouse button and not in water editing mode
+const undoTileEdit = (): void => {
+    finishHistoryEntry();
+
+    const snapshot = undoStack.value[undoStack.value.length - 1];
+
+    if (!snapshot) {
+        return;
+    }
+
+    undoStack.value = undoStack.value.slice(0, -1);
+    redoStack.value = [...redoStack.value, createSnapshot()];
+    restoreSnapshot(snapshot);
+};
+
+const redoTileEdit = (): void => {
+    finishHistoryEntry();
+
+    const snapshot = redoStack.value[redoStack.value.length - 1];
+
+    if (!snapshot) {
+        return;
+    }
+
+    redoStack.value = redoStack.value.slice(0, -1);
+    undoStack.value = [...undoStack.value, createSnapshot()];
+    restoreSnapshot(snapshot);
+};
+
+const getTileFromMouseEvent = (event: MouseEvent): TilePosition | null => {
+    const mapElement = mapElementRef.value;
+
+    if (!mapElement) {
+        return null;
+    }
+
+    const bounds = mapElement.getBoundingClientRect();
+    const tile = {
+        x: Math.floor((event.clientX - bounds.left) / props.scale / 32),
+        y: Math.floor((event.clientY - bounds.top) / props.scale / 32),
+    };
+
+    return isInsideMap(tile) ? tile : null;
+};
+
+const setTrackerPosition = (event: MouseEvent): TilePosition | null => {
+    const tile = getTileFromMouseEvent(event);
+
+    trackerPosition.value = tile ?? { x: -32, y: -32 };
+    emit('trackerPositionChanged', trackerPosition.value);
+
+    return tile;
+};
+
+const getBrushTiles = (center: TilePosition, size: number): TilePosition[] => {
+    const safeSize = clampInteger(size, 1, 12);
+    const offset = Math.floor((safeSize - 1) / 2);
+    const tiles: TilePosition[] = [];
+
+    for (let y = center.y - offset; y < center.y - offset + safeSize; y++) {
+        for (let x = center.x - offset; x < center.x - offset + safeSize; x++) {
+            const tile = { x, y };
+
+            if (isInsideMap(tile)) {
+                tiles.push(tile);
+            }
+        }
+    }
+
+    return tiles;
+};
+
+const getRectangleBounds = (selection: { start: TilePosition; end: TilePosition }) => ({
+    minX: Math.min(selection.start.x, selection.end.x),
+    maxX: Math.max(selection.start.x, selection.end.x),
+    minY: Math.min(selection.start.y, selection.end.y),
+    maxY: Math.max(selection.start.y, selection.end.y),
+});
+
+const selectedRectangleTiles = computed<TilePosition[]>(() => {
+    if (!rectangleSelection.value) {
+        return [];
+    }
+
+    const bounds = getRectangleBounds(rectangleSelection.value);
+    const tiles: TilePosition[] = [];
+
+    for (let y = bounds.minY; y <= bounds.maxY; y++) {
+        for (let x = bounds.minX; x <= bounds.maxX; x++) {
+            tiles.push({ x, y });
+        }
+    }
+
+    return tiles;
+});
+
+const selectionOverlayStyle = computed(() => {
+    if (!rectangleSelection.value) {
+        return null;
+    }
+
+    const bounds = getRectangleBounds(rectangleSelection.value);
+
+    return {
+        top: `${bounds.minY * 32 * props.scale}px`,
+        left: `${bounds.minX * 32 * props.scale}px`,
+        width: `${(bounds.maxX - bounds.minX + 1) * 32 * props.scale}px`,
+        height: `${(bounds.maxY - bounds.minY + 1) * 32 * props.scale}px`,
+    };
+});
+
+const selectionSummary = computed(() => {
+    if (!rectangleSelection.value) {
+        return null;
+    }
+
+    const bounds = getRectangleBounds(rectangleSelection.value);
+
+    return `${bounds.maxX - bounds.minX + 1}x${bounds.maxY - bounds.minY + 1}`;
+});
+
+const activePreset = computed(() => {
+    return tileEditorPresets.value.find((preset) => preset.id === tileEditorSettings.value.selectedPresetId) ?? null;
+});
+
+const presetOptions = computed<TileEditorPresetOption[]>(() => {
+    return tileEditorPresets.value.map((preset) => ({
+        id: preset.id,
+        name: preset.name,
+        layer: preset.layer,
+        width: preset.width,
+        height: preset.height,
+        tileCount: preset.tiles.length,
+    }));
+});
+
+const emitTileEditorState = (): void => {
+    emit('tileEditorStateChanged', {
+        canUndo: undoStack.value.length > 0,
+        canRedo: redoStack.value.length > 0,
+        presets: presetOptions.value,
+        selectionSummary: selectionSummary.value,
+    });
+};
+
+const storePresets = (): void => {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    window.localStorage.setItem(presetStorageKey, JSON.stringify(tileEditorPresets.value));
+};
+
+const loadPresets = (): void => {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    const storedPresets = window.localStorage.getItem(presetStorageKey);
+
+    if (!storedPresets) {
+        return;
+    }
+
+    try {
+        const parsedPresets = JSON.parse(storedPresets) as TileEditorPreset[];
+
+        tileEditorPresets.value = parsedPresets.filter((preset) => {
+            return ['cols', 'water'].includes(preset.layer)
+                && Array.isArray(preset.tiles)
+                && Number.isInteger(preset.width)
+                && Number.isInteger(preset.height);
+        });
+    } catch {
+        tileEditorPresets.value = [];
+    }
+};
+
+const createPresetId = (): string => {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+        return crypto.randomUUID();
+    }
+
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+};
+
+const setCollisionTiles = (tiles: TilePosition[], action: TileEditorAction): void => {
+    const colArray = getCollisionArray();
+
+    tiles.forEach((tile) => {
+        if (!isInsideMap(tile)) {
+            return;
+        }
+
+        colArray[tile.y * props.map.x + tile.x] = action === 'paint' ? '1' : '0';
+    });
+
+    props.map.col = colArray.join('');
+};
+
+const setWaterTiles = (tiles: TilePosition[], action: TileEditorAction): void => {
+    const waterMap = parseWaterData(props.map.water);
+    const depth = clampInteger(tileEditorSettings.value.waterDepth, 1, 9);
+
+    tiles.forEach((tile) => {
+        if (!isInsideMap(tile)) {
+            return;
+        }
+
+        if (action === 'erase') {
+            waterMap.delete(tileKey(tile));
+            return;
+        }
+
+        waterMap.set(tileKey(tile), depth);
+    });
+
+    props.map.water = serializeWaterData(waterMap);
+};
+
+const applyTiles = (tiles: TilePosition[], action: TileEditorAction): void => {
+    if (activeTileLayer.value === 'cols') {
+        setCollisionTiles(tiles, action);
+        return;
+    }
+
+    if (activeTileLayer.value === 'water') {
+        setWaterTiles(tiles, action);
+    }
+};
+
+const getBrushAction = (tile: TilePosition, button: number): TileEditorAction => {
+    if (button === 2) {
+        return 'erase';
+    }
+
+    if (activeTileLayer.value === 'cols') {
+        return getCollisionAt(tile) ? 'erase' : 'paint';
+    }
+
+    return 'paint';
+};
+
+const applyBrushAt = (tile: TilePosition, action: TileEditorAction): void => {
+    applyTiles(getBrushTiles(tile, tileEditorSettings.value.brushSize), action);
+};
+
+const applyRectangleSelection = (action: TileEditorAction): void => {
+    if (selectedRectangleTiles.value.length === 0) {
+        toast.add({ severity: 'warn', summary: 'Brak zaznaczenia', detail: 'Najpierw zaznacz obszar na mapie', life: 3000 });
+        return;
+    }
+
+    runWithHistory(() => {
+        applyTiles(selectedRectangleTiles.value, action);
+    });
+    emitTileEditorState();
+};
+
+const saveSelectionAsPreset = (): void => {
+    const layer = activeTileLayer.value;
+
+    if (!layer || !rectangleSelection.value || selectedRectangleTiles.value.length === 0) {
+        toast.add({ severity: 'warn', summary: 'Brak zaznaczenia', detail: 'Najpierw zaznacz obszar do zapisania', life: 3000 });
+        return;
+    }
+
+    const name = window.prompt('Nazwa presetu');
+
+    if (!name) {
+        return;
+    }
+
+    const bounds = getRectangleBounds(rectangleSelection.value);
+    const tiles: TileEditorPresetTile[] = [];
+
+    if (layer === 'cols') {
+        const colArray = getCollisionArray();
+
+        selectedRectangleTiles.value.forEach((tile) => {
+            if (colArray[tile.y * props.map.x + tile.x] !== '1') {
+                return;
+            }
+
+            tiles.push({
+                x: tile.x - bounds.minX,
+                y: tile.y - bounds.minY,
+            });
+        });
+    } else {
+        const waterMap = parseWaterData(props.map.water);
+
+        selectedRectangleTiles.value.forEach((tile) => {
+            const depth = waterMap.get(tileKey(tile));
+
+            if (!depth) {
+                return;
+            }
+
+            tiles.push({
+                x: tile.x - bounds.minX,
+                y: tile.y - bounds.minY,
+                depth,
+            });
+        });
+    }
+
+    if (tiles.length === 0) {
+        toast.add({ severity: 'warn', summary: 'Pusty preset', detail: 'Zaznaczenie nie zawiera aktywnych kafli', life: 3000 });
+        return;
+    }
+
+    const preset: TileEditorPreset = {
+        id: createPresetId(),
+        name,
+        layer,
+        width: bounds.maxX - bounds.minX + 1,
+        height: bounds.maxY - bounds.minY + 1,
+        tiles,
+    };
+
+    tileEditorPresets.value = [...tileEditorPresets.value, preset];
+    tileEditorSettings.value.selectedPresetId = preset.id;
+    storePresets();
+    emitTileEditorState();
+    toast.add({ severity: 'success', summary: 'Preset zapisany', detail: preset.name, life: 3000 });
+};
+
+const applyPresetAt = (anchor: TilePosition): void => {
+    const preset = activePreset.value;
+    const layer = activeTileLayer.value;
+
+    if (!preset || !layer) {
+        toast.add({ severity: 'warn', summary: 'Brak presetu', detail: 'Wybierz preset przed użyciem', life: 3000 });
+        return;
+    }
+
+    if (preset.layer !== layer) {
+        toast.add({ severity: 'warn', summary: 'Inny typ presetu', detail: 'Preset pasuje do innej warstwy edycji', life: 3000 });
+        return;
+    }
+
+    runWithHistory(() => {
+        if (layer === 'cols') {
+            setCollisionTiles(
+                preset.tiles.map((tile) => ({ x: anchor.x + tile.x, y: anchor.y + tile.y })),
+                'paint',
+            );
+            return;
+        }
+
+        const waterMap = parseWaterData(props.map.water);
+
+        preset.tiles.forEach((tile) => {
+            const targetTile = { x: anchor.x + tile.x, y: anchor.y + tile.y };
+
+            if (isInsideMap(targetTile)) {
+                waterMap.set(tileKey(targetTile), clampInteger(tile.depth ?? tileEditorSettings.value.waterDepth, 1, 9));
+            }
+        });
+
+        props.map.water = serializeWaterData(waterMap);
+    });
+    emitTileEditorState();
+};
+
+const tilePreviewPositions = computed(() => {
+    if (!isTileEditingOn.value || !isInsideMap(trackerPosition.value)) {
+        return [];
+    }
+
+    if (tileEditorSettings.value.tool === 'brush') {
+        return getBrushTiles(trackerPosition.value, tileEditorSettings.value.brushSize).map((tile) => ({
+            ...tile,
+            depth: activeTileLayer.value === 'water' ? tileEditorSettings.value.waterDepth : null,
+        }));
+    }
+
+    if (tileEditorSettings.value.tool === 'preset' && activePreset.value?.layer === activeTileLayer.value) {
+        return activePreset.value.tiles
+            .map((tile) => ({
+                x: trackerPosition.value.x + tile.x,
+                y: trackerPosition.value.y + tile.y,
+                depth: tile.depth ?? null,
+            }))
+            .filter(isInsideMap);
+    }
+
+    return [];
+});
+
+const startPanning = (event: MouseEvent): void => {
+    if (event.button === 2 && !isTileEditingOn.value) {
         isPanning.value = true;
         panStart.value = { x: event.clientX - mapOffset.value.x, y: event.clientY - mapOffset.value.y };
         event.preventDefault();
     }
 };
 
-// Stop panning the map
-const stopPanning = () => {
+const stopPanning = (): void => {
     isPanning.value = false;
 };
 
-// Toggle collision at a specific position
-const toggleCollision = (x: number, y: number) => {
-    const index = y * props.map.x + x;
-    const colArray = props.map.col.split('');
-    colArray[index] = colArray[index] === '0' ? '1' : '0';
-    props.map.col = colArray.join('');
-};
-
-// Handle water editing at a specific position
-const handleWaterEdit = (x: number, y: number, isRightClick: boolean = false) => {
-    if (!props.map.water) {
-        props.map.water = '';
+const handleTileMouseDown = (event: MouseEvent): boolean => {
+    if (!isTileEditingOn.value || (event.button !== 0 && event.button !== 2)) {
+        return false;
     }
 
-    // Parse existing water data
-    const waterSegments = props.map.water ? props.map.water.split('|') : [];
-    const waterMap = new Map();
+    const tile = setTrackerPosition(event);
 
-    // Build a map of water positions and depths
-    waterSegments.forEach(segment => {
-        const [x1, x2, y, depth] = segment.split(',').map(Number);
-        for (let i = x1; i <= x2; i++) {
-            const key = `${i},${y}`;
-            waterMap.set(key, depth);
-        }
-    });
-
-    const key = `${x},${y}`;
-    const currentDepth = waterMap.get(key) || 0;
-
-    if (isRightClick) {
-        // Right click: decrease depth or remove
-        if (currentDepth > 1) {
-            waterMap.set(key, currentDepth - 1);
-        } else {
-            waterMap.delete(key);
-        }
-    } else {
-        // Left click: increase depth (max 9)
-        const newDepth = Math.min((currentDepth || 0) + 1, 9);
-        waterMap.set(key, newDepth);
+    if (!tile) {
+        return true;
     }
 
-    // Convert back to water string format
-    // Group adjacent tiles with same depth for optimization
-    const waterData = [];
-    const processed = new Set();
+    event.preventDefault();
 
-    for (const [key, depth] of waterMap.entries()) {
-        if (processed.has(key)) continue;
+    if (tileEditorSettings.value.tool === 'rectangle') {
+        rectangleSelection.value = { start: tile, end: tile };
+        isSelectingRectangle.value = true;
+        emitTileEditorState();
+        return true;
+    }
 
-        const [tileX, tileY] = key.split(',').map(Number);
-        let x1 = tileX;
-        let x2 = tileX;
-
-        // Check if we can extend this segment to the right
-        while (waterMap.get(`${x2 + 1},${tileY}`) === depth) {
-            x2++;
-            processed.add(`${x2},${tileY}`);
+    if (tileEditorSettings.value.tool === 'preset') {
+        if (event.button === 0) {
+            applyPresetAt(tile);
         }
 
-        waterData.push(`${x1},${x2},${tileY},${depth}`);
-        processed.add(key);
+        return true;
     }
 
-    props.map.water = waterData.join('|');
+    activeBrushAction.value = getBrushAction(tile, event.button);
+    isPaintingTiles.value = true;
+    beginHistoryEntry();
+    applyBrushAt(tile, activeBrushAction.value);
+
+    return true;
 };
 
-// Paint collision based on mouse movement
-const paintCollision = (event: MouseEvent) => {
-    if (!editColsOn.value || !isPaintingCollision.value || !paintingMode.value) return;
+const finishTileMouseAction = (): void => {
+    isSelectingRectangle.value = false;
+    isPaintingTiles.value = false;
+    activeBrushAction.value = null;
+    finishHistoryEntry();
+    emitTileEditorState();
+};
 
-    const x = Math.floor(event.offsetX / props.scale / 32);
-    const y = Math.floor(event.offsetY / props.scale / 32);
-    const index = y * props.map.x + x;
-    const colArray = props.map.col.split('');
+const handleMapMouseMove = (event: MouseEvent): void => {
+    if (isPanning.value) {
+        mapOffset.value = {
+            x: event.clientX - panStart.value.x,
+            y: event.clientY - panStart.value.y,
+        };
+        return;
+    }
 
-    if (paintingMode.value === 'add' && colArray[index] === '0') {
-        colArray[index] = '1';
-        props.map.col = colArray.join('');
-    } else if (paintingMode.value === 'remove' && colArray[index] === '1') {
-        colArray[index] = '0';
-        props.map.col = colArray.join('');
+    const tile = setTrackerPosition(event);
+
+    if (!tile) {
+        return;
+    }
+
+    if (isSelectingRectangle.value && rectangleSelection.value) {
+        rectangleSelection.value = {
+            ...rectangleSelection.value,
+            end: tile,
+        };
+        emitTileEditorState();
+        return;
+    }
+
+    if (isPaintingTiles.value && activeBrushAction.value) {
+        applyBrushAt(tile, activeBrushAction.value);
     }
 };
 
-// Start painting collision
-const startPaintingCollision = (event: MouseEvent) => {
-    if (!editColsOn.value || event.button !== 0) return;
+const handleMapMouseDown = (event: MouseEvent): void => {
+    if (handleTileMouseDown(event)) {
+        return;
+    }
 
-    paintingStart.value = {
-        x: event.clientX,
-        y: event.clientY,
-    };
+    startPanning(event);
 };
 
-// Stop painting collision
-const stopPaintingCollision = () => {
-    isPaintingCollision.value = false;
-    paintingMode.value = null;
-    paintingStart.value = null;
+const handleMapMouseUp = (): void => {
+    stopPanning();
+    finishTileMouseAction();
+};
+
+const handleMapMouseLeave = (): void => {
+    trackerPosition.value = { x: -32, y: -32 };
+    emit('trackerPositionChanged', trackerPosition.value);
+    stopPanning();
+    finishTileMouseAction();
+};
+
+const handleMapClick = (event: MouseEvent): void => {
+    if (isTileEditingOn.value) {
+        return;
+    }
+
+    addNewObject(event);
+};
+
+const handleMapClickCapture = (event: MouseEvent): void => {
+    if (!isTileEditingOn.value) {
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+};
+
+const clearRectangleSelection = (): void => {
+    rectangleSelection.value = null;
+    isSelectingRectangle.value = false;
+    emitTileEditorState();
+};
+
+const runTileEditorCommand = (command: TileEditorCommand): void => {
+    if (command === 'undo') {
+        undoTileEdit();
+    } else if (command === 'redo') {
+        redoTileEdit();
+    } else if (command === 'fill-selection') {
+        applyRectangleSelection('paint');
+    } else if (command === 'erase-selection') {
+        applyRectangleSelection('erase');
+    } else if (command === 'clear-selection') {
+        clearRectangleSelection();
+    } else if (command === 'save-preset') {
+        saveSelectionAsPreset();
+    } else if (command === 'apply-preset') {
+        applyPresetAt(trackerPosition.value);
+    }
+
+    emitTileEditorState();
+};
+
+const isEditableShortcutTarget = (target: EventTarget | null): boolean => {
+    if (!(target instanceof HTMLElement)) {
+        return false;
+    }
+
+    return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable;
+};
+
+const handleTileEditorKeydown = (event: KeyboardEvent): void => {
+    if (isEditableShortcutTarget(event.target)) {
+        return;
+    }
+
+    const usesControlKey = event.ctrlKey || event.metaKey;
+
+    if (usesControlKey && event.shiftKey && event.code === 'KeyZ') {
+        event.preventDefault();
+        runTileEditorCommand('redo');
+        return;
+    }
+
+    if (usesControlKey && event.code === 'KeyZ') {
+        event.preventDefault();
+        runTileEditorCommand('undo');
+        return;
+    }
+
+    if (!isTileEditingOn.value || !rectangleSelection.value) {
+        return;
+    }
+
+    if (event.code === 'Enter' || event.code === 'KeyF') {
+        event.preventDefault();
+        runTileEditorCommand('fill-selection');
+    } else if (event.code === 'Delete' || event.code === 'Backspace') {
+        event.preventDefault();
+        runTileEditorCommand('erase-selection');
+    } else if (event.code === 'Escape') {
+        event.preventDefault();
+        runTileEditorCommand('clear-selection');
+    }
 };
 
 // Add a new object (NPC or door) at the current tracker position
@@ -227,16 +901,6 @@ const addNewObject = (event: MouseEvent) => {
 
     if (moveDoorLocationData.value) {
         updateMoveDoorLocation(x, y);
-        return;
-    }
-
-    if (editColsOn.value) {
-        toggleCollision(x, y);
-        return;
-    }
-
-    if (editWaterOn.value) {
-        handleWaterEdit(x, y, event.button === 2);
         return;
     }
 
@@ -411,13 +1075,35 @@ defineExpose({
         if (value) {
             editWaterOn.value = false;
         }
+        finishTileMouseAction();
+        emitTileEditorState();
     },
     setEditWaterOn: (value: boolean) => {
         editWaterOn.value = value;
         if (value) {
             editColsOn.value = false;
         }
+        finishTileMouseAction();
+        emitTileEditorState();
     },
+    setTileEditorSettings: (settings: Partial<TileEditorSettings>) => {
+        tileEditorSettings.value = {
+            ...tileEditorSettings.value,
+            ...settings,
+            brushSize: clampInteger(settings.brushSize ?? tileEditorSettings.value.brushSize, 1, 12),
+            waterDepth: clampInteger(settings.waterDepth ?? tileEditorSettings.value.waterDepth, 1, 9),
+            selectedPresetId: settings.selectedPresetId === undefined
+                ? tileEditorSettings.value.selectedPresetId
+                : settings.selectedPresetId,
+        };
+    },
+    runTileEditorCommand,
+    getTileEditorState: (): TileEditorState => ({
+        canUndo: undoStack.value.length > 0,
+        canRedo: redoStack.value.length > 0,
+        presets: presetOptions.value,
+        selectionSummary: selectionSummary.value,
+    }),
     setMoveNpcLocationData: (npc: NpcWithLocationResource) => {
         moveDoorLocationData.value = null;
         moveNpcLocationData.value = npc;
@@ -437,6 +1123,32 @@ defineExpose({
         sourceNpc.value = npc;
         toast.add({ severity: 'info', summary: 'Tryb grupowania', detail: 'Kliknij na innego NPC w pobliżu (max 5 kratek) aby dodać go do grupy', life: 5000 });
     }
+});
+
+watch(() => props.map.id, () => {
+    undoStack.value = [];
+    redoStack.value = [];
+    activeHistorySnapshot.value = null;
+    clearRectangleSelection();
+});
+
+watch([
+    () => undoStack.value.length,
+    () => redoStack.value.length,
+    () => selectionSummary.value,
+    () => tileEditorPresets.value.length,
+], () => {
+    emitTileEditorState();
+});
+
+onMounted(() => {
+    loadPresets();
+    window.addEventListener('keydown', handleTileEditorKeydown);
+    emitTileEditorState();
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', handleTileEditorKeydown);
 });
 
 const handleRenewableItemClick = (item) => {
@@ -459,6 +1171,7 @@ const handleRenewableItemClick = (item) => {
 <template>
     <div class="card overflow-auto m-2" v-if="isMapVisible">
         <div
+            ref="mapElementRef"
             class="map-container relative"
             :style="{
                 backgroundImage: `url(${map.src})`,
@@ -467,53 +1180,13 @@ const handleRenewableItemClick = (item) => {
                 transformOrigin: 'top left',
                 transform: `translate(${mapOffset.x}px, ${mapOffset.y}px)`,
             }"
-            @mousemove="(e) => {
-                if (paintingStart) {
-                    const dx = Math.abs(e.clientX - paintingStart.x);
-                    const dy = Math.abs(e.clientY - paintingStart.y);
-                    const threshold = 16 * scale;
-
-                    if (!isPaintingCollision && (dx > threshold || dy > threshold)) {
-                        const x = Math.floor(e.offsetX / scale / 32);
-                        const y = Math.floor(e.offsetY / scale / 32);
-                        const index = y * props.map.x + x;
-                        const colArray = props.map.col.split('');
-                        const current = colArray[index];
-
-                        paintingMode = current === '1' ? 'remove' : 'add';
-                        isPaintingCollision = true;
-                    }
-                }
-
-                if (isPaintingCollision) {
-                    paintCollision(e);
-                } else {
-                    handleMouseMove(e);
-                }
-            }"
-            @mousedown="(e) => {
-                startPanning(e);
-                startPaintingCollision(e);
-            }"
-            @mouseup="(e) => {
-                stopPanning();
-                stopPaintingCollision();
-            }"
-            @mouseleave="() => {
-                stopPanning();
-                stopPaintingCollision();
-            }"
-            @contextmenu.prevent="(e) => {
-                if (editWaterOn) {
-                    // Directly call handleWaterEdit with isRightClick=true
-                    const x = trackerPosition.x;
-                    const y = trackerPosition.y;
-                    handleWaterEdit(x, y, true);
-                }
-            }"
-            @click.self="(e) => {
-                addNewObject(e);
-            }"
+            @mousemove="handleMapMouseMove"
+            @mousedown="handleMapMouseDown"
+            @mouseup="handleMapMouseUp"
+            @mouseleave="handleMapMouseLeave"
+            @contextmenu.prevent
+            @click.capture="handleMapClickCapture"
+            @click.self="handleMapClick"
         >
             <!-- Mouse tracker -->
             <div
@@ -529,6 +1202,33 @@ const handleRenewableItemClick = (item) => {
                     left: trackerPosition.x * 32 * scale,
                 }"
             />
+
+            <div
+                v-if="selectionOverlayStyle"
+                class="tile-selection-overlay"
+                :class="{
+                    'tile-selection-overlay-water': activeTileLayer === 'water',
+                }"
+                :style="selectionOverlayStyle"
+            />
+
+            <div
+                v-for="tile in tilePreviewPositions"
+                :key="`preview-${tile.x}-${tile.y}`"
+                class="tile-preview"
+                :class="{
+                    'tile-preview-water': activeTileLayer === 'water',
+                    'tile-preview-collision': activeTileLayer === 'cols',
+                }"
+                :style="{
+                    width: `${32 * scale}px`,
+                    height: `${32 * scale}px`,
+                    top: `${tile.y * 32 * scale}px`,
+                    left: `${tile.x * 32 * scale}px`,
+                }"
+            >
+                <span v-if="tile.depth" class="tile-preview-depth">{{ tile.depth }}</span>
+            </div>
 
             <!-- NPCs -->
             <NpcRenderer
@@ -599,5 +1299,46 @@ const handleRenewableItemClick = (item) => {
 
 .mouse-tracker {
     pointer-events: none;
+    z-index: 5;
+}
+
+.tile-selection-overlay {
+    position: absolute;
+    pointer-events: none;
+    z-index: 8;
+    border: 2px solid #f59e0b;
+    background: rgba(245, 158, 11, 0.16);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.85);
+}
+
+.tile-selection-overlay-water {
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.18);
+}
+
+.tile-preview {
+    position: absolute;
+    pointer-events: none;
+    z-index: 9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.tile-preview-collision {
+    background: rgba(236, 72, 153, 0.45);
+}
+
+.tile-preview-water {
+    background: rgba(14, 165, 233, 0.42);
+}
+
+.tile-preview-depth {
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 }
 </style>

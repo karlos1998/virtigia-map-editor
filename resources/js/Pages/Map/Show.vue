@@ -46,6 +46,33 @@ type NpcDrawOffset = {
     y: number;
 };
 
+type TileEditorLayer = 'cols' | 'water';
+type TileEditorTool = 'brush' | 'rectangle' | 'preset';
+type TileEditorCommand = 'undo' | 'redo' | 'fill-selection' | 'erase-selection' | 'clear-selection' | 'save-preset' | 'apply-preset';
+
+type TileEditorSettings = {
+    tool: TileEditorTool;
+    brushSize: number;
+    waterDepth: number;
+    selectedPresetId: string | null;
+};
+
+type TileEditorPresetOption = {
+    id: string;
+    name: string;
+    layer: TileEditorLayer;
+    width: number;
+    height: number;
+    tileCount: number;
+};
+
+type TileEditorState = {
+    canUndo: boolean;
+    canRedo: boolean;
+    presets: TileEditorPresetOption[];
+    selectionSummary: string | null;
+};
+
 const offsetDialogVisible = ref(false);
 const offsetNpc = ref<NpcWithLocationResource | null>(null);
 const draftDrawOffsetX = ref(0);
@@ -53,6 +80,12 @@ const draftDrawOffsetY = ref(0);
 const previewNpcDrawOffsets = ref<Record<number, NpcDrawOffset>>({});
 const savedNpcDrawOffsets = ref<Record<number, NpcDrawOffset>>({});
 const offsetLimit = 256;
+const tileEditorState = ref<TileEditorState>({
+    canUndo: false,
+    canRedo: false,
+    presets: [],
+    selectionSummary: null,
+});
 
 const activeBaseNpcId = computed(() => offsetNpc.value?.base_npc_id ?? null);
 
@@ -194,6 +227,22 @@ const handleEditWaterChanged = (value: boolean) => {
 
 const handleNaturalNpcSizeChanged = (value: boolean) => {
     naturalNpcSize.value = value;
+};
+
+const handleTileEditorSettingsChanged = (settings: TileEditorSettings) => {
+    if (mapContainerRef.value) {
+        mapContainerRef.value.setTileEditorSettings(settings);
+    }
+};
+
+const handleTileEditorCommand = (command: TileEditorCommand) => {
+    if (mapContainerRef.value) {
+        mapContainerRef.value.runTileEditorCommand(command);
+    }
+};
+
+const handleTileEditorStateChanged = (state: TileEditorState) => {
+    tileEditorState.value = state;
 };
 
 // Handle NPC confirm dialog
@@ -355,11 +404,17 @@ const handleTrackerPositionChanged = (position: { x: number, y: number }) => {
             :map="map"
             :scale="scale"
             :natural-npc-size="naturalNpcSize"
+            :tile-editor-presets="tileEditorState.presets"
+            :can-undo-tile-edit="tileEditorState.canUndo"
+            :can-redo-tile-edit="tileEditorState.canRedo"
+            :tile-selection-summary="tileEditorState.selectionSummary"
             @zoom-in="zoomIn"
             @zoom-out="zoomOut"
             @edit-cols-changed="handleEditColsChanged"
             @edit-water-changed="handleEditWaterChanged"
             @natural-npc-size-changed="handleNaturalNpcSizeChanged"
+            @tile-editor-settings-changed="handleTileEditorSettingsChanged"
+            @tile-editor-command="handleTileEditorCommand"
         />
 
         <!-- Map Container -->
@@ -375,6 +430,7 @@ const handleTrackerPositionChanged = (position: { x: number, y: number }) => {
             @show-npc-confirm-dialog="showNpcConfirmDialog"
             @show-door-confirm-dialog="showDoorConfirmDialog"
             @tracker-position-changed="handleTrackerPositionChanged"
+            @tile-editor-state-changed="handleTileEditorStateChanged"
         />
 
         <Tabs value="0" class="card">
