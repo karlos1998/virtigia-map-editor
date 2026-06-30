@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { ConnectionLookup, Handle, NodeProps, Position, useVueFlow } from '@vue-flow/core';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { useDialog } from 'primevue/usedialog';
@@ -12,6 +12,7 @@ import {DialogOptionResource} from "@/Resources/DialogOption.resource";
 import {useConfirm, useToast} from "primevue";
 import RemoveNodeButton from "./Componnts/RemoveNodeButton.vue";
 import {DialogNodeAdditionalActionsResource} from "../../Resources/DialogNodeAdditionalActions.resource";
+import type { DialogNodeActionDataResource } from '@/Resources/DialogNodeActionData.resource';
 
 const primeDialog = useDialog();
 const showEditOption = ref(false);
@@ -23,6 +24,7 @@ const props = defineProps<NodeProps<{
     label: string,
     content: string,
     options: Array<DialogOptionResource>
+    action_data: DialogNodeActionDataResource | null,
     additional_actions: DialogNodeAdditionalActionsResource
 }>>();
 
@@ -33,6 +35,23 @@ const state = ref({
   content: props.data.content ?? ''
 });
 const options = ref(props.data.options);
+
+const focusSummary = computed(() => {
+    const focus = props.data.action_data?.focus;
+    if (!focus?.type) {
+        return null;
+    }
+
+    if (focus.type === 'reset') {
+        return 'Reset fokusu';
+    }
+
+    if (focus.type === 'npc') {
+        return `Fokus NPC #${focus.npcId ?? '?'} (${focus.x ?? '?'}, ${focus.y ?? '?'})`;
+    }
+
+    return `Fokus (${focus.x ?? '?'}, ${focus.y ?? '?'})`;
+});
 
 const editOption = (option: DialogOptionResource) => {
     currentOption.value = option;
@@ -158,19 +177,26 @@ const editNode = () => {
             content: state.value.content,
             dialog_id: props.data.dialog_id,
             node_id: props.id,
+            action_data: props.data.action_data,
             additional_actions: props.data.additional_actions,
         },
-        onClose(options) {
-            if (options.data.content) {
-                state.value.content = options.data.content;
+        onClose(closeOptions) {
+            const closeData = closeOptions.data ?? {};
+
+            if (closeData.content) {
+                state.value.content = closeData.content;
             }
 
-            if (options.data.additional_actions) {
-                props.data.additional_actions = options.data.additional_actions;
+            if ('action_data' in closeData) {
+                props.data.action_data = closeData.action_data;
+            }
+
+            if (closeData.additional_actions) {
+                props.data.additional_actions = closeData.additional_actions;
             }
 
             // If the dialog was copied, refresh the page to show the new node
-            if (options.data.copied) {
+            if (closeData.copied) {
                 window.location.reload();
             }
         }
@@ -221,6 +247,7 @@ export default {
         <div class="whitespace-pre-wrap">
             {{ state.content }}
         </div>
+        <Tag v-if="focusSummary" class="mt-2" severity="info" :value="focusSummary" />
 
         <div class="options">
             <draggable v-model="options" @end="saveOptionsOrder" @change="saveOptionsOrder" item-key="id"

@@ -27,6 +27,7 @@ use App\Models\Dialog;
 use App\Models\DialogEdge;
 use App\Models\DialogNode;
 use App\Models\DialogNodeOption;
+use App\Models\Npc;
 use App\Services\DialogActivityLogService;
 use App\Services\DialogLayoutService;
 use App\Services\DialogService;
@@ -119,11 +120,26 @@ class DialogController extends Controller
         // Share the preloaded maps with the DialogNodeResource
         \App\Http\Resources\DialogNodeResource::$maps = $maps;
 
+        $dialogMapIds = $dialog->npcs
+            ->flatMap(fn (Npc $npc) => $npc->locations->pluck('map_id'))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $focusNpcs = $dialogMapIds->isEmpty()
+            ? collect()
+            : Npc::query()
+                ->with(['base', 'locations.map'])
+                ->whereHas('locations', fn ($query) => $query->whereIn('map_id', $dialogMapIds))
+                ->orderBy('id')
+                ->get();
+
         return Inertia::render('Dialog/Show', [
             'dialog' => $dialog->only(['id', 'name']),
             'nodes' => DialogNodeResource::collection($dialog->nodes),
             'edges' => DialogEdgeResource::collection($dialog->edges),
             'npcs' => NpcResource::collection($dialog->npcs),
+            'focusNpcs' => NpcResource::collection($focusNpcs),
             'quests' => SimpleQuestResource::collection($dialog->getRelatedQuests()),
             'logs' => $this->dialogActivityLogService->getForDialog($dialog),
             'dialogNodeOptionAdditionalActionsList' => DialogNodeOptionAdditionalAction::toDropdownList(),

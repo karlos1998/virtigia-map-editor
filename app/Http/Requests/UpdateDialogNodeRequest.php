@@ -34,6 +34,42 @@ class UpdateDialogNodeRequest extends FormRequest
                 'array',
                 new DialogNodeAdditionalActionsValidator,
             ],
+
+            'action_data' => [
+                'nullable',
+                'array',
+            ],
+            'action_data.focus' => [
+                'nullable',
+                'array',
+            ],
+            'action_data.focus.type' => [
+                'required_with:action_data.focus',
+                'in:npc,coordinates,reset',
+            ],
+            'action_data.focus.npcId' => [
+                'nullable',
+                'required_if:action_data.focus.type,npc',
+                'integer',
+            ],
+            'action_data.focus.locationId' => [
+                'nullable',
+                'integer',
+            ],
+            'action_data.focus.mapId' => [
+                'nullable',
+                'integer',
+            ],
+            'action_data.focus.x' => [
+                'nullable',
+                'required_if:action_data.focus.type,npc,coordinates',
+                'integer',
+            ],
+            'action_data.focus.y' => [
+                'nullable',
+                'required_if:action_data.focus.type,npc,coordinates',
+                'integer',
+            ],
         ];
     }
 }

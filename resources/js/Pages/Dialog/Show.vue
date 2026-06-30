@@ -41,6 +41,7 @@ const props = defineProps<{
     nodes: any[], //todo
     edges: any[],
     npcs: NpcWithLocationsResource[],
+    focusNpcs: NpcWithLocationsResource[],
     quests: SimpleQuestResource[],
     logs: AdvanceTableResponse<any>,
     dialogNodeOptionAdditionalActionsList: any[],
@@ -370,6 +371,13 @@ const advancedNodeFromJsonSamples = [
       "y": 170
     },
     "content": "Dostaniesz bonus doświadczenia.",
+    "action_data": {
+      "focus": {
+        "type": "coordinates",
+        "x": 12,
+        "y": 34
+      }
+    },
     "additional_actions": {
       "addExpPercent": {
         "value": 12.5
@@ -833,7 +841,10 @@ const items = ref([
     "type": "special|shop|hotel|teleportation|randomizer|profession|minigame",
     "position": { "x": 220, "y": 120 },
     "content": "opcjonalny tekst",
-    "action_data": { "minigame": { "type": "pipes|saper|mastermind|random", "difficulty": 1 } },
+    "action_data": {
+      "focus": { "type": "npc|coordinates|reset", "npcId": 1, "locationId": 1, "mapId": 1, "x": 12, "y": 34 },
+      "minigame": { "type": "pipes|saper|mastermind|random", "difficulty": 1 }
+    },
     "additional_actions": { "...": { "value": 1 } }
   },
   "options": [

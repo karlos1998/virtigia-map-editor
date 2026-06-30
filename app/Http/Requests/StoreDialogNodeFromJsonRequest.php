@@ -34,6 +34,13 @@ class StoreDialogNodeFromJsonRequest extends FormRequest
             'node.action_data.minigame' => ['required_if:node.type,minigame', 'array'],
             'node.action_data.minigame.type' => ['required_if:node.type,minigame', 'in:pipes,saper,mastermind,random'],
             'node.action_data.minigame.difficulty' => ['required_if:node.type,minigame', 'integer', 'min:1', 'max:3'],
+            'node.action_data.focus' => ['nullable', 'array'],
+            'node.action_data.focus.type' => ['required_with:node.action_data.focus', 'in:npc,coordinates,reset'],
+            'node.action_data.focus.npcId' => ['nullable', 'required_if:node.action_data.focus.type,npc', 'integer'],
+            'node.action_data.focus.locationId' => ['nullable', 'integer'],
+            'node.action_data.focus.mapId' => ['nullable', 'integer'],
+            'node.action_data.focus.x' => ['nullable', 'required_if:node.action_data.focus.type,npc,coordinates', 'integer'],
+            'node.action_data.focus.y' => ['nullable', 'required_if:node.action_data.focus.type,npc,coordinates', 'integer'],
             'options' => [
                 'nullable',
                 'array',
