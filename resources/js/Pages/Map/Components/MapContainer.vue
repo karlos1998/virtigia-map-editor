@@ -320,6 +320,7 @@ const undoTileEdit = (): void => {
     undoStack.value = undoStack.value.slice(0, -1);
     redoStack.value = [...redoStack.value, createSnapshot()];
     restoreSnapshot(snapshot);
+    resetTilePreview();
 };
 
 const redoTileEdit = (): void => {
@@ -334,6 +335,7 @@ const redoTileEdit = (): void => {
     redoStack.value = redoStack.value.slice(0, -1);
     undoStack.value = [...undoStack.value, createSnapshot()];
     restoreSnapshot(snapshot);
+    resetTilePreview();
 };
 
 const getTileFromMouseEvent = (event: MouseEvent): TilePosition | null => {
@@ -452,6 +454,23 @@ const emitTileEditorState = (): void => {
     });
 };
 
+const hideTilePreview = (): void => {
+    trackerPosition.value = { x: -32, y: -32 };
+    emit('trackerPositionChanged', trackerPosition.value);
+};
+
+const resetTilePreview = (clearSelection = true): void => {
+    if (clearSelection) {
+        rectangleSelection.value = null;
+    }
+
+    isSelectingRectangle.value = false;
+    isPaintingTiles.value = false;
+    activeBrushAction.value = null;
+    hideTilePreview();
+    emitTileEditorState();
+};
+
 const storePresets = (): void => {
     if (typeof window === 'undefined') {
         return;
@@ -563,7 +582,7 @@ const applyRectangleSelection = (action: TileEditorAction): void => {
     runWithHistory(() => {
         applyTiles(selectedRectangleTiles.value, action);
     });
-    emitTileEditorState();
+    resetTilePreview();
 };
 
 const saveSelectionAsPreset = (): void => {
@@ -635,11 +654,11 @@ const saveSelectionAsPreset = (): void => {
     toast.add({ severity: 'success', summary: 'Preset zapisany', detail: preset.name, life: 3000 });
 };
 
-const applyPresetAt = (anchor: TilePosition): void => {
+const applyPresetAt = (anchor: TilePosition, action: TileEditorAction = 'paint'): void => {
     const preset = activePreset.value;
     const layer = activeTileLayer.value;
 
-    if (!preset || !layer) {
+    if (!preset || !layer || !isInsideMap(anchor)) {
         toast.add({ severity: 'warn', summary: 'Brak presetu', detail: 'Wybierz preset przed użyciem', life: 3000 });
         return;
     }
@@ -653,7 +672,7 @@ const applyPresetAt = (anchor: TilePosition): void => {
         if (layer === 'cols') {
             setCollisionTiles(
                 preset.tiles.map((tile) => ({ x: anchor.x + tile.x, y: anchor.y + tile.y })),
-                'paint',
+                action,
             );
             return;
         }
@@ -664,13 +683,18 @@ const applyPresetAt = (anchor: TilePosition): void => {
             const targetTile = { x: anchor.x + tile.x, y: anchor.y + tile.y };
 
             if (isInsideMap(targetTile)) {
+                if (action === 'erase') {
+                    waterMap.delete(tileKey(targetTile));
+                    return;
+                }
+
                 waterMap.set(tileKey(targetTile), clampInteger(tile.depth ?? tileEditorSettings.value.waterDepth, 1, 9));
             }
         });
 
         props.map.water = serializeWaterData(waterMap);
     });
-    emitTileEditorState();
+    resetTilePreview(false);
 };
 
 const tilePreviewPositions = computed(() => {
@@ -731,9 +755,7 @@ const handleTileMouseDown = (event: MouseEvent): boolean => {
     }
 
     if (tileEditorSettings.value.tool === 'preset') {
-        if (event.button === 0) {
-            applyPresetAt(tile);
-        }
+        applyPresetAt(tile, event.button === 2 ? 'erase' : 'paint');
 
         return true;
     }
@@ -797,8 +819,7 @@ const handleMapMouseUp = (): void => {
 };
 
 const handleMapMouseLeave = (): void => {
-    trackerPosition.value = { x: -32, y: -32 };
-    emit('trackerPositionChanged', trackerPosition.value);
+    hideTilePreview();
     stopPanning();
     finishTileMouseAction();
 };
@@ -821,9 +842,7 @@ const handleMapClickCapture = (event: MouseEvent): void => {
 };
 
 const clearRectangleSelection = (): void => {
-    rectangleSelection.value = null;
-    isSelectingRectangle.value = false;
-    emitTileEditorState();
+    resetTilePreview();
 };
 
 const runTileEditorCommand = (command: TileEditorCommand): void => {
@@ -877,10 +896,10 @@ const handleTileEditorKeydown = (event: KeyboardEvent): void => {
         return;
     }
 
-    if (event.code === 'Enter' || event.code === 'KeyF') {
+    if (event.code === 'Enter' || event.code === 'NumpadEnter' || event.code === 'Space' || event.code === 'KeyF') {
         event.preventDefault();
         runTileEditorCommand('fill-selection');
-    } else if (event.code === 'Delete' || event.code === 'Backspace') {
+    } else if (event.code === 'Delete' || event.code === 'Backspace' || event.code === 'KeyE') {
         event.preventDefault();
         runTileEditorCommand('erase-selection');
     } else if (event.code === 'Escape') {
@@ -1076,7 +1095,7 @@ defineExpose({
             editWaterOn.value = false;
         }
         finishTileMouseAction();
-        emitTileEditorState();
+        resetTilePreview();
     },
     setEditWaterOn: (value: boolean) => {
         editWaterOn.value = value;
@@ -1084,9 +1103,11 @@ defineExpose({
             editColsOn.value = false;
         }
         finishTileMouseAction();
-        emitTileEditorState();
+        resetTilePreview();
     },
     setTileEditorSettings: (settings: Partial<TileEditorSettings>) => {
+        const previousTool = tileEditorSettings.value.tool;
+
         tileEditorSettings.value = {
             ...tileEditorSettings.value,
             ...settings,
@@ -1096,6 +1117,10 @@ defineExpose({
                 ? tileEditorSettings.value.selectedPresetId
                 : settings.selectedPresetId,
         };
+
+        if (settings.tool !== undefined && settings.tool !== previousTool) {
+            resetTilePreview();
+        }
     },
     runTileEditorCommand,
     getTileEditorState: (): TileEditorState => ({
