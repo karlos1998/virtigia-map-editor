@@ -26,7 +26,8 @@ export type BaseItemCategory =
     | 'golds'
     | 'blessings'
     | 'pets'
-    | 'pouches';
+    | 'pouches'
+    | 'lootChests';
 
 export type AttributeCategoryGroup =
     | 'attributePoint'
@@ -64,6 +65,7 @@ const ALL_CATEGORIES: BaseItemCategory[] = [
     'blessings',
     'pets',
     'pouches',
+    'lootChests',
 ];
 
 const ARMOR_PARTS = ['armors', 'helmets', 'gloves', 'boots', 'shields'] as const;
@@ -97,6 +99,7 @@ const GENERIC_FLAG_ITEMS = [
     'neutrals',
     'pets',
     'pouches',
+    'lootChests',
     'quests',
     'talismans',
     'upgrades',

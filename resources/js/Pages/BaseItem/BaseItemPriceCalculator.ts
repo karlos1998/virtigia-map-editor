@@ -52,6 +52,7 @@ const CATEGORY_MULTIPLIER: Record<string, number> = {
     blessings: 0.1457,
     pets: 0.0104,
     pouches: 1.0356,
+    lootChests: 1.0356,
 };
 
 const RARITY_MULTIPLIER: Record<string, number> = {

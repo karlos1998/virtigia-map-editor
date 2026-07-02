@@ -12,6 +12,7 @@ import AttributePointsEditor from './Components/AttributePointsEditor.vue';
 import TeleportToEditor from './Components/TeleportToEditor.vue';
 import OutfitEditor from './Components/OutfitEditor.vue';
 import PetEditor from './Components/PetEditor.vue';
+import LootChestEditor from './Components/LootChestEditor.vue';
 import {calculateBaseItemPrice} from './BaseItemPriceCalculator';
 import JsonEditorVue from 'json-editor-vue'
 
@@ -50,6 +51,7 @@ const jsonEditorAttributes = ref(JSON.parse(JSON.stringify(cleanAttributes(props
 const isPet = computed(() => props.baseItem.category === 'pets');
 const isBook = computed(() => props.baseItem.category === 'books');
 const isMusicBox = computed(() => props.baseItem.category === 'musicBoxes');
+const isLootChest = computed(() => props.baseItem.category === 'lootChests');
 const baseItem = computed(() => props.baseItem);
 const persistedPrice = ref(Number(props.baseItem.price ?? 0));
 const price = ref<number | null>(Number(props.baseItem.price ?? 0));
@@ -345,8 +347,8 @@ const save = async () => {
     // Create update data with all three fields
     const updateData = {
         attributes: finalAttributes,
-        attribute_points: (isBook.value || isMusicBox.value) ? {} : (form.attribute_points || {}),
-        manual_attribute_points: (isBook.value || isMusicBox.value) ? {} : (form.manual_attribute_points || {})
+        attribute_points: (isBook.value || isMusicBox.value || isLootChest.value) ? {} : (form.attribute_points || {}),
+        manual_attribute_points: (isBook.value || isMusicBox.value || isLootChest.value) ? {} : (form.manual_attribute_points || {})
     };
 
     // Send the update
@@ -535,6 +537,9 @@ const clearCurrency = () => {
             <div class="mt-2 text-sm text-surface-500">
                 Dla kategorii <strong>musicBoxes</strong> aktywny jest atrybut <code>audioId</code>.
             </div>
+        </div>
+        <div v-else-if="isLootChest" class="card">
+            <LootChestEditor v-model:attributes="form.attributes" />
         </div>
 
         <Tabs v-else v-model:value="activeTab" class="card">

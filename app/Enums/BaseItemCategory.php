@@ -9,9 +9,9 @@ use App\Enums\Traits\ValuesToList;
 
 enum BaseItemCategory: string
 {
-    use ValuesToList;
-    use ToDropdownList;
     use GetAttributes;
+    use ToDropdownList;
+    use ValuesToList;
 
     #[Description('Jednoręczne')]
     case ONE_HANDED = 'oneHanded';
@@ -96,4 +96,7 @@ enum BaseItemCategory: string
 
     #[Description('Sakwy')]
     case POUCHES = 'pouches';
+
+    #[Description('Kuferki')]
+    case LOOT_CHESTS = 'lootChests';
 }
