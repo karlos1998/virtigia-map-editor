@@ -146,6 +146,21 @@ const duplicateReward = (reward: LootChestReward): void => {
     });
 };
 
+const sameLootChestConfig = (left: unknown, right: unknown): boolean => {
+    return JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
+};
+
+const assignRewardBaseItem = (reward: LootChestReward, baseItem: BaseItemResource): void => {
+    if (reward.baseItemId !== baseItem.id) {
+        reward.baseItemId = baseItem.id;
+    }
+
+    const hasUsablePreview = Boolean(reward.resolvedItem?.name && reward.resolvedItem?.src);
+    if (reward.resolvedItem?.id !== baseItem.id || !hasUsablePreview) {
+        reward.resolvedItem = baseItem;
+    }
+};
+
 const fixRewardRange = (reward: LootChestReward): void => {
     const nextMinQuantity = clamp(toInteger(reward.minQuantity, 1), 1, 999);
     const nextMaxQuantity = clamp(toInteger(reward.maxQuantity, nextMinQuantity), nextMinQuantity, 999);
@@ -190,8 +205,11 @@ const resolveRewardItems = async (): Promise<void> => {
             return;
         }
 
-        reward.baseItemId = baseItemId;
-        reward.resolvedItem = itemsById.get(baseItemId) ?? reward.resolvedItem ?? null;
+        const resolvedItem = itemsById.get(baseItemId);
+
+        if (resolvedItem) {
+            assignRewardBaseItem(reward, resolvedItem);
+        }
     });
 };
 
@@ -199,13 +217,14 @@ const handleBaseItemChange = (reward: LootChestReward, value: unknown): void => 
     const baseItem = extractBaseItemResource(value);
 
     if (baseItem) {
-        reward.baseItemId = baseItem.id;
-        reward.resolvedItem = baseItem;
+        assignRewardBaseItem(reward, baseItem);
         return;
     }
 
     const baseItemId = extractBaseItemId(value);
-    reward.baseItemId = baseItemId;
+    if (reward.baseItemId !== baseItemId) {
+        reward.baseItemId = baseItemId;
+    }
 
     if (baseItemId === null) {
         reward.resolvedItem = null;
@@ -218,8 +237,7 @@ const handleResolvedItems = (reward: LootChestReward, items: unknown): void => {
     const item = extractBaseItemResource(items);
 
     if (item) {
-        reward.baseItemId = item.id;
-        reward.resolvedItem = item;
+        assignRewardBaseItem(reward, item);
         return;
     }
 
@@ -227,10 +245,16 @@ const handleResolvedItems = (reward: LootChestReward, items: unknown): void => {
 };
 
 const syncAttributes = (): void => {
+    const lootChest = serializeConfig(config.value);
+
+    if (sameLootChestConfig(attributes.value?.lootChest, lootChest)) {
+        return;
+    }
+
     skipAttributeSync = true;
     attributes.value = {
         ...(attributes.value ?? {}),
-        lootChest: serializeConfig(config.value),
+        lootChest,
     };
 
     nextTick(() => {

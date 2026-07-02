@@ -75,6 +75,10 @@ export const extractBaseItemResource = (value: unknown): BaseItemResource | null
         return null;
     }
 
+    if ("id" in value && (value as { id?: unknown }).id === baseItemId) {
+        return value as BaseItemResource;
+    }
+
     return {
         ...(value as BaseItemResource),
         id: baseItemId,
