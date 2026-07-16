@@ -40,6 +40,7 @@ class UpdateDialogNodeActionDataRequest extends CurrentWorldRequest
             'teleportation.scaleNpcsToPlayerLevel' => ['sometimes', 'boolean'],
             'teleportation.npcLevelOffset' => ['sometimes', 'integer'],
             'teleportation.scaleNpcLootItemLevels' => ['sometimes', 'boolean'],
+            'teleportation.npcLootItemLevelOffset' => ['sometimes', 'integer'],
         ];
     }
 }

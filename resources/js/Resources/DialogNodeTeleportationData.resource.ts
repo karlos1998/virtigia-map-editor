@@ -8,4 +8,5 @@ export interface DialogNodeTeleportationDataResource {
     scaleNpcsToPlayerLevel?: boolean
     npcLevelOffset?: number
     scaleNpcLootItemLevels?: boolean
+    npcLootItemLevelOffset?: number
 }

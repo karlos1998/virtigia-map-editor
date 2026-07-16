@@ -47,6 +47,7 @@ const withTeleportationDefaults = (value?: DialogNodeTeleportationDataResource |
     return {
         ...value,
         npcLevelOffset: normalizeLevelOffset(value.npcLevelOffset),
+        npcLootItemLevelOffset: normalizeLevelOffset(value.npcLootItemLevelOffset),
     };
 };
 
@@ -89,6 +90,7 @@ const handleClick = (event: MouseEvent) => {
         scaleNpcsToPlayerLevel: teleportation.value?.scaleNpcsToPlayerLevel ?? false,
         npcLevelOffset: normalizeLevelOffset(teleportation.value?.npcLevelOffset),
         scaleNpcLootItemLevels: teleportation.value?.scaleNpcLootItemLevels ?? false,
+        npcLootItemLevelOffset: normalizeLevelOffset(teleportation.value?.npcLootItemLevelOffset),
     }
     changed.value = true;
 }
@@ -105,6 +107,7 @@ const markCreateInstanceChanged = () => {
         teleportation.value.scaleNpcsToPlayerLevel = false;
         teleportation.value.npcLevelOffset = 0;
         teleportation.value.scaleNpcLootItemLevels = false;
+        teleportation.value.npcLootItemLevelOffset = 0;
     }
     markChanged();
 }
@@ -114,6 +117,7 @@ const markIncludeNpcsChanged = () => {
         teleportation.value.scaleNpcsToPlayerLevel = false;
         teleportation.value.npcLevelOffset = 0;
         teleportation.value.scaleNpcLootItemLevels = false;
+        teleportation.value.npcLootItemLevelOffset = 0;
     }
     markChanged();
 }
@@ -127,6 +131,15 @@ const markScaleNpcsChanged = () => {
     markChanged();
 }
 
+const markScaleLootItemsChanged = () => {
+    if (!teleportation.value?.scaleNpcLootItemLevels) {
+        teleportation.value.npcLootItemLevelOffset = 0;
+    } else {
+        teleportation.value.npcLootItemLevelOffset = normalizeLevelOffset(teleportation.value.npcLootItemLevelOffset);
+    }
+    markChanged();
+}
+
 const reset = () => {
     teleportation.value = withTeleportationDefaults(dialogRef.value.data?.teleportation);
     changed.value = false;
@@ -135,6 +148,7 @@ const reset = () => {
 const save = () => {
     if (teleportation.value) {
         teleportation.value.npcLevelOffset = normalizeLevelOffset(teleportation.value.npcLevelOffset);
+        teleportation.value.npcLootItemLevelOffset = normalizeLevelOffset(teleportation.value.npcLootItemLevelOffset);
     }
 
     dialogRef.value.close({
@@ -206,9 +220,25 @@ const cancel = () => {
                 input-id="teleport-scale-loot-items"
                 :binary="true"
                 :disabled="!teleportation.createInstance || !teleportation.includeNpcs"
-                @change="markChanged"
+                @change="markScaleLootItemsChanged"
             />
             <label for="teleport-scale-loot-items">Skaluj poziom przedmiotów z lootu NPC</label>
+        </div>
+
+        <div
+            v-if="teleportation.createInstance && teleportation.includeNpcs && teleportation.scaleNpcLootItemLevels"
+            class="flex flex-column gap-2"
+        >
+            <label for="teleport-loot-item-level-offset" class="font-semibold">Różnica poziomu przedmiotów z lootu</label>
+            <InputNumber
+                id="teleport-loot-item-level-offset"
+                v-model="teleportation.npcLootItemLevelOffset"
+                :useGrouping="false"
+                showButtons
+                class="w-full"
+                @update:modelValue="markChanged"
+            />
+            <small class="text-surface-500 dark:text-surface-400">0 oznacza poziom gracza, -5 oznacza gracz -5, 10 oznacza gracz +10.</small>
         </div>
     </div>
 
