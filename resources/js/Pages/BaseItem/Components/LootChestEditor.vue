@@ -7,6 +7,7 @@ import type { BaseItemResource } from "@/Resources/BaseItem.resource";
 import { extractBaseItemId, extractBaseItemResource, resolveRewardBaseItemId } from "./lootChestEditorPayload";
 
 type LootChestMode = "random" | "guaranteed";
+type LootChestRewardBinding = "none" | "boundToOwner" | "permanentlyBounded" | "bindsAfterEquip";
 
 type LootChestReward = {
     uid: string;
@@ -19,6 +20,7 @@ type LootChestReward = {
 
 type LootChestConfig = {
     mode: LootChestMode;
+    rewardBinding: LootChestRewardBinding;
     minRewards: number;
     maxRewards: number;
     items: LootChestReward[];
@@ -33,6 +35,7 @@ type StoredLootChestReward = {
 
 type StoredLootChestConfig = {
     mode?: LootChestMode | string | null;
+    rewardBinding?: LootChestRewardBinding | string | null;
     minRewards?: number | string | null;
     maxRewards?: number | string | null;
     items?: StoredLootChestReward[] | null;
@@ -43,6 +46,13 @@ const attributes = defineModel<Record<string, any>>("attributes", { required: tr
 const modeOptions = [
     { label: "Losowy", value: "random" },
     { label: "Pewny", value: "guaranteed" },
+];
+
+const rewardBindingOptions: Array<{ label: string; value: LootChestRewardBinding }> = [
+    { label: "Bez dodatkowego wiązania", value: "none" },
+    { label: "Związane z właścicielem", value: "boundToOwner" },
+    { label: "Związane z właścicielem na stałe", value: "permanentlyBounded" },
+    { label: "Wiąże po założeniu", value: "bindsAfterEquip" },
 ];
 
 const createUid = (): string => `loot-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -75,12 +85,16 @@ const normalizeReward = (reward?: StoredLootChestReward | null): LootChestReward
 
 const normalizeConfig = (stored?: StoredLootChestConfig | null): LootChestConfig => {
     const mode = stored?.mode === "guaranteed" ? "guaranteed" : "random";
+    const rewardBinding = rewardBindingOptions.some((option) => option.value === stored?.rewardBinding)
+        ? stored?.rewardBinding as LootChestRewardBinding
+        : "none";
     const items = Array.isArray(stored?.items) ? stored.items.map(normalizeReward) : [];
     const minRewards = clamp(toInteger(stored?.minRewards, mode === "guaranteed" ? items.length : 1), 0, 999);
     const maxRewards = clamp(toInteger(stored?.maxRewards, Math.max(minRewards, Math.min(items.length || 1, 1))), minRewards, 999);
 
     return {
         mode,
+        rewardBinding,
         minRewards,
         maxRewards,
         items,
@@ -111,6 +125,7 @@ const serializeConfig = (current: LootChestConfig): StoredLootChestConfig => {
 
     return {
         mode: current.mode,
+        rewardBinding: current.rewardBinding,
         minRewards: current.mode === "guaranteed" ? items.length : current.minRewards,
         maxRewards: current.mode === "guaranteed" ? items.length : Math.max(current.minRewards, current.maxRewards),
         items,
@@ -336,6 +351,20 @@ watch(
 
             <div v-else class="lg:col-span-2 flex items-end text-sm text-surface-600">
                 W trybie pewnym gracz dostaje każdy skonfigurowany wiersz.
+            </div>
+
+            <div class="flex flex-col gap-2 lg:col-span-3">
+                <label class="text-sm font-medium text-surface-700">Wiązanie przedmiotów zdobytych z kuferka</label>
+                <Select
+                    v-model="config.rewardBinding"
+                    :options="rewardBindingOptions"
+                    option-label="label"
+                    option-value="value"
+                    class="w-full"
+                />
+                <small class="text-surface-500">
+                    Ustawienie dotyczy wszystkich nagród z tego kuferka, nie samego kuferka.
+                </small>
             </div>
         </div>
 
