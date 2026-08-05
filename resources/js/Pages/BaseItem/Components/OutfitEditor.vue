@@ -3,7 +3,6 @@ import { ref, computed, watch } from 'vue';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
-import Textarea from 'primevue/textarea';
 import OutfitBrowserDialog from './OutfitBrowserDialog.vue';
 import axios from 'axios';
 import { route } from 'ziggy-js';
@@ -19,7 +18,6 @@ const emit = defineEmits(['update:attributes']);
 const useOutfitTime = ref<number>(0);
 const useOutfitSrc = ref<string>('');
 const cooldownTime = ref<number | null>(null);
-const description = ref<string>('');
 
 // Browser dialog state
 const showBrowserDialog = ref(false);
@@ -42,9 +40,6 @@ const initializeFromAttributes = () => {
     } else {
         cooldownTime.value = null;
     }
-
-    // Initialize description
-    description.value = props.attributes?.description ?? '';
 };
 
 // Initialize on mount
@@ -74,7 +69,7 @@ const isValid = computed(() => {
 });
 
 // Auto-save when outfit fields change
-watch([useOutfitTime, useOutfitSrc, cooldownTime, description], () => {
+watch([useOutfitTime, useOutfitSrc, cooldownTime], () => {
     const updatedAttributes = { ...props.attributes };
 
     // Handle useOutfit
@@ -98,13 +93,6 @@ watch([useOutfitTime, useOutfitSrc, cooldownTime, description], () => {
         }
     }
 
-    // Handle description
-    if (description.value && description.value.trim() !== '') {
-        updatedAttributes.description = description.value.trim();
-    } else {
-        delete updatedAttributes.description;
-    }
-
     emit('update:attributes', updatedAttributes);
 });
 
@@ -113,7 +101,6 @@ const removeOutfit = () => {
     const updatedAttributes = { ...props.attributes };
     delete updatedAttributes.useOutfit;
     delete updatedAttributes.cooldownTime;
-    delete updatedAttributes.description;
 
     emit('update:attributes', updatedAttributes);
 
@@ -121,7 +108,6 @@ const removeOutfit = () => {
     useOutfitTime.value = 0;
     useOutfitSrc.value = '';
     cooldownTime.value = null;
-    description.value = '';
 };
 
 // Preview the outfit image
@@ -182,7 +168,6 @@ const handleOutfitSelected = (relativePath: string) => {
                 <p>Źródło grafiki: <strong>{{ useOutfitSrc || 'Nie ustawiono' }}</strong></p>
                 <p>Czas trwania: <strong>{{ useOutfitTime }} min</strong></p>
                 <p v-if="cooldownTime">Czas odnowienia: <strong>{{ cooldownTime }} min</strong></p>
-                <p v-if="description">Opis: <strong>{{ description }}</strong></p>
             </div>
         </div>
 
@@ -257,20 +242,6 @@ const handleOutfitSelected = (relativePath: string) => {
                     suffix=" min"
                 />
                 <small class="text-gray-500">Czas w minutach przed ponownym użyciem stroju</small>
-            </div>
-
-            <!-- Description -->
-            <div class="field">
-                <label for="description" class="block font-semibold mb-2">
-                    Opis Stroju (opcjonalny)
-                </label>
-                <Textarea
-                    v-model="description"
-                    placeholder="Np. Strój Ar-Karlos"
-                    class="w-full"
-                    :rows="3"
-                />
-                <small class="text-gray-500">Opis wyświetlany w grze</small>
             </div>
         </div>
 

@@ -7,8 +7,8 @@ import {router, useForm} from "@inertiajs/vue3";
 import { onMounted, ref, computed, watch } from 'vue';
 import {useToast} from "primevue";
 import axios from "axios";
-import AttributeEditor from "../../Components/AttributeEditor.vue";
 import AttributePointsEditor from './Components/AttributePointsEditor.vue';
+import CommonItemAttributesEditor from './Components/CommonItemAttributesEditor.vue';
 import TeleportToEditor from './Components/TeleportToEditor.vue';
 import OutfitEditor from './Components/OutfitEditor.vue';
 import PetEditor from './Components/PetEditor.vue';
@@ -508,6 +508,7 @@ const clearCurrency = () => {
             <div v-if="baseItem.specific_currency_price !== null" class="mt-2 text-xs text-gray-700">Aktualna cena
                 waluty dla tego itemu: <strong>{{ baseItem.specific_currency_price }}</strong></div>
         </div>
+        <CommonItemAttributesEditor v-model:attributes="form.attributes" />
         <div v-if="isBook" class="card">
             <h4 class="font-semibold mb-3">Książka przypięta do przedmiotu</h4>
             <AutoComplete

@@ -15,6 +15,8 @@ import InputSwitch from 'primevue/inputswitch';
 import {
     additionalAttributes,
     booleanAttributes,
+    commonOwnershipAttributes,
+    descriptionAttribute,
     type AdditionalAttribute,
     type AdditionalAttributeType,
 } from '../AttributeOptions';
@@ -273,11 +275,19 @@ const visibleAttackElements = computed(() => {
 });
 
 const visibleBooleanAttributes = computed(() => {
-    return booleanAttributes.filter(attr => shouldShowAttribute('booleanAttribute', attr.key, getBooleanAttributeValue(attr.key)));
+    const commonAttributeKeys = new Set(commonOwnershipAttributes.map(attribute => attribute.key));
+
+    return booleanAttributes.filter(attr => {
+        return !commonAttributeKeys.has(attr.key)
+            && shouldShowAttribute('booleanAttribute', attr.key, getBooleanAttributeValue(attr.key));
+    });
 });
 
 const visibleAdditionalAttributes = computed(() => {
-    return additionalAttributes.filter(attr => shouldShowAttribute('additionalAttribute', attr.key, isAdditionalAttributeActive(attr)));
+    return additionalAttributes.filter(attr => {
+        return attr.key !== descriptionAttribute.key
+            && shouldShowAttribute('additionalAttribute', attr.key, isAdditionalAttributeActive(attr));
+    });
 });
 
 const incompatibleActiveAttributes = computed<IncompatibleAttribute[]>(() => {

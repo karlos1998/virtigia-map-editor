@@ -2,7 +2,6 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import InputText from 'primevue/inputtext';
 import Button from 'primevue/button';
-import Textarea from 'primevue/textarea';
 import FileUpload from 'primevue/fileupload';
 import Chip from 'primevue/chip';
 import Message from 'primevue/message';
@@ -23,7 +22,6 @@ const toast = useToast();
 // Local state for pet fields
 const petSrc = ref<string>('');
 const petActions = ref<string[]>([]);
-const description = ref<string>('');
 const newActionName = ref<string>('');
 const isSyncingFromProps = ref(false);
 const isUploadingImage = ref(false);
@@ -40,7 +38,6 @@ const initializeFromAttributes = () => {
     isSyncingFromProps.value = true;
     petSrc.value = props.attributes?.petSrc ?? '';
     petActions.value = [...(props.attributes?.petActions ?? [])];
-    description.value = props.attributes?.description ?? '';
     isSyncingFromProps.value = false;
 };
 
@@ -50,11 +47,9 @@ initializeFromAttributes();
 const buildNormalizedAttributes = (source: {
     petSrc?: string | null;
     petActions?: string[] | null;
-    description?: string | null;
 }) => {
     const normalizedAttributes: Record<string, string | string[]> = {};
     const normalizedPetSrc = source.petSrc?.trim() ?? '';
-    const normalizedDescription = source.description?.trim() ?? '';
     const normalizedPetActions = [...(source.petActions ?? [])];
 
     if (normalizedPetSrc !== '') {
@@ -65,23 +60,17 @@ const buildNormalizedAttributes = (source: {
         normalizedAttributes.petActions = normalizedPetActions;
     }
 
-    if (normalizedDescription !== '') {
-        normalizedAttributes.description = normalizedDescription;
-    }
-
     return normalizedAttributes;
 };
 
 const normalizedPropsPetState = computed(() => JSON.stringify(buildNormalizedAttributes({
     petSrc: props.attributes?.petSrc,
     petActions: props.attributes?.petActions ?? [],
-    description: props.attributes?.description,
 })));
 
 const normalizedLocalPetState = computed(() => JSON.stringify(buildNormalizedAttributes({
     petSrc: petSrc.value,
     petActions: petActions.value,
-    description: description.value,
 })));
 
 watch(normalizedPropsPetState, (newValue) => {
@@ -99,7 +88,6 @@ watch(normalizedLocalPetState, () => {
     const {
         petSrc: _petSrc,
         petActions: _petActions,
-        description: _description,
         ...remainingAttributes
     } = props.attributes ?? {};
 
@@ -108,7 +96,6 @@ watch(normalizedLocalPetState, () => {
         ...buildNormalizedAttributes({
             petSrc: petSrc.value,
             petActions: petActions.value,
-            description: description.value,
         }),
     });
 });
@@ -203,7 +190,7 @@ const uploadImage = async () => {
 
 // Check if pet is configured
 const hasPetData = computed(() => {
-    return petSrc.value !== '' || petActions.value.length > 0 || description.value !== '';
+    return petSrc.value !== '' || petActions.value.length > 0;
 });
 
 // Handle Enter key in action input
@@ -312,7 +299,6 @@ onMounted(() => {
             <div class="text-sm text-gray-700">
                 <p v-if="petSrc">Źródło grafiki: <strong>{{ petSrc }}</strong></p>
                 <p v-if="petActions.length > 0">Akcje: <strong>{{ petActions.join(', ') }}</strong></p>
-                <p v-if="description">Opis: <strong>{{ description }}</strong></p>
             </div>
         </div>
 
@@ -441,20 +427,6 @@ onMounted(() => {
                     />
                 </div>
                 <small class="text-gray-500">Dodaj akcje, które zwierzak może wykonywać</small>
-            </div>
-
-            <!-- Description -->
-            <div class="field">
-                <label for="description" class="block font-semibold mb-2">
-                    Opis Zwierzaka
-                </label>
-                <Textarea
-                    v-model="description"
-                    placeholder="Np. Testowy zwierzak do celów demonstracyjnych"
-                    class="w-full"
-                    :rows="3"
-                />
-                <small class="text-gray-500">Opis wyświetlany w grze</small>
             </div>
         </div>
 

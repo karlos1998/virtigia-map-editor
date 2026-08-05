@@ -17,14 +17,25 @@ export interface AdditionalAttribute extends BaseItemAttributeOption {
     arrayConstraints?: Array<{ min?: number; max?: number }>;
 }
 
+export const commonOwnershipAttributes: BooleanAttribute[] = [
+    {key: 'isBoundToOwner', label: 'Związany z właścicielem'},
+    {key: 'isBindsAfterEquip', label: 'Wiąże po założeniu'},
+    {key: 'isPermanentlyBounded', label: 'Związany z właścicielem na stałe'},
+];
+
+export const descriptionAttribute: AdditionalAttribute = {
+    key: 'description',
+    label: 'Opis',
+    type: 'text',
+    placeholder: 'Podaj opis',
+};
+
 export const booleanAttributes: BooleanAttribute[] = [
     {key: 'isNonStoreableInClanDeposit', label: 'Przedmiotu nie można przechowywać w depozycie klanowym'},
     {key: 'isBindPermanentlyAfterBuy', label: 'Wiąże na stałe po kupieniu'},
     {key: 'isNonStoreableInDeposit', label: 'Przedmiotu nie można przechowywać w depozycie'},
-    {key: 'isPermanentlyBounded', label: 'Związany z właścicielem na stałe'},
-    {key: 'isBindsAfterEquip', label: 'Wiąże po założeniu'},
+    ...commonOwnershipAttributes,
     {key: 'isNotAuctionable', label: 'Tego przedmiotu nie można wystawiać na aukcję'},
-    {key: 'isBoundToOwner', label: 'Związany z włascicielem'},
     {key: 'unbindsOwnerBound', label: 'Odwiązuje przedmiot związany z właścicielem'},
     {key: 'unbindsPermanentlyBound', label: 'Odwiązuje przedmiot związany na stałe (też zwykły bind)'},
     {key: 'isRecovered', label: 'Przedmiot odzyskany, obniżona wartość'},
@@ -41,7 +52,7 @@ export const booleanAttributes: BooleanAttribute[] = [
 
 export const additionalAttributes: AdditionalAttribute[] = [
     {key: 'shortenRevival', label: 'Skrócone odrodzenie (sekundy)', type: 'int'},
-    {key: 'description', label: 'Opis', type: 'text', placeholder: 'Podaj opis'},
+    descriptionAttribute,
     {key: 'quantity', label: 'Ilość', type: 'int'},
     {key: 'incrementGold', label: 'Zwiększ złoto', type: 'int'},
     {key: 'healRemaining', label: 'Pełne Uleczenie', type: 'int'},
