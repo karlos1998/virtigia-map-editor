@@ -84,6 +84,7 @@ const STACKABLE_ITEMS = [
     'helmets',
     'neutrals',
     'oneHanded',
+    'pets',
     'quests',
     'staffs',
     'twoHanded',

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import InputText from 'primevue/inputtext';
+import InputNumber from 'primevue/inputnumber';
 import Button from 'primevue/button';
 import FileUpload from 'primevue/fileupload';
 import Chip from 'primevue/chip';
@@ -26,6 +27,34 @@ const newActionName = ref<string>('');
 const isSyncingFromProps = ref(false);
 const isUploadingImage = ref(false);
 const petImageCacheKey = ref(Date.now());
+
+const getPositiveIntegerAttribute = (key: 'quantity' | 'maxQuantity'): number | null => {
+    const value = Number(props.attributes?.[key]);
+
+    return Number.isInteger(value) && value > 0 ? value : null;
+};
+
+const updatePositiveIntegerAttribute = (key: 'quantity' | 'maxQuantity', value: number | null): void => {
+    const attributes = { ...(props.attributes ?? {}) };
+
+    if (value === null || !Number.isFinite(value) || value < 1) {
+        delete attributes[key];
+    } else {
+        attributes[key] = Math.trunc(value);
+    }
+
+    emit('update:attributes', attributes);
+};
+
+const quantity = computed<number | null>({
+    get: () => getPositiveIntegerAttribute('quantity'),
+    set: value => updatePositiveIntegerAttribute('quantity', value),
+});
+
+const maxQuantity = computed<number | null>({
+    get: () => getPositiveIntegerAttribute('maxQuantity'),
+    set: value => updatePositiveIntegerAttribute('maxQuantity', value),
+});
 
 // Image upload form
 const imageForm = useForm({
@@ -311,6 +340,39 @@ onMounted(() => {
 
         <!-- Pet configuration -->
         <div class="space-y-4">
+            <div class="field">
+                <label class="block font-semibold mb-2">Ilość maskotek</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="petQuantity" class="block text-sm font-medium mb-1">Ilość</label>
+                        <InputNumber
+                            input-id="petQuantity"
+                            v-model="quantity"
+                            :min="1"
+                            :max="2000000000"
+                            show-buttons
+                            class="w-full"
+                            placeholder="Nielimitowana"
+                        />
+                    </div>
+                    <div>
+                        <label for="petMaxQuantity" class="block text-sm font-medium mb-1">Maksymalna ilość</label>
+                        <InputNumber
+                            input-id="petMaxQuantity"
+                            v-model="maxQuantity"
+                            :min="1"
+                            :max="2000000000"
+                            show-buttons
+                            class="w-full"
+                            placeholder="Brak limitu stosu"
+                        />
+                    </div>
+                </div>
+                <small class="text-gray-500 mt-2">
+                    Jeśli ilość jest ustawiona, każde użycie maskotki zużywa jedną sztukę. Pusta ilość oznacza nielimitowane użycia.
+                </small>
+            </div>
+
             <!-- Pet source (image filename) -->
             <div class="field">
                 <label for="petSrc" class="block font-semibold mb-2">
