@@ -56,6 +56,20 @@ const expandedRows = ref();
 
         <AdvanceColumn field="name" header="Nazwa" />
 
+        <AdvanceColumn field="buy_price_percent" header="Cena skupu">
+            <template #body="{ data }: Data">
+                {{ data.buy_price_percent }}%
+            </template>
+        </AdvanceColumn>
+
+        <AdvanceColumn field="sell_price_percent" header="Cena sprzedaży">
+            <template #body="{ data }: Data">
+                {{ data.sell_price_percent }}%
+            </template>
+        </AdvanceColumn>
+
+        <AdvanceColumn field="max_buy_price" header="Maks. cena skupu" />
+
         <AdvanceColumn field="info" header="Ilość przedmiotów" >
             <template #body="{ data }: Data">
                 <Tag v-if="data.items_count > 0" :value="data.items_count" v-tooltip="`W sklepie jest ${data.items_count} przedmiotów `" />

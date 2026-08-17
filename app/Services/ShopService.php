@@ -7,20 +7,33 @@ use App\Models\BaseItem;
 use App\Models\Shop;
 use Illuminate\Support\Facades\Auth;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
+use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableTextColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\TableService;
 
 final class ShopService extends BaseService
 {
+    public function __construct(private readonly Shop $shopModel) {}
 
-    public function __construct(private readonly Shop $shopModel)
-    {
-    }
     public function getAll()
     {
         return $this->fetchData(
             ShopResource::class,
             $this->shopModel->with('dialogs.npcs.locations'),
             new TableService(
+                columns: [
+                    'buy_price_percent' => new TableTextColumn(
+                        placeholder: 'Cena skupu (%)',
+                        sortable: true,
+                    ),
+                    'sell_price_percent' => new TableTextColumn(
+                        placeholder: 'Cena sprzedaży (%)',
+                        sortable: true,
+                    ),
+                    'max_buy_price' => new TableTextColumn(
+                        placeholder: 'Maks. cena skupu',
+                        sortable: true,
+                    ),
+                ],
                 globalFilterColumns: ['name'],
             )
         );
@@ -75,7 +88,7 @@ final class ShopService extends BaseService
 
     public function search(string $query = '')
     {
-        return $this->shopModel->where('name', 'like', '%' . $query . '%')->limit(10)->get();
+        return $this->shopModel->where('name', 'like', '%'.$query.'%')->limit(10)->get();
     }
 
     public function store(mixed $validated)
