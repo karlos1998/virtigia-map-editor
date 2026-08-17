@@ -21,6 +21,9 @@ import {
     booleanAttributes,
     type BaseItemAttributeOption,
 } from './AttributeOptions';
+import BulkUpdateBaseItemsDialog from './Components/BulkUpdateBaseItemsDialog.vue';
+
+type BulkBaseItemOperation = 'binding' | 'rarity' | 'currency' | 'price';
 
 type Data = {
     data: BaseItemResource
@@ -48,9 +51,16 @@ type AttributeFilterGroup = {
     options: BaseItemAttributeOption[]
 }
 
+type DropdownOption = {
+    label: string
+    value: string
+}
+
 const props = withDefaults(defineProps<{
     filters?: BaseItemFilters
     legendaryBonusOptions?: LegendaryBonusOption[]
+    baseItemRarityList?: DropdownOption[]
+    baseItemCurrencyList?: DropdownOption[]
 }>(), {
     filters: () => ({
         description: null,
@@ -58,6 +68,8 @@ const props = withDefaults(defineProps<{
         attribute_keys: [],
     }),
     legendaryBonusOptions: () => [],
+    baseItemRarityList: () => [],
+    baseItemCurrencyList: () => [],
 })
 
 const description = ref(props.filters.description ?? '');
@@ -71,6 +83,8 @@ const selectedBaseItems = ref<BaseItemResource[]>([]);
 const bulkActionsMenu = ref();
 const isBulkDescriptionDialogVisible = ref(false);
 const isBulkLootDialogVisible = ref(false);
+const isBulkUpdateDialogVisible = ref(false);
+const bulkUpdateOperation = ref<BulkBaseItemOperation | null>(null);
 const selectedBaseNpc = ref<BaseNpcResource | null>(null);
 const filteredBaseNpcs = ref<BaseNpcResource[]>([]);
 const toast = useToast();
@@ -140,6 +154,29 @@ const bulkActionItems = computed(() => [
         label: 'Przypisz loot do Base NPC',
         icon: 'pi pi-sitemap',
         command: () => openBulkLootDialog(),
+    },
+    {
+        separator: true,
+    },
+    {
+        label: 'Ustaw związanie',
+        icon: 'pi pi-lock',
+        command: () => openBulkUpdateDialog('binding'),
+    },
+    {
+        label: 'Ustaw rzadkość',
+        icon: 'pi pi-star',
+        command: () => openBulkUpdateDialog('rarity'),
+    },
+    {
+        label: 'Przelicz wartość',
+        icon: 'pi pi-calculator',
+        command: () => openBulkUpdateDialog('price'),
+    },
+    {
+        label: 'Ustaw walutę',
+        icon: 'pi pi-wallet',
+        command: () => openBulkUpdateDialog('currency'),
     },
 ]);
 
@@ -215,6 +252,16 @@ const openBulkLootDialog = () => {
     selectedBaseNpc.value = null;
     filteredBaseNpcs.value = [];
     isBulkLootDialogVisible.value = true;
+}
+
+const openBulkUpdateDialog = (operation: BulkBaseItemOperation) => {
+    bulkUpdateOperation.value = operation;
+    isBulkUpdateDialogVisible.value = true;
+}
+
+const completeBulkUpdate = () => {
+    selectedBaseItems.value = [];
+    bulkUpdateOperation.value = null;
 }
 
 const searchBaseNpcs = async ({ query }: { query: string }) => {
@@ -740,6 +787,15 @@ onMounted(() => {
                     />
                 </template>
             </Dialog>
+
+            <BulkUpdateBaseItemsDialog
+                v-model:visible="isBulkUpdateDialogVisible"
+                :items="selectedBaseItems"
+                :operation="bulkUpdateOperation"
+                :rarity-options="baseItemRarityList"
+                :currency-options="baseItemCurrencyList"
+                @completed="completeBulkUpdate"
+            />
         </div>
     </AppLayout>
 

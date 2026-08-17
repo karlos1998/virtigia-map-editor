@@ -315,6 +315,64 @@ final class BaseItemService extends BaseService
         ]);
     }
 
+    /**
+     * @param  array<int, int>  $baseItemIds
+     * @param  array<int, array{item_id: int, price: int}>  $prices
+     */
+    public function bulkUpdate(array $baseItemIds, string $operation, mixed $value, array $prices = []): int
+    {
+        $baseItems = $this->baseItemModel
+            ->newQuery()
+            ->whereIn('id', $baseItemIds)
+            ->get();
+        $pricesByItemId = collect($prices)->keyBy('item_id');
+        $bindingAttributes = [
+            'isBoundToOwner',
+            'isPermanentlyBounded',
+            'isBindsAfterEquip',
+        ];
+
+        return $this->baseItemModel->getConnection()->transaction(function () use (
+            $baseItems,
+            $bindingAttributes,
+            $operation,
+            $pricesByItemId,
+            $value,
+        ): int {
+            foreach ($baseItems as $baseItem) {
+                $updates = ['edited_manually' => true];
+
+                if ($operation === 'binding') {
+                    $attributes = $baseItem->attributes ?? [];
+
+                    foreach ($bindingAttributes as $bindingAttribute) {
+                        unset($attributes[$bindingAttribute]);
+                    }
+
+                    $attributes[$value] = true;
+                    $updates['attributes'] = $attributes;
+                }
+
+                if ($operation === 'rarity') {
+                    $updates['rarity'] = $value;
+                }
+
+                if ($operation === 'currency') {
+                    $updates['currency'] = $value;
+                }
+
+                $priceData = $pricesByItemId->get($baseItem->id);
+                if (is_array($priceData)) {
+                    $updates['price'] = $priceData['price'];
+                }
+
+                $baseItem->update($updates);
+            }
+
+            return $baseItems->count();
+        });
+    }
+
     private function bulkDescriptionReplacementExpression(string $driverName, string $searchPhrase, string $replacementPhrase): string
     {
         if ($driverName === 'sqlite') {

@@ -8,6 +8,7 @@ use App\Enums\BaseItemRarity;
 use App\Enums\LegendaryBonus;
 use App\Http\Requests\BulkAttachBaseItemsToBaseNpcLootRequest;
 use App\Http\Requests\BulkUpdateBaseItemDescriptionRequest;
+use App\Http\Requests\BulkUpdateBaseItemsRequest;
 use App\Http\Requests\CreateBaseItemRequest;
 use App\Http\Requests\IndexBaseItemRequest;
 use App\Http\Requests\UpdateBaseItemImageRequest;
@@ -45,6 +46,8 @@ class BaseItemController extends Controller
             'legendaryBonusOptions' => LegendaryBonus::toDropdownList(
                 fn (LegendaryBonus $bonus): array => ['bonus_value' => $bonus->bonusValue()],
             ),
+            'baseItemRarityList' => BaseItemRarity::toDropdownList(),
+            'baseItemCurrencyList' => BaseItemCurrency::toDropdownList(),
         ]);
     }
 
@@ -167,6 +170,19 @@ class BaseItemController extends Controller
             'success',
             "Dodano {$result['attached_count']} przedmiotów jako loot. Pominięto {$result['skipped_count']} już przypisanych."
         );
+    }
+
+    public function bulkUpdate(BulkUpdateBaseItemsRequest $request): RedirectResponse
+    {
+        $validated = $request->validated();
+        $updatedCount = $this->baseItemService->bulkUpdate(
+            $validated['item_ids'],
+            $validated['operation'],
+            $validated['value'] ?? null,
+            $validated['prices'] ?? [],
+        );
+
+        return back()->with('success', "Zaktualizowano {$updatedCount} przedmiotów.");
     }
 
     public function create(): \Inertia\Response
