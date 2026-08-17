@@ -86,6 +86,12 @@ class BulkUpdateBaseItemsTest extends TestCase
             'item_ids' => [1, 2],
             'operation' => 'binding',
             'value' => 'isPermanentlyBounded',
+            'enabled' => null,
+            'attribute_key' => null,
+            'attribute_paths' => [],
+            'name_mode' => null,
+            'search_phrase' => null,
+            'replacement_phrase' => null,
             'prices' => [],
         ]);
 
@@ -211,6 +217,166 @@ class BulkUpdateBaseItemsTest extends TestCase
         $response->assertSessionHasErrors('prices');
         $this->assertDatabaseHas('base_items', ['id' => 1, 'price' => 100], $this->worldConnection);
         $this->assertDatabaseHas('base_items', ['id' => 2, 'price' => 200], $this->worldConnection);
+    }
+
+    public function test_it_removes_binding_and_can_set_or_unset_a_boolean_attribute(): void
+    {
+        DB::connection($this->worldConnection)->table('base_items')->where('id', 1)->update([
+            'attributes' => json_encode([
+                'needLevel' => 10,
+                'isBoundToOwner' => true,
+                'openAuction' => true,
+            ]),
+        ]);
+
+        $this->bulkUpdate([
+            'item_ids' => [1],
+            'operation' => 'binding',
+            'value' => 'none',
+        ])->assertRedirect();
+        $this->bulkUpdate([
+            'item_ids' => [1, 2],
+            'operation' => 'boolean_attribute',
+            'value' => 'openAuction',
+            'enabled' => false,
+        ])->assertRedirect();
+
+        $this->assertArrayNotHasKey('isBoundToOwner', $this->baseItemAttributes(1));
+        $this->assertArrayNotHasKey('openAuction', $this->baseItemAttributes(1));
+        $this->assertArrayNotHasKey('openAuction', $this->baseItemAttributes(2));
+    }
+
+    public function test_it_sets_and_clears_specific_currency_price(): void
+    {
+        $this->bulkUpdate([
+            'item_ids' => [1, 2],
+            'operation' => 'specific_currency_price',
+            'value' => 125,
+        ])->assertRedirect();
+        $this->assertDatabaseHas('base_items', ['id' => 1, 'specific_currency_price' => 125], $this->worldConnection);
+
+        $this->bulkUpdate([
+            'item_ids' => [1],
+            'operation' => 'specific_currency_price',
+            'value' => null,
+        ])->assertRedirect();
+        $this->assertDatabaseHas('base_items', ['id' => 1, 'specific_currency_price' => null], $this->worldConnection);
+        $this->assertDatabaseHas('base_items', ['id' => 2, 'specific_currency_price' => 125], $this->worldConnection);
+    }
+
+    public function test_it_sets_category_and_required_level_with_optional_prices(): void
+    {
+        $this->bulkUpdate([
+            'item_ids' => [1, 2],
+            'operation' => 'category',
+            'value' => 'helmets',
+            'prices' => [
+                ['item_id' => 1, 'price' => 111],
+                ['item_id' => 2, 'price' => 222],
+            ],
+        ])->assertRedirect();
+        $this->bulkUpdate([
+            'item_ids' => [1, 2],
+            'operation' => 'required_level',
+            'value' => 75,
+            'prices' => [],
+        ])->assertRedirect();
+
+        foreach ([1, 2] as $itemId) {
+            $this->assertDatabaseHas('base_items', ['id' => $itemId, 'category' => 'helmets'], $this->worldConnection);
+            $this->assertSame(75, $this->baseItemAttributes($itemId)['needLevel']);
+        }
+        $this->assertDatabaseHas('base_items', ['id' => 1, 'price' => 111], $this->worldConnection);
+        $this->assertDatabaseHas('base_items', ['id' => 2, 'price' => 222], $this->worldConnection);
+    }
+
+    public function test_it_sets_and_removes_a_legendary_bonus(): void
+    {
+        $this->bulkUpdate([
+            'item_ids' => [1, 2],
+            'operation' => 'legendary_bonus',
+            'value' => 'pushBack',
+        ])->assertRedirect();
+
+        $this->assertSame(['pushBack', 8], $this->baseItemAttributes(1)['legendaryBon']);
+        $this->bulkUpdate([
+            'item_ids' => [1],
+            'operation' => 'legendary_bonus',
+            'value' => 'none',
+        ])->assertRedirect();
+        $this->assertArrayNotHasKey('legendaryBon', $this->baseItemAttributes(1));
+        $this->assertSame(['pushBack', 8], $this->baseItemAttributes(2)['legendaryBon']);
+    }
+
+    public function test_it_sets_and_clears_item_lifespan_attributes(): void
+    {
+        $this->bulkUpdate([
+            'item_ids' => [1, 2],
+            'operation' => 'lifespan',
+            'attribute_key' => 'expiresOn',
+            'value' => 1_800_000_000,
+        ])->assertRedirect();
+        $this->assertSame(1_800_000_000, $this->baseItemAttributes(1)['expiresOn']);
+
+        $this->bulkUpdate([
+            'item_ids' => [1],
+            'operation' => 'lifespan',
+            'attribute_key' => 'expiresOn',
+            'value' => null,
+        ])->assertRedirect();
+        $this->assertArrayNotHasKey('expiresOn', $this->baseItemAttributes(1));
+        $this->assertSame(1_800_000_000, $this->baseItemAttributes(2)['expiresOn']);
+    }
+
+    public function test_it_clears_selected_keys_from_each_attribute_column(): void
+    {
+        DB::connection($this->worldConnection)->table('base_items')->where('id', 1)->update([
+            'attributes' => json_encode(['needLevel' => 10, 'description' => 'Zostaje']),
+            'attribute_points' => json_encode(['strength' => 5, 'armor' => 3]),
+            'manual_attribute_points' => json_encode(['counter' => 2]),
+        ]);
+
+        $this->bulkUpdate([
+            'item_ids' => [1],
+            'operation' => 'clear_attributes',
+            'attribute_paths' => [
+                'attributes:needLevel',
+                'attribute_points:strength',
+                'manual_attribute_points:counter',
+            ],
+        ])->assertRedirect();
+
+        $this->assertSame(['description' => 'Zostaje'], $this->baseItemAttributes(1));
+        $this->assertSame(
+            ['armor' => 3],
+            json_decode((string) DB::connection($this->worldConnection)->table('base_items')->where('id', 1)->value('attribute_points'), true)
+        );
+        $this->assertDatabaseHas('base_items', ['id' => 1, 'manual_attribute_points' => null], $this->worldConnection);
+    }
+
+    public function test_it_replaces_prefixes_and_suffixes_item_names(): void
+    {
+        $this->bulkUpdate([
+            'item_ids' => [1],
+            'operation' => 'name',
+            'name_mode' => 'replace',
+            'search_phrase' => 'Przedmiot',
+            'replacement_phrase' => 'Hełm',
+        ])->assertRedirect();
+        $this->bulkUpdate([
+            'item_ids' => [1],
+            'operation' => 'name',
+            'name_mode' => 'prefix',
+            'replacement_phrase' => 'Stary ',
+        ])->assertRedirect();
+        $this->bulkUpdate([
+            'item_ids' => [1],
+            'operation' => 'name',
+            'name_mode' => 'suffix',
+            'replacement_phrase' => ' +1',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('base_items', ['id' => 1, 'name' => 'Stary Hełm 1 +1'], $this->worldConnection);
     }
 
     private function bulkUpdate(array $payload): \Illuminate\Testing\TestResponse

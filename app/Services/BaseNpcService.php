@@ -220,6 +220,41 @@ final class BaseNpcService extends BaseService
         $baseItem = $baseNpc->loots()->findOrFail($loot);
         $baseNpc->loots()->detach($loot);
 
+        $this->logLootDetachment($baseNpc, $baseItem);
+    }
+
+    /**
+     * @param  array<int, int>  $baseItemIds
+     * @return array{detached_count: int, skipped_count: int}
+     */
+    public function detachLoots(BaseNpc $baseNpc, array $baseItemIds): array
+    {
+        $uniqueBaseItemIds = collect($baseItemIds)
+            ->map(fn (int|string $baseItemId): int => (int) $baseItemId)
+            ->unique()
+            ->values();
+        $attachedBaseItems = $baseNpc->loots()
+            ->whereIn('base_items.id', $uniqueBaseItemIds)
+            ->get()
+            ->unique('id')
+            ->values();
+
+        $baseNpc->getConnection()->transaction(function () use ($attachedBaseItems, $baseNpc): void {
+            foreach ($attachedBaseItems as $baseItem) {
+                $baseNpc->loots()->detach($baseItem->id);
+                $this->logLootDetachment($baseNpc, $baseItem);
+            }
+        });
+
+        return [
+            'detached_count' => $attachedBaseItems->count(),
+            'skipped_count' => $uniqueBaseItemIds->count() - $attachedBaseItems->count(),
+        ];
+    }
+
+    private function logLootDetachment(BaseNpc $baseNpc, BaseItem $baseItem): void
+    {
+
         activity()
             ->causedBy(Auth::user())
             ->performedOn($baseItem)

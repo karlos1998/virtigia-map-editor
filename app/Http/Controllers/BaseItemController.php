@@ -7,6 +7,8 @@ use App\Enums\BaseItemCurrency;
 use App\Enums\BaseItemRarity;
 use App\Enums\LegendaryBonus;
 use App\Http\Requests\BulkAttachBaseItemsToBaseNpcLootRequest;
+use App\Http\Requests\BulkAttachBaseItemsToShopRequest;
+use App\Http\Requests\BulkDetachBaseItemRelationsRequest;
 use App\Http\Requests\BulkUpdateBaseItemDescriptionRequest;
 use App\Http\Requests\BulkUpdateBaseItemsRequest;
 use App\Http\Requests\CreateBaseItemRequest;
@@ -19,8 +21,10 @@ use App\Http\Resources\ActivityLogResource;
 use App\Http\Resources\BaseItemResource;
 use App\Models\BaseItem;
 use App\Models\BaseNpc;
+use App\Models\Shop;
 use App\Services\BaseItemService;
 use App\Services\BaseNpcService;
+use App\Services\ShopService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -31,6 +35,7 @@ class BaseItemController extends Controller
     public function __construct(
         private readonly BaseItemService $baseItemService,
         private readonly BaseNpcService $baseNpcService,
+        private readonly ShopService $shopService,
     ) {}
 
     /**
@@ -48,6 +53,7 @@ class BaseItemController extends Controller
             ),
             'baseItemRarityList' => BaseItemRarity::toDropdownList(),
             'baseItemCurrencyList' => BaseItemCurrency::toDropdownList(),
+            'baseItemCategoryList' => BaseItemCategory::toDropdownList(),
         ]);
     }
 
@@ -175,14 +181,43 @@ class BaseItemController extends Controller
     public function bulkUpdate(BulkUpdateBaseItemsRequest $request): RedirectResponse
     {
         $validated = $request->validated();
-        $updatedCount = $this->baseItemService->bulkUpdate(
-            $validated['item_ids'],
-            $validated['operation'],
-            $validated['value'] ?? null,
-            $validated['prices'] ?? [],
-        );
+        $updatedCount = $this->baseItemService->bulkUpdate($validated);
 
         return back()->with('success', "Zaktualizowano {$updatedCount} przedmiotów.");
+    }
+
+    public function bulkAttachToShop(BulkAttachBaseItemsToShopRequest $request): RedirectResponse
+    {
+        $validated = $request->validated();
+        $shop = Shop::query()->findOrFail($validated['shop_id']);
+        $result = $this->shopService->attachItems(
+            $shop,
+            $validated['item_ids'],
+            $validated['start_position'],
+        );
+
+        return back()->with(
+            'success',
+            "Dodano {$result['attached_count']} przedmiotów do sklepu. Pominięto {$result['skipped_count']} już przypisanych."
+        );
+    }
+
+    public function bulkDetachRelations(BulkDetachBaseItemRelationsRequest $request): RedirectResponse
+    {
+        $validated = $request->validated();
+
+        if ($validated['target_type'] === 'base_npc') {
+            $target = BaseNpc::query()->findOrFail($validated['target_id']);
+            $result = $this->baseNpcService->detachLoots($target, $validated['item_ids']);
+        } else {
+            $target = Shop::query()->findOrFail($validated['target_id']);
+            $result = $this->shopService->detachItems($target, $validated['item_ids']);
+        }
+
+        return back()->with(
+            'success',
+            "Odpięto {$result['detached_count']} przedmiotów. Pominięto {$result['skipped_count']} nieprzypisanych."
+        );
     }
 
     public function create(): \Inertia\Response

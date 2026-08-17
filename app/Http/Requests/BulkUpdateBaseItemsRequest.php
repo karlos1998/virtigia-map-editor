@@ -2,14 +2,35 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\BaseItemCategory;
 use App\Enums\BaseItemCurrency;
 use App\Enums\BaseItemRarity;
+use App\Enums\LegendaryBonus;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\Validator;
 
 class BulkUpdateBaseItemsRequest extends CurrentWorldRequest
 {
+    private const BOOLEAN_ATTRIBUTES = [
+        'isNonStoreableInClanDeposit',
+        'isBindPermanentlyAfterBuy',
+        'isNonStoreableInDeposit',
+        'isNotAuctionable',
+        'unbindsOwnerBound',
+        'unbindsPermanentlyBound',
+        'isRecovered',
+        'isUnidentified',
+        'findHeroNpc',
+        'findDetailedHeroNpc',
+        'combatFlee',
+        'openDeposit',
+        'openClanDeposit',
+        'openMail',
+        'openAuction',
+        'impossibleToRemove',
+    ];
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -30,15 +51,61 @@ class BulkUpdateBaseItemsRequest extends CurrentWorldRequest
         return [
             'item_ids' => ['required', 'array', 'min:1', 'max:500'],
             'item_ids.*' => ['integer', 'distinct', $this->existsOnCurrentWorld('base_items')],
-            'operation' => ['required', Rule::in(['binding', 'rarity', 'currency', 'price'])],
+            'operation' => ['required', Rule::in([
+                'binding',
+                'boolean_attribute',
+                'category',
+                'clear_attributes',
+                'currency',
+                'legendary_bonus',
+                'lifespan',
+                'name',
+                'price',
+                'rarity',
+                'required_level',
+                'specific_currency_price',
+            ])],
             'value' => match ($operation) {
                 'binding' => ['required', Rule::in([
+                    'none',
                     'isBoundToOwner',
                     'isPermanentlyBounded',
                     'isBindsAfterEquip',
                 ])],
+                'boolean_attribute' => ['required', Rule::in(self::BOOLEAN_ATTRIBUTES)],
+                'category' => ['required', new Enum(BaseItemCategory::class)],
                 'rarity' => ['required', new Enum(BaseItemRarity::class)],
                 'currency' => ['required', new Enum(BaseItemCurrency::class)],
+                'legendary_bonus' => ['required', Rule::in([
+                    'none',
+                    ...LegendaryBonus::valuesToList(),
+                ])],
+                'required_level' => ['required', 'integer', 'min:1', 'max:300'],
+                'specific_currency_price' => ['present', 'nullable', 'integer', 'min:0', 'max:1000000'],
+                'lifespan' => ['present', 'nullable', 'integer', 'min:0'],
+                default => ['nullable'],
+            },
+            'enabled' => $operation === 'boolean_attribute'
+                ? ['required', 'boolean']
+                : ['nullable', 'boolean'],
+            'attribute_key' => $operation === 'lifespan'
+                ? ['required', Rule::in(['expiresOn', 'timeToDisappear'])]
+                : ['nullable'],
+            'attribute_paths' => $operation === 'clear_attributes'
+                ? ['required', 'array', 'min:1', 'max:100']
+                : ['nullable', 'array'],
+            'attribute_paths.*' => [
+                'string',
+                'distinct',
+                'regex:/^(attributes|attribute_points|manual_attribute_points):[A-Za-z][A-Za-z0-9_]*$/',
+            ],
+            'name_mode' => $operation === 'name'
+                ? ['required', Rule::in(['replace', 'prefix', 'suffix'])]
+                : ['nullable'],
+            'search_phrase' => [Rule::requiredIf($operation === 'name' && $this->input('name_mode') === 'replace'), 'nullable', 'string', 'min:1', 'max:50'],
+            'replacement_phrase' => match (true) {
+                $operation === 'name' && $this->input('name_mode') === 'replace' => ['present', 'nullable', 'string', 'max:50'],
+                $operation === 'name' => ['required', 'string', 'min:1', 'max:50'],
                 default => ['nullable'],
             },
             'prices' => [Rule::requiredIf($operation === 'price'), 'array', 'max:500'],
@@ -76,8 +143,14 @@ class BulkUpdateBaseItemsRequest extends CurrentWorldRequest
                 return;
             }
 
-            if ($this->string('operation')->toString() === 'binding') {
-                $validator->errors()->add('prices', 'Zmiana związania nie może modyfikować cen.');
+            if (! in_array($this->string('operation')->toString(), [
+                'category',
+                'currency',
+                'price',
+                'rarity',
+                'required_level',
+            ], true)) {
+                $validator->errors()->add('prices', 'Ta operacja nie może modyfikować cen.');
 
                 return;
             }

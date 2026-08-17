@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\BaseItemCategory;
 use App\Enums\BaseItemCurrency;
 use App\Enums\BaseItemRarity;
+use App\Enums\LegendaryBonus;
 use App\Enums\Profession;
 use App\Http\Resources\BaseItemResource;
 use App\Models\BaseItem;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Karlos3098\LaravelPrimevueTableService\Enum\TableColumnDataType;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownColumn;
@@ -316,16 +318,26 @@ final class BaseItemService extends BaseService
     }
 
     /**
-     * @param  array<int, int>  $baseItemIds
-     * @param  array<int, array{item_id: int, price: int}>  $prices
+     * @param  array{
+     *     item_ids: array<int, int>,
+     *     operation: string,
+     *     value?: mixed,
+     *     enabled?: bool,
+     *     attribute_key?: string,
+     *     attribute_paths?: array<int, string>,
+     *     name_mode?: string,
+     *     search_phrase?: string|null,
+     *     replacement_phrase?: string|null,
+     *     prices?: array<int, array{item_id: int, price: int}>
+     * }  $payload
      */
-    public function bulkUpdate(array $baseItemIds, string $operation, mixed $value, array $prices = []): int
+    public function bulkUpdate(array $payload): int
     {
         $baseItems = $this->baseItemModel
             ->newQuery()
-            ->whereIn('id', $baseItemIds)
+            ->whereIn('id', $payload['item_ids'])
             ->get();
-        $pricesByItemId = collect($prices)->keyBy('item_id');
+        $pricesByItemId = collect($payload['prices'] ?? [])->keyBy('item_id');
         $bindingAttributes = [
             'isBoundToOwner',
             'isPermanentlyBounded',
@@ -335,12 +347,13 @@ final class BaseItemService extends BaseService
         return $this->baseItemModel->getConnection()->transaction(function () use (
             $baseItems,
             $bindingAttributes,
-            $operation,
+            $payload,
             $pricesByItemId,
-            $value,
         ): int {
             foreach ($baseItems as $baseItem) {
                 $updates = ['edited_manually' => true];
+                $operation = $payload['operation'];
+                $value = $payload['value'] ?? null;
 
                 if ($operation === 'binding') {
                     $attributes = $baseItem->attributes ?? [];
@@ -349,8 +362,23 @@ final class BaseItemService extends BaseService
                         unset($attributes[$bindingAttribute]);
                     }
 
-                    $attributes[$value] = true;
-                    $updates['attributes'] = $attributes;
+                    if ($value !== 'none') {
+                        $attributes[$value] = true;
+                    }
+
+                    $updates['attributes'] = $attributes === [] ? null : $attributes;
+                }
+
+                if ($operation === 'boolean_attribute') {
+                    $attributes = $baseItem->attributes ?? [];
+
+                    if ($payload['enabled']) {
+                        $attributes[$value] = true;
+                    } else {
+                        unset($attributes[$value]);
+                    }
+
+                    $updates['attributes'] = $attributes === [] ? null : $attributes;
                 }
 
                 if ($operation === 'rarity') {
@@ -359,6 +387,54 @@ final class BaseItemService extends BaseService
 
                 if ($operation === 'currency') {
                     $updates['currency'] = $value;
+                }
+
+                if ($operation === 'category') {
+                    $updates['category'] = $value;
+                }
+
+                if ($operation === 'specific_currency_price') {
+                    $updates['specific_currency_price'] = $value;
+                }
+
+                if ($operation === 'required_level') {
+                    $attributes = $baseItem->attributes ?? [];
+                    $attributes['needLevel'] = $value;
+                    $updates['attributes'] = $attributes === [] ? null : $attributes;
+                }
+
+                if ($operation === 'legendary_bonus') {
+                    $attributes = $baseItem->attributes ?? [];
+
+                    if ($value === 'none') {
+                        unset($attributes['legendaryBon']);
+                    } else {
+                        $legendaryBonus = LegendaryBonus::from($value);
+                        $attributes['legendaryBon'] = [$legendaryBonus->value, $legendaryBonus->bonusValue()];
+                    }
+
+                    $updates['attributes'] = $attributes === [] ? null : $attributes;
+                }
+
+                if ($operation === 'lifespan') {
+                    $attributes = $baseItem->attributes ?? [];
+                    $attributeKey = $payload['attribute_key'];
+
+                    if ($value === null) {
+                        unset($attributes[$attributeKey]);
+                    } else {
+                        $attributes[$attributeKey] = $value;
+                    }
+
+                    $updates['attributes'] = $attributes === [] ? null : $attributes;
+                }
+
+                if ($operation === 'clear_attributes') {
+                    $this->clearBaseItemAttributePaths($baseItem, $payload['attribute_paths'], $updates);
+                }
+
+                if ($operation === 'name') {
+                    $updates['name'] = $this->updatedBulkBaseItemName($baseItem->name, $payload);
                 }
 
                 $priceData = $pricesByItemId->get($baseItem->id);
@@ -371,6 +447,51 @@ final class BaseItemService extends BaseService
 
             return $baseItems->count();
         });
+    }
+
+    /**
+     * @param  array<int, string>  $attributePaths
+     * @param  array<string, mixed>  $updates
+     */
+    private function clearBaseItemAttributePaths(BaseItem $baseItem, array $attributePaths, array &$updates): void
+    {
+        $attributeColumns = [
+            'attributes' => $baseItem->attributes ?? [],
+            'attribute_points' => $baseItem->attribute_points ?? [],
+            'manual_attribute_points' => $baseItem->manual_attribute_points ?? [],
+        ];
+        $changedColumns = [];
+
+        foreach ($attributePaths as $attributePath) {
+            [$column, $key] = explode(':', $attributePath, 2);
+            unset($attributeColumns[$column][$key]);
+            $changedColumns[$column] = true;
+        }
+
+        foreach (array_keys($changedColumns) as $column) {
+            $updates[$column] = $attributeColumns[$column] === [] ? null : $attributeColumns[$column];
+        }
+    }
+
+    /**
+     * @param  array{name_mode: string, search_phrase?: string|null, replacement_phrase?: string|null}  $payload
+     */
+    private function updatedBulkBaseItemName(string $name, array $payload): string
+    {
+        $text = (string) ($payload['replacement_phrase'] ?? '');
+        $updatedName = match ($payload['name_mode']) {
+            'replace' => str_replace((string) $payload['search_phrase'], $text, $name),
+            'prefix' => rtrim($text).' '.$name,
+            'suffix' => $name.' '.ltrim($text),
+        };
+
+        if (mb_strlen($updatedName) < 4 || mb_strlen($updatedName) > 50) {
+            throw ValidationException::withMessages([
+                'replacement_phrase' => "Nazwa przedmiotu {$name} po zmianie musi mieć od 4 do 50 znaków.",
+            ]);
+        }
+
+        return $updatedName;
     }
 
     private function bulkDescriptionReplacementExpression(string $driverName, string $searchPhrase, string $replacementPhrase): string

@@ -19,11 +19,15 @@ import axios from 'axios';
 import {
     additionalAttributes,
     booleanAttributes,
+    commonOwnershipAttributes,
     type BaseItemAttributeOption,
 } from './AttributeOptions';
-import BulkUpdateBaseItemsDialog from './Components/BulkUpdateBaseItemsDialog.vue';
-
-type BulkBaseItemOperation = 'binding' | 'rarity' | 'currency' | 'price';
+import BulkManageBaseItemRelationsDialog, {
+    type BulkRelationOperation,
+} from './Components/BulkManageBaseItemRelationsDialog.vue';
+import BulkUpdateBaseItemsDialog, {
+    type BulkBaseItemOperation,
+} from './Components/BulkUpdateBaseItemsDialog.vue';
 
 type Data = {
     data: BaseItemResource
@@ -61,6 +65,7 @@ const props = withDefaults(defineProps<{
     legendaryBonusOptions?: LegendaryBonusOption[]
     baseItemRarityList?: DropdownOption[]
     baseItemCurrencyList?: DropdownOption[]
+    baseItemCategoryList?: DropdownOption[]
 }>(), {
     filters: () => ({
         description: null,
@@ -70,6 +75,7 @@ const props = withDefaults(defineProps<{
     legendaryBonusOptions: () => [],
     baseItemRarityList: () => [],
     baseItemCurrencyList: () => [],
+    baseItemCategoryList: () => [],
 })
 
 const description = ref(props.filters.description ?? '');
@@ -84,7 +90,9 @@ const bulkActionsMenu = ref();
 const isBulkDescriptionDialogVisible = ref(false);
 const isBulkLootDialogVisible = ref(false);
 const isBulkUpdateDialogVisible = ref(false);
+const isBulkRelationDialogVisible = ref(false);
 const bulkUpdateOperation = ref<BulkBaseItemOperation | null>(null);
+const bulkRelationOperation = ref<BulkRelationOperation | null>(null);
 const selectedBaseNpc = ref<BaseNpcResource | null>(null);
 const filteredBaseNpcs = ref<BaseNpcResource[]>([]);
 const toast = useToast();
@@ -132,6 +140,37 @@ const hasActiveAdvancedFilters = computed(() => (
 
 const selectedBaseItemIds = computed(() => selectedBaseItems.value.map((baseItem) => baseItem.id));
 
+const booleanAttributeOptions = computed<DropdownOption[]>(() => {
+    const ownershipKeys = new Set(commonOwnershipAttributes.map(attribute => attribute.key));
+
+    return booleanAttributes
+        .filter(attribute => !ownershipKeys.has(attribute.key))
+        .map(attribute => ({ label: attribute.label, value: attribute.key }));
+});
+
+const clearAttributeGroups = computed(() => {
+    const uniqueAttributes = new Map<string, string>();
+    [...booleanAttributes, ...additionalAttributes].forEach(attribute => uniqueAttributes.set(attribute.key, attribute.label));
+    uniqueAttributes.set('needLevel', 'Wymagany poziom');
+    uniqueAttributes.set('needProfessions', 'Wymagane profesje');
+    uniqueAttributes.set('legendaryBon', 'Bonus legendarny');
+
+    return [
+        {
+            label: 'Atrybuty',
+            options: [...uniqueAttributes].map(([key, label]) => ({ label, value: `attributes:${key}` })),
+        },
+        {
+            label: 'Punkty atrybutów',
+            options: attributePointOptions.value.map(option => ({ label: option.label, value: `attribute_points:${option.key}` })),
+        },
+        {
+            label: 'Manualne punkty atrybutów',
+            options: manualAttributePointOptions.value.map(option => ({ label: option.label, value: `manual_attribute_points:${option.key}` })),
+        },
+    ].filter(group => group.options.length > 0);
+});
+
 const canSubmitBulkDescriptionCorrection = computed(() => (
     selectedBaseItemIds.value.length > 0
     && bulkDescriptionForm.search_phrase.length > 0
@@ -156,6 +195,16 @@ const bulkActionItems = computed(() => [
         command: () => openBulkLootDialog(),
     },
     {
+        label: 'Przypisz do sklepu',
+        icon: 'pi pi-shopping-cart',
+        command: () => openBulkRelationDialog('attach_shop'),
+    },
+    {
+        label: 'Odepnij od NPC lub sklepu',
+        icon: 'pi pi-link',
+        command: () => openBulkRelationDialog('detach_relation'),
+    },
+    {
         separator: true,
     },
     {
@@ -164,9 +213,29 @@ const bulkActionItems = computed(() => [
         command: () => openBulkUpdateDialog('binding'),
     },
     {
+        label: 'Ustaw atrybut logiczny',
+        icon: 'pi pi-check-circle',
+        command: () => openBulkUpdateDialog('boolean_attribute'),
+    },
+    {
         label: 'Ustaw rzadkość',
         icon: 'pi pi-star',
         command: () => openBulkUpdateDialog('rarity'),
+    },
+    {
+        label: 'Ustaw kategorię',
+        icon: 'pi pi-tags',
+        command: () => openBulkUpdateDialog('category'),
+    },
+    {
+        label: 'Ustaw wymagany poziom',
+        icon: 'pi pi-chart-line',
+        command: () => openBulkUpdateDialog('required_level'),
+    },
+    {
+        label: 'Ustaw bonus legendarny',
+        icon: 'pi pi-bolt',
+        command: () => openBulkUpdateDialog('legendary_bonus'),
     },
     {
         label: 'Przelicz wartość',
@@ -174,9 +243,37 @@ const bulkActionItems = computed(() => [
         command: () => openBulkUpdateDialog('price'),
     },
     {
+        label: 'Zmień wartość',
+        icon: 'pi pi-percentage',
+        command: () => openBulkUpdateDialog('price_adjustment'),
+    },
+    {
         label: 'Ustaw walutę',
         icon: 'pi pi-wallet',
         command: () => openBulkUpdateDialog('currency'),
+    },
+    {
+        label: 'Ustaw cenę w walucie specjalnej',
+        icon: 'pi pi-money-bill',
+        command: () => openBulkUpdateDialog('specific_currency_price'),
+    },
+    {
+        separator: true,
+    },
+    {
+        label: 'Ustaw termin ważności',
+        icon: 'pi pi-clock',
+        command: () => openBulkUpdateDialog('lifespan'),
+    },
+    {
+        label: 'Wyczyść wybrane atrybuty',
+        icon: 'pi pi-eraser',
+        command: () => openBulkUpdateDialog('clear_attributes'),
+    },
+    {
+        label: 'Zmień nazwy',
+        icon: 'pi pi-pencil',
+        command: () => openBulkUpdateDialog('name'),
     },
 ]);
 
@@ -259,9 +356,19 @@ const openBulkUpdateDialog = (operation: BulkBaseItemOperation) => {
     isBulkUpdateDialogVisible.value = true;
 }
 
+const openBulkRelationDialog = (operation: BulkRelationOperation) => {
+    bulkRelationOperation.value = operation;
+    isBulkRelationDialogVisible.value = true;
+}
+
 const completeBulkUpdate = () => {
     selectedBaseItems.value = [];
     bulkUpdateOperation.value = null;
+}
+
+const completeBulkRelation = () => {
+    selectedBaseItems.value = [];
+    bulkRelationOperation.value = null;
 }
 
 const searchBaseNpcs = async ({ query }: { query: string }) => {
@@ -794,7 +901,18 @@ onMounted(() => {
                 :operation="bulkUpdateOperation"
                 :rarity-options="baseItemRarityList"
                 :currency-options="baseItemCurrencyList"
+                :category-options="baseItemCategoryList"
+                :legendary-bonus-options="legendaryBonusOptions"
+                :boolean-attribute-options="booleanAttributeOptions"
+                :clear-attribute-groups="clearAttributeGroups"
                 @completed="completeBulkUpdate"
+            />
+
+            <BulkManageBaseItemRelationsDialog
+                v-model:visible="isBulkRelationDialogVisible"
+                :items="selectedBaseItems"
+                :operation="bulkRelationOperation"
+                @completed="completeBulkRelation"
             />
         </div>
     </AppLayout>
