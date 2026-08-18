@@ -35,6 +35,9 @@ enum DialogNodeOptionRule: string
     #[Description('Przedmioty w torbie')]
     case ITEMS = 'items';
 
+    #[Description('Przedmioty w ekwipunku')]
+    case EQUIPPED_ITEMS = 'equippedItems';
+
     #[Description('Procentowa szansa')]
     case PERCENTAGE_CHANCE = 'percentageChance';
 

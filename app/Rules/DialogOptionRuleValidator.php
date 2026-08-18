@@ -10,6 +10,7 @@ use App\Models\QuestStep;
 use App\Models\SeasonalEvent;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Support\Collection;
 
 class DialogOptionRuleValidator implements ValidationRule
 {
@@ -127,6 +128,43 @@ class DialogOptionRuleValidator implements ValidationRule
 
                     return;
                 }
+            } elseif ($key === DialogNodeOptionRule::EQUIPPED_ITEMS->value) {
+                if (
+                    ! is_array($ruleData['value']) ||
+                    $ruleData['value'] === [] ||
+                    ! collect($ruleData['value'])->every(fn ($itemId) => is_int($itemId))
+                ) {
+                    $fail("Dla rule: {$key}, wartość musi być niepustą tablicą liczb całkowitych.");
+
+                    return;
+                }
+
+                $itemIds = collect($ruleData['value']);
+                if ($itemIds->unique()->count() !== $itemIds->count()) {
+                    $fail("Dla rule: {$key}, każdy przedmiot może wystąpić tylko raz.");
+
+                    return;
+                }
+
+                $items = BaseItem::query()
+                    ->whereIn('id', $itemIds)
+                    ->get(['id', 'category']);
+
+                if ($items->count() !== $itemIds->count()) {
+                    $fail("Dla rule: {$key}, wszystkie ID muszą wskazywać istniejące przedmioty.");
+
+                    return;
+                }
+
+                $duplicateCategories = $this->findDuplicateCategories(
+                    $items->map(fn (BaseItem $item) => $item->category?->value ?? '')
+                );
+
+                if ($duplicateCategories->isNotEmpty()) {
+                    $fail("Dla rule: {$key}, nie można wybrać kilku przedmiotów z tej samej kategorii: ".$duplicateCategories->implode(', ').'.');
+
+                    return;
+                }
             } elseif ($key === DialogNodeOptionRule::MESSAGE_CONTENT->value) {
                 if (! is_string($ruleData['value']) || mb_strlen($ruleData['value']) > 100) {
                     $fail("Dla rule: {$key}, wartość musi być tekstem o długości max. 100 znaków.");
@@ -228,5 +266,18 @@ class DialogOptionRuleValidator implements ValidationRule
                 }
             }
         }
+    }
+
+    /**
+     * @param  Collection<int, string>  $categories
+     * @return Collection<int, string>
+     */
+    private function findDuplicateCategories(Collection $categories): Collection
+    {
+        return $categories
+            ->countBy()
+            ->filter(fn (int $count) => $count > 1)
+            ->keys()
+            ->values();
     }
 }

@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Enums\DialogNodeOptionRule;
 use App\Rules\DialogOptionRuleValidator;
+use Illuminate\Support\Collection;
 use PHPUnit\Framework\TestCase;
 
 class DialogOptionRuleValidatorTest extends TestCase
@@ -52,6 +53,27 @@ class DialogOptionRuleValidatorTest extends TestCase
         self::assertNotSame([], $this->validateRules([
             DialogNodeOptionRule::HONOR_POINTS->value => ['value' => -1, 'consume' => true],
         ]));
+    }
+
+    public function test_equipped_items_rule_cannot_consume_and_requires_items(): void
+    {
+        self::assertFalse(DialogNodeOptionRule::EQUIPPED_ITEMS->canBeUsed());
+
+        self::assertNotSame([], $this->validateRules([
+            DialogNodeOptionRule::EQUIPPED_ITEMS->value => ['value' => [], 'consume' => false],
+        ]));
+    }
+
+    public function test_it_finds_duplicate_equipment_categories(): void
+    {
+        $validator = new DialogOptionRuleValidator;
+        $reflection = new \ReflectionClass($validator);
+        $method = $reflection->getMethod('findDuplicateCategories');
+
+        /** @var Collection<int, string> $duplicates */
+        $duplicates = $method->invoke($validator, collect(['boots', 'armors', 'boots', 'helmets']));
+
+        self::assertSame(['boots'], $duplicates->all());
     }
 
     /**

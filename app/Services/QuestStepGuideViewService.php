@@ -110,6 +110,28 @@ class QuestStepGuideViewService
                 continue;
             }
 
+            if ($key === 'equippedItems' && is_array($value)) {
+                foreach ($value as $itemId) {
+                    $item = $itemsById->get((int) $itemId);
+                    $usageView = $itemUsageById->get((int) $itemId);
+                    $itemName = $item?->name ?? "Przedmiot #{$itemId}";
+
+                    $descriptions[] = [
+                        'type' => 'equipped_item',
+                        'text' => "Miej założony {$itemName} (#{$itemId})",
+                        'consume' => false,
+                        'item' => [
+                            'id' => (int) $itemId,
+                            'name' => $itemName,
+                            'src' => $item?->src,
+                            'usage_sources' => $usageView?->sources ?? [],
+                        ],
+                    ];
+                }
+
+                continue;
+            }
+
             if ($key === 'gold' && is_numeric($value)) {
                 $descriptions[] = [
                     'type' => 'gold',
@@ -495,7 +517,7 @@ class QuestStepGuideViewService
         }
 
         foreach ($payload as $key => $ruleData) {
-            if ($key !== 'items') {
+            if (! in_array($key, ['items', 'equippedItems'], true)) {
                 continue;
             }
 

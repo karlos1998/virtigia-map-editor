@@ -5,6 +5,7 @@ export enum DialogNodeOptionRule {
     levelBelow = 'levelBelow',
     brotherhood = 'brotherhood',
     items = 'items',
+    equippedItems = 'equippedItems',
     percentageChance = 'percentageChance',
     questStep = 'questStep',
     questBeforeStep = 'questBeforeStep',

@@ -33,6 +33,7 @@ const availableRules = computed(() =>
 )
 
 const resolvedRuleItems = ref<BaseItemResource[]>([])
+const resolvedEquippedRuleItems = ref<BaseItemResource[]>([])
 
 // Dialog counters
 const dialogCounters = ref<DialogCounterResource[]>([])
@@ -95,7 +96,10 @@ const submitNewRule = () => {
 
     let value: number | number[] | string | string[] | boolean | null = 0
     let value2: any = null
-    if (newRule.value === DialogNodeOptionRule.items) {
+    if (
+        newRule.value === DialogNodeOptionRule.items ||
+        newRule.value === DialogNodeOptionRule.equippedItems
+    ) {
         value = []
     } else if (
         newRule.value === DialogNodeOptionRule.questStep ||
@@ -150,6 +154,26 @@ const itemAmounts = ref<number[]>([])
 const handleResolvedRuleItems = (items: BaseItemResource[]): void => {
     resolvedRuleItems.value = items
 }
+
+const handleResolvedEquippedRuleItems = (items: BaseItemResource[]): void => {
+    resolvedEquippedRuleItems.value = items
+}
+
+const duplicateEquippedItemCategories = computed<string[]>(() => {
+    const categories = new Map<string, { label: string; count: number }>()
+
+    resolvedEquippedRuleItems.value.forEach(item => {
+        const current = categories.get(item.category)
+        categories.set(item.category, {
+            label: item.category_name ?? item.category,
+            count: (current?.count ?? 0) + 1,
+        })
+    })
+
+    return [...categories.values()]
+        .filter(category => category.count > 1)
+        .map(category => category.label)
+})
 
 const openItemsAmountModal = () => {
     const rule = rules.value[DialogNodeOptionRule.items]
@@ -308,6 +332,24 @@ watch(
                 class="dialog-editor-action-button"
                 @click="openItemsAmountModal"
             />
+        </div>
+
+        <BaseItemSearchSelect
+            v-if="rules[name] && name === DialogNodeOptionRule.equippedItems"
+            v-model="rules[name].value"
+            value-mode="id"
+            multiple
+            placeholder="Szukaj przedmiotów do założenia (nazwa lub #id)"
+            class="dialog-editor-control dialog-editor-control--full"
+            @resolved-items="handleResolvedEquippedRuleItems"
+        />
+
+        <div
+            v-if="rules[name] && name === DialogNodeOptionRule.equippedItems && duplicateEquippedItemCategories.length > 0"
+            class="dialog-editor-error"
+        >
+            Postać nie może mieć założonych dwóch przedmiotów z tej samej kategorii:
+            {{ duplicateEquippedItemCategories.join(', ') }}.
         </div>
 
         <QuestRuleSelector
@@ -516,6 +558,12 @@ watch(
     display: flex;
     min-height: 3rem;
     padding: 0.625rem 0.875rem;
+}
+
+.dialog-editor-error {
+    color: var(--p-red-500, #ef4444);
+    flex: 0 0 100%;
+    font-size: 0.875rem;
 }
 
 .dialog-editor-add-row {
