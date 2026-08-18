@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AppLayout from "@/layout/AppLayout.vue";
-import {DialogCounterResource} from "@/Resources/DialogCounter.resource";
+import {DialogCounterResource, dialogCounterScopeLabels} from "@/Resources/DialogCounter.resource";
 import {Link, useForm} from '@inertiajs/vue3';
 import {route} from "ziggy-js";
 import {useConfirm} from "primevue/useconfirm";
@@ -84,7 +84,13 @@ const confirmDelete = (counter: DialogCounterResource) => {
 
                 <Column field="id" header="ID" style="width: 10%" sortable/>
 
-                <Column field="name" header="Nazwa" style="width: 60%" sortable/>
+                <Column field="name" header="Nazwa" style="width: 45%" sortable/>
+
+                <Column field="scope" header="Zakres" style="width: 15%" sortable>
+                    <template #body="{data}">
+                        {{ dialogCounterScopeLabels[data.scope as DialogCounterResource['scope']] }}
+                    </template>
+                </Column>
 
                 <Column header="Akcje" style="width: 30%">
                     <template #body="{data}">

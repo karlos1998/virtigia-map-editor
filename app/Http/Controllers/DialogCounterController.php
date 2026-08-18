@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreDialogCounterRequest;
+use App\Http\Requests\UpdateDialogCounterRequest;
 use App\Models\DialogCounter;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class DialogCounterController extends Controller
@@ -14,7 +15,7 @@ class DialogCounterController extends Controller
     public function index()
     {
         return Inertia::render('DialogCounter/Index', [
-            'dialogCounters' => DialogCounter::all(['id', 'name']),
+            'dialogCounters' => DialogCounter::all(['id', 'name', 'scope']),
         ]);
     }
 
@@ -23,7 +24,7 @@ class DialogCounterController extends Controller
      */
     public function indexJson()
     {
-        return response()->json(DialogCounter::all(['id', 'name']));
+        return response()->json(DialogCounter::all(['id', 'name', 'scope']));
     }
 
     /**
@@ -37,14 +38,9 @@ class DialogCounterController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreDialogCounterRequest $request)
     {
-        $validated = $request->validate([
-//            'name' => 'required|string|max:255|unique:dialog_counters,name',
-            'name' => 'required|string|max:255',
-        ]);
-
-        DialogCounter::create($validated);
+        DialogCounter::create($request->validated());
 
         return to_route('dialog-counters.index');
     }
@@ -62,13 +58,9 @@ class DialogCounterController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, DialogCounter $dialogCounter)
+    public function update(UpdateDialogCounterRequest $request, DialogCounter $dialogCounter)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:dialog_counters,name,' . $dialogCounter->id,
-        ]);
-
-        $dialogCounter->update($validated);
+        $dialogCounter->update($request->validated());
 
         return back();
     }

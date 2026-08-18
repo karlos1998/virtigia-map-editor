@@ -4,7 +4,7 @@ import { usePage } from "@inertiajs/vue3"
 import { DialogNodeOptionRule } from "@/types/DialogNodeOptionRule"
 import { DropdownListType } from "@/Resources/DropdownList.type"
 import { BaseItemResource } from "@/Resources/BaseItem.resource"
-import { DialogCounterResource } from "@/Resources/DialogCounter.resource"
+import { DialogCounterResource, dialogCounterScopeLabels } from "@/Resources/DialogCounter.resource"
 import { DialogNodeRulesResource } from "@/Resources/DialogNodeRules.resource"
 import { route } from "ziggy-js"
 import axios from "axios"
@@ -72,7 +72,10 @@ const getQuestRuleDescription = (rule: string | number): string | null =>
 
 const loadDialogCounters = async () => {
     const { data } = await axios.get<DialogCounterResource[]>(route("web-api.dialog-counters.index"))
-    dialogCounters.value = data
+    dialogCounters.value = data.map(counter => ({
+        ...counter,
+        name: `${counter.name} — ${dialogCounterScopeLabels[counter.scope]}`,
+    }))
 }
 
 const loadSeasonalEvents = async () => {

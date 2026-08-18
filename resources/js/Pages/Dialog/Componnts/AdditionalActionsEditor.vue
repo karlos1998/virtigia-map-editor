@@ -13,7 +13,7 @@ import Select from 'primevue/dropdown';
 import { DialogNodeAdditionalAction } from '@/types/DialogNodeAdditionalAction';
 import { DropdownListType } from '@/Resources/DropdownList.type';
 import { BaseItemResource } from '@/Resources/BaseItem.resource';
-import { DialogCounterResource } from '@/Resources/DialogCounter.resource';
+import { DialogCounterResource, dialogCounterScopeLabels } from '@/Resources/DialogCounter.resource';
 import { DialogNodeAdditionalActionsResource } from '@/Resources/DialogNodeAdditionalActions.resource';
 import BaseItemSearchSelect from '@/Components/BaseItemSearchSelect.vue';
 import OutfitBrowserDialog from '@/Pages/BaseItem/Components/OutfitBrowserDialog.vue';
@@ -49,7 +49,10 @@ const { questNodes, loading, loadQuests, loadQuestStepById } = useQuestStepSelec
 
 const loadDialogCounters = async (): Promise<void> => {
     const { data } = await axios.get<DialogCounterResource[]>(route('web-api.dialog-counters.index'));
-    dialogCounters.value = data;
+    dialogCounters.value = data.map(counter => ({
+        ...counter,
+        name: `${counter.name} — ${dialogCounterScopeLabels[counter.scope]}`,
+    }));
 };
 
 const addAdditionalAction = (): void => {

@@ -4,7 +4,8 @@ import {route} from "ziggy-js";
 import {useToast} from "primevue";
 import AppLayout from "@/layout/AppLayout.vue";
 import ItemHeader from "@/Components/ItemHeader.vue";
-import {DialogCounterResource} from "@/Resources/DialogCounter.resource";
+import {DialogCounterResource, dialogCounterScopeOptions} from "@/Resources/DialogCounter.resource";
+import Select from 'primevue/select';
 
 const toast = useToast();
 
@@ -14,6 +15,7 @@ const {dialogCounter} = usePage<{
 
 const form = useForm({
     name: dialogCounter.name,
+    scope: dialogCounter.scope,
 });
 
 const submit = () => {
@@ -60,6 +62,20 @@ const submit = () => {
                         <label for="name">Nazwa *</label>
                     </IftaLabel>
                     <small v-if="form.errors.name" class="p-error">{{ form.errors.name }}</small>
+
+                    <IftaLabel>
+                        <Select
+                            id="scope"
+                            v-model="form.scope"
+                            :options="dialogCounterScopeOptions"
+                            optionLabel="label"
+                            optionValue="value"
+                            class="w-full"
+                            :class="{'p-invalid': form.errors.scope}"
+                        />
+                        <label for="scope">Zakres *</label>
+                    </IftaLabel>
+                    <small v-if="form.errors.scope" class="p-error">{{ form.errors.scope }}</small>
                 </div>
 
                 <div class="flex justify-end space-x-4 pt-4 border-t">
