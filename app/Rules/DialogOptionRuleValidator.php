@@ -191,6 +191,12 @@ class DialogOptionRuleValidator implements ValidationRule
 
                     return;
                 }
+            } elseif ($key === DialogNodeOptionRule::HONOR_POINTS->value) {
+                if (! is_int($ruleData['value']) || $ruleData['value'] < 0) {
+                    $fail("Dla rule: {$key}, wartość musi być nieujemną liczbą całkowitą.");
+
+                    return;
+                }
             } elseif ($key === DialogNodeOptionRule::HAS_ACTIVE_BLESSING->value) {
                 if ($ruleData['value'] !== true) {
                     $fail("Dla rule: {$key}, wartość musi być true.");

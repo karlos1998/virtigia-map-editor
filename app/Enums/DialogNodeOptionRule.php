@@ -18,6 +18,10 @@ enum DialogNodeOptionRule: string
     #[Description('Złoto')]
     case GOLD = 'gold';
 
+    #[CanBeUsed]
+    #[Description('Punkty honoru')]
+    case HONOR_POINTS = 'honorPoints';
+
     #[Description('Poziom co najmniej')]
     case LEVEL = 'level';
 

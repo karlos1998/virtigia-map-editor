@@ -1,5 +1,6 @@
 export enum DialogNodeOptionRule {
     gold = 'gold',
+    honorPoints = 'honorPoints',
     level = 'level',
     levelBelow = 'levelBelow',
     brotherhood = 'brotherhood',

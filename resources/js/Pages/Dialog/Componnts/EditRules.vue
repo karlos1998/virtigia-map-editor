@@ -50,6 +50,7 @@ const weekdayOptions = [
 
 const plainNumberRules = new Set<string>([
     DialogNodeOptionRule.gold,
+    DialogNodeOptionRule.honorPoints,
     DialogNodeOptionRule.level,
     DialogNodeOptionRule.levelBelow,
     DialogNodeOptionRule.dragonTears,

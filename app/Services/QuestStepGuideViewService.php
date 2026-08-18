@@ -119,6 +119,15 @@ class QuestStepGuideViewService
                 continue;
             }
 
+            if ($key === 'honorPoints' && is_numeric($value)) {
+                $descriptions[] = [
+                    'type' => 'honor_points',
+                    'text' => ($consume ? 'Wydaj' : 'Miej')." {$value} punktów honoru",
+                ];
+
+                continue;
+            }
+
             if ($key === 'level' && is_numeric($value)) {
                 $descriptions[] = [
                     'type' => 'level',

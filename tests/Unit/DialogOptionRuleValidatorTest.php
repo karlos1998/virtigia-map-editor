@@ -17,6 +17,7 @@ class DialogOptionRuleValidatorTest extends TestCase
             DialogNodeOptionRule::ACTIVE_PLAYERS_ON_MAP->value => ['value' => 3, 'consume' => false],
             DialogNodeOptionRule::HAS_ACTIVE_BLESSING->value => ['value' => true, 'consume' => false],
             DialogNodeOptionRule::LEVEL_BELOW->value => ['value' => 40, 'consume' => false],
+            DialogNodeOptionRule::HONOR_POINTS->value => ['value' => 100, 'consume' => true],
         ]));
     }
 
@@ -46,6 +47,10 @@ class DialogOptionRuleValidatorTest extends TestCase
 
         self::assertNotSame([], $this->validateRules([
             DialogNodeOptionRule::HAS_ACTIVE_BLESSING->value => ['value' => false, 'consume' => false],
+        ]));
+
+        self::assertNotSame([], $this->validateRules([
+            DialogNodeOptionRule::HONOR_POINTS->value => ['value' => -1, 'consume' => true],
         ]));
     }
 
