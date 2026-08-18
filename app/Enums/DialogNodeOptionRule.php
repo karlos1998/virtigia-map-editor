@@ -32,7 +32,7 @@ enum DialogNodeOptionRule: string
     case BROTHERHOOD = 'brotherhood';
 
     #[CanBeUsed]
-    #[Description('Przedmioty')]
+    #[Description('Przedmioty w torbie')]
     case ITEMS = 'items';
 
     #[Description('Procentowa szansa')]
