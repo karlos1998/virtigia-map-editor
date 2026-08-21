@@ -15,6 +15,8 @@ export interface NpcResource {
     group_id: number | null
     in_group: boolean
     enabled: boolean
+    auto_start_dialog: boolean
+    auto_start_dialog_range: number
     //...
 }
 

@@ -142,7 +142,9 @@ class NpcService extends BaseService
     public function update(Npc $npc, array $validated): void
     {
         $npc->fill($validated);
-        $npc->dialog()->associate($validated['dialog']);
+        if (array_key_exists('dialog', $validated)) {
+            $npc->dialog()->associate($validated['dialog']);
+        }
         $npc->save();
     }
 

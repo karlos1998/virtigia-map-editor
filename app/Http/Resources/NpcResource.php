@@ -32,6 +32,8 @@ class NpcResource extends JsonResource
             'group_id' => $this->resource->group_id,
             'in_group' => $this->resource->group_id > 0,
             'enabled' => $this->resource->enabled,
+            'auto_start_dialog' => $this->resource->auto_start_dialog,
+            'auto_start_dialog_range' => $this->resource->auto_start_dialog_range,
 
             $this->mergeWhen($this->resource->pivot?->x !== null && $this->resource->pivot?->y !== null, fn () => [
                 'location' => [

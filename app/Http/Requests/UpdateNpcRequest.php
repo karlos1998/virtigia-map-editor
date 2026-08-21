@@ -24,6 +24,8 @@ class UpdateNpcRequest extends CurrentWorldRequest
                 'nullable',
                 $this->existsOnCurrentWorld('dialogs'),
             ],
+            'auto_start_dialog' => ['sometimes', 'boolean'],
+            'auto_start_dialog_range' => ['sometimes', 'integer', 'min:1', 'max:10'],
         ];
     }
 }
