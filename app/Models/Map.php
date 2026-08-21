@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PvpType;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Map extends DynamicModel
 {
@@ -27,11 +27,13 @@ class Map extends DynamicModel
         'is_grouping_locked' => 'boolean',
     ];
 
-    public function npcs() {
+    public function npcs()
+    {
         return $this->belongsToMany(Npc::class, NpcLocation::class)->withPivot(['id', 'x', 'y']);
     }
 
-    public function doors() {
+    public function doors()
+    {
         return $this->hasMany(Door::class);
     }
 
@@ -40,12 +42,18 @@ class Map extends DynamicModel
         return $this->belongsTo(RespawnPoint::class);
     }
 
-    public function doorsLeadingToMap() {
+    public function doorsLeadingToMap()
+    {
         return $this->hasMany(Door::class, 'go_map_id')->with(['map', 'requiredBaseItem']);
     }
 
     public function renewableMapItems()
     {
         return $this->hasMany(RenewableMapItem::class, 'map_id');
+    }
+
+    public function trackCheckpoints(): HasMany
+    {
+        return $this->hasMany(MapTrackCheckpoint::class);
     }
 }

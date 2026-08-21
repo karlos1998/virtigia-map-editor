@@ -133,6 +133,11 @@ const model = ref([
                 route: 'dialog-counters.index',
             },
             {
+                label: 'Trasy i checkpointy',
+                icon: 'pi pi-flag',
+                route: 'map-tracks.index',
+            },
+            {
                 label: 'Wydarzenia sezonowe',
                 icon: 'pi pi-calendar',
                 route: 'seasonal-events.index',
