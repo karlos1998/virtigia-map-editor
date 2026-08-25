@@ -48,6 +48,10 @@ class BaseItemController extends Controller
         return Inertia::render('BaseItem/Index', [
             'items' => $this->baseItemService->getAll($filters),
             'filters' => $filters,
+            'selectedShopOptions' => Shop::query()
+                ->whereIn('id', $filters['shop_ids'])
+                ->orderBy('name')
+                ->get(['id', 'name']),
             'legendaryBonusOptions' => LegendaryBonus::toDropdownList(
                 fn (LegendaryBonus $bonus): array => ['bonus_value' => $bonus->bonusValue()],
             ),

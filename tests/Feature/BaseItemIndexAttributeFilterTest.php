@@ -34,6 +34,8 @@ class BaseItemIndexAttributeFilterTest extends TestCase
         }
 
         Schema::connection('retro')->disableForeignKeyConstraints();
+        Schema::connection('retro')->dropIfExists('shop_items');
+        Schema::connection('retro')->dropIfExists('shops');
         Schema::connection('retro')->dropIfExists('base_item_usage_views');
         Schema::connection('retro')->dropIfExists('base_items');
 
@@ -63,6 +65,20 @@ class BaseItemIndexAttributeFilterTest extends TestCase
             $table->boolean('is_in_use')->default(false);
             $table->unsignedInteger('source_count')->default(0);
             $table->json('sources')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::connection('retro')->create('shops', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->timestamps();
+        });
+
+        Schema::connection('retro')->create('shop_items', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('shop_id');
+            $table->unsignedBigInteger('item_id');
+            $table->unsignedTinyInteger('position');
             $table->timestamps();
         });
 
@@ -203,6 +219,38 @@ class BaseItemIndexAttributeFilterTest extends TestCase
             ],
         ]);
 
+        DB::connection('retro')->table('shops')->insert([
+            [
+                'id' => 100,
+                'name' => 'Sklep z amuletami',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => 101,
+                'name' => 'Sklep z bronią',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        DB::connection('retro')->table('shop_items')->insert([
+            [
+                'shop_id' => 100,
+                'item_id' => 10,
+                'position' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'shop_id' => 101,
+                'item_id' => 11,
+                'position' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
         Schema::connection('retro')->enableForeignKeyConstraints();
     }
 
@@ -289,6 +337,39 @@ class BaseItemIndexAttributeFilterTest extends TestCase
             ->has('items.data', 1)
             ->where('items.data.0.id', 13)
             ->where('filters.attribute_keys.0', 'armor'));
+    }
+
+    public function test_it_filters_base_items_belonging_to_any_selected_shop(): void
+    {
+        $response = $this
+            ->actingAs($this->makeUser())
+            ->withSession(['world' => 'retro'])
+            ->get(route('base-items.index', [
+                'shop_ids' => [100, 101],
+            ]));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page): Assert => $page
+            ->component('BaseItem/Index')
+            ->has('items.data', 2)
+            ->where('items.data.0.id', 10)
+            ->where('items.data.1.id', 11)
+            ->where('filters.shop_ids', [100, 101])
+            ->has('selectedShopOptions', 2));
+    }
+
+    public function test_it_rejects_an_unknown_shop_filter(): void
+    {
+        $response = $this
+            ->actingAs($this->makeUser())
+            ->withSession(['world' => 'retro'])
+            ->get(route('base-items.index', [
+                'shop_ids' => [999],
+            ]));
+
+        $response
+            ->assertRedirect()
+            ->assertSessionHasErrors('shop_ids.0');
     }
 
     private function makeUser(): User

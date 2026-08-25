@@ -29,7 +29,7 @@ final class BaseItemService extends BaseService
     public function __construct(private readonly BaseItem $baseItemModel) {}
 
     /**§
-     * @param  array{description?: string|null, legendary_bonus?: string|null, attribute_keys?: array<int, string>}  $filters
+     * @param  array{description?: string|null, legendary_bonus?: string|null, attribute_keys?: array<int, string>, shop_ids?: array<int, int>}  $filters
      *
      * @throws \Exception
      */
@@ -41,7 +41,7 @@ final class BaseItemService extends BaseService
             ->leftJoin('base_item_usage_views as usage_view', 'usage_view.base_item_id', '=', 'base_items.id')
             ->with('usageView');
 
-        $this->applyAttributeFilters($baseItemsQuery, $filters);
+        $this->applyFilters($baseItemsQuery, $filters);
 
         return $this->fetchData(
             BaseItemResource::class,
@@ -110,13 +110,14 @@ final class BaseItemService extends BaseService
     }
 
     /**
-     * @param  array{description?: string|null, legendary_bonus?: string|null, attribute_keys?: array<int, string>}  $filters
+     * @param  array{description?: string|null, legendary_bonus?: string|null, attribute_keys?: array<int, string>, shop_ids?: array<int, int>}  $filters
      */
-    private function applyAttributeFilters(Builder $query, array $filters): void
+    private function applyFilters(Builder $query, array $filters): void
     {
         $description = trim((string) ($filters['description'] ?? ''));
         $legendaryBonus = trim((string) ($filters['legendary_bonus'] ?? ''));
         $attributeKeys = $filters['attribute_keys'] ?? [];
+        $shopIds = $filters['shop_ids'] ?? [];
 
         if ($description !== '') {
             $query->where('base_items.attributes->description', 'like', "%{$description}%");
@@ -124,6 +125,12 @@ final class BaseItemService extends BaseService
 
         if ($legendaryBonus !== '') {
             $query->whereJsonContains('base_items.attributes->legendaryBon', $legendaryBonus);
+        }
+
+        if ($shopIds !== []) {
+            $query->whereHas('shops', function (Builder $shopQuery) use ($shopIds): void {
+                $shopQuery->whereIn('shops.id', $shopIds);
+            });
         }
 
         foreach ($attributeKeys as $attributeKey) {
