@@ -8,6 +8,7 @@ import AppTopbar from './AppTopbar.vue';
 import DynamicDialog from 'primevue/dynamicdialog';
 import {usePage} from "@inertiajs/vue3";
 import {RockTip} from "virtigia-tips";
+import {useLayoutStore} from '@/stores/layout.store.js';
 
 const props = defineProps({
     focus: {
@@ -16,8 +17,12 @@ const props = defineProps({
     },
 });
 
-const {watchSidebarActive, unbindOutsideClickListener, containerClass, onMenuToggle} = useLayout();
+const {watchSidebarActive, unbindOutsideClickListener, containerClass, onMenuToggle, layoutState} = useLayout();
+const layoutStore = useLayoutStore();
 const page = usePage();
+
+layoutState.anchored = Boolean(layoutStore.anchored);
+layoutState.sidebarActive = layoutState.anchored;
 
 onMounted(() => {
     if (props.focus) {
