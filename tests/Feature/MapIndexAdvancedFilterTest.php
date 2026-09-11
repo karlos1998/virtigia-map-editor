@@ -137,6 +137,7 @@ class MapIndexAdvancedFilterTest extends TestCase
             ->component('Map/Index')
             ->has('maps.data', 2)
             ->where('maps.data.0.id', 2)
+            ->where('maps.data.0.path', 'maps/missing-first.png')
             ->where('maps.data.1.id', 3)
             ->where('filters.missing_battleground', true));
     }
