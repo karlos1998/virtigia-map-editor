@@ -22,9 +22,24 @@ function onMouseEnter() {
 function onMouseLeave() {
     if (!layoutState.anchored) {
         if (!timeout) {
-            timeout = setTimeout(() => onSidebarToggle(false), 300);
+            timeout = setTimeout(() => {
+                timeout = null;
+
+                if (!layoutState.anchored) {
+                    onSidebarToggle(false);
+                }
+            }, 300);
         }
     }
+}
+
+function toggleAnchor() {
+    if (timeout) {
+        clearTimeout(timeout);
+        timeout = null;
+    }
+
+    onAnchorToggle();
 }
 
 function navigateToHome() {
@@ -42,7 +57,7 @@ const showLogoText = computed(() => !isSlim.value && !isSlimPlus.value);
             <a @click="navigateToHome" class="app-logo cursor-pointer">
                 <AppLogo :showText="showLogoText" />
             </a>
-            <button class="layout-sidebar-anchor" type="button" @click="onAnchorToggle">
+            <button class="layout-sidebar-anchor" type="button" @click.stop="toggleAnchor">
                 <i class="pi pi-lock-open" v-if="!layoutState.anchored"></i>
                 <i class="pi pi-lock" v-else></i>
             </button>

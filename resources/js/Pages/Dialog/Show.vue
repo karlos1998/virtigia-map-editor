@@ -55,6 +55,7 @@ const nodeFromJsonProcessing = ref(false);
 const isLayoutProcessing = ref(false);
 const nodeFromJsonInput = ref('');
 const isJsonDocumentationVisible = ref(false);
+const activeTab = ref('tree');
 const addNodeFromJsonModalContentRef = ref<HTMLElement | null>(null);
 const confirm = useConfirm();
 const toast = useToast();
@@ -919,7 +920,11 @@ const items = ref([
             </div>
         </Dialog>
 
-        <Tabs value="tree" class="dialog-tabs">
+        <Tabs
+            v-model:value="activeTab"
+            class="dialog-tabs"
+            :class="{ 'dialog-tabs--scrollable': activeTab !== 'tree' }"
+        >
             <TabList>
                 <Tab value="general">
                     <i class="pi pi-info-circle mr-2" />
@@ -1185,16 +1190,23 @@ const items = ref([
     min-height: 0;
 }
 
+.dialog-tabs--scrollable :deep(.p-tabpanels) {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.dialog-tabs--scrollable :deep(.p-tabpanel) {
+    height: auto;
+    min-height: 100%;
+}
+
 .dialog-tree-panel {
     height: 100%;
     overflow: hidden;
 }
 
 .dialog-scroll-panel {
-    height: 100%;
-    min-height: 0;
-    overflow: auto;
-    overscroll-behavior: contain;
+    min-height: 100%;
 }
 
 .dialog-flow-shell,
