@@ -207,7 +207,7 @@ export function useLayout() {
                 'layout-static-inactive': layoutState.staticMenuDesktopInactive && layoutConfig.menuMode === 'static',
                 'layout-overlay-active': layoutState.overlayMenuActive,
                 'layout-mobile-active': layoutState.staticMenuMobileActive,
-                'layout-sidebar-active': layoutState.sidebarActive,
+                'layout-sidebar-active': layoutState.sidebarActive || layoutState.anchored,
                 'layout-sidebar-anchored': layoutState.anchored
             }
         ];
