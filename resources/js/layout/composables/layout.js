@@ -140,6 +140,7 @@ export function useLayout() {
 
     const onAnchorToggle = () => {
         layoutState.anchored = !layoutState.anchored;
+        layoutState.sidebarActive = layoutState.anchored;
     };
 
     const bindOutsideClickListener = () => {

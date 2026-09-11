@@ -61,6 +61,7 @@ const toast = useToast();
 
 // Form for copying the dialog
 const copyForm = useForm({});
+const deleteForm = useForm({});
 
 // Function to copy the dialog
 const copyDialog = () => {
@@ -73,6 +74,27 @@ const copyDialog = () => {
         accept: () => {
             copyForm.post(route('dialogs.copy', { dialog: props.dialog.id }));
         }
+    });
+};
+
+const deleteDialog = (): void => {
+    confirm.require({
+        group: 'dialog-show-modal',
+        message: `Czy na pewno chcesz usunąć dialog "${props.dialog.name}"? Powiązane NPC zostaną odpięte od dialogu.`,
+        header: 'Usuń dialog',
+        icon: 'pi pi-exclamation-triangle',
+        rejectProps: {
+            label: 'Anuluj',
+            severity: 'secondary',
+            outlined: true,
+        },
+        acceptProps: {
+            label: 'Usuń',
+            severity: 'danger',
+        },
+        accept: () => {
+            deleteForm.delete(route('dialogs.destroy', { dialog: props.dialog.id }));
+        },
     });
 };
 
@@ -1049,6 +1071,14 @@ const items = ref([
                                         :loading="copyForm.processing"
                                         @click="copyDialog"
                                     />
+                                    <Button
+                                        label="Usuń dialog"
+                                        icon="pi pi-trash"
+                                        size="small"
+                                        severity="danger"
+                                        :loading="deleteForm.processing"
+                                        @click="deleteDialog"
+                                    />
                                 </div>
                             </template>
                         </DetailsCardListItem>
@@ -1151,6 +1181,7 @@ const items = ref([
 
 .dialog-tabs :deep(.p-tabpanel) {
     width: 100%;
+    height: 100%;
     min-height: 0;
 }
 
@@ -1161,7 +1192,9 @@ const items = ref([
 
 .dialog-scroll-panel {
     height: 100%;
+    min-height: 0;
     overflow: auto;
+    overscroll-behavior: contain;
 }
 
 .dialog-flow-shell,

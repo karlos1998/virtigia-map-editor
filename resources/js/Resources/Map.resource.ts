@@ -3,6 +3,7 @@ import {RespawnPointResource} from "@/Resources/RespawnPoint.resource";
 export interface MapResource {
     id: number
     name: string
+    path: string
     src: string
     thumbnail_src?: string
     x: number

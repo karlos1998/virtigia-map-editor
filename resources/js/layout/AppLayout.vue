@@ -144,12 +144,10 @@ primevue Message = TODO . nie wiadomo czemu height ustawil sie na 100%.
     @apply pt-20 md:pt-16 px-4 md:px-6 lg:px-8 transition-all duration-300 ease-in-out;
 }
 
-::deep(.layout-static.layout-sidebar-anchored) .layout-content-wrapper {
-    @apply md:ml-[280px];
-}
-
-::deep(.layout-static) .layout-content-wrapper {
-    @apply md:ml-[280px];
+@media (min-width: 992px) {
+    .layout-sidebar-anchored .layout-content-wrapper {
+        margin-left: 16rem;
+    }
 }
 
 .layout-content {

@@ -168,7 +168,7 @@ const clearAdvancedFilters = () => {
                     </template>
                 </AdvanceColumn>
 
-                <AdvanceColumn field="src" header="Ścieżka"  />
+                <AdvanceColumn field="path" header="Ścieżka" />
 
                 <AdvanceColumn field="respawn_point" header="Miejsce odrodzenia">
                     <template #body="{data}">

@@ -257,6 +257,28 @@ class DialogService extends BaseService
         return $dialog;
     }
 
+    public function destroy(Dialog $dialog): void
+    {
+        $dialog->getConnection()->transaction(function () use ($dialog): void {
+            $dialog->npcs()->update([
+                'dialog_id' => null,
+                'auto_start_dialog' => false,
+            ]);
+
+            $dialog->edges()->delete();
+
+            $dialog->nodes()
+                ->with('options')
+                ->get()
+                ->each(function (DialogNode $dialogNode): void {
+                    $dialogNode->options()->delete();
+                    $dialogNode->delete();
+                });
+
+            $dialog->delete();
+        });
+    }
+
     public function updateNode(Dialog $dialog, DialogNode $dialogNode, array $validated)
     {
         $dialogNode->update($validated);

@@ -437,6 +437,11 @@ const loadLayoutConfigFromStorage = () => {
         layout.setMenuMode(layoutStore.menuMode);
     }
 
+    if (layoutStore.anchored !== undefined) {
+        layout.layoutState.anchored = layoutStore.anchored;
+        layout.layoutState.sidebarActive = layoutStore.anchored;
+    }
+
     // Apply menu theme
     if (layoutStore.menuTheme) {
         layout.layoutConfig.menuTheme = layoutStore.menuTheme;
@@ -476,6 +481,10 @@ if(!layoutLoaded.value) {
             }
         }
     }, { deep: true }) // Use deep watching to catch nested property changes
+
+    watch(() => layout.layoutState.anchored, (anchored) => {
+        layoutStore.anchored = anchored;
+    });
 
     //zmiana motywu systemowego
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener('change', (event) => {

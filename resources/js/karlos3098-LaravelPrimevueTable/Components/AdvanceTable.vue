@@ -64,8 +64,8 @@ provide('service', service.value)
             <slot name="loading"></slot>
         </template>
 
-        <template #expansion>
-            <slot name="expansion"></slot>
+        <template #expansion="slotProps">
+            <slot name="expansion" v-bind="slotProps"></slot>
         </template>
 
         <slot />

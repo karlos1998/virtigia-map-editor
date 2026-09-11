@@ -83,6 +83,7 @@ Route::middleware(['auth'])->group(function () {
                     Route::get('dialogs/search', [DialogController::class, 'search'])->name('dialogs.search');
                     Route::get('dialogs/{dialog}', [DialogController::class, 'show'])->name('dialogs.show');
                     Route::patch('dialogs/{dialog}', [DialogController::class, 'update'])->name('dialogs.update');
+                    Route::delete('dialogs/{dialog}', [DialogController::class, 'destroy'])->name('dialogs.destroy');
                     Route::post('dialogs/{dialog}/copy', [DialogController::class, 'copyDialog'])->name('dialogs.copy');
                     Route::withoutMiddleware(ValidateCsrfToken::class)->group(function () {
                         Route::post('dialogs/{dialog}/layout-nodes', [DialogController::class, 'layoutNodes'])->name('dialogs.layout-nodes');

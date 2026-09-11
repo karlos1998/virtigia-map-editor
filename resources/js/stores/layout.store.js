@@ -10,7 +10,8 @@ export const useLayoutStore = defineStore('layout', {
         surface: null,
         darkTheme: false,
         menuMode: 'drawer',
-        menuTheme: 'light'
+        menuTheme: 'light',
+        anchored: false
 
     }),
     persist: true,

@@ -63,6 +63,13 @@ class DialogController extends Controller
         $this->dialogService->update($dialog, $request->validated());
     }
 
+    public function destroy(Dialog $dialog): \Illuminate\Http\RedirectResponse
+    {
+        $this->dialogService->destroy($dialog);
+
+        return to_route('dialogs.index')->with('success', 'Dialog został usunięty.');
+    }
+
     public function layoutNodes(Dialog $dialog): JsonResponse
     {
         $dialog->load(['nodes.options', 'edges']);

@@ -7,6 +7,7 @@ import InputText from 'primevue/inputtext';
 import Dialog from 'primevue/dialog';
 import axios from 'axios';
 import {router} from '@inertiajs/vue3';
+import {useToast} from 'primevue/usetoast';
 
 interface ApiMap {
     id: number;
@@ -37,7 +38,12 @@ interface MapSearchResult {
 const props = defineProps<WorldMinimapData>();
 
 const nodes = ref<WorldMinimapNode[]>(props.nodes || []);
+const savedPositions = ref<Record<number, {x: number, y: number}>>(
+    Object.fromEntries(nodes.value.map((node) => [node.id, {x: node.x, y: node.y}]))
+);
 const selectedNodeMapId = ref<number | null>(null);
+const isSaving = ref(false);
+const toast = useToast();
 
 const isDraggingCanvas = ref(false);
 const isDraggingNode = ref(false);
@@ -67,6 +73,21 @@ const svgTranslate = computed(() => `translate(${translateX.value},${translateY.
 const svgScale = computed(() => `scale(${zoom.value})`);
 
 const selectedNode = computed(() => nodes.value.find((node) => node.map_id === selectedNodeMapId.value) || null);
+const changedNodes = computed(() => nodes.value.filter((node) => {
+    const savedPosition = savedPositions.value[node.id];
+
+    return !savedPosition
+        || Math.round(node.x) !== savedPosition.x
+        || Math.round(node.y) !== savedPosition.y;
+}));
+const hasUnsavedPositions = computed(() => changedNodes.value.length > 0);
+
+function replaceNodes(nextNodes: WorldMinimapNode[]) {
+    nodes.value = nextNodes;
+    savedPositions.value = Object.fromEntries(
+        nextNodes.map((node) => [node.id, {x: Math.round(node.x), y: Math.round(node.y)}])
+    );
+}
 
 function nodeWidth(node: WorldMinimapNode) {
     return Math.max(20, Math.min(120, node.map.x * TILE_SCALE));
@@ -118,24 +139,11 @@ function handleNodeMouseDown(event: MouseEvent, node: WorldMinimapNode) {
     };
 }
 
-async function handleMouseUp() {
-    const wasDraggingNode = isDraggingNode.value;
-    const releasedNodeId = dragNodeId.value;
-
+function handleMouseUp() {
     isDraggingCanvas.value = false;
     isDraggingNode.value = false;
     dragNodeId.value = null;
     document.body.style.cursor = 'auto';
-
-    if (wasDraggingNode && releasedNodeId) {
-        const node = nodes.value.find((n) => n.id === releasedNodeId);
-        if (node) {
-            void axios.patch(route('web-api.minimap.nodes.update', {node: node.id}), {
-                x: Math.round(node.x),
-                y: Math.round(node.y),
-            });
-        }
-    }
 }
 
 function handleMouseMove(event: MouseEvent) {
@@ -172,10 +180,42 @@ function resetZoom() {
 
 async function refreshWorldMinimapData() {
     const {data} = await axios.get<WorldMinimapData>(route('web-api.minimap.index'));
-    nodes.value = data.nodes || [];
+    replaceNodes(data.nodes || []);
 
     if (selectedNodeMapId.value && !nodes.value.some((n) => n.map_id === selectedNodeMapId.value)) {
         selectedNodeMapId.value = null;
+    }
+}
+
+async function saveWorldMinimapPositions() {
+    if (!hasUnsavedPositions.value) {
+        return;
+    }
+
+    isSaving.value = true;
+
+    try {
+        await Promise.all(changedNodes.value.map((node) => axios.patch(
+            route('web-api.minimap.nodes.update', {node: node.id}),
+            {
+                x: Math.round(node.x),
+                y: Math.round(node.y),
+            },
+        )));
+
+        savedPositions.value = Object.fromEntries(
+            nodes.value.map((node) => [node.id, {x: Math.round(node.x), y: Math.round(node.y)}])
+        );
+        toast.add({severity: 'success', summary: 'Zapisano', detail: 'Układ minimapy został zapisany.', life: 3000});
+    } catch ({response}: any) {
+        toast.add({
+            severity: 'error',
+            summary: 'Błąd',
+            detail: response?.data?.message || 'Nie udało się zapisać układu minimapy.',
+            life: 6000,
+        });
+    } finally {
+        isSaving.value = false;
     }
 }
 
@@ -239,6 +279,14 @@ onUnmounted(() => {
                 <div class="flex items-center justify-between gap-3">
                     <div class="font-semibold">Minimapa świata</div>
                     <div class="flex items-center gap-2">
+                        <Tag v-if="hasUnsavedPositions" value="Niezapisane zmiany" severity="warn" />
+                        <Button
+                            label="Zapisz"
+                            icon="pi pi-save"
+                            :disabled="!hasUnsavedPositions"
+                            :loading="isSaving"
+                            @click="saveWorldMinimapPositions"
+                        />
                         <Button label="Odśwież" severity="secondary" @click="refreshWorldMinimapData" />
                         <Button label="Wygeneruj od nowa" severity="warn" @click="showGenerateModal = true" />
                     </div>
