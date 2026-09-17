@@ -39,6 +39,9 @@ const mobQuantity = ref(1);
 const targetType = ref<'base_npc' | 'mob_species'>('base_npc');
 const filteredBaseNpcs = ref<BaseNpcResource[]>([]);
 const filteredMobSpecies = ref<MobSpeciesResource[]>([]);
+const canAddMob = computed(() => {
+    return mobQuantity.value > 0 && (targetType.value === 'base_npc' ? selectedBaseNpc.value !== null : selectedMobSpecies.value !== null);
+});
 
 const form = useForm({
     name: '',
@@ -221,74 +224,115 @@ const submit = () => {
                         <InputNumber v-model="progressTime" inputId="progressTime" class="w-full" :min="0" />
                     </div>
 
-                    <div v-if="progressType === 'mobs'" class="flex flex-col gap-2">
+                    <div v-if="progressType === 'mobs'" class="flex flex-col gap-4">
                         <label class="font-semibold block">Moby do zabicia</label>
 
-                        <div class="mb-2">
-                            <Dropdown
-                                v-model="targetType"
-                                :options="[
-                                    { label: 'Konkretny NPC', value: 'base_npc' },
-                                    { label: 'Gatunek (MobSpecies)', value: 'mob_species' }
-                                ]"
-                                optionLabel="label"
-                                optionValue="value"
-                                class="w-full"
-                            />
+                        <div class="rounded-lg border border-surface-200 bg-surface-50 p-4 dark:border-surface-700 dark:bg-surface-900/40">
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label for="progressTargetType" class="mb-2 block text-sm font-semibold">Rodzaj celu</label>
+                                    <Dropdown
+                                        inputId="progressTargetType"
+                                        v-model="targetType"
+                                        :options="[
+                                            { label: 'Konkretny NPC', value: 'base_npc' },
+                                            { label: 'Gatunek (MobSpecies)', value: 'mob_species' }
+                                        ]"
+                                        optionLabel="label"
+                                        optionValue="value"
+                                        class="w-full"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label for="progressMobQuantity" class="mb-2 block text-sm font-semibold">Wymagana liczba zabitych</label>
+                                    <InputNumber
+                                        v-model="mobQuantity"
+                                        inputId="progressMobQuantity"
+                                        :min="1"
+                                        showButtons
+                                        class="w-full"
+                                    />
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <label class="mb-2 block text-sm font-semibold">
+                                    {{ targetType === 'base_npc' ? 'Wybierz NPC' : 'Wybierz gatunek' }}
+                                </label>
+
+                                <AutoComplete
+                                    v-if="targetType === 'base_npc'"
+                                    v-model="selectedBaseNpc"
+                                    placeholder="Wyszukaj potwora"
+                                    :suggestions="filteredBaseNpcs"
+                                    @complete="filterBaseNpcs"
+                                    :option-label="(baseNpc: BaseNpcResource|null) => baseNpc?.name || ''"
+                                    fluid
+                                >
+                                    <template #option="slotProps">
+                                        <div class="flex items-center gap-4">
+                                            <img
+                                                class="h-12 w-12 object-cover"
+                                                :src="slotProps.option.src"
+                                                :alt="slotProps.option.name"
+                                            />
+                                            <div>
+                                                <span class="font-semibold">
+                                                    [{{ slotProps.option.id }}] {{ slotProps.option.name }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </AutoComplete>
+
+                                <AutoComplete
+                                    v-else
+                                    v-model="selectedMobSpecies"
+                                    placeholder="Wyszukaj gatunek"
+                                    :suggestions="filteredMobSpecies"
+                                    @complete="filterMobSpecies"
+                                    :option-label="(species: MobSpeciesResource|null) => species?.name || ''"
+                                    fluid
+                                />
+                            </div>
+
+                            <div class="mt-4 flex items-center justify-between gap-3 border-t border-surface-200 pt-4 dark:border-surface-700">
+                                <span class="text-sm text-surface-600 dark:text-surface-300">Dodaj wybrany cel do listy poniżej</span>
+                                <Button
+                                    type="button"
+                                    icon="pi pi-plus"
+                                    aria-label="Dodaj wybrany cel do listy"
+                                    v-tooltip.top="'Dodaj wybrany cel do listy'"
+                                    @click="addMob"
+                                    :disabled="!canAddMob"
+                                />
+                            </div>
                         </div>
 
-                        <div class="flex gap-2 mb-2">
-                            <AutoComplete
-                                v-if="targetType === 'base_npc'"
-                                class="flex-grow"
-                                v-model="selectedBaseNpc"
-                                placeholder="Wyszukaj potwora"
-                                :suggestions="filteredBaseNpcs"
-                                @complete="filterBaseNpcs"
-                                :option-label="(baseNpc: BaseNpcResource|null) => baseNpc?.name || ''"
-                                fluid
-                            >
-                                <template #option="slotProps">
-                                    <div class="flex items-center space-x-4">
-                                        <img
-                                            class="h-12 w-12 object-cover"
-                                            :src="slotProps.option.src"
-                                            alt="Option Image"
-                                        />
+                        <div>
+                            <div class="mb-2 flex items-center justify-between gap-3">
+                                <span class="font-semibold">Dodane cele</span>
+                                <span class="text-sm text-surface-500">{{ selectedMobs.length }}</span>
+                            </div>
+
+                            <div v-if="selectedMobs.length === 0" class="rounded-lg border border-dashed border-surface-300 p-4 text-center text-sm text-surface-500 dark:border-surface-600 dark:text-surface-400">
+                                Nie dodano jeszcze żadnego celu. Wybierz NPC lub gatunek powyżej i dodaj go do listy.
+                            </div>
+
+                            <ul v-else class="m-0 flex list-none flex-col gap-2 p-0">
+                                <li v-for="(mob, index) in selectedMobs" :key="`${mob.type}-${mob.baseNpc?.id ?? mob.mobSpecies?.id}-${index}`" class="flex items-center justify-between gap-3 rounded-lg border border-surface-200 p-3 dark:border-surface-700">
+                                    <div class="flex items-center gap-2">
+                                        <img v-if="mob.type === 'base_npc' && mob.baseNpc?.src" :src="mob.baseNpc.src" :alt="mob.baseNpc.name" class="h-10 w-10 rounded object-cover" />
                                         <div>
-                                            <span class="font-semibold">
-                                                [{{ slotProps.option.id }}] {{ slotProps.option.name }}
-                                            </span>
+                                            <div v-if="mob.type === 'base_npc' && mob.baseNpc" class="font-medium">{{ mob.baseNpc.name }}</div>
+                                            <div v-else-if="mob.type === 'mob_species' && mob.mobSpecies" class="font-medium">{{ mob.mobSpecies.name }}</div>
+                                            <div class="text-sm text-surface-500">
+                                                {{ mob.type === 'base_npc' ? `NPC #${mob.baseNpc?.id}` : `Gatunek #${mob.mobSpecies?.id}` }} · do zabicia: {{ mob.quantity }}
+                                            </div>
                                         </div>
                                     </div>
-                                </template>
-                            </AutoComplete>
-
-                            <AutoComplete
-                                v-else
-                                class="flex-grow"
-                                v-model="selectedMobSpecies"
-                                placeholder="Wyszukaj gatunek"
-                                :suggestions="filteredMobSpecies"
-                                @complete="filterMobSpecies"
-                                :option-label="(species: MobSpeciesResource|null) => species?.name || ''"
-                                fluid
-                            />
-
-                            <InputNumber v-model="mobQuantity" :min="1" placeholder="Ilość" class="w-24" />
-
-                            <Button icon="pi pi-plus" @click="addMob" :disabled="targetType === 'base_npc' ? !selectedBaseNpc : !selectedMobSpecies" />
-                        </div>
-
-                        <div v-if="selectedMobs.length > 0" class="mt-2">
-                            <ul class="list-none p-0 m-0">
-                                <li v-for="(mob, index) in selectedMobs" :key="index" class="flex items-center justify-between p-2 border-b">
-                                    <div class="flex items-center gap-2">
-                                        <img v-if="mob.type === 'base_npc' && mob.baseNpc" :src="mob.baseNpc.src" class="h-8 w-8 object-cover" />
-                                        <span v-if="mob.type === 'base_npc' && mob.baseNpc">[id: {{mob.baseNpc.id}}] {{ mob.baseNpc.name }} ({{ mob.quantity }})</span>
-                                        <span v-else-if="mob.type === 'mob_species' && mob.mobSpecies">[gatunek: {{mob.mobSpecies.id}}] {{ mob.mobSpecies.name }} ({{ mob.quantity }})</span>
-                                    </div>
-                                    <Button icon="pi pi-times" severity="danger" text @click="removeMob(index)" />
+                                    <Button type="button" icon="pi pi-times" severity="danger" text aria-label="Usuń cel z listy" @click="removeMob(index)" />
                                 </li>
                             </ul>
                         </div>

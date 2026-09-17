@@ -78,7 +78,10 @@ class QuestStepResource extends JsonResource
                         'base_npc_id' => $mob->base_npc_id,
                         'mob_species_id' => $mob->mob_species_id,
                         'quantity' => $mob->quantity,
-                        'base_npc' => $mob->baseNpc,
+                        'base_npc' => $mob->baseNpc ? [
+                            ...$mob->baseNpc->toArray(),
+                            'src' => AssetUrl::npc($mob->baseNpc->src),
+                        ] : null,
                         'mob_species' => $mob->mobSpecies,
                     ];
                 }),
