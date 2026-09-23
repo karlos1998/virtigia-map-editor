@@ -5,7 +5,9 @@ namespace App\Services\Mcp;
 use App\Models\BaseItem;
 use App\Models\BaseNpc;
 use App\Models\Dialog;
+use App\Models\DialogEdge;
 use App\Models\DialogNode;
+use App\Models\DialogNodeOption;
 use App\Models\Map as GameMap;
 use App\Models\Npc;
 use App\Models\Quest;
@@ -183,6 +185,62 @@ class GameContentSearchService
                     'additional_actions' => $option->additional_actions,
                 ])->all(),
             ])->all(),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    public function dialogGraph(string $world, int $dialogId): array
+    {
+        $world = $this->worldService->use($world);
+        $dialog = Dialog::query()
+            ->with(['nodes.options', 'edges', 'npcs.base:id,name', 'npcs.locations.map:id,name'])
+            ->findOrFail($dialogId);
+
+        return [
+            'world' => $world,
+            'dialog' => [
+                'id' => $dialog->id,
+                'name' => $dialog->name,
+                'shared_by_npcs' => $dialog->npcs->map(fn (Npc $npc): array => [
+                    'npc_id' => $npc->id,
+                    'base_npc_id' => $npc->base_npc_id,
+                    'name' => $npc->base?->name,
+                    'maps' => $npc->locations->pluck('map.name')->filter()->unique()->values()->all(),
+                ])->values()->all(),
+                'nodes' => $dialog->nodes->sortBy('id')->map(fn (DialogNode $node): array => [
+                    'id' => $node->id,
+                    'type' => $node->type,
+                    'position' => $node->position,
+                    'content' => $node->content,
+                    'action_data' => $node->action_data,
+                    'additional_actions' => $node->additional_actions,
+                    'shop_id' => $node->shop_id,
+                    'hotel_id' => $node->hotel_id,
+                    'options' => $node->options->map(fn (DialogNodeOption $option): array => [
+                        'id' => $option->id,
+                        'label' => $option->label,
+                        'rules' => $option->rules,
+                        'additional_action' => $option->additional_action?->value,
+                        'additional_actions' => $option->additional_actions,
+                        'cooldown' => $option->cooldown,
+                        'order' => $option->order,
+                    ])->values()->all(),
+                ])->values()->all(),
+                'edges' => $dialog->edges->sortBy('id')->map(fn (DialogEdge $edge): array => [
+                    'id' => $edge->id,
+                    'source_node_id' => $edge->source_node_id,
+                    'source_option_id' => $edge->source_option_id,
+                    'source_handle' => $edge->source_handle,
+                    'target_node_id' => $edge->target_node_id,
+                    'rules' => $edge->rules,
+                ])->values()->all(),
+            ],
+            'editing_guidance' => [
+                'Use patch_dialog for additions and targeted edits; do not replace the whole graph.',
+                'A shared dialog is intentionally updated for every NPC listed in shared_by_npcs.',
+                'Untouched shop_id and hotel_id values are preserved automatically.',
+                'Node positions are recalculated after applying the patch to prevent overlap.',
+            ],
         ];
     }
 }

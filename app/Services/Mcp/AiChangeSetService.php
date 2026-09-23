@@ -14,6 +14,7 @@ use App\Models\Npc;
 use App\Models\Quest;
 use App\Models\QuestStep;
 use App\Models\User;
+use App\Services\DialogLayoutService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -26,12 +27,14 @@ class AiChangeSetService
         'create_quest',
         'create_dialog',
         'replace_dialog',
+        'patch_dialog',
         'assign_dialog_to_npc',
         'place_npc',
     ];
 
     public function __construct(
         private readonly McpWorldService $worldService,
+        private readonly DialogLayoutService $dialogLayoutService,
     ) {}
 
     /** @param array<int, array<string, mixed>> $operations */
@@ -257,6 +260,15 @@ class AiChangeSetService
                 $this->validateDialogGraph($data, $prefix, $errors);
             }
 
+            if ($type === 'patch_dialog') {
+                $dialog = Dialog::query()->find($operation['dialog_id'] ?? null);
+                if ($dialog === null) {
+                    $errors[] = "{$prefix}: dialog_id nie wskazuje istniejącego dialogu.";
+                } else {
+                    $this->validateDialogPatch($dialog, $data, $prefix, $errors);
+                }
+            }
+
             if ($type === 'assign_dialog_to_npc') {
                 if (! Npc::query()->whereKey($operation['npc_id'] ?? null)->exists()) {
                     $errors[] = "{$prefix}: npc_id nie wskazuje istniejącego NPC.";
@@ -422,6 +434,114 @@ class AiChangeSetService
         }
     }
 
+    /** @param array<int, string> $errors */
+    private function validateDialogPatch(Dialog $dialog, array $data, string $prefix, array &$errors): void
+    {
+        $nodeKeys = [];
+        $optionKeys = [];
+        $dialogNodeIds = $dialog->nodes()->pluck('id')->map(fn ($id): int => (int) $id)->all();
+        $dialogOptionIds = DialogNodeOption::query()
+            ->whereIn('node_id', $dialogNodeIds)
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+        $dialogEdgeIds = $dialog->edges()->pluck('id')->map(fn ($id): int => (int) $id)->all();
+
+        foreach ($data['nodes'] ?? [] as $nodeIndex => $node) {
+            $nodeId = isset($node['id']) && is_numeric($node['id']) ? (int) $node['id'] : null;
+            $nodeKey = $node['key'] ?? null;
+
+            if ($nodeId === null && (! is_string($nodeKey) || preg_match('/^[a-z0-9][a-z0-9_-]{0,63}$/', $nodeKey) !== 1)) {
+                $errors[] = "{$prefix}: węzeł ".($nodeIndex + 1).' musi wskazywać istniejące id albo mieć poprawny key.';
+
+                continue;
+            }
+
+            if ($nodeId !== null && ! in_array($nodeId, $dialogNodeIds, true)) {
+                $errors[] = "{$prefix}: węzeł [{$nodeId}] nie należy do tego dialogu.";
+            }
+
+            if (is_string($nodeKey)) {
+                if (in_array($nodeKey, $nodeKeys, true)) {
+                    $errors[] = "{$prefix}: key węzła [{$nodeKey}] występuje więcej niż raz.";
+                }
+                $nodeKeys[] = $nodeKey;
+            }
+
+            foreach ($node['options'] ?? [] as $optionIndex => $option) {
+                $optionId = isset($option['id']) && is_numeric($option['id']) ? (int) $option['id'] : null;
+                $optionKey = $option['key'] ?? null;
+
+                if ($optionId === null && (! is_string($optionKey) || preg_match('/^[a-z0-9][a-z0-9_-]{0,63}$/', $optionKey) !== 1)) {
+                    $errors[] = "{$prefix}: opcja ".($optionIndex + 1).' musi wskazywać istniejące id albo mieć poprawny key.';
+
+                    continue;
+                }
+
+                if ($optionId !== null && ! in_array($optionId, $dialogOptionIds, true)) {
+                    $errors[] = "{$prefix}: opcja [{$optionId}] nie należy do tego dialogu.";
+                }
+
+                if ($optionId === null && (! is_string($option['label'] ?? null) || trim($option['label']) === '')) {
+                    $errors[] = "{$prefix}: nowa opcja [{$optionKey}] musi mieć etykietę.";
+                }
+
+                if (is_string($optionKey)) {
+                    $compoundKey = ($nodeKey ?? 'node-'.$nodeId).':'.$optionKey;
+                    if (in_array($compoundKey, $optionKeys, true)) {
+                        $errors[] = "{$prefix}: key opcji [{$compoundKey}] występuje więcej niż raz.";
+                    }
+                    $optionKeys[] = $compoundKey;
+                }
+            }
+        }
+
+        foreach ($data['edges'] ?? [] as $edgeIndex => $edge) {
+            $edgeId = isset($edge['id']) && is_numeric($edge['id']) ? (int) $edge['id'] : null;
+            if ($edgeId !== null && ! in_array($edgeId, $dialogEdgeIds, true)) {
+                $errors[] = "{$prefix}: połączenie [{$edgeId}] nie należy do tego dialogu.";
+            }
+
+            if ($edgeId === null && ! isset($edge['target_node_id']) && ! isset($edge['target_node_key'])) {
+                $errors[] = "{$prefix}: nowe połączenie ".($edgeIndex + 1).' musi mieć target_node_id albo target_node_key.';
+            }
+
+            foreach (['source_node_id', 'target_node_id'] as $field) {
+                if (isset($edge[$field]) && ! in_array((int) $edge[$field], $dialogNodeIds, true)) {
+                    $errors[] = "{$prefix}: {$field} połączenia ".($edgeIndex + 1).' nie należy do tego dialogu.';
+                }
+            }
+
+            if (isset($edge['source_option_id']) && ! in_array((int) $edge['source_option_id'], $dialogOptionIds, true)) {
+                $errors[] = "{$prefix}: source_option_id połączenia ".($edgeIndex + 1).' nie należy do tego dialogu.';
+            }
+        }
+
+        foreach (($data['delete_node_ids'] ?? []) as $id) {
+            if (! in_array((int) $id, $dialogNodeIds, true)) {
+                $errors[] = "{$prefix}: usuwany węzeł [{$id}] nie należy do tego dialogu.";
+            }
+        }
+
+        foreach (($data['delete_option_ids'] ?? []) as $id) {
+            if (! in_array((int) $id, $dialogOptionIds, true)) {
+                $errors[] = "{$prefix}: usuwana opcja [{$id}] nie należy do tego dialogu.";
+            }
+        }
+
+        foreach (($data['delete_edge_ids'] ?? []) as $id) {
+            if (! in_array((int) $id, $dialogEdgeIds, true)) {
+                $errors[] = "{$prefix}: usuwane połączenie [{$id}] nie należy do tego dialogu.";
+            }
+        }
+
+        if (($data['nodes'] ?? []) === [] && ($data['edges'] ?? []) === []
+            && ($data['delete_node_ids'] ?? []) === [] && ($data['delete_option_ids'] ?? []) === []
+            && ($data['delete_edge_ids'] ?? []) === [] && ! array_key_exists('name', $data)) {
+            $errors[] = "{$prefix}: patch dialogu nie zawiera żadnych zmian.";
+        }
+    }
+
     /** @param array<int, string> $dialogKeys @param array<int, string> $errors */
     private function validateDialogReference(array $operation, array $dialogKeys, string $prefix, array &$errors): void
     {
@@ -519,11 +639,20 @@ class AiChangeSetService
         }
 
         foreach ($operations as $operation) {
-            if (! in_array($operation['type'], ['create_dialog', 'replace_dialog'], true)) {
+            if (! in_array($operation['type'], ['create_dialog', 'replace_dialog', 'patch_dialog'], true)) {
                 continue;
             }
 
             $data = $this->resolvePlaceholders($operation['data'], $result['references']);
+
+            if ($operation['type'] === 'patch_dialog') {
+                $dialog = Dialog::query()->findOrFail($operation['dialog_id']);
+                $before['dialogs'][(string) $dialog->id] ??= $this->snapshotDialog($dialog);
+                $result['updated']['dialogs'][] = $dialog->id;
+                $this->patchDialogGraph($dialog, $data);
+
+                continue;
+            }
 
             if ($operation['type'] === 'create_dialog') {
                 $dialog = Dialog::query()->create(['name' => $data['name']]);
@@ -591,6 +720,8 @@ class AiChangeSetService
                 'content' => $nodeData['content'] ?? null,
                 'action_data' => $nodeData['action_data'] ?? null,
                 'additional_actions' => $nodeData['additional_actions'] ?? null,
+                'shop_id' => $nodeData['shop_id'] ?? null,
+                'hotel_id' => $nodeData['hotel_id'] ?? null,
             ]);
             $nodes[$nodeData['key']] = $node;
 
@@ -620,6 +751,131 @@ class AiChangeSetService
                 'rules' => $edgeData['rules'] ?? null,
             ])->save();
         }
+    }
+
+    /** @param array<string, mixed> $data */
+    private function patchDialogGraph(Dialog $dialog, array $data): void
+    {
+        if (array_key_exists('name', $data)) {
+            $dialog->update(['name' => $data['name']]);
+        }
+
+        $deleteNodeIds = array_map('intval', $data['delete_node_ids'] ?? []);
+        $deleteOptionIds = array_map('intval', $data['delete_option_ids'] ?? []);
+        $deleteEdgeIds = array_map('intval', $data['delete_edge_ids'] ?? []);
+
+        if ($deleteNodeIds !== []) {
+            $optionIds = DialogNodeOption::query()->whereIn('node_id', $deleteNodeIds)->pluck('id');
+            DialogEdge::query()
+                ->where('source_dialog_id', $dialog->id)
+                ->where(function ($query) use ($deleteNodeIds, $optionIds): void {
+                    $query->whereIn('source_node_id', $deleteNodeIds)
+                        ->orWhereIn('target_node_id', $deleteNodeIds)
+                        ->orWhereIn('source_option_id', $optionIds);
+                })
+                ->delete();
+            DialogNodeOption::query()->whereIn('node_id', $deleteNodeIds)->delete();
+            DialogNode::query()->whereIn('id', $deleteNodeIds)->delete();
+        }
+
+        if ($deleteOptionIds !== []) {
+            DialogEdge::query()->where('source_dialog_id', $dialog->id)->whereIn('source_option_id', $deleteOptionIds)->delete();
+            DialogNodeOption::query()->whereIn('id', $deleteOptionIds)->delete();
+        }
+
+        if ($deleteEdgeIds !== []) {
+            DialogEdge::query()->where('source_dialog_id', $dialog->id)->whereIn('id', $deleteEdgeIds)->delete();
+        }
+
+        $nodesByKey = [];
+        $optionsByKey = [];
+
+        foreach ($data['nodes'] ?? [] as $nodeData) {
+            if (isset($nodeData['id'])) {
+                $node = DialogNode::query()
+                    ->where('source_dialog_id', $dialog->id)
+                    ->findOrFail($nodeData['id']);
+            } else {
+                $node = $dialog->nodes()->create([
+                    'type' => $nodeData['type'] ?? 'special',
+                    'position' => $nodeData['position'] ?? ['x' => 0, 'y' => 0],
+                    'content' => $nodeData['content'] ?? null,
+                    'action_data' => $nodeData['action_data'] ?? null,
+                    'additional_actions' => $nodeData['additional_actions'] ?? null,
+                    'shop_id' => $nodeData['shop_id'] ?? null,
+                    'hotel_id' => $nodeData['hotel_id'] ?? null,
+                ]);
+            }
+
+            $nodeFields = array_intersect_key($nodeData, array_flip([
+                'type', 'position', 'content', 'action_data', 'additional_actions', 'shop_id', 'hotel_id',
+            ]));
+            if ($node->exists && $nodeFields !== []) {
+                $node->forceFill($nodeFields)->save();
+            }
+
+            if (isset($nodeData['key'])) {
+                $nodesByKey[$nodeData['key']] = $node;
+            }
+
+            foreach ($nodeData['options'] ?? [] as $optionIndex => $optionData) {
+                if (isset($optionData['id'])) {
+                    $option = $node->options()->findOrFail($optionData['id']);
+                } else {
+                    $option = $node->options()->create([
+                        'label' => $optionData['label'],
+                        'rules' => $optionData['rules'] ?? null,
+                        'additional_action' => $optionData['additional_action'] ?? null,
+                        'additional_actions' => $optionData['additional_actions'] ?? null,
+                        'cooldown' => $optionData['cooldown'] ?? null,
+                        'order' => $optionData['order'] ?? $optionIndex,
+                    ]);
+                }
+
+                $optionFields = array_intersect_key($optionData, array_flip([
+                    'label', 'rules', 'additional_action', 'additional_actions', 'cooldown', 'order',
+                ]));
+                if ($option->exists && $optionFields !== []) {
+                    $option->forceFill($optionFields)->save();
+                }
+
+                if (isset($optionData['key'])) {
+                    $optionsByKey[($nodeData['key'] ?? 'node-'.$node->id).':'.$optionData['key']] = $option;
+                }
+            }
+        }
+
+        foreach ($data['edges'] ?? [] as $edgeData) {
+            $edge = isset($edgeData['id'])
+                ? $dialog->edges()->findOrFail($edgeData['id'])
+                : new DialogEdge;
+
+            $fields = array_intersect_key($edgeData, array_flip(['source_handle', 'rules']));
+            $fields['source_dialog_id'] = $dialog->id;
+
+            foreach (['source_node', 'target_node'] as $reference) {
+                $idField = $reference.'_id';
+                $keyField = $reference.'_key';
+                if (array_key_exists($idField, $edgeData)) {
+                    $fields[$idField] = $edgeData[$idField];
+                } elseif (isset($edgeData[$keyField])) {
+                    $fields[$idField] = $nodesByKey[$edgeData[$keyField]]->id;
+                }
+            }
+
+            if (array_key_exists('source_option_id', $edgeData)) {
+                $fields['source_option_id'] = $edgeData['source_option_id'];
+            } elseif (isset($edgeData['source_option_key'])) {
+                $sourceNodeReference = $edgeData['source_node_key'] ?? 'node-'.$edgeData['source_node_id'];
+                $fields['source_option_id'] = $optionsByKey[$sourceNodeReference.':'.$edgeData['source_option_key']]->id;
+            }
+
+            $edge->forceFill($fields)->save();
+        }
+
+        $dialog->unsetRelation('nodes')->unsetRelation('edges');
+        $positions = $this->dialogLayoutService->calculate($dialog->fresh());
+        $this->dialogLayoutService->save($dialog, $positions);
     }
 
     private function deleteDialogGraph(Dialog $dialog): void

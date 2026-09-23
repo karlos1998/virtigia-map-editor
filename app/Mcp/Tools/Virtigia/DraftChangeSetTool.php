@@ -11,7 +11,7 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 
-#[Description('Validate and save a previewable Virtigia content change set. This never changes game-world data. Allowed operations are create_quest, create_dialog, replace_dialog, assign_dialog_to_npc, and place_npc with an existing BaseNPC.')]
+#[Description('Validate and save a previewable Virtigia content change set. This never changes game-world data. Use patch_dialog for targeted edits to an existing graph; full replacement is only for exceptional cases.')]
 class DraftChangeSetTool extends VirtigiaTool
 {
     protected string $name = 'draft_change_set';
@@ -67,6 +67,7 @@ class DraftChangeSetTool extends VirtigiaTool
                         'create_quest',
                         'create_dialog',
                         'replace_dialog',
+                        'patch_dialog',
                         'assign_dialog_to_npc',
                         'place_npc',
                     ])->required(),
@@ -83,7 +84,7 @@ class DraftChangeSetTool extends VirtigiaTool
                         'x' => $schema->integer()->min(0)->required(),
                         'y' => $schema->integer()->min(0)->required(),
                     ])),
-                    'data' => $schema->object()->description('Quest or full dialog graph payload. Follow the installed skill schema.'),
+                    'data' => $schema->object()->description('Quest, full dialog graph, or incremental dialog patch payload. Follow the installed skill schema.'),
                 ]))
                 ->description('Ordered operations. Put create_quest and create_dialog before operations that reference their keys.')
                 ->required(),

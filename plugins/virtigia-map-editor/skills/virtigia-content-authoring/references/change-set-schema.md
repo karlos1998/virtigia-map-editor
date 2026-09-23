@@ -69,7 +69,52 @@ W dialogach odwołuj się do utworzonych rekordów przez `@quest:roan_missing_pa
 
 Opcja bez krawędzi zamyka rozmowę. `additional_action` służy wyłącznie pojedynczym akcjom enum, np. `HEAL`; akcje questa zapisuj w `additional_actions`.
 
-`replace_dialog` ma ten sam `data`, ale zamiast `key` wymaga `dialog_id`. Zastępuje cały graf dialogu, dlatego zawsze najpierw pokaż użytkownikowi podsumowanie.
+`replace_dialog` ma ten sam `data`, ale zamiast `key` wymaga `dialog_id`. Zastępuje cały graf dialogu i powinien być używany tylko wtedy, gdy użytkownik wyraźnie chce przebudować całość.
+
+## Edycja istniejącego dialogu
+
+Najpierw wywołaj `get_dialog_graph`, aby pobrać stabilne identyfikatory. Następnie użyj `patch_dialog`. Pola pominięte w patchu nie są zmieniane, więc istniejące sklepy, hotele i pozostałe gałęzie zostają zachowane. Po zastosowaniu commita serwer automatycznie rozkłada wszystkie węzły bez nakładania.
+
+```json
+{
+  "type": "patch_dialog",
+  "dialog_id": 123,
+  "data": {
+    "nodes": [
+      {
+        "id": 450,
+        "options": [
+          {
+            "key": "ask_for_meat",
+            "label": "Masz dla mnie jakieś zajęcie?",
+            "rules": {"playerLevel": {"value": 10}}
+          }
+        ]
+      },
+      {
+        "key": "meat_quest_offer",
+        "type": "special",
+        "content": "Przynieś mi pięć kawałków króliczego mięsa.",
+        "options": [
+          {"key": "accept", "label": "Zrobi się."},
+          {"key": "decline", "label": "Może innym razem."}
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "source_node_id": 450,
+        "source_option_key": "ask_for_meat",
+        "target_node_key": "meat_quest_offer"
+      }
+    ]
+  }
+}
+```
+
+Istniejące węzły, opcje i połączenia wskazuj przez `id`; nowe przez lokalny `key`. Nowe połączenia mogą używać `source_node_id`/`target_node_id` albo `source_node_key`/`target_node_key`. Dla nowej opcji w istniejącym węźle podaj `source_node_id` i jej `source_option_key`.
+
+Usuwanie jest jawne przez `delete_node_ids`, `delete_option_ids` i `delete_edge_ids`. Aktualizacja istniejącego połączenia odbywa się przez wpis w `edges` zawierający jego `id`. Jeśli dialog jest współdzielony, zmiana dotyczy wszystkich korzystających z niego NPC — jest to zachowanie zamierzone.
 
 ## Przypisanie dialogu
 

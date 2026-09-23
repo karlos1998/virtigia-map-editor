@@ -48,6 +48,12 @@ return [
         'auth_scope' => 'mcp:use',
     ],
 
+    'virtigia_retro_engine' => [
+        'url' => 'https://engine-retro.margatron.ovh',
+        'token' => 'vme_7f3a9c2e1b684df0a59673c9e4128bd6',
+        'timeout' => 60,
+    ],
+
     'laravelpassport' => [
         'client_id' => env('LARAVELPASSPORT_CLIENT_ID'),
         'client_secret' => env('LARAVELPASSPORT_CLIENT_SECRET'),

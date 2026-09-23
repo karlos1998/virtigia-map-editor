@@ -2,13 +2,18 @@
 
 namespace Tests\Feature\Mcp;
 
+use App\Mcp\Tools\Virtigia\AnalyzeRetroLootTool;
 use App\Mcp\Tools\Virtigia\ApplyChangeSetTool;
 use App\Mcp\Tools\Virtigia\DraftChangeSetTool;
+use App\Mcp\Tools\Virtigia\GetDialogGraphTool;
+use App\Mcp\Tools\Virtigia\GetRetroBuildOptionsTool;
 use App\Mcp\Tools\Virtigia\GetWritingContextTool;
+use App\Mcp\Tools\Virtigia\InspectRetroNpcTool;
 use App\Mcp\Tools\Virtigia\ListChangeSetsTool;
 use App\Mcp\Tools\Virtigia\ProfileTool;
 use App\Mcp\Tools\Virtigia\RevertChangeSetTool;
 use App\Mcp\Tools\Virtigia\SearchGameContentTool;
+use App\Mcp\Tools\Virtigia\SimulateRetroCombatTool;
 use App\Services\Mcp\AiChangeSetService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -92,7 +97,10 @@ class VirtigiaContentServerTest extends TestCase
     #[DataProvider('toolNames')]
     public function test_tools_expose_stable_names(string $toolClass, string $expectedName): void
     {
-        $this->assertSame($expectedName, app($toolClass)->name());
+        $tool = app($toolClass);
+
+        $this->assertSame($expectedName, $tool->name());
+        $this->assertArrayHasKey('inputSchema', $tool->toArray());
     }
 
     /** @return array<string, array{class-string, string}> */
@@ -102,6 +110,11 @@ class VirtigiaContentServerTest extends TestCase
             'profile' => [ProfileTool::class, 'profile'],
             'search' => [SearchGameContentTool::class, 'search_game_content'],
             'writing context' => [GetWritingContextTool::class, 'get_writing_context'],
+            'dialog graph' => [GetDialogGraphTool::class, 'get_dialog_graph'],
+            'inspect retro npc' => [InspectRetroNpcTool::class, 'inspect_retro_npc'],
+            'retro build options' => [GetRetroBuildOptionsTool::class, 'get_retro_build_options'],
+            'retro combat simulation' => [SimulateRetroCombatTool::class, 'simulate_retro_combat'],
+            'retro loot analysis' => [AnalyzeRetroLootTool::class, 'analyze_retro_loot'],
             'draft' => [DraftChangeSetTool::class, 'draft_change_set'],
             'apply' => [ApplyChangeSetTool::class, 'apply_change_set'],
             'list' => [ListChangeSetsTool::class, 'list_change_sets'],
