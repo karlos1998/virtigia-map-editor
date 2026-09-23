@@ -29,11 +29,6 @@ class User extends Authenticatable
         'permissions',
     ];
 
-    protected $casts = [
-        'roles' => 'array',
-        'permissions' => 'array',
-    ];
-
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -55,12 +50,19 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'roles' => 'array',
+            'permissions' => 'array',
         ];
     }
 
     public function apiTokens(): HasMany
     {
         return $this->hasMany(UserApiToken::class);
+    }
+
+    public function aiChangeSets(): HasMany
+    {
+        return $this->hasMany(AiChangeSet::class);
     }
 
     public function hasGameMasterRole(): bool

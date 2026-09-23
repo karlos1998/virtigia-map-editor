@@ -159,6 +159,11 @@ const model = ref([
                 route: 'activity-logs.index',
             },
             {
+                label: 'Commity AI',
+                icon: 'pi pi-sparkles',
+                route: 'ai-change-sets.index',
+            },
+            {
                 label: 'Tokeny API',
                 icon: 'pi pi-key',
                 route: 'api-tokens.index',

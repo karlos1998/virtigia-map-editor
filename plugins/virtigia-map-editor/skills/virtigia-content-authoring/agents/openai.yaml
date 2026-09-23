@@ -1,0 +1,15 @@
+interface:
+  display_name: "Virtigia – questy i dialogi"
+  short_description: "Questy i dialogi z kontrolowanym zapisem"
+  default_prompt: "Use $virtigia-content-authoring to prepare a new quest on Retro for my approval."
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "virtigia-map-editor"
+      description: "Firmowe API Map Editora z logowaniem Virtigii"
+      transport: "streamable_http"
+      url: "https://map-editor.margatron.ovh/mcp/virtigia"
+
+policy:
+  allow_implicit_invocation: true

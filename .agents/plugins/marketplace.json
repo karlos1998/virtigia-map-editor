@@ -1,0 +1,20 @@
+{
+  "name": "virtigia",
+  "interface": {
+    "displayName": "Virtigia"
+  },
+  "plugins": [
+    {
+      "name": "virtigia-map-editor",
+      "source": {
+        "source": "local",
+        "path": "./plugins/virtigia-map-editor"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

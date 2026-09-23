@@ -40,6 +40,12 @@ return [
         'client_secret' => env('VIRTIGIA_PAGE_CLIENT_SECRET'),
         'redirect' => env('VIRTIGIA_PAGE_REDIRECT'),
         'url' => env('VIRTIGIA_PAGE_URL'), // Dodaj URL aplikacji A
+        'mcp_profile_path' => env('VIRTIGIA_MCP_PROFILE_PATH', '/api/mcp/profile'),
+    ],
+
+    'virtigia_mcp' => [
+        'default_world' => env('VIRTIGIA_MCP_DEFAULT_WORLD', 'retro'),
+        'auth_scope' => 'mcp:use',
     ],
 
     'laravelpassport' => [

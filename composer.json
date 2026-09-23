@@ -19,6 +19,7 @@
         "karlos3098/laravel-primevue-table-service": "^0.0.18",
         "laravel/framework": "^11.31",
         "laravel/horizon": "^5.46",
+        "laravel/mcp": "^0.5",
         "laravel/scout": "^10.14",
         "laravel/socialite": "^5.16",
         "laravel/telescope": "^5.7",

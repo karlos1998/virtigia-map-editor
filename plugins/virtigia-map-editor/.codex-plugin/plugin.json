@@ -1,0 +1,23 @@
+{
+  "name": "virtigia-map-editor",
+  "version": "0.1.0",
+  "description": "Tworzy i bezpiecznie zapisuje questy, dialogi oraz rozmieszczenie NPC w Virtigii.",
+  "author": {
+    "name": "Virtigia"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Virtigia Map Editor",
+    "shortDescription": "Questy i dialogi Virtigii z historią zmian.",
+    "longDescription": "Firmowa wtyczka do wyszukiwania zawartości świata oraz tworzenia questów, dialogów i instancji NPC z walidacją i cofanymi commitami.",
+    "developerName": "Virtigia",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "defaultPrompt": [
+      "Znajdź Roana w Ithan na Retro i pokaż jego kontekst.",
+      "Przygotuj nowy quest na Retro do zatwierdzenia.",
+      "Pokaż ostatnie commity AI i ich status."
+    ]
+  },
+  "mcpServers": "./.mcp.json"
+}

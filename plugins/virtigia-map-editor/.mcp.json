@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "virtigia-map-editor": {
+      "type": "http",
+      "url": "https://map-editor.margatron.ovh/mcp/virtigia"
+    }
+  }
+}

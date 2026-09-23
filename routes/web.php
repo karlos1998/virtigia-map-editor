@@ -3,6 +3,7 @@
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Administration\DatabaseDumpController;
 use App\Http\Controllers\Administration\WorldTemplateController;
+use App\Http\Controllers\AiChangeSetController;
 use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\AudioController;
@@ -76,6 +77,8 @@ Route::middleware(['auth'])->group(function () {
                 ->group(function () {
 
                     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+                    Route::get('ai-change-sets', [AiChangeSetController::class, 'index'])->name('ai-change-sets.index');
+                    Route::post('ai-change-sets/{aiChangeSet}/revert', [AiChangeSetController::class, 'revert'])->name('ai-change-sets.revert');
 
                     // todo - trzbea to pogrupowac...
                     Route::get('dialogs', [DialogController::class, 'index'])->name('dialogs.index');
