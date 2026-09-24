@@ -15,6 +15,7 @@ use App\Mcp\Tools\Virtigia\RevertChangeSetTool;
 use App\Mcp\Tools\Virtigia\SearchGameContentTool;
 use App\Mcp\Tools\Virtigia\SimulateRetroCombatTool;
 use App\Services\Mcp\AiChangeSetService;
+use App\Services\Mcp\RetroEngineAnalysisService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -91,6 +92,28 @@ class VirtigiaContentServerTest extends TestCase
 
         $this->assertFalse($validation['valid']);
         $this->assertNotEmpty($validation['errors']);
+    }
+
+    public function test_retro_engine_proxy_fails_closed_without_server_side_token(): void
+    {
+        config()->set('services.virtigia_retro_engine.token', null);
+        Http::preventStrayRequests();
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('nie ma skonfigurowanych poświadczeń');
+
+        app(RetroEngineAnalysisService::class)->npc(1);
+    }
+
+    public function test_retro_build_tool_exposes_availability_filters(): void
+    {
+        $schema = app(GetRetroBuildOptionsTool::class)->toArray()['inputSchema']['properties'];
+
+        $this->assertArrayHasKey('max_rarity', $schema);
+        $this->assertArrayHasKey('obtainable_only', $schema);
+        $this->assertArrayHasKey('allowed_sources', $schema);
+        $this->assertArrayHasKey('exclude_event_sources', $schema);
+        $this->assertArrayHasKey('exclude_admin_shops', $schema);
     }
 
     /** @param class-string $toolClass */

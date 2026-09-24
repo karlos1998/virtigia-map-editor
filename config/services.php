@@ -49,9 +49,9 @@ return [
     ],
 
     'virtigia_retro_engine' => [
-        'url' => 'https://engine-retro.margatron.ovh',
-        'token' => 'vme_7f3a9c2e1b684df0a59673c9e4128bd6',
-        'timeout' => 60,
+        'url' => env('VIRTIGIA_RETRO_ENGINE_URL', 'https://engine-retro.margatron.ovh'),
+        'token' => env('VIRTIGIA_RETRO_ENGINE_TOKEN'),
+        'timeout' => env('VIRTIGIA_RETRO_ENGINE_TIMEOUT', 60),
     ],
 
     'laravelpassport' => [

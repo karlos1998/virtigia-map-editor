@@ -5,6 +5,7 @@ namespace App\Services\Mcp;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
+use LogicException;
 
 class RetroEngineAnalysisService
 {
@@ -56,8 +57,15 @@ class RetroEngineAnalysisService
 
     private function request(): PendingRequest
     {
-        return Http::baseUrl((string) config('services.virtigia_retro_engine.url'))
-            ->withToken((string) config('services.virtigia_retro_engine.token'))
+        $url = trim((string) config('services.virtigia_retro_engine.url'));
+        $token = trim((string) config('services.virtigia_retro_engine.token'));
+
+        if ($url === '' || $token === '') {
+            throw new LogicException('Połączenie Map Editor → Retro Engine nie ma skonfigurowanych poświadczeń.');
+        }
+
+        return Http::baseUrl($url)
+            ->withToken($token)
             ->acceptJson()
             ->timeout((int) config('services.virtigia_retro_engine.timeout', 60));
     }
