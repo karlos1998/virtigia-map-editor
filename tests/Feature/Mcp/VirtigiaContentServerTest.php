@@ -5,8 +5,10 @@ namespace Tests\Feature\Mcp;
 use App\Mcp\Tools\Virtigia\AnalyzeRetroLootTool;
 use App\Mcp\Tools\Virtigia\ApplyChangeSetTool;
 use App\Mcp\Tools\Virtigia\DraftChangeSetTool;
+use App\Mcp\Tools\Virtigia\GetBaseItemTool;
 use App\Mcp\Tools\Virtigia\GetDialogGraphTool;
 use App\Mcp\Tools\Virtigia\GetRetroBuildOptionsTool;
+use App\Mcp\Tools\Virtigia\GetShopInventoryTool;
 use App\Mcp\Tools\Virtigia\GetWritingContextTool;
 use App\Mcp\Tools\Virtigia\InspectRetroNpcTool;
 use App\Mcp\Tools\Virtigia\ListChangeSetsTool;
@@ -14,10 +16,21 @@ use App\Mcp\Tools\Virtigia\ProfileTool;
 use App\Mcp\Tools\Virtigia\RevertChangeSetTool;
 use App\Mcp\Tools\Virtigia\SearchGameContentTool;
 use App\Mcp\Tools\Virtigia\SimulateRetroCombatTool;
+use App\Models\BaseItem;
+use App\Models\BaseNpc;
+use App\Models\BaseNpcLoot;
+use App\Models\Dialog;
+use App\Models\DynamicModel;
+use App\Models\Quest;
+use App\Models\Shop;
+use App\Models\ShopItem;
 use App\Services\Mcp\AiChangeSetService;
+use App\Services\Mcp\GameContentSearchService;
+use App\Services\Mcp\McpWorldService;
 use App\Services\Mcp\RetroEngineAnalysisService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -84,14 +97,243 @@ class VirtigiaContentServerTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => 321, 'login' => 'quest-maker']);
     }
 
-    public function test_forbidden_content_operations_are_rejected(): void
+    public function test_forbidden_base_npc_creation_is_rejected(): void
     {
         $validation = app(AiChangeSetService::class)->validateOperations([
-            ['type' => 'create_item', 'data' => ['name' => 'Miecz AI']],
+            ['type' => 'create_base_npc', 'data' => ['name' => 'NPC AI']],
         ]);
 
         $this->assertFalse($validation['valid']);
         $this->assertNotEmpty($validation['errors']);
+    }
+
+    public function test_new_base_item_with_valid_image_can_be_drafted(): void
+    {
+        $validation = app(AiChangeSetService::class)->validateOperations([[
+            'type' => 'create_base_item',
+            'key' => 'quest_token',
+            'data' => [
+                'name' => 'Żeton zadania',
+                'category' => 'quests',
+                'rarity' => 'common',
+                'price' => 0,
+                'currency' => 'unset',
+                'attributes' => ['description' => 'Przedmiot testowy'],
+                'image_data_uri' => $this->itemImageDataUri(),
+            ],
+        ]]);
+
+        $this->assertTrue($validation['valid'], implode("\n", $validation['errors']));
+    }
+
+    public function test_new_base_item_rejects_image_with_wrong_dimensions(): void
+    {
+        $validation = app(AiChangeSetService::class)->validateOperations([[
+            'type' => 'create_base_item',
+            'key' => 'bad_icon',
+            'data' => [
+                'name' => 'Błędna ikona',
+                'category' => 'quests',
+                'rarity' => 'common',
+                'price' => 0,
+                'currency' => 'unset',
+                'image_data_uri' => 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Zl1sAAAAASUVORK5CYII=',
+            ],
+        ]]);
+
+        $this->assertFalse($validation['valid']);
+        $this->assertStringContainsString('32×32', implode(' ', $validation['errors']));
+    }
+
+    public function test_base_item_change_rejects_unsupported_fields_instead_of_ignoring_them(): void
+    {
+        $validation = app(AiChangeSetService::class)->validateOperations([[
+            'type' => 'create_base_item',
+            'key' => 'bad_item',
+            'data' => [
+                'name' => 'Niepoprawny item',
+                'category' => 'quests',
+                'rarity' => 'common',
+                'price' => 0,
+                'currency' => 'unset',
+                'src' => 'unsafe/manual-path.png',
+                'image_data_uri' => $this->itemImageDataUri(),
+            ],
+        ]]);
+
+        $this->assertFalse($validation['valid']);
+        $this->assertStringContainsString('nieobsługiwane pola BaseItemu: src', implode(' ', $validation['errors']));
+    }
+
+    public function test_presented_change_set_redacts_embedded_item_image(): void
+    {
+        $changeSet = new \App\Models\AiChangeSet([
+            'operations' => [[
+                'type' => 'create_base_item',
+                'key' => 'quest_token',
+                'data' => [
+                    'name' => 'Żeton zadania',
+                    'image_data_uri' => $this->itemImageDataUri(),
+                ],
+            ]],
+        ]);
+
+        $presented = app(AiChangeSetService::class)->present($changeSet);
+
+        $this->assertStringStartsWith('[image data omitted;', $presented['operations'][0]['data']['image_data_uri']);
+        $this->assertStringNotContainsString('base64,', $presented['operations'][0]['data']['image_data_uri']);
+    }
+
+    public function test_item_commit_can_create_assign_and_revert_everything(): void
+    {
+        Storage::fake('s3');
+        app(McpWorldService::class)->use('test');
+
+        try {
+            $user = \App\Models\User::factory()->create();
+            $baseNpc = BaseNpc::query()->create([
+                'name' => 'NPC testowy MCP',
+                'src' => 'test/mcp.gif',
+                'lvl' => 1,
+                'category' => 'NPC',
+                'profession' => 'w',
+            ]);
+            $shop = Shop::query()->create(['name' => 'Sklep testowy MCP']);
+            $sourceItem = BaseItem::query()->create([
+                'name' => 'Miecz źródłowy MCP',
+                'src' => 'items/test/source.png',
+                'stats' => '',
+                'cl' => 0,
+                'pr' => 0,
+                'edited_manually' => true,
+                'attributes' => ['physicalDamage' => 100, 'obsoleteBonus' => 1],
+                'rarity' => 'common',
+                'category' => 'oneHanded',
+                'price' => 100,
+                'currency' => 'gold',
+            ]);
+            $service = app(AiChangeSetService::class);
+            $changeSet = $service->draft($user, 'test', 'Nowy przedmiot testowy', null, [
+                [
+                    'type' => 'clone_base_item',
+                    'key' => 'improved_sword',
+                    'source_base_item_id' => $sourceItem->id,
+                    'data' => [
+                        'name' => 'Lepszy miecz MCP',
+                        'rarity' => 'unique',
+                        'attributes_patch' => ['physicalDamage' => 120],
+                        'remove_attributes' => ['obsoleteBonus'],
+                    ],
+                ],
+                [
+                    'type' => 'update_base_item',
+                    'item_id' => $sourceItem->id,
+                    'data' => [
+                        'attributes_patch' => ['physicalDamage' => 110],
+                    ],
+                ],
+                [
+                    'type' => 'create_base_item',
+                    'key' => 'quest_token',
+                    'data' => [
+                        'name' => 'Żeton zadania MCP',
+                        'category' => 'quests',
+                        'rarity' => 'common',
+                        'price' => 0,
+                        'currency' => 'unset',
+                        'attributes' => ['description' => 'Nagroda z testowego zadania'],
+                        'image_data_uri' => $this->itemImageDataUri(),
+                    ],
+                ],
+                [
+                    'type' => 'attach_item_to_shop',
+                    'shop_id' => $shop->id,
+                    'item_key' => 'quest_token',
+                    'row' => 9,
+                    'column' => 7,
+                ],
+                [
+                    'type' => 'attach_item_to_base_npc_loot',
+                    'base_npc_id' => $baseNpc->id,
+                    'item_key' => 'quest_token',
+                ],
+                [
+                    'type' => 'create_quest',
+                    'key' => 'item_quest',
+                    'data' => [
+                        'name' => 'Test itemu MCP',
+                        'steps' => [[
+                            'key' => 'start',
+                            'name' => 'Odbierz przedmiot',
+                            'description' => 'Odbierz nowy przedmiot.',
+                        ]],
+                    ],
+                ],
+                [
+                    'type' => 'create_dialog',
+                    'key' => 'item_dialog',
+                    'data' => [
+                        'name' => 'Nagroda itemowa MCP',
+                        'nodes' => [[
+                            'key' => 'reward',
+                            'content' => 'Oto twoja nagroda.',
+                            'additional_actions' => [
+                                'addItems' => ['value' => ['@item:quest_token']],
+                            ],
+                            'options' => [[
+                                'key' => 'finish',
+                                'label' => 'Dziękuję.',
+                            ]],
+                        ]],
+                    ],
+                ],
+            ]);
+
+            $applied = $service->apply($user, $changeSet->id, 1);
+            $itemId = $applied->result['references']['items']['quest_token'];
+            $clonedItemId = $applied->result['references']['items']['improved_sword'];
+            $dialogId = $applied->result['references']['dialogs']['item_dialog'];
+            $questId = $applied->result['references']['quests']['item_quest'];
+
+            $item = BaseItem::query()->findOrFail($itemId);
+            $clonedItem = BaseItem::query()->findOrFail($clonedItemId);
+            Storage::disk('s3')->assertExists('img/'.$item->src);
+            $this->assertSame('items/test/source.png', $clonedItem->src);
+            $this->assertSame(120, $clonedItem->attributes['physicalDamage']);
+            $this->assertArrayNotHasKey('obsoleteBonus', $clonedItem->attributes);
+            $this->assertSame(110, BaseItem::query()->findOrFail($sourceItem->id)->attributes['physicalDamage']);
+            $this->assertTrue(ShopItem::query()->where(['shop_id' => $shop->id, 'item_id' => $itemId, 'position' => 79])->exists());
+            $this->assertTrue(BaseNpcLoot::query()->where(['base_npc_id' => $baseNpc->id, 'base_item_id' => $itemId])->exists());
+            $this->assertSame($itemId, Dialog::query()->findOrFail($dialogId)->nodes()->firstOrFail()->additional_actions['addItems']['value'][0]);
+
+            $itemDetails = app(GameContentSearchService::class)->baseItem('test', $itemId);
+            $shopInventory = app(GameContentSearchService::class)->shopInventory('test', $shop->id);
+            $this->assertSame('Żeton zadania MCP', $itemDetails['item']['name']);
+            $this->assertSame(79, $shopInventory['shop']['items'][0]['position']);
+            $this->assertNotContains(79, $shopInventory['shop']['free_positions']);
+
+            $reverted = $service->revert($user, $changeSet->id);
+
+            $this->assertSame('reverted', $reverted->status);
+            $this->assertNull(BaseItem::withTrashed()->find($itemId));
+            $this->assertNull(BaseItem::withTrashed()->find($clonedItemId));
+            $this->assertSame(['physicalDamage' => 100, 'obsoleteBonus' => 1], BaseItem::query()->findOrFail($sourceItem->id)->attributes);
+            $this->assertNull(Dialog::query()->find($dialogId));
+            $this->assertNull(Quest::query()->find($questId));
+            $this->assertFalse(ShopItem::query()->where('item_id', $itemId)->exists());
+            $this->assertFalse(BaseNpcLoot::query()->where('base_item_id', $itemId)->exists());
+        } finally {
+            app(McpWorldService::class)->use('test');
+            ShopItem::query()->whereIn('shop_id', Shop::query()->where('name', 'Sklep testowy MCP')->pluck('id'))->delete();
+            BaseNpcLoot::query()->whereIn('base_npc_id', BaseNpc::query()->where('name', 'NPC testowy MCP')->pluck('id'))->delete();
+            Dialog::query()->where('name', 'Nagroda itemowa MCP')->delete();
+            Quest::query()->where('name', 'Test itemu MCP')->delete();
+            BaseItem::withTrashed()->where('name', 'Żeton zadania MCP')->forceDelete();
+            BaseItem::withTrashed()->whereIn('name', ['Miecz źródłowy MCP', 'Lepszy miecz MCP'])->forceDelete();
+            Shop::query()->where('name', 'Sklep testowy MCP')->delete();
+            BaseNpc::query()->where('name', 'NPC testowy MCP')->delete();
+            DynamicModel::clearGlobalConnection();
+        }
     }
 
     public function test_retro_engine_proxy_fails_closed_without_server_side_token(): void
@@ -132,6 +374,8 @@ class VirtigiaContentServerTest extends TestCase
         return [
             'profile' => [ProfileTool::class, 'profile'],
             'search' => [SearchGameContentTool::class, 'search_game_content'],
+            'base item' => [GetBaseItemTool::class, 'get_base_item'],
+            'shop inventory' => [GetShopInventoryTool::class, 'get_shop_inventory'],
             'writing context' => [GetWritingContextTool::class, 'get_writing_context'],
             'dialog graph' => [GetDialogGraphTool::class, 'get_dialog_graph'],
             'inspect retro npc' => [InspectRetroNpcTool::class, 'inspect_retro_npc'],
@@ -143,5 +387,16 @@ class VirtigiaContentServerTest extends TestCase
             'list' => [ListChangeSetsTool::class, 'list_change_sets'],
             'revert' => [RevertChangeSetTool::class, 'revert_change_set'],
         ];
+    }
+
+    private function itemImageDataUri(): string
+    {
+        $image = imagecreatetruecolor(32, 32);
+        ob_start();
+        imagepng($image);
+        $contents = (string) ob_get_clean();
+        imagedestroy($image);
+
+        return 'data:image/png;base64,'.base64_encode($contents);
     }
 }

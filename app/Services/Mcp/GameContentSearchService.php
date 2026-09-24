@@ -2,6 +2,10 @@
 
 namespace App\Services\Mcp;
 
+use App\Enums\BaseItemCategory;
+use App\Enums\BaseItemCurrency;
+use App\Enums\BaseItemRarity;
+use App\Facades\AssetUrl;
 use App\Models\BaseItem;
 use App\Models\BaseNpc;
 use App\Models\Dialog;
@@ -11,6 +15,7 @@ use App\Models\DialogNodeOption;
 use App\Models\Map as GameMap;
 use App\Models\Npc;
 use App\Models\Quest;
+use App\Models\Shop;
 
 class GameContentSearchService
 {
@@ -25,7 +30,7 @@ class GameContentSearchService
     public function search(string $world, string $query, array $types, ?string $mapName, int $limit): array
     {
         $world = $this->worldService->use($world);
-        $types = $types === [] ? ['maps', 'npcs', 'base_npcs', 'items', 'quests', 'dialogs'] : $types;
+        $types = $types === [] ? ['maps', 'npcs', 'base_npcs', 'items', 'shops', 'quests', 'dialogs'] : $types;
         $limit = min(max($limit, 1), 25);
         $like = '%'.trim($query).'%';
         $results = [];
@@ -54,6 +59,17 @@ class GameContentSearchService
                 ->orderBy('name')
                 ->limit($limit)
                 ->get(['id', 'name', 'src', 'category'])
+                ->toArray();
+        }
+
+        if (in_array('shops', $types, true)) {
+            $results['shops'] = Shop::query()
+                ->select(['id', 'name', 'currency_item_id'])
+                ->withCount('items')
+                ->where('name', 'like', $like)
+                ->orderBy('name')
+                ->limit($limit)
+                ->get()
                 ->toArray();
         }
 
@@ -128,6 +144,84 @@ class GameContentSearchService
             'world' => $world,
             'query' => $query,
             'results' => $results,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    public function baseItem(string $world, int $baseItemId): array
+    {
+        $world = $this->worldService->use($world);
+        $baseItem = BaseItem::query()
+            ->with(['shops', 'baseNpcs:id,name,lvl,rank', 'usageView'])
+            ->findOrFail($baseItemId);
+
+        return [
+            'world' => $world,
+            'item' => [
+                'id' => $baseItem->id,
+                'name' => $baseItem->name,
+                'src' => $baseItem->src,
+                'image_url' => AssetUrl::item($baseItem->src),
+                'category' => $baseItem->category?->value,
+                'rarity' => $baseItem->rarity,
+                'price' => $baseItem->price,
+                'currency' => $baseItem->currency?->value,
+                'specific_currency_price' => $baseItem->specific_currency_price,
+                'attributes' => $baseItem->attributes ?? [],
+                'attribute_points' => $baseItem->attribute_points ?? [],
+                'manual_attribute_points' => $baseItem->manual_attribute_points ?? [],
+                'reverse_attributes' => $baseItem->reverse_attributes ?? [],
+                'shops' => $baseItem->shops
+                    ->sortBy('pivot.position')
+                    ->map(fn (Shop $shop): array => [
+                        'id' => $shop->id,
+                        'name' => $shop->name,
+                        'position' => (int) $shop->pivot->position,
+                        'row' => intdiv((int) $shop->pivot->position, 8),
+                        'column' => (int) $shop->pivot->position % 8,
+                    ])->values()->all(),
+                'base_npc_loots' => $baseItem->baseNpcs->map(fn (BaseNpc $baseNpc): array => [
+                    'id' => $baseNpc->id,
+                    'name' => $baseNpc->name,
+                    'level' => $baseNpc->lvl,
+                    'rank' => $baseNpc->rank?->value,
+                ])->values()->all(),
+                'usage_sources' => $baseItem->usageView?->sources ?? [],
+            ],
+            'editing' => [
+                'categories' => BaseItemCategory::valuesToList(),
+                'rarities' => BaseItemRarity::valuesToList(),
+                'currencies' => BaseItemCurrency::valuesToList(),
+                'image' => ['formats' => ['png', 'gif'], 'width' => 32, 'height' => 32],
+                'guidance' => 'For a percentage improvement, calculate and show the exact changed numeric attributes. Preserve unrelated attributes and use attributes_patch/remove_attributes for targeted edits.',
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    public function shopInventory(string $world, int $shopId): array
+    {
+        $world = $this->worldService->use($world);
+        $shop = Shop::query()->with(['items' => fn ($query) => $query->orderBy('shop_items.position')])->findOrFail($shopId);
+        $occupiedPositions = $shop->items->pluck('pivot.position')->map(fn ($value): int => (int) $value)->all();
+
+        return [
+            'world' => $world,
+            'shop' => [
+                'id' => $shop->id,
+                'name' => $shop->name,
+                'currency_item_id' => $shop->currency_item_id,
+                'grid' => ['rows' => 10, 'columns' => 8, 'minimum_position' => 0, 'maximum_position' => 79],
+                'items' => $shop->items->map(fn (BaseItem $baseItem): array => [
+                    'id' => $baseItem->id,
+                    'name' => $baseItem->name,
+                    'position' => (int) $baseItem->pivot->position,
+                    'row' => intdiv((int) $baseItem->pivot->position, 8),
+                    'column' => (int) $baseItem->pivot->position % 8,
+                ])->values()->all(),
+                'occupied_positions' => $occupiedPositions,
+                'free_positions' => array_values(array_diff(range(0, 79), $occupiedPositions)),
+            ],
         ];
     }
 

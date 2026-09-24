@@ -10,7 +10,7 @@ use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
-#[Description('Search maps, placed NPCs, existing BaseNPC records, items, quests, and dialogs in one Virtigia world. Use this before drafting changes to resolve real IDs and disambiguate names.')]
+#[Description('Search maps, placed NPCs, existing BaseNPC records, items, shops, quests, and dialogs in one Virtigia world. Use this before drafting changes to resolve real IDs and disambiguate names.')]
 #[IsReadOnly]
 class SearchGameContentTool extends VirtigiaTool
 {
@@ -26,7 +26,7 @@ class SearchGameContentTool extends VirtigiaTool
             'world' => ['nullable', 'string'],
             'query' => ['required', 'string', 'max:255'],
             'types' => ['nullable', 'array'],
-            'types.*' => ['string', 'in:maps,npcs,base_npcs,items,quests,dialogs'],
+            'types.*' => ['string', 'in:maps,npcs,base_npcs,items,shops,quests,dialogs'],
             'map_name' => ['nullable', 'string', 'max:255'],
             'limit' => ['nullable', 'integer', 'min:1', 'max:25'],
         ]);
@@ -51,7 +51,7 @@ class SearchGameContentTool extends VirtigiaTool
             'world' => $schema->string()->description('World slug. Defaults to retro.'),
             'query' => $schema->string()->description('Name or phrase to find.')->required(),
             'types' => $schema->array()
-                ->items($schema->string()->enum(['maps', 'npcs', 'base_npcs', 'items', 'quests', 'dialogs']))
+                ->items($schema->string()->enum(['maps', 'npcs', 'base_npcs', 'items', 'shops', 'quests', 'dialogs']))
                 ->description('Content types to search. Omit to search all types.'),
             'map_name' => $schema->string()->description('Optional map name filter for placed NPCs.'),
             'limit' => $schema->integer()->min(1)->max(25)->default(10),

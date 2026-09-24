@@ -2,9 +2,13 @@
 
 namespace App\Services\Mcp;
 
+use App\Enums\BaseItemCategory;
+use App\Enums\BaseItemCurrency;
+use App\Enums\BaseItemRarity;
 use App\Models\AiChangeSet;
 use App\Models\BaseItem;
 use App\Models\BaseNpc;
+use App\Models\BaseNpcLoot;
 use App\Models\Dialog;
 use App\Models\DialogEdge;
 use App\Models\DialogNode;
@@ -13,11 +17,15 @@ use App\Models\Map as GameMap;
 use App\Models\Npc;
 use App\Models\Quest;
 use App\Models\QuestStep;
+use App\Models\Shop;
+use App\Models\ShopItem;
 use App\Models\User;
+use App\Services\BaseItemService;
 use App\Services\DialogLayoutService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -30,11 +38,17 @@ class AiChangeSetService
         'patch_dialog',
         'assign_dialog_to_npc',
         'place_npc',
+        'create_base_item',
+        'clone_base_item',
+        'update_base_item',
+        'attach_item_to_shop',
+        'attach_item_to_base_npc_loot',
     ];
 
     public function __construct(
         private readonly McpWorldService $worldService,
         private readonly DialogLayoutService $dialogLayoutService,
+        private readonly BaseItemService $baseItemService,
     ) {}
 
     /** @param array<int, array<string, mixed>> $operations */
@@ -155,6 +169,18 @@ class AiChangeSetService
             }
 
             Quest::query()->whereIn('id', data_get($result, 'created.quests', []))->delete();
+
+            ShopItem::query()->whereIn('id', data_get($result, 'created.shop_items', []))->delete();
+            BaseNpcLoot::query()->whereIn('id', data_get($result, 'created.base_npc_loots', []))->delete();
+
+            foreach (data_get($before, 'base_items', []) as $snapshot) {
+                $this->restoreBaseItem($snapshot);
+            }
+
+            BaseItem::query()
+                ->whereIn('id', data_get($result, 'created.base_items', []))
+                ->get()
+                ->each(fn (BaseItem $baseItem) => $baseItem->forceDelete());
         });
 
         $changeSet->update([
@@ -189,7 +215,7 @@ class AiChangeSetService
             'prompt' => $changeSet->prompt,
             'status' => $changeSet->status,
             'revision' => $changeSet->revision,
-            'operations' => $changeSet->operations,
+            'operations' => $this->redactBinaryPayloads($changeSet->operations),
             'validation' => $changeSet->validation,
             'result' => $changeSet->result,
             'applied_at' => $changeSet->applied_at?->toIso8601String(),
@@ -222,13 +248,16 @@ class AiChangeSetService
         $questKeys = [];
         $stepKeys = [];
         $dialogKeys = [];
+        $itemKeys = [];
+        $plannedShopPositions = [];
+        $plannedBaseNpcLoots = [];
 
         foreach ($operations as $index => $operation) {
             $type = $operation['type'];
             $data = $operation['data'] ?? [];
             $prefix = 'Operacja '.($index + 1);
 
-            if (in_array($type, ['create_quest', 'create_dialog'], true)) {
+            if (in_array($type, ['create_quest', 'create_dialog', 'create_base_item', 'clone_base_item'], true)) {
                 $key = $operation['key'] ?? null;
                 if (! is_string($key) || $key === '') {
                     $errors[] = "{$prefix}: pole key jest wymagane dla {$type}.";
@@ -236,15 +265,21 @@ class AiChangeSetService
                     continue;
                 }
 
-                $bucket = $type === 'create_quest' ? $questKeys : $dialogKeys;
+                $bucket = match ($type) {
+                    'create_quest' => $questKeys,
+                    'create_dialog' => $dialogKeys,
+                    default => $itemKeys,
+                };
                 if (in_array($key, $bucket, true)) {
                     $errors[] = "{$prefix}: key [{$key}] występuje więcej niż raz.";
                 }
 
                 if ($type === 'create_quest') {
                     $questKeys[] = $key;
-                } else {
+                } elseif ($type === 'create_dialog') {
                     $dialogKeys[] = $key;
+                } else {
+                    $itemKeys[] = $key;
                 }
             }
 
@@ -307,6 +342,18 @@ class AiChangeSetService
                 }
             }
 
+            if (in_array($type, ['create_base_item', 'clone_base_item', 'update_base_item'], true)) {
+                $this->validateBaseItemOperation($operation, $prefix, $errors);
+            }
+
+            if ($type === 'attach_item_to_shop') {
+                $this->validateShopItemOperation($operation, $itemKeys, $plannedShopPositions, $prefix, $errors);
+            }
+
+            if ($type === 'attach_item_to_base_npc_loot') {
+                $this->validateBaseNpcLootOperation($operation, $itemKeys, $plannedBaseNpcLoots, $prefix, $errors);
+            }
+
             $this->validateExistingItemReferences($operation, $prefix, $errors);
         }
 
@@ -322,7 +369,13 @@ class AiChangeSetService
             }
         }
 
-        $warnings[] = 'Commit nie tworzy nowych itemów, BaseNPC ani grafik; może używać wyłącznie istniejących rekordów.';
+        foreach ($this->placeholderReferences($operations, '@item:') as $reference) {
+            if (! in_array($reference, $itemKeys, true)) {
+                $errors[] = "Nieznany tymczasowy item [{$reference}].";
+            }
+        }
+
+        $warnings[] = 'Commit może tworzyć i edytować BaseItemy oraz przypisywać je do sklepów, lootów i dialogów questowych. Nadal nie tworzy BaseNPC ani map.';
 
         return [
             'valid' => $errors === [],
@@ -560,6 +613,262 @@ class AiChangeSetService
     }
 
     /** @param array<int, string> $errors */
+    private function validateBaseItemOperation(array $operation, string $prefix, array &$errors): void
+    {
+        $type = $operation['type'];
+        $data = $operation['data'] ?? [];
+        $allowedFields = [
+            'name',
+            'category',
+            'rarity',
+            'price',
+            'currency',
+            'specific_currency_price',
+            'attributes',
+            'attributes_patch',
+            'remove_attributes',
+            'attribute_points',
+            'manual_attribute_points',
+            'reverse_attributes',
+            'image_data_uri',
+        ];
+
+        if ($type === 'clone_base_item' && ! BaseItem::query()->whereKey($operation['source_base_item_id'] ?? null)->exists()) {
+            $errors[] = "{$prefix}: source_base_item_id nie wskazuje istniejącego BaseItemu.";
+        }
+
+        if ($type === 'update_base_item' && ! BaseItem::query()->whereKey($operation['item_id'] ?? null)->exists()) {
+            $errors[] = "{$prefix}: item_id nie wskazuje istniejącego BaseItemu.";
+        }
+
+        if (! is_array($data)) {
+            $errors[] = "{$prefix}: data musi być obiektem.";
+
+            return;
+        }
+
+        $unknownFields = array_values(array_diff(array_keys($data), $allowedFields));
+        if ($unknownFields !== []) {
+            $errors[] = "{$prefix}: nieobsługiwane pola BaseItemu: ".implode(', ', $unknownFields).'.';
+        }
+
+        if ($type === 'update_base_item' && $data === []) {
+            $errors[] = "{$prefix}: aktualizacja itemu nie zawiera żadnych zmian.";
+        }
+
+        $requiredFields = $type === 'create_base_item'
+            ? ['name', 'category', 'rarity', 'price', 'currency', 'image_data_uri']
+            : [];
+
+        foreach ($requiredFields as $field) {
+            if (! array_key_exists($field, $data) || $data[$field] === null || $data[$field] === '') {
+                $errors[] = "{$prefix}: pole data.{$field} jest wymagane dla nowego itemu.";
+            }
+        }
+
+        if (array_key_exists('name', $data) && (! is_string($data['name']) || mb_strlen(trim($data['name'])) < 4 || mb_strlen($data['name']) > 50)) {
+            $errors[] = "{$prefix}: nazwa itemu musi mieć od 4 do 50 znaków.";
+        }
+
+        $this->validateEnumValue($data, 'category', BaseItemCategory::valuesToList(), $prefix, $errors);
+        $this->validateEnumValue($data, 'rarity', BaseItemRarity::valuesToList(), $prefix, $errors);
+        $this->validateEnumValue($data, 'currency', BaseItemCurrency::valuesToList(), $prefix, $errors);
+
+        foreach (['price' => 1_000_000_000, 'specific_currency_price' => 1_000_000] as $field => $maximum) {
+            if (array_key_exists($field, $data)
+                && ($data[$field] !== null && (! is_int($data[$field]) || $data[$field] < 0 || $data[$field] > $maximum))) {
+                $errors[] = "{$prefix}: data.{$field} musi być liczbą całkowitą od 0 do {$maximum}.";
+            }
+        }
+
+        foreach (['attributes', 'attributes_patch', 'attribute_points', 'manual_attribute_points', 'reverse_attributes'] as $field) {
+            if (array_key_exists($field, $data) && $data[$field] !== null && ! is_array($data[$field])) {
+                $errors[] = "{$prefix}: data.{$field} musi być obiektem JSON albo null.";
+            }
+        }
+
+        if (array_key_exists('attributes', $data) && array_key_exists('attributes_patch', $data)) {
+            $errors[] = "{$prefix}: użyj data.attributes albo data.attributes_patch, nie obu jednocześnie.";
+        }
+
+        if (array_key_exists('remove_attributes', $data)
+            && (! is_array($data['remove_attributes']) || collect($data['remove_attributes'])->contains(fn ($key): bool => ! is_string($key) || trim($key) === ''))) {
+            $errors[] = "{$prefix}: data.remove_attributes musi być listą nazw atrybutów.";
+        }
+
+        if (array_key_exists('image_data_uri', $data)) {
+            $this->validateItemImage($data['image_data_uri'], $prefix, $errors);
+        }
+    }
+
+    /** @param array<int, string> $allowedValues @param array<int, string> $errors */
+    private function validateEnumValue(array $data, string $field, array $allowedValues, string $prefix, array &$errors): void
+    {
+        if (array_key_exists($field, $data) && ! in_array($data[$field], $allowedValues, true)) {
+            $errors[] = "{$prefix}: data.{$field} ma nieobsługiwaną wartość.";
+        }
+    }
+
+    /** @param array<int, string> $errors */
+    private function validateItemImage(mixed $image, string $prefix, array &$errors): void
+    {
+        if (! is_string($image) || strlen($image) > 200_000
+            || preg_match('/^data:image\/(png|gif);base64,/', $image) !== 1) {
+            $errors[] = "{$prefix}: grafika itemu musi być PNG lub GIF 32×32 przekazanym jako data URI.";
+
+            return;
+        }
+
+        $decoded = base64_decode(substr($image, strpos($image, ',') + 1), true);
+        $imageInfo = is_string($decoded) ? @getimagesizefromstring($decoded) : false;
+
+        if ($imageInfo === false || ! in_array($imageInfo['mime'], ['image/png', 'image/gif'], true)
+            || $imageInfo[0] !== 32 || $imageInfo[1] !== 32) {
+            $errors[] = "{$prefix}: grafika itemu musi być prawidłowym plikiem PNG lub GIF o wymiarach dokładnie 32×32 px.";
+        }
+    }
+
+    /**
+     * @param  array<int, string>  $itemKeys
+     * @param  array<int, array{positions: array<int, int>, items: array<int, string>}>  $plannedShopPositions
+     * @param  array<int, string>  $errors
+     */
+    private function validateShopItemOperation(
+        array $operation,
+        array $itemKeys,
+        array &$plannedShopPositions,
+        string $prefix,
+        array &$errors,
+    ): void {
+        $shop = Shop::query()->find($operation['shop_id'] ?? null);
+        if ($shop === null) {
+            $errors[] = "{$prefix}: shop_id nie wskazuje istniejącego sklepu.";
+
+            return;
+        }
+
+        $itemReference = $this->validateItemReference($operation, $itemKeys, $prefix, $errors);
+        $position = $this->shopPosition($operation, $prefix, $errors);
+        if ($itemReference === null || $position === null) {
+            return;
+        }
+
+        $shopId = (int) $shop->id;
+        $plannedShopPositions[$shopId] ??= [
+            'positions' => $shop->items()->pluck('shop_items.position')->map(fn ($value): int => (int) $value)->all(),
+            'items' => $shop->items()->pluck('base_items.id')->map(fn ($value): string => 'id:'.(int) $value)->all(),
+        ];
+
+        if (in_array($position, $plannedShopPositions[$shopId]['positions'], true)) {
+            $errors[] = "{$prefix}: pozycja {$position} w sklepie [{$shop->name}] jest już zajęta.";
+        }
+
+        if (in_array($itemReference, $plannedShopPositions[$shopId]['items'], true)) {
+            $errors[] = "{$prefix}: ten item jest już przypisany do sklepu [{$shop->name}].";
+        }
+
+        $plannedShopPositions[$shopId]['positions'][] = $position;
+        $plannedShopPositions[$shopId]['items'][] = $itemReference;
+    }
+
+    /** @param array<int, string> $errors */
+    private function shopPosition(array $operation, string $prefix, array &$errors): ?int
+    {
+        $position = $operation['position'] ?? null;
+        $row = $operation['row'] ?? null;
+        $column = $operation['column'] ?? null;
+
+        if ($position === null && ($row === null || $column === null)) {
+            $errors[] = "{$prefix}: podaj position 0–79 albo row 0–9 i column 0–7.";
+
+            return null;
+        }
+
+        if (($row === null) !== ($column === null)) {
+            $errors[] = "{$prefix}: row i column muszą być podane razem.";
+
+            return null;
+        }
+
+        if ($row !== null && (! is_int($row) || $row < 0 || $row > 9 || ! is_int($column) || $column < 0 || $column > 7)) {
+            $errors[] = "{$prefix}: sklep ma 10 rzędów 0–9 i 8 kolumn 0–7.";
+
+            return null;
+        }
+
+        $gridPosition = $row !== null ? ($row * 8) + $column : null;
+        if ($position !== null && (! is_int($position) || $position < 0 || $position > 79)) {
+            $errors[] = "{$prefix}: position musi mieścić się w zakresie 0–79.";
+
+            return null;
+        }
+
+        if ($position !== null && $gridPosition !== null && $position !== $gridPosition) {
+            $errors[] = "{$prefix}: position nie zgadza się z row × 8 + column.";
+
+            return null;
+        }
+
+        return $position ?? $gridPosition;
+    }
+
+    /** @param array<int, string> $itemKeys @param array<int, array<int, string>> $plannedBaseNpcLoots @param array<int, string> $errors */
+    private function validateBaseNpcLootOperation(
+        array $operation,
+        array $itemKeys,
+        array &$plannedBaseNpcLoots,
+        string $prefix,
+        array &$errors,
+    ): void {
+        $baseNpcId = (int) ($operation['base_npc_id'] ?? 0);
+        if (! BaseNpc::query()->whereKey($baseNpcId)->exists()) {
+            $errors[] = "{$prefix}: base_npc_id nie wskazuje istniejącego BaseNPC.";
+        }
+
+        $itemReference = $this->validateItemReference($operation, $itemKeys, $prefix, $errors);
+        if ($itemReference === null || $baseNpcId < 1) {
+            return;
+        }
+
+        $plannedBaseNpcLoots[$baseNpcId] ??= BaseNpcLoot::query()
+            ->where('base_npc_id', $baseNpcId)
+            ->pluck('base_item_id')
+            ->map(fn ($value): string => 'id:'.(int) $value)
+            ->all();
+
+        if (in_array($itemReference, $plannedBaseNpcLoots[$baseNpcId], true)) {
+            $errors[] = "{$prefix}: ten item jest już lootem wskazanego BaseNPC.";
+        }
+
+        $plannedBaseNpcLoots[$baseNpcId][] = $itemReference;
+    }
+
+    /** @param array<int, string> $itemKeys @param array<int, string> $errors */
+    private function validateItemReference(array $operation, array $itemKeys, string $prefix, array &$errors): ?string
+    {
+        $itemId = $operation['item_id'] ?? null;
+        $itemKey = $operation['item_key'] ?? null;
+
+        if ($itemId !== null && $itemKey !== null) {
+            $errors[] = "{$prefix}: podaj item_id albo item_key, nie oba.";
+
+            return null;
+        }
+
+        if (is_numeric($itemId) && BaseItem::query()->whereKey((int) $itemId)->exists()) {
+            return 'id:'.(int) $itemId;
+        }
+
+        if (is_string($itemKey) && in_array($itemKey, $itemKeys, true)) {
+            return 'key:'.$itemKey;
+        }
+
+        $errors[] = "{$prefix}: podaj istniejący item_id albo item_key utworzony wcześniej w tym commicie.";
+
+        return null;
+    }
+
+    /** @param array<int, string> $errors */
     private function validateExistingItemReferences(array $operation, string $prefix, array &$errors): void
     {
         $itemIds = [];
@@ -574,7 +883,7 @@ class AiChangeSetService
         $missingIds = array_values(array_diff($itemIds, $existingIds));
 
         if ($missingIds !== []) {
-            $errors[] = "{$prefix}: itemy [".implode(', ', $missingIds).'] nie istnieją. AI nie może tworzyć nowych itemów.';
+            $errors[] = "{$prefix}: itemy [".implode(', ', $missingIds).'] nie istnieją; użyj istniejących ID albo placeholderów @item:key z tego commita.';
         }
     }
 
@@ -611,11 +920,64 @@ class AiChangeSetService
     private function executeOperations(array $operations): array
     {
         $result = [
-            'created' => ['quests' => [], 'dialogs' => [], 'npcs' => []],
-            'updated' => ['dialogs' => [], 'npcs' => []],
-            'references' => ['quests' => [], 'steps' => [], 'dialogs' => []],
+            'created' => [
+                'quests' => [],
+                'dialogs' => [],
+                'npcs' => [],
+                'base_items' => [],
+                'shop_items' => [],
+                'base_npc_loots' => [],
+            ],
+            'updated' => ['dialogs' => [], 'npcs' => [], 'base_items' => []],
+            'references' => ['quests' => [], 'steps' => [], 'dialogs' => [], 'items' => []],
         ];
-        $before = ['dialogs' => [], 'npcs' => []];
+        $before = ['dialogs' => [], 'npcs' => [], 'base_items' => []];
+
+        foreach ($operations as $operation) {
+            if (! in_array($operation['type'], ['create_base_item', 'clone_base_item', 'update_base_item'], true)) {
+                continue;
+            }
+
+            $data = $operation['data'] ?? [];
+            if ($operation['type'] === 'create_base_item') {
+                $baseItem = new BaseItem;
+                $baseItem->forceFill([
+                    'name' => $data['name'],
+                    'category' => $data['category'],
+                    'rarity' => $data['rarity'],
+                    'price' => $data['price'],
+                    'currency' => $data['currency'],
+                    'specific_currency_price' => $data['specific_currency_price'] ?? null,
+                    'attributes' => $data['attributes'] ?? null,
+                    'attribute_points' => $data['attribute_points'] ?? null,
+                    'manual_attribute_points' => $data['manual_attribute_points'] ?? null,
+                    'reverse_attributes' => $data['reverse_attributes'] ?? null,
+                    'edited_manually' => true,
+                    'src' => '',
+                    'stats' => '',
+                    'cl' => 0,
+                    'pr' => 0,
+                ])->save();
+            } elseif ($operation['type'] === 'clone_base_item') {
+                $sourceBaseItem = BaseItem::query()->findOrFail($operation['source_base_item_id']);
+                $baseItem = $sourceBaseItem->replicate();
+                $baseItem->forceFill(['stats' => '', 'edited_manually' => true])->save();
+                $this->applyBaseItemData($baseItem, $data);
+            } else {
+                $baseItem = BaseItem::query()->findOrFail($operation['item_id']);
+                $before['base_items'][(string) $baseItem->id] ??= $this->snapshotBaseItem($baseItem);
+                $this->applyBaseItemData($baseItem, $data);
+                $result['updated']['base_items'][] = $baseItem->id;
+            }
+
+            if ($operation['type'] !== 'update_base_item') {
+                if ($operation['type'] === 'create_base_item') {
+                    $this->applyBaseItemData($baseItem, $data);
+                }
+                $result['created']['base_items'][] = $baseItem->id;
+                $result['references']['items'][$operation['key']] = $baseItem->id;
+            }
+        }
 
         foreach ($operations as $operation) {
             if ($operation['type'] !== 'create_quest') {
@@ -698,6 +1060,25 @@ class AiChangeSetService
                 }
 
                 $result['created']['npcs'][] = $npc->id;
+            }
+
+            if ($operation['type'] === 'attach_item_to_shop') {
+                $shopItem = new ShopItem;
+                $shopItem->forceFill([
+                    'shop_id' => $operation['shop_id'],
+                    'item_id' => $this->resolveItemId($operation, $result['references']),
+                    'position' => $this->resolvedShopPosition($operation),
+                ])->save();
+                $result['created']['shop_items'][] = $shopItem->id;
+            }
+
+            if ($operation['type'] === 'attach_item_to_base_npc_loot') {
+                $baseNpcLoot = new BaseNpcLoot;
+                $baseNpcLoot->forceFill([
+                    'base_npc_id' => $operation['base_npc_id'],
+                    'base_item_id' => $this->resolveItemId($operation, $result['references']),
+                ])->save();
+                $result['created']['base_npc_loots'][] = $baseNpcLoot->id;
             }
         }
 
@@ -897,6 +1278,12 @@ class AiChangeSetService
             data_get($result, 'created.npcs', []),
             data_get($result, 'updated.npcs', []),
         )));
+        $baseItemIds = array_values(array_unique(array_merge(
+            data_get($result, 'created.base_items', []),
+            data_get($result, 'updated.base_items', []),
+        )));
+        $shopItemIds = data_get($result, 'created.shop_items', []);
+        $baseNpcLootIds = data_get($result, 'created.base_npc_loots', []);
 
         return [
             'quests' => Quest::query()->whereIn('id', $questIds)->orderBy('id')->get()
@@ -905,6 +1292,12 @@ class AiChangeSetService
                 ->mapWithKeys(fn (Dialog $dialog): array => [(string) $dialog->id => $this->snapshotDialog($dialog)])->all(),
             'npcs' => Npc::query()->whereIn('id', $npcIds)->orderBy('id')->get()
                 ->mapWithKeys(fn (Npc $npc): array => [(string) $npc->id => $this->snapshotNpc($npc)])->all(),
+            'base_items' => BaseItem::query()->whereIn('id', $baseItemIds)->orderBy('id')->get()
+                ->mapWithKeys(fn (BaseItem $baseItem): array => [(string) $baseItem->id => $this->snapshotBaseItem($baseItem)])->all(),
+            'shop_items' => ShopItem::query()->whereIn('id', $shopItemIds)->orderBy('id')->get()
+                ->mapWithKeys(fn (ShopItem $shopItem): array => [(string) $shopItem->id => $this->snapshotShopItem($shopItem)])->all(),
+            'base_npc_loots' => BaseNpcLoot::query()->whereIn('id', $baseNpcLootIds)->orderBy('id')->get()
+                ->mapWithKeys(fn (BaseNpcLoot $baseNpcLoot): array => [(string) $baseNpcLoot->id => $this->snapshotBaseNpcLoot($baseNpcLoot)])->all(),
         ];
     }
 
@@ -993,6 +1386,50 @@ class AiChangeSetService
         ];
     }
 
+    /** @return array<string, mixed> */
+    private function snapshotBaseItem(BaseItem $baseItem): array
+    {
+        return [
+            'id' => $baseItem->id,
+            'name' => $baseItem->name,
+            'src' => $baseItem->src,
+            'stats' => $baseItem->stats,
+            'cl' => $baseItem->cl,
+            'pr' => $baseItem->pr,
+            'edited_manually' => $baseItem->edited_manually,
+            'attributes' => $baseItem->attributes,
+            'attribute_points' => $baseItem->attribute_points,
+            'manual_attribute_points' => $baseItem->manual_attribute_points,
+            'reverse_attributes' => $baseItem->reverse_attributes,
+            'category' => $baseItem->category?->value,
+            'currency' => $baseItem->currency?->value,
+            'price' => $baseItem->price,
+            'specific_currency_price' => $baseItem->specific_currency_price,
+            'rarity' => $baseItem->rarity,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function snapshotShopItem(ShopItem $shopItem): array
+    {
+        return [
+            'id' => $shopItem->id,
+            'shop_id' => $shopItem->shop_id,
+            'item_id' => $shopItem->item_id,
+            'position' => $shopItem->position,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function snapshotBaseNpcLoot(BaseNpcLoot $baseNpcLoot): array
+    {
+        return [
+            'id' => $baseNpcLoot->id,
+            'base_npc_id' => $baseNpcLoot->base_npc_id,
+            'base_item_id' => $baseNpcLoot->base_item_id,
+        ];
+    }
+
     /** @param array<string, mixed> $snapshot */
     private function restoreDialog(array $snapshot): void
     {
@@ -1033,6 +1470,56 @@ class AiChangeSetService
         }
     }
 
+    /** @param array<string, mixed> $snapshot */
+    private function restoreBaseItem(array $snapshot): void
+    {
+        BaseItem::query()->findOrFail($snapshot['id'])->forceFill($snapshot)->save();
+    }
+
+    /** @param array<string, mixed> $data */
+    private function applyBaseItemData(BaseItem $baseItem, array $data): void
+    {
+        $fields = Arr::only($data, [
+            'name',
+            'category',
+            'rarity',
+            'price',
+            'currency',
+            'specific_currency_price',
+            'attribute_points',
+            'manual_attribute_points',
+            'reverse_attributes',
+        ]);
+
+        if (array_key_exists('attributes', $data)) {
+            $fields['attributes'] = $data['attributes'] === [] ? null : $data['attributes'];
+        } elseif (array_key_exists('attributes_patch', $data) || array_key_exists('remove_attributes', $data)) {
+            $attributes = $baseItem->attributes ?? [];
+            foreach ($data['attributes_patch'] ?? [] as $key => $value) {
+                if ($value === null) {
+                    unset($attributes[$key]);
+                } else {
+                    $attributes[$key] = $value;
+                }
+            }
+            foreach ($data['remove_attributes'] ?? [] as $key) {
+                unset($attributes[$key]);
+            }
+            $fields['attributes'] = $attributes === [] ? null : $attributes;
+        }
+
+        $baseItem->forceFill([...$fields, 'edited_manually' => true])->save();
+
+        if (isset($data['image_data_uri'])) {
+            $this->baseItemService->updateImageFromBase64(
+                $baseItem,
+                Str::of($data['image_data_uri']),
+                Str::of($baseItem->name),
+                'img',
+            );
+        }
+    }
+
     private function assertCreatedEntitiesHaveNoOutsideReferences(array $result): void
     {
         $createdDialogIds = data_get($result, 'created.dialogs', []);
@@ -1054,6 +1541,27 @@ class AiChangeSetService
             if ($outsideDialogs->isNotEmpty()) {
                 throw ValidationException::withMessages([
                     'change_set' => 'Nie można cofnąć commita: utworzony quest jest używany przez później zmieniony dialog.',
+                ]);
+            }
+        }
+
+        $createdItemIds = data_get($result, 'created.base_items', []);
+        $createdShopItemIds = data_get($result, 'created.shop_items', []);
+        $createdBaseNpcLootIds = data_get($result, 'created.base_npc_loots', []);
+        foreach (BaseItem::query()->whereIn('id', $createdItemIds)->get() as $baseItem) {
+            $hasOutsideShop = ShopItem::query()
+                ->where('item_id', $baseItem->id)
+                ->whereNotIn('id', $createdShopItemIds)
+                ->exists();
+            $hasOutsideLoot = BaseNpcLoot::query()
+                ->where('base_item_id', $baseItem->id)
+                ->whereNotIn('id', $createdBaseNpcLootIds)
+                ->exists();
+            $outsideDialogs = $baseItem->dialogs()->pluck('dialogs.id')->diff($touchedDialogIds);
+
+            if ($hasOutsideShop || $hasOutsideLoot || $outsideDialogs->isNotEmpty() || $baseItem->hotelRooms()->exists()) {
+                throw ValidationException::withMessages([
+                    'change_set' => "Nie można cofnąć commita: utworzony item [{$baseItem->id}] został później użyty poza tym commitem.",
                 ]);
             }
         }
@@ -1085,6 +1593,10 @@ class AiChangeSetService
             return str_ends_with(implode('.', $path), 'setQuestStep.value') ? $id : 's-'.$id;
         }
 
+        if (str_starts_with($value, '@item:')) {
+            return (int) data_get($references, 'items.'.substr($value, 6));
+        }
+
         return $value;
     }
 
@@ -1094,6 +1606,21 @@ class AiChangeSetService
         return isset($operation['dialog_id'])
             ? (int) $operation['dialog_id']
             : (int) data_get($references, 'dialogs.'.$operation['dialog_key']);
+    }
+
+    /** @param array<string, mixed> $references */
+    private function resolveItemId(array $operation, array $references): int
+    {
+        return isset($operation['item_id'])
+            ? (int) $operation['item_id']
+            : (int) data_get($references, 'items.'.$operation['item_key']);
+    }
+
+    private function resolvedShopPosition(array $operation): int
+    {
+        return isset($operation['position'])
+            ? (int) $operation['position']
+            : ((int) $operation['row'] * 8) + (int) $operation['column'];
     }
 
     /** @return array<int, string> */
@@ -1144,5 +1671,22 @@ class AiChangeSetService
         if (! array_is_list($value)) {
             ksort($value);
         }
+    }
+
+    private function redactBinaryPayloads(mixed $value, ?string $key = null): mixed
+    {
+        if ($key === 'image_data_uri' && is_string($value)) {
+            return '[image data omitted; '.strlen($value).' bytes]';
+        }
+
+        if (! is_array($value)) {
+            return $value;
+        }
+
+        return collect($value)
+            ->mapWithKeys(fn ($child, $childKey): array => [
+                $childKey => $this->redactBinaryPayloads($child, is_string($childKey) ? $childKey : null),
+            ])
+            ->all();
     }
 }

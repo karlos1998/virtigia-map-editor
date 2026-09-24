@@ -1,6 +1,6 @@
 ---
 name: virtigia-content-authoring
-description: Create or edit Virtigia quests, dialogue graphs, and placed NPCs, or analyze Retro NPC combat, equipment, skills, and loot through the Virtigia Map Editor MCP. Use for Virtigia world content, NPC lookup, builds, drop chances, previewable AI commits, or rollback. Do not use it to create items, BaseNPC definitions, maps, or graphics.
+description: Create or edit Virtigia quests, dialogue graphs, BaseItems, shop and loot assignments, and placed NPCs, or analyze Retro combat and drops through the Virtigia Map Editor MCP. Use for world content, item graphics and attributes, builds, previewable AI commits, or rollback. Do not use it to create BaseNPC definitions or maps.
 ---
 
 # Virtigia Content Authoring
@@ -11,7 +11,7 @@ Treat the Map Editor MCP as the source of truth. Never guess record IDs or game-
 
 1. Call `profile` to confirm the employee identity and available worlds.
 2. Use the world named by the user. If none is named, state that you are using `retro` before drafting changes.
-3. Call `search_game_content` to resolve every referenced NPC, map, item, quest, and dialog. If results are ambiguous, ask the user which exact result they mean.
+3. Call `search_game_content` to resolve every referenced NPC, map, item, shop, quest, and dialog. If results are ambiguous, ask the user which exact result they mean.
 4. Before writing player-facing dialogue, call `get_writing_context` and follow [content-style.md](references/content-style.md).
 5. Before changing an existing dialog, call `get_dialog_graph`. Use `patch_dialog`; a shared dialog is intentionally changed for every NPC that uses it and is not a reason to stop.
 6. Build operations using [change-set-schema.md](references/change-set-schema.md), then call `draft_change_set`.
@@ -19,6 +19,17 @@ Treat the Map Editor MCP as the source of truth. Never guess record IDs or game-
 8. Report the created or changed IDs returned by the server.
 
 For rollback, call `list_change_sets`, identify the exact commit, and call `revert_change_set` only after confirmation. Rollback may be refused when later manual or AI edits touched the same records.
+
+## BaseItems, shops, loot and quest rewards
+
+For BaseItem work, read [base-items.md](references/base-items.md).
+
+1. Before cloning, scaling or editing, call `get_base_item` and use its exact current fields as the baseline.
+2. A wholly new item needs an attached PNG/GIF image exactly 32×32. A clone may reuse the source image unless the user supplies a replacement.
+3. Use `attributes_patch` and `remove_attributes` for targeted edits. When asked for a percentage improvement, calculate and show every exact before/after numeric value; preserve unrelated fields.
+4. Before assigning to a shop, call `get_shop_inventory`. Select an explicit free position from `0` to `79`; there are 8 columns and 10 rows, and `position = row × 8 + column`.
+5. Add shop and BaseNPC loot assignments in the same draft when requested. Reference a newly created item in dialogue rules/actions with `@item:<key>`.
+6. Include the item, image, attribute diff, shop slot and loot/reward assignments in the approval summary.
 
 ## Retro combat and loot analysis
 
@@ -37,9 +48,9 @@ These tools currently support only `retro`. They construct fake characters, item
 
 ## Hard boundaries
 
-- Never create items, BaseNPC definitions, maps, images, sprites, outfits, or other assets.
+- Never create BaseNPC definitions, maps, NPC sprites, outfits, or unrelated assets. BaseItem icons are allowed only through the validated 32×32 item-image field.
 - `place_npc` may only instantiate an existing BaseNPC on an existing map.
-- Quests and dialogs may reference only existing items found with `search_game_content`.
+- Quests and dialogs may reference existing items or BaseItems created earlier in the same commit through `@item:<key>`.
 - Never bypass the draft-and-apply flow.
 - Never call Retro Engine endpoints directly, read engine credentials or database configuration, inspect a local engine repository for game data, or create local scripts/clients as a fallback. If the required Map Editor MCP tool is missing or fails, stop and report that integration failure.
 - Existing dialogue is a tone reference, not text to copy.

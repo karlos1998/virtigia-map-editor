@@ -20,6 +20,8 @@
 
 W dialogach odwołuj się do utworzonych rekordów przez `@quest:roan_missing_package` oraz `@step:roan_missing_package:ask_roan`.
 
+BaseItem utworzony w tym samym commicie można wskazać w `addItems`, `removeItems` lub regułach `items` przez `@item:<key>`. Szczegóły i zasady grafiki opisuje [base-items.md](base-items.md).
+
 ## Dialog
 
 ```json
@@ -143,3 +145,64 @@ Można podać istniejące `dialog_id` zamiast `dialog_key`.
 ```
 
 Ta operacja tworzy wyłącznie instancję NPC. `base_npc_id` i każdy `map_id` muszą już istnieć.
+
+## BaseItem
+
+Nowy item od zera:
+
+```json
+{
+  "type": "create_base_item",
+  "key": "roan_token",
+  "data": {
+    "name": "Żeton Roana",
+    "category": "quests",
+    "rarity": "common",
+    "price": 0,
+    "currency": "unset",
+    "attributes": {"description": "Dowód wykonania zadania."},
+    "image_data_uri": "data:image/png;base64,..."
+  }
+}
+```
+
+Klon z celowymi zmianami:
+
+```json
+{
+  "type": "clone_base_item",
+  "key": "improved_sword",
+  "source_base_item_id": 123,
+  "data": {
+    "name": "Wzmocniony miecz",
+    "rarity": "heroic",
+    "attributes_patch": {"physicalDamage": [120, 150]},
+    "remove_attributes": ["oldBonus"]
+  }
+}
+```
+
+Edycja istniejącego itemu ma `type: update_base_item`, `item_id` i ten sam kształt `data`. `attributes_patch` zachowuje wszystkie niewymienione klucze; `attributes` zastępuje całość.
+
+## Sklep i loot BaseNPC
+
+```json
+{
+  "type": "attach_item_to_shop",
+  "item_key": "improved_sword",
+  "shop_id": 44,
+  "position": 17
+}
+```
+
+Pozycja musi być wolna i mieścić się w `0–79`. Można zamiast niej podać zgodne `row` (`0–9`) i `column` (`0–7`). Zawsze wcześniej wywołaj `get_shop_inventory`.
+
+```json
+{
+  "type": "attach_item_to_base_npc_loot",
+  "item_key": "improved_sword",
+  "base_npc_id": 934
+}
+```
+
+Istniejący item wskazuje się przez `item_id`, a utworzony wcześniej w tym commicie przez `item_key`.
