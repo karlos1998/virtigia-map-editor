@@ -12,11 +12,51 @@
     "name": "Zaginiona przesyłka Roana",
     "steps": [
       {"key": "ask_roan", "name": "Porozmawiaj z Roanem", "description": "Dowiedz się, co zaginęło."},
-      {"key": "return_roan", "name": "Wróć do Roana", "description": "Przekaż Roanowi wieści."}
+      {
+        "key": "hunt_rabbits",
+        "name": "Upoluj króliki",
+        "description": "Zdobądź pięć porcji mięsa.",
+        "auto_progress": {
+          "type": "mobs",
+          "mobs": [
+            {"type": "base_npc", "base_npc_id": 321, "quantity": 5}
+          ]
+        }
+      },
+      {"key": "return_roan", "name": "Wróć do Roana", "description": "Przekaż Roanowi mięso."}
     ]
   }
 }
 ```
+
+`description` jest wyłącznie tekstem dla gracza. Zabijanie mobów, upływ czasu i przejście następnego dnia muszą być zapisane w rzeczywistych polach progresu. Pełny schemat i reguły weryfikacji opisuje [quest-progress.md](quest-progress.md).
+
+## Edycja mechaniki istniejącego questa
+
+Najpierw wywołaj `get_quest`, aby pobrać prawdziwe `quest_id` i `step_id`. `patch_quest` zmienia tylko wymienione pola. Ustawienie `auto_progress` na `null` usuwa poprzedni automatyczny warunek.
+
+```json
+{
+  "type": "patch_quest",
+  "quest_id": 139,
+  "data": {
+    "steps": [
+      {
+        "step_id": 9001,
+        "auto_progress": {
+          "type": "mobs",
+          "mobs": [
+            {"type": "base_npc", "base_npc_id": 1189, "quantity": 10},
+            {"type": "base_npc", "base_npc_id": 1190, "quantity": 1}
+          ]
+        }
+      }
+    ]
+  }
+}
+```
+
+Po zastosowaniu commita ponownie wywołaj `get_quest` i porównaj wszystkie ID, ilości oraz kolejność kroków.
 
 W dialogach odwołuj się do utworzonych rekordów przez `@quest:roan_missing_package` oraz `@step:roan_missing_package:ask_roan`.
 

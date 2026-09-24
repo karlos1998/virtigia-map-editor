@@ -15,6 +15,7 @@ use App\Models\DialogNodeOption;
 use App\Models\Map as GameMap;
 use App\Models\Npc;
 use App\Models\Quest;
+use App\Models\QuestStep;
 use App\Models\Shop;
 
 class GameContentSearchService
@@ -221,6 +222,62 @@ class GameContentSearchService
                 ])->values()->all(),
                 'occupied_positions' => $occupiedPositions,
                 'free_positions' => array_values(array_diff(range(0, 79), $occupiedPositions)),
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    public function quest(string $world, int $questId): array
+    {
+        $world = $this->worldService->use($world);
+        $quest = Quest::query()
+            ->with([
+                'steps.autoProgress.mobs.baseNpc:id,name,src,lvl,rank',
+                'steps.autoProgress.mobs.mobSpecies:id,name',
+            ])
+            ->findOrFail($questId);
+
+        return [
+            'world' => $world,
+            'quest' => [
+                'id' => $quest->id,
+                'name' => $quest->name,
+                'steps' => $quest->steps->sortBy('id')->map(fn (QuestStep $step): array => [
+                    'id' => $step->id,
+                    'name' => $step->name,
+                    'description' => $step->description,
+                    'visible_in_quest_list' => $step->visible_in_quest_list,
+                    'auto_advance_next_day' => $step->auto_advance_next_day,
+                    'auto_advance_to_step_id' => $step->auto_advance_to_step_id,
+                    'auto_progress' => $step->autoProgress === null ? null : [
+                        'type' => $step->autoProgress->type,
+                        'time_seconds' => $step->autoProgress->time_seconds,
+                        'mobs' => $step->autoProgress->mobs->map(fn ($mob): array => [
+                            'type' => $mob->mob_species_id === null ? 'base_npc' : 'mob_species',
+                            'base_npc_id' => $mob->base_npc_id,
+                            'mob_species_id' => $mob->mob_species_id,
+                            'quantity' => $mob->quantity,
+                            'base_npc' => $mob->baseNpc === null ? null : [
+                                'id' => $mob->baseNpc->id,
+                                'name' => $mob->baseNpc->name,
+                                'level' => $mob->baseNpc->lvl,
+                                'rank' => $mob->baseNpc->rank?->value,
+                                'src' => $mob->baseNpc->src,
+                                'image_url' => AssetUrl::npc($mob->baseNpc->src),
+                            ],
+                            'mob_species' => $mob->mobSpecies === null ? null : [
+                                'id' => $mob->mobSpecies->id,
+                                'name' => $mob->mobSpecies->name,
+                            ],
+                        ])->values()->all(),
+                    ],
+                ])->values()->all(),
+            ],
+            'engine_behavior' => [
+                'mobs' => 'Every matching kill increments its target counter. When every target reaches quantity, the engine automatically activates the next quest step by step ID order.',
+                'time' => 'After time_seconds, the engine automatically activates the next quest step by step ID order.',
+                'next_day' => 'auto_advance_next_day runs on the next daily reset; auto_advance_to_step_id selects the target, while null clears the quest progress.',
+                'description_is_not_logic' => true,
             ],
         ];
     }

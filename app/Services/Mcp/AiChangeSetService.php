@@ -14,9 +14,12 @@ use App\Models\DialogEdge;
 use App\Models\DialogNode;
 use App\Models\DialogNodeOption;
 use App\Models\Map as GameMap;
+use App\Models\MobSpecies;
 use App\Models\Npc;
 use App\Models\Quest;
 use App\Models\QuestStep;
+use App\Models\QuestStepAutoProgress;
+use App\Models\QuestStepAutoProgressMob;
 use App\Models\Shop;
 use App\Models\ShopItem;
 use App\Models\User;
@@ -33,6 +36,7 @@ class AiChangeSetService
 {
     private const OPERATION_TYPES = [
         'create_quest',
+        'patch_quest',
         'create_dialog',
         'replace_dialog',
         'patch_dialog',
@@ -168,6 +172,10 @@ class AiChangeSetService
                 $this->restoreDialog($snapshot);
             }
 
+            foreach (data_get($before, 'quests', []) as $snapshot) {
+                $this->restoreQuest($snapshot);
+            }
+
             Quest::query()->whereIn('id', data_get($result, 'created.quests', []))->delete();
 
             ShopItem::query()->whereIn('id', data_get($result, 'created.shop_items', []))->delete();
@@ -287,6 +295,10 @@ class AiChangeSetService
                 $this->validateQuestOperation($data, $prefix, (string) ($operation['key'] ?? ''), $stepKeys, $errors);
             }
 
+            if ($type === 'patch_quest') {
+                $this->validateQuestPatchOperation($operation, $prefix, $errors);
+            }
+
             if (in_array($type, ['create_dialog', 'replace_dialog'], true)) {
                 if ($type === 'replace_dialog' && ! Dialog::query()->whereKey($operation['dialog_id'] ?? null)->exists()) {
                     $errors[] = "{$prefix}: dialog_id nie wskazuje istniejącego dialogu.";
@@ -387,6 +399,11 @@ class AiChangeSetService
     /** @param array<int, string> $stepKeys @param array<int, string> $errors */
     private function validateQuestOperation(array $data, string $prefix, string $questKey, array &$stepKeys, array &$errors): void
     {
+        $unknownFields = array_values(array_diff(array_keys($data), ['name', 'steps']));
+        if ($unknownFields !== []) {
+            $errors[] = "{$prefix}: nieobsługiwane pola questa: ".implode(', ', $unknownFields).'.';
+        }
+
         if (! is_string($data['name'] ?? null) || trim($data['name']) === '') {
             $errors[] = "{$prefix}: quest musi mieć nazwę.";
         }
@@ -397,13 +414,34 @@ class AiChangeSetService
             return;
         }
 
+        $localStepKeys = [];
         foreach ($data['steps'] as $stepIndex => $step) {
+            if (! is_array($step)) {
+                $errors[] = "{$prefix}: krok ".($stepIndex + 1).' musi być obiektem.';
+
+                continue;
+            }
+
+            $unknownStepFields = array_values(array_diff(array_keys($step), [
+                'key',
+                'name',
+                'description',
+                'visible_in_quest_list',
+                'auto_progress',
+                'auto_advance_next_day',
+                'auto_advance_to_step_key',
+            ]));
+            if ($unknownStepFields !== []) {
+                $errors[] = "{$prefix}: krok ".($stepIndex + 1).' ma nieobsługiwane pola: '.implode(', ', $unknownStepFields).'.';
+            }
+
             $key = $step['key'] ?? null;
             if (! is_string($key) || preg_match('/^[a-z0-9][a-z0-9_-]{0,63}$/', $key) !== 1) {
                 $errors[] = "{$prefix}: krok ".($stepIndex + 1).' musi mieć poprawny key.';
-            } elseif (in_array($questKey.':'.$key, $stepKeys, true)) {
+            } elseif (in_array($key, $localStepKeys, true)) {
                 $errors[] = "{$prefix}: key kroku [{$key}] występuje więcej niż raz w queście.";
             } else {
+                $localStepKeys[] = $key;
                 $stepKeys[] = $questKey.':'.$key;
             }
 
@@ -414,6 +452,236 @@ class AiChangeSetService
             if (! is_string($step['description'] ?? null)) {
                 $errors[] = "{$prefix}: krok ".($stepIndex + 1).' musi mieć opis.';
             }
+
+            if (array_key_exists('visible_in_quest_list', $step) && ! is_bool($step['visible_in_quest_list'])) {
+                $errors[] = "{$prefix}: visible_in_quest_list kroku ".($stepIndex + 1).' musi być wartością logiczną.';
+            }
+
+            if (array_key_exists('auto_advance_next_day', $step) && ! is_bool($step['auto_advance_next_day'])) {
+                $errors[] = "{$prefix}: auto_advance_next_day kroku ".($stepIndex + 1).' musi być wartością logiczną.';
+            }
+
+            if (array_key_exists('auto_progress', $step) && $step['auto_progress'] !== null) {
+                $this->validateQuestStepAutoProgress($step['auto_progress'], "{$prefix}, krok ".($stepIndex + 1), $errors);
+            }
+
+            if (($step['auto_progress'] ?? null) !== null && ($step['auto_advance_next_day'] ?? false)) {
+                $errors[] = "{$prefix}: krok ".($stepIndex + 1).' nie może jednocześnie używać auto_progress i auto_advance_next_day.';
+            }
+        }
+
+        foreach ($data['steps'] as $stepIndex => $step) {
+            if (! is_array($step) || ! array_key_exists('auto_advance_to_step_key', $step)) {
+                continue;
+            }
+
+            $targetKey = $step['auto_advance_to_step_key'];
+            if (! ($step['auto_advance_next_day'] ?? false)) {
+                $errors[] = "{$prefix}: auto_advance_to_step_key wymaga auto_advance_next_day w kroku ".($stepIndex + 1).'.';
+            }
+
+            if ($targetKey !== null && (! is_string($targetKey) || ! in_array($targetKey, $localStepKeys, true))) {
+                $errors[] = "{$prefix}: auto_advance_to_step_key kroku ".($stepIndex + 1).' wskazuje nieistniejący krok tego questa.';
+            }
+        }
+    }
+
+    /** @param array<int, string> $errors */
+    private function validateQuestPatchOperation(array $operation, string $prefix, array &$errors): void
+    {
+        $quest = Quest::query()->with('steps.autoProgress')->find($operation['quest_id'] ?? null);
+        if ($quest === null) {
+            $errors[] = "{$prefix}: quest_id nie wskazuje istniejącego questa.";
+
+            return;
+        }
+
+        $data = $operation['data'] ?? [];
+        $unknownFields = array_values(array_diff(array_keys($data), ['name', 'steps']));
+        if ($unknownFields !== []) {
+            $errors[] = "{$prefix}: nieobsługiwane pola patcha questa: ".implode(', ', $unknownFields).'.';
+        }
+
+        if ($data === [] || (array_keys($data) === ['steps'] && ($data['steps'] ?? []) === [])) {
+            $errors[] = "{$prefix}: patch questa nie zawiera żadnych zmian.";
+        }
+
+        if (array_key_exists('name', $data) && (! is_string($data['name']) || trim($data['name']) === '')) {
+            $errors[] = "{$prefix}: nazwa questa nie może być pusta.";
+        }
+
+        if (array_key_exists('steps', $data) && ! is_array($data['steps'])) {
+            $errors[] = "{$prefix}: data.steps musi być tablicą.";
+
+            return;
+        }
+
+        $questStepIds = $quest->steps->pluck('id')->map(fn ($id): int => (int) $id)->all();
+        $seenStepIds = [];
+        foreach ($data['steps'] ?? [] as $stepIndex => $step) {
+            if (! is_array($step)) {
+                $errors[] = "{$prefix}: patch kroku ".($stepIndex + 1).' musi być obiektem.';
+
+                continue;
+            }
+
+            $unknownStepFields = array_values(array_diff(array_keys($step), [
+                'step_id',
+                'name',
+                'description',
+                'visible_in_quest_list',
+                'auto_progress',
+                'auto_advance_next_day',
+                'auto_advance_to_step_id',
+            ]));
+            if ($unknownStepFields !== []) {
+                $errors[] = "{$prefix}: patch kroku ".($stepIndex + 1).' ma nieobsługiwane pola: '.implode(', ', $unknownStepFields).'.';
+            }
+
+            $stepId = filter_var($step['step_id'] ?? null, FILTER_VALIDATE_INT);
+            if ($stepId === false || ! in_array($stepId, $questStepIds, true)) {
+                $errors[] = "{$prefix}: step_id patcha ".($stepIndex + 1).' nie należy do wskazanego questa.';
+
+                continue;
+            }
+
+            if (in_array($stepId, $seenStepIds, true)) {
+                $errors[] = "{$prefix}: krok [{$stepId}] jest patchowany więcej niż raz.";
+            }
+            $seenStepIds[] = $stepId;
+            $existingStep = $quest->steps->firstWhere('id', $stepId);
+
+            if (count($step) === 1) {
+                $errors[] = "{$prefix}: patch kroku [{$stepId}] nie zawiera żadnych zmian.";
+            }
+
+            if (array_key_exists('name', $step) && (! is_string($step['name']) || trim($step['name']) === '')) {
+                $errors[] = "{$prefix}: nazwa kroku [{$stepId}] nie może być pusta.";
+            }
+
+            if (array_key_exists('description', $step) && $step['description'] !== null && ! is_string($step['description'])) {
+                $errors[] = "{$prefix}: description kroku [{$stepId}] musi być tekstem albo null.";
+            }
+
+            foreach (['visible_in_quest_list', 'auto_advance_next_day'] as $booleanField) {
+                if (array_key_exists($booleanField, $step) && ! is_bool($step[$booleanField])) {
+                    $errors[] = "{$prefix}: {$booleanField} kroku [{$stepId}] musi być wartością logiczną.";
+                }
+            }
+
+            if (array_key_exists('auto_progress', $step) && $step['auto_progress'] !== null) {
+                $this->validateQuestStepAutoProgress($step['auto_progress'], "{$prefix}, krok [{$stepId}]", $errors);
+            }
+
+            $effectiveAutoProgress = array_key_exists('auto_progress', $step)
+                ? $step['auto_progress']
+                : $existingStep?->autoProgress;
+            $effectiveNextDay = array_key_exists('auto_advance_next_day', $step)
+                ? $step['auto_advance_next_day']
+                : (bool) $existingStep?->auto_advance_next_day;
+            if ($effectiveAutoProgress !== null && $effectiveNextDay) {
+                $errors[] = "{$prefix}: krok [{$stepId}] nie może jednocześnie używać auto_progress i auto_advance_next_day.";
+            }
+
+            if (array_key_exists('auto_advance_to_step_id', $step)) {
+                $targetStepId = $step['auto_advance_to_step_id'];
+                if (! $effectiveNextDay) {
+                    $errors[] = "{$prefix}: auto_advance_to_step_id wymaga auto_advance_next_day w kroku [{$stepId}].";
+                }
+                if ($targetStepId !== null && (! is_int($targetStepId) || ! in_array($targetStepId, $questStepIds, true))) {
+                    $errors[] = "{$prefix}: auto_advance_to_step_id kroku [{$stepId}] nie należy do wskazanego questa.";
+                }
+            }
+        }
+    }
+
+    /** @param array<int, string> $errors */
+    private function validateQuestStepAutoProgress(mixed $autoProgress, string $prefix, array &$errors): void
+    {
+        if (! is_array($autoProgress)) {
+            $errors[] = "{$prefix}: auto_progress musi być obiektem albo null.";
+
+            return;
+        }
+
+        $unknownFields = array_values(array_diff(array_keys($autoProgress), ['type', 'time_seconds', 'mobs']));
+        if ($unknownFields !== []) {
+            $errors[] = "{$prefix}: auto_progress ma nieobsługiwane pola: ".implode(', ', $unknownFields).'.';
+        }
+
+        $type = $autoProgress['type'] ?? null;
+        if (! in_array($type, ['time', 'mobs'], true)) {
+            $errors[] = "{$prefix}: auto_progress.type musi mieć wartość time albo mobs.";
+
+            return;
+        }
+
+        if ($type === 'time') {
+            if (! is_int($autoProgress['time_seconds'] ?? null) || $autoProgress['time_seconds'] < 1) {
+                $errors[] = "{$prefix}: auto_progress.time_seconds musi być dodatnią liczbą całkowitą.";
+            }
+            if (($autoProgress['mobs'] ?? []) !== []) {
+                $errors[] = "{$prefix}: auto_progress typu time nie może zawierać celów mobs.";
+            }
+
+            return;
+        }
+
+        if (array_key_exists('time_seconds', $autoProgress) && $autoProgress['time_seconds'] !== null) {
+            $errors[] = "{$prefix}: auto_progress typu mobs nie może zawierać time_seconds.";
+        }
+
+        $mobs = $autoProgress['mobs'] ?? null;
+        if (! is_array($mobs) || $mobs === []) {
+            $errors[] = "{$prefix}: auto_progress typu mobs wymaga co najmniej jednego celu.";
+
+            return;
+        }
+
+        $seenTargets = [];
+        foreach ($mobs as $mobIndex => $mob) {
+            if (! is_array($mob)) {
+                $errors[] = "{$prefix}: cel ".($mobIndex + 1).' musi być obiektem.';
+
+                continue;
+            }
+
+            $unknownMobFields = array_values(array_diff(array_keys($mob), ['type', 'base_npc_id', 'mob_species_id', 'quantity']));
+            if ($unknownMobFields !== []) {
+                $errors[] = "{$prefix}: cel ".($mobIndex + 1).' ma nieobsługiwane pola: '.implode(', ', $unknownMobFields).'.';
+            }
+
+            $targetType = $mob['type'] ?? null;
+            if (! in_array($targetType, ['base_npc', 'mob_species'], true)) {
+                $errors[] = "{$prefix}: cel ".($mobIndex + 1).' musi mieć type base_npc albo mob_species.';
+
+                continue;
+            }
+
+            if (! is_int($mob['quantity'] ?? null) || $mob['quantity'] < 1) {
+                $errors[] = "{$prefix}: quantity celu ".($mobIndex + 1).' musi być dodatnią liczbą całkowitą.';
+            }
+
+            $targetIdField = $targetType === 'base_npc' ? 'base_npc_id' : 'mob_species_id';
+            $otherIdField = $targetType === 'base_npc' ? 'mob_species_id' : 'base_npc_id';
+            $targetId = $mob[$targetIdField] ?? null;
+            if (! is_int($targetId) || $targetId < 1) {
+                $errors[] = "{$prefix}: cel ".($mobIndex + 1)." wymaga poprawnego {$targetIdField}.";
+            } elseif ($targetType === 'base_npc' && ! BaseNpc::query()->whereKey($targetId)->exists()) {
+                $errors[] = "{$prefix}: BaseNPC [{$targetId}] z celu ".($mobIndex + 1).' nie istnieje.';
+            } elseif ($targetType === 'mob_species' && ! MobSpecies::query()->whereKey($targetId)->exists()) {
+                $errors[] = "{$prefix}: MobSpecies [{$targetId}] z celu ".($mobIndex + 1).' nie istnieje.';
+            }
+
+            if (array_key_exists($otherIdField, $mob) && $mob[$otherIdField] !== null) {
+                $errors[] = "{$prefix}: cel ".($mobIndex + 1)." typu {$targetType} nie może zawierać {$otherIdField}.";
+            }
+
+            $targetKey = $targetType.':'.$targetId;
+            if (in_array($targetKey, $seenTargets, true)) {
+                $errors[] = "{$prefix}: cel [{$targetKey}] występuje więcej niż raz.";
+            }
+            $seenTargets[] = $targetKey;
         }
     }
 
@@ -928,10 +1196,10 @@ class AiChangeSetService
                 'shop_items' => [],
                 'base_npc_loots' => [],
             ],
-            'updated' => ['dialogs' => [], 'npcs' => [], 'base_items' => []],
+            'updated' => ['quests' => [], 'dialogs' => [], 'npcs' => [], 'base_items' => []],
             'references' => ['quests' => [], 'steps' => [], 'dialogs' => [], 'items' => []],
         ];
-        $before = ['dialogs' => [], 'npcs' => [], 'base_items' => []];
+        $before = ['quests' => [], 'dialogs' => [], 'npcs' => [], 'base_items' => []];
 
         foreach ($operations as $operation) {
             if (! in_array($operation['type'], ['create_base_item', 'clone_base_item', 'update_base_item'], true)) {
@@ -987,6 +1255,7 @@ class AiChangeSetService
             $quest = Quest::query()->create(['name' => $operation['data']['name']]);
             $result['created']['quests'][] = $quest->id;
             $result['references']['quests'][$operation['key']] = $quest->id;
+            $stepsByKey = [];
 
             foreach ($operation['data']['steps'] as $stepData) {
                 $step = $quest->steps()->create([
@@ -996,8 +1265,63 @@ class AiChangeSetService
                     'auto_advance_next_day' => $stepData['auto_advance_next_day'] ?? false,
                     'auto_advance_to_step_id' => null,
                 ]);
+                $stepsByKey[$stepData['key']] = $step;
                 $result['references']['steps'][$operation['key'].':'.$stepData['key']] = $step->id;
             }
+
+            foreach ($operation['data']['steps'] as $stepData) {
+                $step = $stepsByKey[$stepData['key']];
+                if (isset($stepData['auto_progress'])) {
+                    $this->replaceQuestStepAutoProgress($step, $stepData['auto_progress']);
+                }
+
+                if (array_key_exists('auto_advance_to_step_key', $stepData)) {
+                    $step->forceFill([
+                        'auto_advance_to_step_id' => $stepData['auto_advance_to_step_key'] === null
+                            ? null
+                            : $stepsByKey[$stepData['auto_advance_to_step_key']]->id,
+                    ])->save();
+                }
+            }
+        }
+
+        foreach ($operations as $operation) {
+            if ($operation['type'] !== 'patch_quest') {
+                continue;
+            }
+
+            $quest = Quest::query()->findOrFail($operation['quest_id']);
+            $before['quests'][(string) $quest->id] ??= $this->snapshotQuest($quest);
+            $data = $operation['data'];
+
+            if (array_key_exists('name', $data)) {
+                $quest->forceFill(['name' => $data['name']])->save();
+            }
+
+            foreach ($data['steps'] ?? [] as $stepData) {
+                $step = $quest->steps()->findOrFail($stepData['step_id']);
+                $fields = Arr::only($stepData, [
+                    'name',
+                    'description',
+                    'visible_in_quest_list',
+                    'auto_advance_next_day',
+                    'auto_advance_to_step_id',
+                ]);
+                if (array_key_exists('auto_advance_next_day', $stepData)
+                    && $stepData['auto_advance_next_day'] === false
+                    && ! array_key_exists('auto_advance_to_step_id', $stepData)) {
+                    $fields['auto_advance_to_step_id'] = null;
+                }
+                if ($fields !== []) {
+                    $step->forceFill($fields)->save();
+                }
+
+                if (array_key_exists('auto_progress', $stepData)) {
+                    $this->replaceQuestStepAutoProgress($step, $stepData['auto_progress']);
+                }
+            }
+
+            $result['updated']['quests'][] = $quest->id;
         }
 
         foreach ($operations as $operation) {
@@ -1085,7 +1409,144 @@ class AiChangeSetService
         $result['created'] = array_map(fn (array $ids): array => array_values(array_unique($ids)), $result['created']);
         $result['updated'] = array_map(fn (array $ids): array => array_values(array_unique($ids)), $result['updated']);
 
+        $this->assertQuestProgressOperationsApplied($operations, $result['references']);
+
         return [$result, $before, $this->snapshotTouchedEntities($result)];
+    }
+
+    /** @param array<string, mixed>|null $autoProgressData */
+    private function replaceQuestStepAutoProgress(QuestStep $step, ?array $autoProgressData): void
+    {
+        $existingAutoProgress = $step->autoProgress()->first();
+        if ($autoProgressData === null) {
+            if ($existingAutoProgress !== null) {
+                $existingAutoProgress->mobs()->delete();
+                $existingAutoProgress->delete();
+            }
+
+            return;
+        }
+
+        $autoProgress = $step->autoProgress()->updateOrCreate([], [
+            'type' => $autoProgressData['type'],
+            'time_seconds' => $autoProgressData['type'] === 'time' ? $autoProgressData['time_seconds'] : null,
+        ]);
+        $autoProgress->mobs()->delete();
+
+        if ($autoProgressData['type'] !== 'mobs') {
+            return;
+        }
+
+        foreach ($autoProgressData['mobs'] as $mobData) {
+            $autoProgress->mobs()->create([
+                'base_npc_id' => $mobData['type'] === 'base_npc' ? $mobData['base_npc_id'] : null,
+                'mob_species_id' => $mobData['type'] === 'mob_species' ? $mobData['mob_species_id'] : null,
+                'quantity' => $mobData['quantity'],
+            ]);
+        }
+    }
+
+    /** @return array<string, mixed>|null */
+    private function normalizedQuestStepAutoProgress(?QuestStepAutoProgress $autoProgress): ?array
+    {
+        if ($autoProgress === null) {
+            return null;
+        }
+
+        return $this->normalizedQuestStepAutoProgressData([
+            'type' => $autoProgress->type,
+            'time_seconds' => $autoProgress->time_seconds,
+            'mobs' => $autoProgress->mobs->map(fn (QuestStepAutoProgressMob $mob): array => [
+                'type' => $mob->mob_species_id === null ? 'base_npc' : 'mob_species',
+                'base_npc_id' => $mob->base_npc_id,
+                'mob_species_id' => $mob->mob_species_id,
+                'quantity' => $mob->quantity,
+            ])->all(),
+        ]);
+    }
+
+    /** @param array<string, mixed>|null $autoProgressData @return array<string, mixed>|null */
+    private function normalizedQuestStepAutoProgressData(?array $autoProgressData): ?array
+    {
+        if ($autoProgressData === null) {
+            return null;
+        }
+
+        $type = $autoProgressData['type'];
+        $mobs = collect($autoProgressData['mobs'] ?? [])
+            ->map(fn (array $mob): array => [
+                'type' => $mob['type'],
+                'base_npc_id' => $mob['type'] === 'base_npc' ? (int) $mob['base_npc_id'] : null,
+                'mob_species_id' => $mob['type'] === 'mob_species' ? (int) $mob['mob_species_id'] : null,
+                'quantity' => (int) $mob['quantity'],
+            ])
+            ->sortBy(fn (array $mob): string => $mob['type'].':'.($mob['base_npc_id'] ?? $mob['mob_species_id']))
+            ->values()
+            ->all();
+
+        return [
+            'type' => $type,
+            'time_seconds' => $type === 'time' ? (int) $autoProgressData['time_seconds'] : null,
+            'mobs' => $type === 'mobs' ? $mobs : [],
+        ];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $operations
+     * @param  array<string, mixed>  $references
+     */
+    private function assertQuestProgressOperationsApplied(array $operations, array $references): void
+    {
+        foreach ($operations as $operation) {
+            if (! in_array($operation['type'], ['create_quest', 'patch_quest'], true)) {
+                continue;
+            }
+
+            foreach ($operation['data']['steps'] ?? [] as $stepData) {
+                $progressFields = ['auto_progress', 'auto_advance_next_day', 'auto_advance_to_step_key', 'auto_advance_to_step_id'];
+                if (array_intersect($progressFields, array_keys($stepData)) === []) {
+                    continue;
+                }
+
+                $stepId = $operation['type'] === 'create_quest'
+                    ? data_get($references, 'steps.'.$operation['key'].':'.$stepData['key'])
+                    : $stepData['step_id'];
+                $step = QuestStep::query()->with('autoProgress.mobs')->findOrFail($stepId);
+
+                if (array_key_exists('auto_progress', $stepData)) {
+                    $actual = $this->normalizedQuestStepAutoProgress($step->autoProgress);
+                    $expected = $this->normalizedQuestStepAutoProgressData($stepData['auto_progress']);
+                    if ($this->canonicalJson($actual ?? []) !== $this->canonicalJson($expected ?? [])) {
+                        throw ValidationException::withMessages([
+                            'operations' => "Odczyt kontrolny kroku questa [{$stepId}] nie potwierdził zapisania automatycznego postępu.",
+                        ]);
+                    }
+                }
+
+                if (array_key_exists('auto_advance_next_day', $stepData)
+                    && (bool) $step->auto_advance_next_day !== $stepData['auto_advance_next_day']) {
+                    throw ValidationException::withMessages([
+                        'operations' => "Odczyt kontrolny kroku questa [{$stepId}] nie potwierdził przejścia następnego dnia.",
+                    ]);
+                }
+
+                $targetField = $operation['type'] === 'create_quest'
+                    ? 'auto_advance_to_step_key'
+                    : 'auto_advance_to_step_id';
+                if (! array_key_exists($targetField, $stepData)) {
+                    continue;
+                }
+
+                $expectedTargetStepId = $operation['type'] === 'create_quest' && $stepData[$targetField] !== null
+                    ? data_get($references, 'steps.'.$operation['key'].':'.$stepData[$targetField])
+                    : $stepData[$targetField];
+                if ($step->auto_advance_to_step_id !== $expectedTargetStepId) {
+                    throw ValidationException::withMessages([
+                        'operations' => "Odczyt kontrolny kroku questa [{$stepId}] nie potwierdził docelowego kroku automatycznego przejścia.",
+                    ]);
+                }
+            }
+        }
     }
 
     /** @param array<string, mixed> $data */
@@ -1269,7 +1730,10 @@ class AiChangeSetService
     /** @return array<string, mixed> */
     private function snapshotTouchedEntities(array $result): array
     {
-        $questIds = data_get($result, 'created.quests', []);
+        $questIds = array_values(array_unique(array_merge(
+            data_get($result, 'created.quests', []),
+            data_get($result, 'updated.quests', []),
+        )));
         $dialogIds = array_values(array_unique(array_merge(
             data_get($result, 'created.dialogs', []),
             data_get($result, 'updated.dialogs', []),
@@ -1304,7 +1768,7 @@ class AiChangeSetService
     /** @return array<string, mixed> */
     private function snapshotQuest(Quest $quest): array
     {
-        $quest->load('steps');
+        $quest->load('steps.autoProgress.mobs');
 
         return [
             'id' => $quest->id,
@@ -1317,6 +1781,7 @@ class AiChangeSetService
                 'visible_in_quest_list' => $step->visible_in_quest_list,
                 'auto_advance_next_day' => $step->auto_advance_next_day,
                 'auto_advance_to_step_id' => $step->auto_advance_to_step_id,
+                'auto_progress' => $this->normalizedQuestStepAutoProgress($step->autoProgress),
             ])->values()->all(),
         ];
     }
@@ -1452,6 +1917,21 @@ class AiChangeSetService
         foreach ($snapshot['edges'] as $edgeData) {
             $edge = new DialogEdge;
             $edge->forceFill($edgeData)->save();
+        }
+    }
+
+    /** @param array<string, mixed> $snapshot */
+    private function restoreQuest(array $snapshot): void
+    {
+        $quest = Quest::query()->findOrFail($snapshot['id']);
+        $quest->forceFill(['name' => $snapshot['name']])->save();
+
+        foreach ($snapshot['steps'] as $stepData) {
+            $autoProgress = $stepData['auto_progress'];
+            unset($stepData['auto_progress']);
+            $step = $quest->steps()->findOrFail($stepData['id']);
+            $step->forceFill($stepData)->save();
+            $this->replaceQuestStepAutoProgress($step, $autoProgress);
         }
     }
 

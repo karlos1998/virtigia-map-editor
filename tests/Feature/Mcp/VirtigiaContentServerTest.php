@@ -7,6 +7,7 @@ use App\Mcp\Tools\Virtigia\ApplyChangeSetTool;
 use App\Mcp\Tools\Virtigia\DraftChangeSetTool;
 use App\Mcp\Tools\Virtigia\GetBaseItemTool;
 use App\Mcp\Tools\Virtigia\GetDialogGraphTool;
+use App\Mcp\Tools\Virtigia\GetQuestTool;
 use App\Mcp\Tools\Virtigia\GetRetroBuildOptionsTool;
 use App\Mcp\Tools\Virtigia\GetShopInventoryTool;
 use App\Mcp\Tools\Virtigia\GetWritingContextTool;
@@ -22,6 +23,8 @@ use App\Models\BaseNpcLoot;
 use App\Models\Dialog;
 use App\Models\DynamicModel;
 use App\Models\Quest;
+use App\Models\QuestStepAutoProgress;
+use App\Models\QuestStepAutoProgressMob;
 use App\Models\Shop;
 use App\Models\ShopItem;
 use App\Services\Mcp\AiChangeSetService;
@@ -182,6 +185,147 @@ class VirtigiaContentServerTest extends TestCase
 
         $this->assertStringStartsWith('[image data omitted;', $presented['operations'][0]['data']['image_data_uri']);
         $this->assertStringNotContainsString('base64,', $presented['operations'][0]['data']['image_data_uri']);
+    }
+
+    public function test_quest_rejects_invented_kill_fields_instead_of_ignoring_them(): void
+    {
+        $validation = app(AiChangeSetService::class)->validateOperations([[
+            'type' => 'create_quest',
+            'key' => 'broken_kill_quest',
+            'data' => [
+                'name' => 'Błędny quest zabójstw',
+                'steps' => [[
+                    'key' => 'kill_mobs',
+                    'name' => 'Zabij przeciwników',
+                    'description' => 'Zabij dziesięciu przeciwników.',
+                    'kill_targets' => [['base_npc_id' => 1189, 'quantity' => 10]],
+                    'on_complete_step_key' => 'return_to_npc',
+                ], [
+                    'key' => 'return_to_npc',
+                    'name' => 'Wróć do zleceniodawcy',
+                    'description' => 'Odbierz nagrodę.',
+                ]],
+            ],
+        ]]);
+
+        $this->assertFalse($validation['valid']);
+        $this->assertStringContainsString('kill_targets', implode(' ', $validation['errors']));
+        $this->assertStringContainsString('on_complete_step_key', implode(' ', $validation['errors']));
+    }
+
+    public function test_quest_commit_persists_reads_patches_and_reverts_real_mob_progress(): void
+    {
+        app(McpWorldService::class)->use('test');
+
+        try {
+            $user = \App\Models\User::factory()->create();
+            $monk = BaseNpc::query()->create([
+                'name' => 'Mnich testowy MCP',
+                'src' => 'test/monk.gif',
+                'lvl' => 20,
+                'category' => 'MOB',
+                'profession' => 'w',
+            ]);
+            $leader = BaseNpc::query()->create([
+                'name' => 'Przywódca testowy MCP',
+                'src' => 'test/leader.gif',
+                'lvl' => 25,
+                'category' => 'MOB',
+                'profession' => 'w',
+            ]);
+            $service = app(AiChangeSetService::class);
+            $createChangeSet = $service->draft($user, 'test', 'Quest zabójstw MCP', null, [[
+                'type' => 'create_quest',
+                'key' => 'monk_hunt',
+                'data' => [
+                    'name' => 'Polowanie testowe MCP',
+                    'steps' => [[
+                        'key' => 'accept',
+                        'name' => 'Przyjmij zadanie',
+                        'description' => 'Porozmawiaj ze zleceniodawcą.',
+                        'auto_advance_next_day' => true,
+                        'auto_advance_to_step_key' => 'kill',
+                    ], [
+                        'key' => 'kill',
+                        'name' => 'Pokonaj przeciwników',
+                        'description' => 'Pokonaj mnichów i ich przywódcę.',
+                        'auto_progress' => [
+                            'type' => 'mobs',
+                            'mobs' => [
+                                ['type' => 'base_npc', 'base_npc_id' => $monk->id, 'quantity' => 10],
+                                ['type' => 'base_npc', 'base_npc_id' => $leader->id, 'quantity' => 1],
+                            ],
+                        ],
+                    ], [
+                        'key' => 'return',
+                        'name' => 'Wróć do zleceniodawcy',
+                        'description' => 'Odbierz nagrodę.',
+                    ]],
+                ],
+            ]]);
+
+            $created = $service->apply($user, $createChangeSet->id, 1);
+            $questId = $created->result['references']['quests']['monk_hunt'];
+            $acceptStepId = $created->result['references']['steps']['monk_hunt:accept'];
+            $killStepId = $created->result['references']['steps']['monk_hunt:kill'];
+            $autoProgress = QuestStepAutoProgress::query()->where('quest_step_id', $killStepId)->firstOrFail();
+
+            $this->assertSame('mobs', $autoProgress->type);
+            $this->assertEqualsCanonicalizing([
+                ['base_npc_id' => $monk->id, 'quantity' => 10],
+                ['base_npc_id' => $leader->id, 'quantity' => 1],
+            ], QuestStepAutoProgressMob::query()
+                ->where('quest_step_auto_progress_id', $autoProgress->id)
+                ->get(['base_npc_id', 'quantity'])
+                ->map(fn (QuestStepAutoProgressMob $target): array => [
+                    'base_npc_id' => $target->base_npc_id,
+                    'quantity' => $target->quantity,
+                ])->all());
+
+            $readBack = app(GameContentSearchService::class)->quest('test', $questId);
+            $killStep = collect($readBack['quest']['steps'])->firstWhere('id', $killStepId);
+            $acceptStep = collect($readBack['quest']['steps'])->firstWhere('id', $acceptStepId);
+            $this->assertSame('mobs', $killStep['auto_progress']['type']);
+            $this->assertSame(10, $killStep['auto_progress']['mobs'][0]['quantity']);
+            $this->assertTrue($acceptStep['auto_advance_next_day']);
+            $this->assertSame($killStepId, $acceptStep['auto_advance_to_step_id']);
+            $this->assertTrue($readBack['engine_behavior']['description_is_not_logic']);
+
+            $patchChangeSet = $service->draft($user, 'test', 'Popraw ilość mnichów MCP', null, [[
+                'type' => 'patch_quest',
+                'quest_id' => $questId,
+                'data' => [
+                    'steps' => [[
+                        'step_id' => $killStepId,
+                        'auto_progress' => [
+                            'type' => 'mobs',
+                            'mobs' => [
+                                ['type' => 'base_npc', 'base_npc_id' => $monk->id, 'quantity' => 15],
+                                ['type' => 'base_npc', 'base_npc_id' => $leader->id, 'quantity' => 1],
+                            ],
+                        ],
+                    ]],
+                ],
+            ]]);
+            $service->apply($user, $patchChangeSet->id, 1);
+
+            $patched = app(GameContentSearchService::class)->quest('test', $questId);
+            $patchedKillStep = collect($patched['quest']['steps'])->firstWhere('id', $killStepId);
+            $this->assertSame(15, $patchedKillStep['auto_progress']['mobs'][0]['quantity']);
+
+            $service->revert($user, $patchChangeSet->id);
+            $reverted = app(GameContentSearchService::class)->quest('test', $questId);
+            $revertedKillStep = collect($reverted['quest']['steps'])->firstWhere('id', $killStepId);
+            $this->assertSame(10, $revertedKillStep['auto_progress']['mobs'][0]['quantity']);
+
+            $service->revert($user, $createChangeSet->id);
+            $this->assertNull(Quest::query()->find($questId));
+        } finally {
+            app(McpWorldService::class)->use('test');
+            Quest::query()->where('name', 'Polowanie testowe MCP')->delete();
+            BaseNpc::query()->whereIn('name', ['Mnich testowy MCP', 'Przywódca testowy MCP'])->delete();
+            DynamicModel::clearGlobalConnection();
+        }
     }
 
     public function test_item_commit_can_create_assign_and_revert_everything(): void
@@ -378,6 +522,7 @@ class VirtigiaContentServerTest extends TestCase
             'shop inventory' => [GetShopInventoryTool::class, 'get_shop_inventory'],
             'writing context' => [GetWritingContextTool::class, 'get_writing_context'],
             'dialog graph' => [GetDialogGraphTool::class, 'get_dialog_graph'],
+            'quest' => [GetQuestTool::class, 'get_quest'],
             'inspect retro npc' => [InspectRetroNpcTool::class, 'inspect_retro_npc'],
             'retro build options' => [GetRetroBuildOptionsTool::class, 'get_retro_build_options'],
             'retro combat simulation' => [SimulateRetroCombatTool::class, 'simulate_retro_combat'],
