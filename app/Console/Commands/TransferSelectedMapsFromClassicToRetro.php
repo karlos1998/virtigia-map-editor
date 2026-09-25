@@ -35,7 +35,9 @@ class TransferSelectedMapsFromClassicToRetro extends Command
     public function handle()
     {
 
-        $ids = [599, 730];
+        $ids = [2102];
+//        $ids = [2117, 2105, 2069, 2106, 1793, 2924, 2925, 2926];
+//        $ids = [599, 730];
 
 //        $ids = [1568];
 
