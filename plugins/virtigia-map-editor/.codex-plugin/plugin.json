@@ -1,6 +1,6 @@
 {
   "name": "virtigia-map-editor",
-  "version": "0.7.0+codex.20260926231429",
+  "version": "0.7.1+codex.20260926232454",
   "description": "Tworzy mapy i kolizje, BaseNPC z dostarczonych grafik, questy, dialogi, przej\u015bcia i BaseItemy Virtigii oraz analizuje walk\u0119 i loot Retro przez Map Editor.",
   "author": {
     "name": "Virtigia"

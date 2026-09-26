@@ -10,6 +10,13 @@ abstract class VirtigiaTool extends Tool
     public function toArray(): array
     {
         $tool = parent::toArray();
+        $annotations = (array) ($tool['annotations'] ?? []);
+        $tool['annotations'] = [
+            'readOnlyHint' => false,
+            'destructiveHint' => false,
+            'openWorldHint' => false,
+            ...$annotations,
+        ];
         $tool['_meta']['securitySchemes'] = [
             [
                 'type' => 'oauth2',

@@ -783,9 +783,26 @@ class VirtigiaContentServerTest extends TestCase
     public function test_tools_expose_stable_names(string $toolClass, string $expectedName): void
     {
         $tool = app($toolClass);
+        $serialized = $tool->toArray();
 
         $this->assertSame($expectedName, $tool->name());
-        $this->assertArrayHasKey('inputSchema', $tool->toArray());
+        $this->assertArrayHasKey('inputSchema', $serialized);
+        $this->assertArrayHasKey('readOnlyHint', $serialized['annotations']);
+        $this->assertArrayHasKey('destructiveHint', $serialized['annotations']);
+        $this->assertArrayHasKey('openWorldHint', $serialized['annotations']);
+    }
+
+    public function test_write_tools_have_explicit_safety_annotations(): void
+    {
+        $draftAnnotations = app(DraftChangeSetTool::class)->toArray()['annotations'];
+        $applyAnnotations = app(ApplyChangeSetTool::class)->toArray()['annotations'];
+
+        $this->assertFalse($draftAnnotations['readOnlyHint']);
+        $this->assertFalse($draftAnnotations['destructiveHint']);
+        $this->assertFalse($draftAnnotations['openWorldHint']);
+        $this->assertFalse($applyAnnotations['readOnlyHint']);
+        $this->assertTrue($applyAnnotations['destructiveHint']);
+        $this->assertFalse($applyAnnotations['openWorldHint']);
     }
 
     /** @return array<string, array{class-string, string}> */
