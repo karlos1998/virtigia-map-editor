@@ -5,17 +5,23 @@ namespace App\Services\Mcp;
 use App\Enums\BaseItemCategory;
 use App\Enums\BaseItemCurrency;
 use App\Enums\BaseItemRarity;
+use App\Enums\DialogCounterScope;
+use App\Enums\Profession;
 use App\Facades\AssetUrl;
 use App\Models\BaseItem;
 use App\Models\BaseNpc;
 use App\Models\Dialog;
+use App\Models\DialogCounter;
 use App\Models\DialogEdge;
 use App\Models\DialogNode;
 use App\Models\DialogNodeOption;
+use App\Models\Hotel;
 use App\Models\Map as GameMap;
+use App\Models\MobSpecies;
 use App\Models\Npc;
 use App\Models\Quest;
 use App\Models\QuestStep;
+use App\Models\SeasonalEvent;
 use App\Models\Shop;
 
 class GameContentSearchService
@@ -31,7 +37,10 @@ class GameContentSearchService
     public function search(string $world, string $query, array $types, ?string $mapName, int $limit): array
     {
         $world = $this->worldService->use($world);
-        $types = $types === [] ? ['maps', 'npcs', 'base_npcs', 'items', 'shops', 'quests', 'dialogs'] : $types;
+        $types = $types === [] ? [
+            'maps', 'npcs', 'base_npcs', 'items', 'shops', 'hotels', 'quests', 'dialogs',
+            'dialog_counters', 'seasonal_events', 'mob_species',
+        ] : $types;
         $limit = min(max($limit, 1), 25);
         $like = '%'.trim($query).'%';
         $results = [];
@@ -71,6 +80,55 @@ class GameContentSearchService
                 ->orderBy('name')
                 ->limit($limit)
                 ->get()
+                ->toArray();
+        }
+
+        if (in_array('hotels', $types, true)) {
+            $results['hotels'] = Hotel::query()
+                ->select(['id', 'name', 'currency', 'period'])
+                ->withCount('rooms')
+                ->where('name', 'like', $like)
+                ->orderBy('name')
+                ->limit($limit)
+                ->get()
+                ->toArray();
+        }
+
+        if (in_array('dialog_counters', $types, true)) {
+            $results['dialog_counters'] = DialogCounter::query()
+                ->where('name', 'like', $like)
+                ->orderBy('name')
+                ->limit($limit)
+                ->get(['id', 'name', 'scope'])
+                ->map(fn (DialogCounter $counter): array => [
+                    'id' => $counter->id,
+                    'name' => $counter->name,
+                    'scope' => $counter->scope?->value,
+                ])->all();
+        }
+
+        if (in_array('seasonal_events', $types, true)) {
+            $results['seasonal_events'] = SeasonalEvent::query()
+                ->where('name', 'like', $like)
+                ->orderBy('name')
+                ->limit($limit)
+                ->get(['id', 'name', 'slug', 'active', 'starts_at', 'ends_at'])
+                ->map(fn (SeasonalEvent $event): array => [
+                    'id' => $event->id,
+                    'name' => $event->name,
+                    'slug' => $event->slug,
+                    'is_currently_active' => $event->isCurrentlyActive(),
+                    'starts_at' => $event->starts_at?->toIso8601String(),
+                    'ends_at' => $event->ends_at?->toIso8601String(),
+                ])->all();
+        }
+
+        if (in_array('mob_species', $types, true)) {
+            $results['mob_species'] = MobSpecies::query()
+                ->where('name', 'like', $like)
+                ->orderBy('name')
+                ->limit($limit)
+                ->get(['id', 'name'])
                 ->toArray();
         }
 
@@ -340,12 +398,198 @@ class GameContentSearchService
     }
 
     /** @return array<string, mixed> */
+    public function dialogCapabilities(string $world): array
+    {
+        $world = $this->worldService->use($world);
+
+        return [
+            'world' => $world,
+            'graph_model' => [
+                'option_rules' => 'option.rules decide whether the answer is available to the player.',
+                'edge_rules' => 'edge.rules independently decide whether that particular outgoing branch may be followed. One option may lead to several targets with different edge rules.',
+                'terminal_option' => 'An option without an outgoing edge closes the conversation.',
+                'shared_dialog' => 'Editing one dialog changes it for every NPC that references the same dialog.',
+                'layout' => 'After patch_dialog the server recalculates node positions by graph depth and node size, preventing Vue Flow overlap.',
+                'patching' => 'Use stable IDs from get_dialog_graph for existing records and local keys for new records. Omitted fields and branches are preserved.',
+            ],
+            'text_runtime' => [
+                'placeholders' => [
+                    '#nick' => 'current character name',
+                    '#lvl' => 'current character level',
+                    '#difflvl(N)' => 'absolute difference between the character level and N',
+                ],
+                'bbcode' => ['[b]...[/b]', '[i]...[/i]', '[u]...[/u]', '[href=URL]...[/href]', '[img]URL[/img]', '[br]'],
+                'html' => 'Raw HTML is stripped by the client. Use supported BBCode only.',
+                'message_input' => 'A messageContent rule makes the client ask the player for text and send it with the option click. Its value is the required answer, max 100 characters.',
+            ],
+            'node_types' => [
+                'start' => [
+                    'purpose' => 'Invisible graph entry.',
+                    'outputs' => 'Direct edges; normally at least one. Rules belong on those edges.',
+                ],
+                'special' => [
+                    'purpose' => 'Visible NPC speech.',
+                    'fields' => ['content', 'action_data.focus', 'additional_actions', 'options'],
+                    'requirements' => 'At least one option; content is 3-2000 characters when present.',
+                ],
+                'shop' => [
+                    'purpose' => 'Opens an existing shop.',
+                    'fields' => ['shop_id'],
+                    'requirements' => 'shop_id must identify an existing shop. Preserve it when editing neighboring dialogue.',
+                ],
+                'hotel' => [
+                    'purpose' => 'Opens an existing hotel.',
+                    'fields' => ['hotel_id'],
+                    'requirements' => 'hotel_id must identify an existing hotel.',
+                ],
+                'teleportation' => [
+                    'purpose' => 'Teleports to an existing map or creates an instance of it.',
+                    'action_data' => [
+                        'teleportation' => [
+                            'mapId' => 'existing map ID',
+                            'x' => 'integer tile coordinate from 0 to map width - 1',
+                            'y' => 'integer tile coordinate from 0 to map height - 1',
+                            'createInstance' => 'boolean; clone the destination as a private instance',
+                            'includeNpcs' => 'boolean; copy NPCs from the base map into the instance',
+                            'scaleNpcsToPlayerLevel' => 'boolean; only meaningful for an instance with NPCs',
+                            'npcLevelOffset' => 'integer added to the player level when scaling NPCs',
+                            'scaleNpcLootItemLevels' => 'boolean; scale loot item levels in the instance',
+                            'npcLootItemLevelOffset' => 'integer item-level offset',
+                        ],
+                    ],
+                ],
+                'randomizer' => [
+                    'purpose' => 'Selects one direct outgoing edge by percentage.',
+                    'requirements' => 'Put percentageChance in every outgoing edge.rules. Values must total 100; the editor treats the last edge as the remainder.',
+                ],
+                'profession' => [
+                    'purpose' => 'Routes by the player profession.',
+                    'options' => collect(Profession::cases())->mapWithKeys(fn (Profession $profession): array => [
+                        $profession->value => $profession->description(),
+                    ])->all(),
+                    'requirements' => 'Provide exactly one option per profession, preferably keyed w, p, m, b, t and h. Each option may have at most one outgoing edge.',
+                ],
+                'minigame' => [
+                    'purpose' => 'Starts a minigame and branches on its result.',
+                    'action_data' => ['minigame' => ['type' => 'pipes|saper|mastermind|random', 'difficulty' => 'integer 1-3']],
+                    'outputs' => ['source-success' => 'win', 'source-fail' => 'loss'],
+                    'requirements' => 'Each result handle may have at most one edge.',
+                ],
+            ],
+            'camera_focus' => [
+                'placement' => 'special.action_data.focus',
+                'npc' => ['type' => 'npc', 'npcId' => 'placed NPC ID', 'locationId' => 'that NPC location ID', 'mapId' => 'location map ID', 'x' => 'location x', 'y' => 'location y'],
+                'coordinates' => ['type' => 'coordinates', 'x' => 'tile x on the current map', 'y' => 'tile y on the current map'],
+                'reset' => ['type' => 'reset'],
+                'runtime' => 'The client animates to the tile center in 260 ms with the target near 25% of screen height. npcId/locationId/mapId identify the editor selection; the client ultimately uses x/y.',
+                'lifecycle' => 'Focus persists across subsequent nodes until another focus instruction, reset, or dialog close. Closing a dialog always resets it.',
+                'selection' => 'For NPC focus, select only one of focus_targets returned by get_dialog_graph; those are placed NPC locations on maps where this dialog is used.',
+            ],
+            'rule_shape' => ['value' => 'required', 'value2' => 'rule-specific auxiliary value', 'consume' => 'optional boolean; true only for gold, honorPoints, items and dragonTears'],
+            'rules' => [
+                'gold' => ['value' => 'non-negative number', 'consume' => 'may deduct it'],
+                'honorPoints' => ['value' => 'non-negative integer', 'consume' => 'may deduct it'],
+                'level' => ['value' => 'minimum character level'],
+                'levelBelow' => ['value' => 'character level must be lower than this'],
+                'brotherhood' => ['value' => 0, 'meaning' => 'requires Karmazynowe Bractwo membership'],
+                'items' => ['value' => 'array of BaseItem IDs or @item:key placeholders', 'value2' => 'parallel array of quantities, each 1-1000', 'consume' => 'may remove the quantities'],
+                'equippedItems' => ['value' => 'non-empty unique BaseItem ID array; no two items may share a category'],
+                'percentageChance' => ['value' => 'integer 0-100; primarily for randomizer edge.rules'],
+                'questStep' => ['value' => 's-ID or q-ID, or an array; exact step means current step, whole quest means started'],
+                'questBeforeStep' => ['value' => 's-ID or q-ID, or an array; exact step means earlier in the same quest, whole quest means not started'],
+                'questAfterStep' => ['value' => 'prefer s-ID; passes on a later step. Whole-quest behavior is counterintuitive and treated by the engine like not started'],
+                'dragonTears' => ['value' => 'non-negative number', 'consume' => 'may deduct it'],
+                'messageContent' => ['value' => 'exact required player text, max 100 characters', 'meaning' => 'opens a text-input prompt in the client'],
+                'dialogCounter' => ['value' => 'existing DialogCounter ID', 'value2' => "['>'|'='|'<', integer]"],
+                'seasonalEvent' => ['value' => 'existing SeasonalEvent ID'],
+                'timeAfter' => ['value' => 'HH:MM in 24-hour time'],
+                'timeBefore' => ['value' => 'HH:MM in 24-hour time'],
+                'weekday' => ['value' => 'non-empty array; 1=Monday through 7=Sunday'],
+                'activePlayersOnMap' => ['value' => 'non-negative integer'],
+                'hasActiveBlessing' => ['value' => true],
+            ],
+            'additional_actions' => [
+                'timing' => 'The same object may be placed on a special node (runs when that speech is shown) or on an option (runs after the option is clicked).',
+                'actions' => [
+                    'addItems' => ['value' => 'BaseItem ID/@item:key array', 'value2' => 'parallel quantity array'],
+                    'addGold' => ['value' => 'number'],
+                    'addHonorPoints' => ['value' => 'number'],
+                    'addExp' => ['value' => 'number'],
+                    'addExpPercent' => ['value' => '0-100, max two decimal places'],
+                    'setQuestStep' => ['value' => 'QuestStep ID or @step:quest-key:step-key'],
+                    'blessing' => ['value' => 'existing BaseItem ID with category blessings', 'scale' => 'optional boolean'],
+                    'setOutfit' => ['value' => 'existing outfit asset path only', 'duration' => 'minutes; 0 is permanent'],
+                    'addDialogCounter' => ['value' => 'existing DialogCounter ID; increments it'],
+                    'resetDialogCounter' => ['value' => 'existing DialogCounter ID'],
+                    'resetAdditionalAttributePoints' => ['value' => 'number'],
+                ],
+            ],
+            'option_additional_action' => [
+                'timing' => 'A single enum action that runs when the option is clicked; independent from additional_actions.',
+                'values' => [
+                    'HEAL' => 'heal the character',
+                    'SELF_KILL' => 'kill the character',
+                    'SUBTRACT_EXP' => 'subtract experience',
+                    'BATTLE' => 'start combat with the interacted NPC',
+                    'KILL_AND_LOOT' => 'kill the NPC and show loot',
+                    'KILL' => 'kill the NPC automatically',
+                    'SHOW_MAIL' => 'open mail',
+                    'SHOW_DEPOSIT' => 'open personal deposit',
+                    'SHOW_CLAN_DEPOSIT' => 'open clan deposit',
+                    'SHOW_AUCTIONS' => 'open auctions',
+                ],
+            ],
+            'lookup_types' => [
+                'shops', 'hotels', 'dialog_counters', 'seasonal_events', 'items', 'quests', 'dialogs', 'maps', 'npcs',
+            ],
+            'dialog_counter_scopes' => collect(DialogCounterScope::cases())->map(fn (DialogCounterScope $scope): string => $scope->value)->all(),
+            'npc_placement' => [
+                'base_npc_id' => 'must reference an existing BaseNPC; AI cannot create BaseNPC definitions or sprites',
+                'locations' => 'one placed NPC may have one or more existing map locations, each with map_id, x and y',
+                'dialog' => 'may reference an existing dialog_id or a dialog_key created earlier in the same change set',
+                'enabled' => 'boolean visibility/availability flag',
+                'auto_start_dialog' => 'boolean; starts the assigned dialog automatically when the player enters range',
+                'auto_start_dialog_range' => 'positive tile range for automatic start',
+            ],
+            'supported_authoring' => [
+                'quests and automatic kill/time/next-day progress',
+                'dialog graph patches and all node/rule/action fields described above',
+                'existing shop/hotel assignment inside dialog nodes',
+                'camera focus using existing NPC locations or coordinates',
+                'placed NPCs based on existing BaseNPC records',
+                'BaseItems, shop inventory slots and BaseNPC loot membership',
+            ],
+            'not_exposed_for_ai_writes' => [
+                'BaseNPC definitions, maps and graphic-dependent assets',
+                'doors, hotels/rooms, dialog counters and seasonal-event creation',
+                'books, audio, map tracks, respawn/spawn points and special attacks',
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
     public function dialogGraph(string $world, int $dialogId): array
     {
         $world = $this->worldService->use($world);
         $dialog = Dialog::query()
             ->with(['nodes.options', 'edges', 'npcs.base:id,name', 'npcs.locations.map:id,name'])
             ->findOrFail($dialogId);
+        $dialogMapIds = $dialog->npcs
+            ->flatMap(fn (Npc $npc) => $npc->locations->pluck('map_id'))
+            ->filter()
+            ->unique()
+            ->values();
+        $dialogMaps = GameMap::query()
+            ->whereIn('id', $dialogMapIds)
+            ->orderBy('name')
+            ->get(['id', 'name', 'x', 'y']);
+        $focusNpcs = $dialogMapIds->isEmpty()
+            ? collect()
+            : Npc::query()
+                ->with(['base:id,name', 'locations' => fn ($query) => $query->whereIn('map_id', $dialogMapIds)->with('map:id,name,x,y')])
+                ->whereHas('locations', fn ($query) => $query->whereIn('map_id', $dialogMapIds))
+                ->orderBy('id')
+                ->get();
 
         return [
             'world' => $world,
@@ -356,7 +600,13 @@ class GameContentSearchService
                     'npc_id' => $npc->id,
                     'base_npc_id' => $npc->base_npc_id,
                     'name' => $npc->base?->name,
-                    'maps' => $npc->locations->pluck('map.name')->filter()->unique()->values()->all(),
+                    'locations' => $npc->locations->map(fn ($location): array => [
+                        'location_id' => $location->id,
+                        'map_id' => $location->map_id,
+                        'map_name' => $location->map?->name,
+                        'x' => $location->x,
+                        'y' => $location->y,
+                    ])->values()->all(),
                 ])->values()->all(),
                 'nodes' => $dialog->nodes->sortBy('id')->map(fn (DialogNode $node): array => [
                     'id' => $node->id,
@@ -386,11 +636,45 @@ class GameContentSearchService
                     'rules' => $edge->rules,
                 ])->values()->all(),
             ],
+            'runtime_context' => [
+                'maps' => $dialogMaps->map(fn (GameMap $map): array => [
+                    'id' => $map->id,
+                    'name' => $map->name,
+                    'width' => $map->x,
+                    'height' => $map->y,
+                    'coordinate_bounds' => ['x' => [0, max(0, $map->x - 1)], 'y' => [0, max(0, $map->y - 1)]],
+                ])->values()->all(),
+                'focus_targets' => $focusNpcs->flatMap(fn (Npc $npc) => $npc->locations->map(fn ($location): array => [
+                    'npc_id' => $npc->id,
+                    'base_npc_id' => $npc->base_npc_id,
+                    'name' => $npc->base?->name,
+                    'location_id' => $location->id,
+                    'map_id' => $location->map_id,
+                    'map_name' => $location->map?->name,
+                    'x' => $location->x,
+                    'y' => $location->y,
+                    'focus' => [
+                        'type' => 'npc',
+                        'npcId' => $npc->id,
+                        'locationId' => $location->id,
+                        'mapId' => $location->map_id,
+                        'x' => $location->x,
+                        'y' => $location->y,
+                    ],
+                ]))->values()->all(),
+                'client_text' => [
+                    'placeholders' => ['#nick', '#lvl', '#difflvl(N)'],
+                    'bbcode' => ['b', 'i', 'u', 'href', 'img', 'br'],
+                ],
+            ],
             'editing_guidance' => [
                 'Use patch_dialog for additions and targeted edits; do not replace the whole graph.',
                 'A shared dialog is intentionally updated for every NPC listed in shared_by_npcs.',
                 'Untouched shop_id and hotel_id values are preserved automatically.',
                 'Node positions are recalculated after applying the patch to prevent overlap.',
+                'Call get_dialog_capabilities for the exact semantics and shape of every node, rule and action.',
+                'For NPC camera focus copy one exact focus object from runtime_context.focus_targets.',
+                'Option rules control whether an answer is available; edge rules control which connected branch is selected.',
             ],
         ];
     }

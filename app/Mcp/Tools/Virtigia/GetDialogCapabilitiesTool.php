@@ -10,11 +10,11 @@ use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
-#[Description('Read one complete existing dialog graph, including stable node, option and edge IDs, shop/hotel references, every NPC sharing it, maps and allowed camera-focus targets. Call this before patch_dialog.')]
+#[Description('Return the exact Virtigia dialog authoring model: node types, graph routing, camera focus, option and edge rules, rewards/actions, text formatting, counters, seasonal events, minigames, shops, hotels and teleport instances. Call before any non-trivial dialog draft.')]
 #[IsReadOnly]
-class GetDialogGraphTool extends VirtigiaTool
+class GetDialogCapabilitiesTool extends VirtigiaTool
 {
-    protected string $name = 'get_dialog_graph';
+    protected string $name = 'get_dialog_capabilities';
 
     public function __construct(
         private readonly GameContentSearchService $searchService,
@@ -24,12 +24,10 @@ class GetDialogGraphTool extends VirtigiaTool
     {
         $validated = $request->validate([
             'world' => ['nullable', 'string'],
-            'dialog_id' => ['required', 'integer', 'min:1'],
         ]);
 
-        return Response::structured($this->searchService->dialogGraph(
+        return Response::structured($this->searchService->dialogCapabilities(
             $validated['world'] ?? (string) config('services.virtigia_mcp.default_world', 'retro'),
-            $validated['dialog_id'],
         ));
     }
 
@@ -38,7 +36,6 @@ class GetDialogGraphTool extends VirtigiaTool
     {
         return [
             'world' => $schema->string()->description('World slug. Defaults to retro.'),
-            'dialog_id' => $schema->integer()->min(1)->description('Existing dialog ID.')->required(),
         ];
     }
 }

@@ -60,9 +60,11 @@ Po zastosowaniu commita ponownie wywołaj `get_quest` i porównaj wszystkie ID, 
 
 W dialogach odwołuj się do utworzonych rekordów przez `@quest:roan_missing_package` oraz `@step:roan_missing_package:ask_roan`.
 
-BaseItem utworzony w tym samym commicie można wskazać w `addItems`, `removeItems` lub regułach `items` przez `@item:<key>`. Szczegóły i zasady grafiki opisuje [base-items.md](base-items.md).
+BaseItem utworzony w tym samym commicie można wskazać w `addItems` lub regułach `items` przez `@item:<key>`. Odebranie wymaganych itemów realizuje `items` z `consume: true`. Szczegóły i zasady grafiki opisuje [base-items.md](base-items.md).
 
 ## Dialog
+
+Przed pracą z dialogiem przeczytaj [dialog-mechanics.md](dialog-mechanics.md) i wywołaj `get_dialog_capabilities`.
 
 ```json
 {
@@ -129,7 +131,7 @@ Najpierw wywołaj `get_dialog_graph`, aby pobrać stabilne identyfikatory. Nast�
           {
             "key": "ask_for_meat",
             "label": "Masz dla mnie jakieś zajęcie?",
-            "rules": {"playerLevel": {"value": 10}}
+            "rules": {"level": {"value": 10}}
           }
         ]
       },
@@ -155,6 +157,8 @@ Najpierw wywołaj `get_dialog_graph`, aby pobrać stabilne identyfikatory. Nast�
 ```
 
 Istniejące węzły, opcje i połączenia wskazuj przez `id`; nowe przez lokalny `key`. Nowe połączenia mogą używać `source_node_id`/`target_node_id` albo `source_node_key`/`target_node_key`. Dla nowej opcji w istniejącym węźle podaj `source_node_id` i jej `source_option_key`.
+
+`options[].rules` kontroluje dostępność odpowiedzi. `edges[].rules` kontroluje wybór konkretnej gałęzi. To niezależne mechanizmy. Fokus kamery, minigry, teleporty, losowania, profesje, liczniki, eventy, formatowanie tekstu i wszystkie akcje są opisane w [dialog-mechanics.md](dialog-mechanics.md).
 
 Usuwanie jest jawne przez `delete_node_ids`, `delete_option_ids` i `delete_edge_ids`. Aktualizacja istniejącego połączenia odbywa się przez wpis w `edges` zawierający jego `id`. Jeśli dialog jest współdzielony, zmiana dotyczy wszystkich korzystających z niego NPC — jest to zachowanie zamierzone.
 

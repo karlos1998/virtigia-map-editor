@@ -26,4 +26,4 @@ Przed przypisaniem wywołaj `get_shop_inventory`. Sklep ma pozycje `0–79`, 8 k
 
 - `attach_item_to_base_npc_loot` przypisuje item do istniejącego BaseNPC.
 - W dialogowych regułach i akcjach użyj `@item:<key>`, gdy item jest tworzony lub klonowany w tym samym commicie. Serwer zamieni placeholder na prawdziwe ID.
-- Zdobycz questa jest realizowana przez istniejące akcje dialogowe, np. `addItems`; wymaganie lub odebranie przedmiotu przez `items`/`removeItems`. Najpierw odczytaj sąsiedni dialog, żeby zachować prawidłowy kształt danych.
+- Zdobycz questa jest realizowana przez istniejącą akcję dialogową `addItems`; wymaganie przedmiotu przez regułę `items`, a odebranie go przez tę samą regułę z `consume: true`. Najpierw odczytaj sąsiedni dialog, żeby zachować prawidłowy kształt danych.

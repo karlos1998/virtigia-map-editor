@@ -1,22 +1,25 @@
 {
   "name": "virtigia-map-editor",
-  "version": "0.4.0",
-  "description": "Tworzy kompletne questy z automatycznym progresem, dialogi i BaseItemy Virtigii oraz analizuje walkę i loot Retro przez bezpieczne narzędzia Map Editora.",
+  "version": "0.5.0+codex.20260926210433",
+  "description": "Tworzy kompletne questy, pe\u0142ne grafy dialog\u00f3w i BaseItemy Virtigii oraz analizuje walk\u0119 i loot Retro przez bezpieczne narz\u0119dzia Map Editora.",
   "author": {
     "name": "Virtigia"
   },
   "skills": "./skills/",
   "interface": {
     "displayName": "Virtigia Map Editor",
-    "shortDescription": "Questy, BaseItemy i analiza walk Retro.",
-    "longDescription": "Firmowa wtyczka do tworzenia questów, dialogów i BaseItemów, przypisywania ich do sklepów i lootów oraz analizy NPC, ekwipunku, umiejętności i dropu Retro.",
+    "shortDescription": "Questy, pe\u0142ne dialogi, BaseItemy i walka Retro.",
+    "longDescription": "Firmowa wtyczka do tworzenia quest\u00f3w, pe\u0142nych graf\u00f3w dialog\u00f3w z regu\u0142ami, akcjami, fokusem kamery, minigrami i teleportami, a tak\u017ce BaseItem\u00f3w oraz analizy NPC, ekwipunku, umiej\u0119tno\u015bci i dropu Retro.",
     "developerName": "Virtigia",
     "category": "Productivity",
-    "capabilities": ["Read", "Write"],
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
     "defaultPrompt": [
-      "Znajdź Roana w Ithan na Retro i pokaż jego kontekst.",
+      "Znajd\u017a Roana w Ithan na Retro i poka\u017c jego kontekst.",
       "Sklonuj item, popraw jego statystyki i przygotuj commit.",
-      "Porównaj legalne buildy na Retro przeciwko herosowi."
+      "Por\u00f3wnaj legalne buildy na Retro przeciwko herosowi."
     ]
   },
   "mcpServers": "./.mcp.json"

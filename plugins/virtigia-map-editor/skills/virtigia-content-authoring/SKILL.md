@@ -14,7 +14,7 @@ Treat the Map Editor MCP as the source of truth. Never guess record IDs or game-
 3. Call `search_game_content` to resolve every referenced NPC, map, item, shop, quest, and dialog. If results are ambiguous, ask the user which exact result they mean.
 4. Before writing player-facing dialogue, call `get_writing_context` and follow [content-style.md](references/content-style.md).
 5. For every quest, read [quest-progress.md](references/quest-progress.md). A description never implements a kill, time, or next-day transition. Before repairing an existing quest, call `get_quest`.
-6. Before changing an existing dialog, call `get_dialog_graph`. Use `patch_dialog`; a shared dialog is intentionally changed for every NPC that uses it and is not a reason to stop.
+6. For every non-trivial dialog, call `get_dialog_capabilities` and read [dialog-mechanics.md](references/dialog-mechanics.md). Before changing an existing dialog, also call `get_dialog_graph`. Use `patch_dialog`; a shared dialog is intentionally changed for every NPC that uses it and is not a reason to stop.
 7. Build operations using [change-set-schema.md](references/change-set-schema.md), then call `draft_change_set`.
 8. Show the user a compact summary of the validated draft, including real quest progression conditions. Call `apply_change_set` only after the user explicitly approves that draft.
 9. After applying a quest change, call `get_quest` and compare every target ID, quantity, timer and destination with the request. Report the created or changed IDs returned by the server.
@@ -53,6 +53,7 @@ These tools currently support only `retro`. They construct fake characters, item
 - `place_npc` may only instantiate an existing BaseNPC on an existing map.
 - Quests and dialogs may reference existing items or BaseItems created earlier in the same commit through `@item:<key>`.
 - Never encode quest mechanics only in `name` or `description`, and never invent fields such as `kill_targets` or `on_complete_step_key`. Use the exact progression schema from [quest-progress.md](references/quest-progress.md).
+- Do not guess dialog semantics. Keep option availability in `options[].rules`, branch selection in `edges[].rules`, and copy NPC camera focus from `get_dialog_graph.runtime_context.focus_targets`.
 - Never bypass the draft-and-apply flow.
 - Never call Retro Engine endpoints directly, read engine credentials or database configuration, inspect a local engine repository for game data, or create local scripts/clients as a fallback. If the required Map Editor MCP tool is missing or fails, stop and report that integration failure.
 - Existing dialogue is a tone reference, not text to copy.

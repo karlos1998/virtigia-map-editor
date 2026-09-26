@@ -6,6 +6,7 @@ use App\Mcp\Tools\Virtigia\AnalyzeRetroLootTool;
 use App\Mcp\Tools\Virtigia\ApplyChangeSetTool;
 use App\Mcp\Tools\Virtigia\DraftChangeSetTool;
 use App\Mcp\Tools\Virtigia\GetBaseItemTool;
+use App\Mcp\Tools\Virtigia\GetDialogCapabilitiesTool;
 use App\Mcp\Tools\Virtigia\GetDialogGraphTool;
 use App\Mcp\Tools\Virtigia\GetQuestTool;
 use App\Mcp\Tools\Virtigia\GetRetroBuildOptionsTool;
@@ -502,6 +503,31 @@ class VirtigiaContentServerTest extends TestCase
         $this->assertArrayHasKey('exclude_admin_shops', $schema);
     }
 
+    public function test_dialog_capabilities_explain_advanced_editor_and_client_behaviour(): void
+    {
+        $capabilities = app(GameContentSearchService::class)->dialogCapabilities('test');
+
+        $this->assertSame('option.rules decide whether the answer is available to the player.', $capabilities['graph_model']['option_rules']);
+        $this->assertSame('edge.rules independently decide whether that particular outgoing branch may be followed. One option may lead to several targets with different edge rules.', $capabilities['graph_model']['edge_rules']);
+        $this->assertSame('current character name', $capabilities['text_runtime']['placeholders']['#nick']);
+        $this->assertSame('source-success', array_key_first($capabilities['node_types']['minigame']['outputs']));
+        $this->assertSame('npc', $capabilities['camera_focus']['npc']['type']);
+        $this->assertSame('parallel array of quantities, each 1-1000', $capabilities['rules']['items']['value2']);
+        $this->assertSame('existing DialogCounter ID', $capabilities['rules']['dialogCounter']['value']);
+        $this->assertSame('start combat with the interacted NPC', $capabilities['option_additional_action']['values']['BATTLE']);
+        $this->assertContains('doors, hotels/rooms, dialog counters and seasonal-event creation', $capabilities['not_exposed_for_ai_writes']);
+    }
+
+    public function test_search_tool_exposes_dialog_dependency_types(): void
+    {
+        $types = app(SearchGameContentTool::class)->toArray()['inputSchema']['properties']['types']['items']['enum'];
+
+        $this->assertContains('hotels', $types);
+        $this->assertContains('dialog_counters', $types);
+        $this->assertContains('seasonal_events', $types);
+        $this->assertContains('mob_species', $types);
+    }
+
     /** @param class-string $toolClass */
     #[DataProvider('toolNames')]
     public function test_tools_expose_stable_names(string $toolClass, string $expectedName): void
@@ -521,6 +547,7 @@ class VirtigiaContentServerTest extends TestCase
             'base item' => [GetBaseItemTool::class, 'get_base_item'],
             'shop inventory' => [GetShopInventoryTool::class, 'get_shop_inventory'],
             'writing context' => [GetWritingContextTool::class, 'get_writing_context'],
+            'dialog capabilities' => [GetDialogCapabilitiesTool::class, 'get_dialog_capabilities'],
             'dialog graph' => [GetDialogGraphTool::class, 'get_dialog_graph'],
             'quest' => [GetQuestTool::class, 'get_quest'],
             'inspect retro npc' => [InspectRetroNpcTool::class, 'inspect_retro_npc'],
