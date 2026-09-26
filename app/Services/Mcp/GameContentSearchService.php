@@ -15,7 +15,9 @@ use App\Models\DialogCounter;
 use App\Models\DialogEdge;
 use App\Models\DialogNode;
 use App\Models\DialogNodeOption;
+use App\Models\Door;
 use App\Models\Hotel;
+use App\Models\HotelRoom;
 use App\Models\Map as GameMap;
 use App\Models\MobSpecies;
 use App\Models\Npc;
@@ -253,6 +255,106 @@ class GameContentSearchService
                 'currencies' => BaseItemCurrency::valuesToList(),
                 'image' => ['formats' => ['png', 'gif'], 'width' => 32, 'height' => 32],
                 'guidance' => 'For a percentage improvement, calculate and show the exact changed numeric attributes. Preserve unrelated attributes and use attributes_patch/remove_attributes for targeted edits.',
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    public function mapTransitions(string $world, int $mapId): array
+    {
+        $world = $this->worldService->use($world);
+        $map = GameMap::query()->findOrFail($mapId, ['id', 'name', 'x', 'y']);
+        $transitions = Door::query()
+            ->with([
+                'map:id,name,x,y',
+                'targetMap:id,name,x,y',
+                'requiredBaseItem:id,name,src,category',
+            ])
+            ->where(function ($query) use ($mapId): void {
+                $query->where('map_id', $mapId)->orWhere('go_map_id', $mapId);
+            })
+            ->orderBy('map_id')
+            ->orderBy('y')
+            ->orderBy('x')
+            ->get();
+        $hotelRooms = HotelRoom::query()
+            ->with(['hotel:id,name', 'baseItem:id,name'])
+            ->whereIn('door_id', $transitions->pluck('id'))
+            ->get()
+            ->keyBy('door_id');
+
+        $serialize = function (Door $transition) use ($transitions, $hotelRooms): array {
+            $returnTransitions = $transitions->filter(fn (Door $candidate): bool => $candidate->map_id === $transition->go_map_id
+                && $candidate->go_map_id === $transition->map_id
+            );
+            $pairedTransition = $returnTransitions->first(fn (Door $candidate): bool => $candidate->x === $transition->go_x
+                && $candidate->y === $transition->go_y
+                && $candidate->go_x === $transition->x
+                && $candidate->go_y === $transition->y
+            );
+            $hotelRoom = $hotelRooms->get($transition->id);
+
+            return [
+                'id' => $transition->id,
+                'source' => [
+                    'map_id' => $transition->map_id,
+                    'map_name' => $transition->map?->name,
+                    'map_width' => $transition->map?->x,
+                    'map_height' => $transition->map?->y,
+                    'x' => $transition->x,
+                    'y' => $transition->y,
+                ],
+                'destination' => [
+                    'map_id' => $transition->go_map_id,
+                    'map_name' => $transition->targetMap?->name,
+                    'map_width' => $transition->targetMap?->x,
+                    'map_height' => $transition->targetMap?->y,
+                    'x' => $transition->go_x,
+                    'y' => $transition->go_y,
+                ],
+                'requirements' => [
+                    'min_level' => $transition->min_lvl,
+                    'max_level' => $transition->max_lvl,
+                    'required_base_item' => $transition->requiredBaseItem === null ? null : [
+                        'id' => $transition->requiredBaseItem->id,
+                        'name' => $transition->requiredBaseItem->name,
+                        'category' => $transition->requiredBaseItem->category?->value,
+                        'src' => $transition->requiredBaseItem->src,
+                        'image_url' => AssetUrl::item($transition->requiredBaseItem->src),
+                    ],
+                ],
+                'bidirectional' => $pairedTransition !== null,
+                'paired_transition_id' => $pairedTransition?->id,
+                'return_transition_ids' => $returnTransitions->pluck('id')->values()->all(),
+                'hotel_room' => $hotelRoom === null ? null : [
+                    'id' => $hotelRoom->id,
+                    'hotel_id' => $hotelRoom->hotel_id,
+                    'hotel_name' => $hotelRoom->hotel?->name,
+                    'key_base_item_id' => $hotelRoom->base_item_id,
+                    'key_base_item_name' => $hotelRoom->baseItem?->name,
+                    'price' => $hotelRoom->price,
+                ],
+            ];
+        };
+
+        return [
+            'world' => $world,
+            'map' => ['id' => $map->id, 'name' => $map->name, 'width' => $map->x, 'height' => $map->y],
+            'outgoing' => $transitions->where('map_id', $mapId)->map($serialize)->values()->all(),
+            'incoming' => $transitions->where('go_map_id', $mapId)->map($serialize)->values()->all(),
+            'runtime_behavior' => [
+                'directionality' => 'Each record is one-way. A return passage is a separate record with reversed maps and coordinates.',
+                'activation_distance' => 'The engine allows use from the transition tile or an adjacent tile (absolute X and Y differences are at most 1).',
+                'level_range' => 'min_level and max_level are inclusive; null means no bound.',
+                'required_item' => 'The player must carry one instance of the BaseItem in the bag. It is checked but not consumed.',
+                'hotel_room_override' => 'When a transition belongs to a hotel room, the engine requires that room\'s valid key instead of required_base_item.',
+                'routing' => 'Engine pathfinding treats transitions as directed graph edges and excludes edges blocked by level, item, or hotel-key requirements.',
+            ],
+            'authoring' => [
+                'operations' => ['create_map_transition', 'update_map_transition', 'delete_map_transition'],
+                'bidirectional_passage' => 'Create or update two explicit operations, one for each direction. Requirements may differ by direction.',
+                'coordinates' => 'All coordinates are zero-based tiles and must be inside the corresponding map dimensions.',
+                'deletion' => 'A transition assigned to a hotel room cannot be deleted by an AI change set.',
             ],
         ];
     }
@@ -558,10 +660,11 @@ class GameContentSearchService
                 'camera focus using existing NPC locations or coordinates',
                 'placed NPCs based on existing BaseNPC records',
                 'BaseItems, shop inventory slots and BaseNPC loot membership',
+                'directed map transitions with coordinates, level ranges and required BaseItems',
             ],
             'not_exposed_for_ai_writes' => [
                 'BaseNPC definitions, maps and graphic-dependent assets',
-                'doors, hotels/rooms, dialog counters and seasonal-event creation',
+                'hotels/rooms, dialog counters and seasonal-event creation',
                 'books, audio, map tracks, respawn/spawn points and special attacks',
             ],
         ];

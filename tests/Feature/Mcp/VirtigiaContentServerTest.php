@@ -13,6 +13,7 @@ use App\Mcp\Tools\Virtigia\GetQuestTool;
 use App\Mcp\Tools\Virtigia\GetRetroBuildOptionsTool;
 use App\Mcp\Tools\Virtigia\GetShopInventoryTool;
 use App\Mcp\Tools\Virtigia\GetWritingContextTool;
+use App\Mcp\Tools\Virtigia\InspectMapTransitionsTool;
 use App\Mcp\Tools\Virtigia\InspectRetroNpcTool;
 use App\Mcp\Tools\Virtigia\ListChangeSetsTool;
 use App\Mcp\Tools\Virtigia\ProfileTool;
@@ -23,7 +24,11 @@ use App\Models\BaseItem;
 use App\Models\BaseNpc;
 use App\Models\BaseNpcLoot;
 use App\Models\Dialog;
+use App\Models\Door;
 use App\Models\DynamicModel;
+use App\Models\Hotel;
+use App\Models\HotelRoom;
+use App\Models\Map as GameMap;
 use App\Models\Quest;
 use App\Models\QuestStepAutoProgress;
 use App\Models\QuestStepAutoProgressMob;
@@ -516,7 +521,122 @@ class VirtigiaContentServerTest extends TestCase
         $this->assertSame('parallel array of quantities, each 1-1000', $capabilities['rules']['items']['value2']);
         $this->assertSame('existing DialogCounter ID', $capabilities['rules']['dialogCounter']['value']);
         $this->assertSame('start combat with the interacted NPC', $capabilities['option_additional_action']['values']['BATTLE']);
-        $this->assertContains('doors, hotels/rooms, dialog counters and seasonal-event creation', $capabilities['not_exposed_for_ai_writes']);
+        $this->assertContains('directed map transitions with coordinates, level ranges and required BaseItems', $capabilities['supported_authoring']);
+        $this->assertContains('hotels/rooms, dialog counters and seasonal-event creation', $capabilities['not_exposed_for_ai_writes']);
+    }
+
+    public function test_map_transitions_can_be_inspected_created_updated_deleted_and_reverted(): void
+    {
+        app(McpWorldService::class)->use('test');
+
+        try {
+            $user = \App\Models\User::factory()->create();
+            $sourceMap = $this->createMap('Mapa źródłowa MCP', 30, 20);
+            $destinationMap = $this->createMap('Mapa docelowa MCP', 40, 25);
+            $requiredItem = BaseItem::query()->create([
+                'name' => 'Klucz przejścia MCP',
+                'src' => 'items/test/key.png',
+                'stats' => '',
+                'cl' => 0,
+                'pr' => 0,
+                'edited_manually' => true,
+                'attributes' => [],
+                'rarity' => 'common',
+                'category' => 'quests',
+                'price' => 0,
+                'currency' => 'unset',
+            ]);
+            $service = app(AiChangeSetService::class);
+            $createChangeSet = $service->draft($user, 'test', 'Dwukierunkowe przejście testowe', null, [[
+                'type' => 'create_map_transition',
+                'data' => [
+                    'source_map_id' => $sourceMap->id,
+                    'source_x' => 29,
+                    'source_y' => 10,
+                    'destination_map_id' => $destinationMap->id,
+                    'destination_x' => 0,
+                    'destination_y' => 10,
+                    'min_level' => 10,
+                    'max_level' => 50,
+                    'required_base_item_id' => $requiredItem->id,
+                ],
+            ], [
+                'type' => 'create_map_transition',
+                'data' => [
+                    'source_map_id' => $destinationMap->id,
+                    'source_x' => 0,
+                    'source_y' => 10,
+                    'destination_map_id' => $sourceMap->id,
+                    'destination_x' => 29,
+                    'destination_y' => 10,
+                ],
+            ]]);
+
+            $created = $service->apply($user, $createChangeSet->id, 1);
+            [$outgoingId, $returnId] = $created->result['created']['map_transitions'];
+            $hotel = Hotel::query()->create(['name' => 'Hotel testowy MCP']);
+            $hotelRoom = HotelRoom::query()->create([
+                'hotel_id' => $hotel->id,
+                'base_item_id' => $requiredItem->id,
+                'door_id' => $returnId,
+                'price' => 100,
+            ]);
+            $inspected = app(GameContentSearchService::class)->mapTransitions('test', $sourceMap->id);
+
+            $this->assertCount(1, $inspected['outgoing']);
+            $this->assertCount(1, $inspected['incoming']);
+            $this->assertTrue($inspected['outgoing'][0]['bidirectional']);
+            $this->assertSame($returnId, $inspected['outgoing'][0]['paired_transition_id']);
+            $this->assertSame($requiredItem->id, $inspected['outgoing'][0]['requirements']['required_base_item']['id']);
+            $this->assertSame(10, $inspected['outgoing'][0]['requirements']['min_level']);
+            $this->assertSame($hotelRoom->id, $inspected['incoming'][0]['hotel_room']['id']);
+
+            $forbiddenDelete = $service->validateOperations([[
+                'type' => 'delete_map_transition',
+                'transition_id' => $returnId,
+            ]]);
+            $this->assertFalse($forbiddenDelete['valid']);
+            $this->assertStringContainsString('pokoju hotelowego', implode(' ', $forbiddenDelete['errors']));
+            $hotelRoom->delete();
+
+            $patchChangeSet = $service->draft($user, 'test', 'Zmiana przejścia testowego', null, [[
+                'type' => 'update_map_transition',
+                'transition_id' => $outgoingId,
+                'data' => [
+                    'source_y' => 11,
+                    'min_level' => 20,
+                    'required_base_item_id' => null,
+                ],
+            ], [
+                'type' => 'delete_map_transition',
+                'transition_id' => $returnId,
+            ]]);
+            $service->apply($user, $patchChangeSet->id, 1);
+
+            $changed = app(GameContentSearchService::class)->mapTransitions('test', $sourceMap->id);
+            $this->assertSame(11, $changed['outgoing'][0]['source']['y']);
+            $this->assertSame(20, $changed['outgoing'][0]['requirements']['min_level']);
+            $this->assertNull($changed['outgoing'][0]['requirements']['required_base_item']);
+            $this->assertFalse($changed['outgoing'][0]['bidirectional']);
+            $this->assertSame([], $changed['incoming']);
+
+            $service->revert($user, $patchChangeSet->id);
+            $restored = app(GameContentSearchService::class)->mapTransitions('test', $sourceMap->id);
+            $this->assertSame(10, $restored['outgoing'][0]['source']['y']);
+            $this->assertTrue($restored['outgoing'][0]['bidirectional']);
+            $this->assertSame($requiredItem->id, $restored['outgoing'][0]['requirements']['required_base_item']['id']);
+
+            $service->revert($user, $createChangeSet->id);
+            $this->assertFalse(Door::query()->whereIn('id', [$outgoingId, $returnId])->exists());
+        } finally {
+            app(McpWorldService::class)->use('test');
+            HotelRoom::query()->whereIn('hotel_id', Hotel::query()->where('name', 'Hotel testowy MCP')->pluck('id'))->delete();
+            Hotel::query()->where('name', 'Hotel testowy MCP')->delete();
+            Door::query()->whereIn('map_id', GameMap::query()->whereIn('name', ['Mapa źródłowa MCP', 'Mapa docelowa MCP'])->pluck('id'))->delete();
+            BaseItem::withTrashed()->where('name', 'Klucz przejścia MCP')->forceDelete();
+            GameMap::query()->whereIn('name', ['Mapa źródłowa MCP', 'Mapa docelowa MCP'])->delete();
+            DynamicModel::clearGlobalConnection();
+        }
     }
 
     public function test_search_tool_exposes_dialog_dependency_types(): void
@@ -546,6 +666,7 @@ class VirtigiaContentServerTest extends TestCase
             'profile' => [ProfileTool::class, 'profile'],
             'search' => [SearchGameContentTool::class, 'search_game_content'],
             'visual references' => [BrowseVisualReferencesTool::class, 'browse_visual_references'],
+            'map transitions' => [InspectMapTransitionsTool::class, 'inspect_map_transitions'],
             'base item' => [GetBaseItemTool::class, 'get_base_item'],
             'shop inventory' => [GetShopInventoryTool::class, 'get_shop_inventory'],
             'writing context' => [GetWritingContextTool::class, 'get_writing_context'],
@@ -572,5 +693,19 @@ class VirtigiaContentServerTest extends TestCase
         imagedestroy($image);
 
         return 'data:image/png;base64,'.base64_encode($contents);
+    }
+
+    private function createMap(string $name, int $width, int $height): GameMap
+    {
+        return GameMap::query()->create([
+            'name' => $name,
+            'src' => 'maps/test.gif',
+            'x' => $width,
+            'y' => $height,
+            'col' => '',
+            'battleground' => '',
+            'water' => '',
+            'pvp' => 0,
+        ]);
     }
 }

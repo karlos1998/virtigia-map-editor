@@ -1,6 +1,6 @@
 ---
 name: virtigia-content-authoring
-description: Create or edit Virtigia quests, dialogue graphs, BaseItems, shop and loot assignments, and placed NPCs, browse existing map, item and NPC graphics for visual-style references, or analyze Retro combat and drops through the Virtigia Map Editor MCP. Use for world content, item graphics and attributes, visual analysis, builds, previewable AI commits, or rollback. Do not use it to create BaseNPC definitions or maps.
+description: Create or edit Virtigia quests, dialogue graphs, directed map transitions, BaseItems, shop and loot assignments, and placed NPCs, browse existing map, item and NPC graphics for visual-style references, or analyze Retro combat and drops through the Virtigia Map Editor MCP. Use for world content, routes, item graphics and attributes, visual analysis, builds, previewable AI commits, or rollback. Do not use it to create BaseNPC definitions or maps.
 ---
 
 # Virtigia Content Authoring
@@ -16,9 +16,10 @@ Treat the Map Editor MCP as the source of truth. Never guess record IDs or game-
 5. Before writing player-facing dialogue, call `get_writing_context` and follow [content-style.md](references/content-style.md).
 6. For every quest, read [quest-progress.md](references/quest-progress.md). A description never implements a kill, time, or next-day transition. Before repairing an existing quest, call `get_quest`.
 7. For every non-trivial dialog, call `get_dialog_capabilities` and read [dialog-mechanics.md](references/dialog-mechanics.md). Before changing an existing dialog, also call `get_dialog_graph`. Use `patch_dialog`; a shared dialog is intentionally changed for every NPC that uses it and is not a reason to stop.
-8. Build operations using [change-set-schema.md](references/change-set-schema.md), then call `draft_change_set`.
-9. Show the user a compact summary of the validated draft, including real quest progression conditions. Call `apply_change_set` only after the user explicitly approves that draft.
-10. After applying a quest change, call `get_quest` and compare every target ID, quantity, timer and destination with the request. Report the created or changed IDs returned by the server.
+8. For every map-transition request, read [map-transitions.md](references/map-transitions.md) and call `inspect_map_transitions` for every affected map before drafting.
+9. Build operations using [change-set-schema.md](references/change-set-schema.md), then call `draft_change_set`.
+10. Show the user a compact summary of the validated draft, including both transition directions and their requirements plus real quest progression conditions. Call `apply_change_set` only after the user explicitly approves that draft.
+11. After applying a quest change, call `get_quest` and compare every target ID, quantity, timer and destination with the request. After a transition change, call `inspect_map_transitions` again for both maps and verify coordinates, requirements and the exact return pair. Report the created or changed IDs returned by the server.
 
 For rollback, call `list_change_sets`, identify the exact commit, and call `revert_change_set` only after confirmation. Rollback may be refused when later manual or AI edits touched the same records.
 
@@ -52,6 +53,8 @@ These tools currently support only `retro`. They construct fake characters, item
 
 - Never create BaseNPC definitions, maps, NPC sprites, outfits, or unrelated assets. BaseItem icons are allowed only through the validated 32×32 item-image field.
 - `place_npc` may only instantiate an existing BaseNPC on an existing map.
+- A map transition is one direction. Never infer, edit, or delete the return direction without inspecting it and including a separate explicit operation.
+- Never delete a transition whose `hotel_room` is non-null. Preserve directional level and item requirements unless the user asked to change them.
 - Quests and dialogs may reference existing items or BaseItems created earlier in the same commit through `@item:<key>`.
 - Never encode quest mechanics only in `name` or `description`, and never invent fields such as `kill_targets` or `on_complete_step_key`. Use the exact progression schema from [quest-progress.md](references/quest-progress.md).
 - Do not guess dialog semantics. Keep option availability in `options[].rules`, branch selection in `edges[].rules`, and copy NPC camera focus from `get_dialog_graph.runtime_context.focus_targets`.

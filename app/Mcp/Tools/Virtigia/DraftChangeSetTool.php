@@ -11,7 +11,7 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 
-#[Description('Validate and save a previewable Virtigia content change set. This never changes game-world data. Supports quests with real mob/time auto-progress, targeted quest/dialog patches, placed NPCs, BaseItem creation/cloning/editing, shop slots and BaseNPC loot assignments.')]
+#[Description('Validate and save a previewable Virtigia content change set. This never changes game-world data. Supports directed map transitions, quests with real mob/time auto-progress, targeted quest/dialog patches, placed NPCs, BaseItem creation/cloning/editing, shop slots and BaseNPC loot assignments.')]
 class DraftChangeSetTool extends VirtigiaTool
 {
     protected string $name = 'draft_change_set';
@@ -76,6 +76,9 @@ class DraftChangeSetTool extends VirtigiaTool
                         'update_base_item',
                         'attach_item_to_shop',
                         'attach_item_to_base_npc_loot',
+                        'create_map_transition',
+                        'update_map_transition',
+                        'delete_map_transition',
                     ])->required(),
                     'key' => $schema->string()->description('Temporary key for a created quest, dialog, or BaseItem.'),
                     'dialog_id' => $schema->integer()->min(1),
@@ -86,6 +89,7 @@ class DraftChangeSetTool extends VirtigiaTool
                     'item_id' => $schema->integer()->min(1)->description('Existing BaseItem ID.'),
                     'item_key' => $schema->string()->description('Temporary key of a BaseItem created or cloned earlier in this change set.'),
                     'source_base_item_id' => $schema->integer()->min(1)->description('Existing BaseItem to clone.'),
+                    'transition_id' => $schema->integer()->min(1)->description('Existing transition ID for update_map_transition or delete_map_transition.'),
                     'shop_id' => $schema->integer()->min(1),
                     'position' => $schema->integer()->min(0)->max(79)->description('Shop slot. position = row × 8 + column.'),
                     'row' => $schema->integer()->min(0)->max(9),
@@ -137,6 +141,16 @@ class DraftChangeSetTool extends VirtigiaTool
                         'manual_attribute_points' => $schema->object()->nullable(),
                         'reverse_attributes' => $schema->object()->nullable(),
                         'image_data_uri' => $schema->string(),
+                        'source_map_id' => $schema->integer()->min(1),
+                        'source_x' => $schema->integer()->min(0),
+                        'source_y' => $schema->integer()->min(0),
+                        'destination_map_id' => $schema->integer()->min(1),
+                        'destination_x' => $schema->integer()->min(0),
+                        'destination_y' => $schema->integer()->min(0),
+                        'min_level' => $schema->integer()->min(0)->nullable(),
+                        'max_level' => $schema->integer()->min(0)->nullable(),
+                        'required_base_item_id' => $schema->integer()->min(1)->nullable(),
+                        'required_base_item_key' => $schema->string()->nullable()->description('Temporary key of a BaseItem created earlier in this change set.'),
                     ])->description('Quest/dialog payload or BaseItem fields. For kill objectives, steps[].auto_progress is mandatory; text in description has no gameplay effect. For item edits prefer attributes_patch and remove_attributes; image_data_uri must be PNG/GIF 32×32.'),
                 ]))
                 ->description('Ordered operations. Put create operations before operations that reference their temporary keys. Use @item:key inside dialog item actions.')

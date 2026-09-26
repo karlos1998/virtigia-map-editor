@@ -13,9 +13,12 @@ use App\Models\Dialog;
 use App\Models\DialogEdge;
 use App\Models\DialogNode;
 use App\Models\DialogNodeOption;
+use App\Models\Door;
+use App\Models\HotelRoom;
 use App\Models\Map as GameMap;
 use App\Models\MobSpecies;
 use App\Models\Npc;
+use App\Models\NpcLocation;
 use App\Models\Quest;
 use App\Models\QuestStep;
 use App\Models\QuestStepAutoProgress;
@@ -47,6 +50,9 @@ class AiChangeSetService
         'update_base_item',
         'attach_item_to_shop',
         'attach_item_to_base_npc_loot',
+        'create_map_transition',
+        'update_map_transition',
+        'delete_map_transition',
     ];
 
     public function __construct(
@@ -154,6 +160,12 @@ class AiChangeSetService
             $result = $changeSet->result ?? [];
             $before = $changeSet->before_snapshot ?? [];
 
+            Door::query()->whereIn('id', data_get($result, 'created.map_transitions', []))->delete();
+
+            foreach (data_get($before, 'map_transitions', []) as $snapshot) {
+                $this->restoreMapTransition($snapshot);
+            }
+
             foreach (Npc::query()->whereIn('id', data_get($result, 'created.npcs', []))->get() as $npc) {
                 $npc->locations()->delete();
                 $npc->delete();
@@ -259,6 +271,8 @@ class AiChangeSetService
         $itemKeys = [];
         $plannedShopPositions = [];
         $plannedBaseNpcLoots = [];
+        $plannedTransitionTiles = [];
+        $touchedTransitionIds = [];
 
         foreach ($operations as $index => $operation) {
             $type = $operation['type'];
@@ -366,6 +380,17 @@ class AiChangeSetService
                 $this->validateBaseNpcLootOperation($operation, $itemKeys, $plannedBaseNpcLoots, $prefix, $errors);
             }
 
+            if (in_array($type, ['create_map_transition', 'update_map_transition', 'delete_map_transition'], true)) {
+                $this->validateMapTransitionOperation(
+                    $operation,
+                    $itemKeys,
+                    $plannedTransitionTiles,
+                    $touchedTransitionIds,
+                    $prefix,
+                    $errors,
+                );
+            }
+
             $this->validateExistingItemReferences($operation, $prefix, $errors);
         }
 
@@ -387,7 +412,7 @@ class AiChangeSetService
             }
         }
 
-        $warnings[] = 'Commit może tworzyć i edytować BaseItemy oraz przypisywać je do sklepów, lootów i dialogów questowych. Nadal nie tworzy BaseNPC ani map.';
+        $warnings[] = 'Commit może zarządzać przejściami map, BaseItemami, sklepami, lootem, questami i dialogami. Nadal nie tworzy BaseNPC ani map.';
 
         return [
             'valid' => $errors === [],
@@ -1136,6 +1161,145 @@ class AiChangeSetService
         return null;
     }
 
+    /**
+     * @param  array<int, string>  $itemKeys
+     * @param  array<int, string>  $plannedTransitionTiles
+     * @param  array<int, int>  $touchedTransitionIds
+     * @param  array<int, string>  $errors
+     */
+    private function validateMapTransitionOperation(
+        array $operation,
+        array $itemKeys,
+        array &$plannedTransitionTiles,
+        array &$touchedTransitionIds,
+        string $prefix,
+        array &$errors,
+    ): void {
+        $type = $operation['type'];
+        $data = $operation['data'] ?? [];
+        $transition = null;
+
+        if ($type !== 'create_map_transition') {
+            $transitionId = filter_var($operation['transition_id'] ?? null, FILTER_VALIDATE_INT);
+            $transition = $transitionId === false ? null : Door::query()->find($transitionId);
+            if ($transition === null) {
+                $errors[] = "{$prefix}: transition_id nie wskazuje istniejącego przejścia.";
+
+                return;
+            }
+
+            if (in_array($transition->id, $touchedTransitionIds, true)) {
+                $errors[] = "{$prefix}: przejście [{$transition->id}] jest zmieniane więcej niż raz w tym commicie.";
+
+                return;
+            }
+            $touchedTransitionIds[] = $transition->id;
+        }
+
+        if ($type === 'delete_map_transition') {
+            if ($data !== []) {
+                $errors[] = "{$prefix}: delete_map_transition nie przyjmuje pola data.";
+            }
+            if (HotelRoom::query()->where('door_id', $transition->id)->exists()) {
+                $errors[] = "{$prefix}: przejście [{$transition->id}] należy do pokoju hotelowego i nie może zostać usunięte przez commit AI.";
+            }
+
+            return;
+        }
+
+        $allowedFields = [
+            'source_map_id',
+            'source_x',
+            'source_y',
+            'destination_map_id',
+            'destination_x',
+            'destination_y',
+            'min_level',
+            'max_level',
+            'required_base_item_id',
+            'required_base_item_key',
+        ];
+        $unknownFields = array_values(array_diff(array_keys($data), $allowedFields));
+        if ($unknownFields !== []) {
+            $errors[] = "{$prefix}: nieobsługiwane pola przejścia: ".implode(', ', $unknownFields).'.';
+        }
+        if ($type === 'update_map_transition' && $data === []) {
+            $errors[] = "{$prefix}: update_map_transition nie zawiera żadnych zmian.";
+
+            return;
+        }
+
+        $sourceMapId = array_key_exists('source_map_id', $data) ? $data['source_map_id'] : $transition?->map_id;
+        $sourceX = array_key_exists('source_x', $data) ? $data['source_x'] : $transition?->x;
+        $sourceY = array_key_exists('source_y', $data) ? $data['source_y'] : $transition?->y;
+        $destinationMapId = array_key_exists('destination_map_id', $data) ? $data['destination_map_id'] : $transition?->go_map_id;
+        $destinationX = array_key_exists('destination_x', $data) ? $data['destination_x'] : $transition?->go_x;
+        $destinationY = array_key_exists('destination_y', $data) ? $data['destination_y'] : $transition?->go_y;
+        $sourceMap = is_int($sourceMapId) ? GameMap::query()->find($sourceMapId) : null;
+        $destinationMap = is_int($destinationMapId) ? GameMap::query()->find($destinationMapId) : null;
+
+        if ($sourceMap === null) {
+            $errors[] = "{$prefix}: source_map_id nie wskazuje istniejącej mapy.";
+        }
+        if ($destinationMap === null) {
+            $errors[] = "{$prefix}: destination_map_id nie wskazuje istniejącej mapy.";
+        }
+
+        if ($sourceMap !== null && (! is_int($sourceX) || ! is_int($sourceY)
+            || $sourceX < 0 || $sourceY < 0 || $sourceX >= $sourceMap->x || $sourceY >= $sourceMap->y)) {
+            $errors[] = "{$prefix}: pozycja źródłowa wykracza poza mapę [{$sourceMap->name}].";
+        }
+        if ($destinationMap !== null && (! is_int($destinationX) || ! is_int($destinationY)
+            || $destinationX < 0 || $destinationY < 0 || $destinationX >= $destinationMap->x || $destinationY >= $destinationMap->y)) {
+            $errors[] = "{$prefix}: pozycja docelowa wykracza poza mapę [{$destinationMap->name}].";
+        }
+
+        if ($sourceMap !== null && is_int($sourceX) && is_int($sourceY)) {
+            $occupiedByTransition = Door::query()
+                ->where('map_id', $sourceMap->id)
+                ->where('x', $sourceX)
+                ->where('y', $sourceY)
+                ->when($transition, fn ($query) => $query->where('id', '!=', $transition->id))
+                ->exists();
+            $occupiedByNpc = NpcLocation::query()
+                ->where('map_id', $sourceMap->id)
+                ->where('x', $sourceX)
+                ->where('y', $sourceY)
+                ->exists();
+            $tileKey = "{$sourceMap->id}:{$sourceX}:{$sourceY}";
+            if ($occupiedByTransition || $occupiedByNpc || in_array($tileKey, $plannedTransitionTiles, true)) {
+                $errors[] = "{$prefix}: na polu źródłowym {$tileKey} istnieje już NPC albo przejście.";
+            }
+            $plannedTransitionTiles[] = $tileKey;
+        }
+
+        $minLevel = array_key_exists('min_level', $data) ? $data['min_level'] : $transition?->min_lvl;
+        $maxLevel = array_key_exists('max_level', $data) ? $data['max_level'] : $transition?->max_lvl;
+        if ($minLevel !== null && (! is_int($minLevel) || $minLevel < 0)) {
+            $errors[] = "{$prefix}: min_level musi być nieujemną liczbą całkowitą albo null.";
+        }
+        if ($maxLevel !== null && (! is_int($maxLevel) || $maxLevel < 0)) {
+            $errors[] = "{$prefix}: max_level musi być nieujemną liczbą całkowitą albo null.";
+        }
+        if (is_int($minLevel) && is_int($maxLevel) && $maxLevel < $minLevel) {
+            $errors[] = "{$prefix}: max_level nie może być mniejszy niż min_level.";
+        }
+
+        $requiredBaseItemId = $data['required_base_item_id'] ?? null;
+        $requiredBaseItemKey = $data['required_base_item_key'] ?? null;
+        if ($requiredBaseItemId !== null && $requiredBaseItemKey !== null) {
+            $errors[] = "{$prefix}: podaj required_base_item_id albo required_base_item_key, nie oba.";
+        }
+        if ($requiredBaseItemId !== null
+            && (! is_int($requiredBaseItemId) || ! BaseItem::query()->whereKey($requiredBaseItemId)->exists())) {
+            $errors[] = "{$prefix}: required_base_item_id nie wskazuje istniejącego BaseItemu.";
+        }
+        if ($requiredBaseItemKey !== null
+            && (! is_string($requiredBaseItemKey) || ! in_array($requiredBaseItemKey, $itemKeys, true))) {
+            $errors[] = "{$prefix}: required_base_item_key musi wskazywać BaseItem utworzony wcześniej w tym commicie.";
+        }
+    }
+
     /** @param array<int, string> $errors */
     private function validateExistingItemReferences(array $operation, string $prefix, array &$errors): void
     {
@@ -1195,11 +1359,13 @@ class AiChangeSetService
                 'base_items' => [],
                 'shop_items' => [],
                 'base_npc_loots' => [],
+                'map_transitions' => [],
             ],
-            'updated' => ['quests' => [], 'dialogs' => [], 'npcs' => [], 'base_items' => []],
+            'updated' => ['quests' => [], 'dialogs' => [], 'npcs' => [], 'base_items' => [], 'map_transitions' => []],
+            'deleted' => ['map_transitions' => []],
             'references' => ['quests' => [], 'steps' => [], 'dialogs' => [], 'items' => []],
         ];
-        $before = ['quests' => [], 'dialogs' => [], 'npcs' => [], 'base_items' => []];
+        $before = ['quests' => [], 'dialogs' => [], 'npcs' => [], 'base_items' => [], 'map_transitions' => []];
 
         foreach ($operations as $operation) {
             if (! in_array($operation['type'], ['create_base_item', 'clone_base_item', 'update_base_item'], true)) {
@@ -1245,6 +1411,37 @@ class AiChangeSetService
                 $result['created']['base_items'][] = $baseItem->id;
                 $result['references']['items'][$operation['key']] = $baseItem->id;
             }
+        }
+
+        foreach ($operations as $operation) {
+            if (! in_array($operation['type'], ['create_map_transition', 'update_map_transition', 'delete_map_transition'], true)) {
+                continue;
+            }
+
+            if ($operation['type'] === 'create_map_transition') {
+                $transition = new Door;
+                $transition->forceFill($this->mapTransitionFields($operation['data'], $result['references']))->save();
+                $result['created']['map_transitions'][] = $transition->id;
+
+                continue;
+            }
+
+            $transition = Door::query()->findOrFail($operation['transition_id']);
+            $before['map_transitions'][(string) $transition->id] ??= $this->snapshotMapTransition($transition);
+
+            if ($operation['type'] === 'delete_map_transition') {
+                $result['deleted']['map_transitions'][] = $transition->id;
+                $transition->delete();
+
+                continue;
+            }
+
+            $transition->forceFill($this->mapTransitionFields(
+                $operation['data'],
+                $result['references'],
+                $transition,
+            ))->save();
+            $result['updated']['map_transitions'][] = $transition->id;
         }
 
         foreach ($operations as $operation) {
@@ -1408,6 +1605,7 @@ class AiChangeSetService
 
         $result['created'] = array_map(fn (array $ids): array => array_values(array_unique($ids)), $result['created']);
         $result['updated'] = array_map(fn (array $ids): array => array_values(array_unique($ids)), $result['updated']);
+        $result['deleted'] = array_map(fn (array $ids): array => array_values(array_unique($ids)), $result['deleted']);
 
         $this->assertQuestProgressOperationsApplied($operations, $result['references']);
 
@@ -1748,6 +1946,11 @@ class AiChangeSetService
         )));
         $shopItemIds = data_get($result, 'created.shop_items', []);
         $baseNpcLootIds = data_get($result, 'created.base_npc_loots', []);
+        $mapTransitionIds = array_values(array_unique(array_merge(
+            data_get($result, 'created.map_transitions', []),
+            data_get($result, 'updated.map_transitions', []),
+            data_get($result, 'deleted.map_transitions', []),
+        )));
 
         return [
             'quests' => Quest::query()->whereIn('id', $questIds)->orderBy('id')->get()
@@ -1762,6 +1965,8 @@ class AiChangeSetService
                 ->mapWithKeys(fn (ShopItem $shopItem): array => [(string) $shopItem->id => $this->snapshotShopItem($shopItem)])->all(),
             'base_npc_loots' => BaseNpcLoot::query()->whereIn('id', $baseNpcLootIds)->orderBy('id')->get()
                 ->mapWithKeys(fn (BaseNpcLoot $baseNpcLoot): array => [(string) $baseNpcLoot->id => $this->snapshotBaseNpcLoot($baseNpcLoot)])->all(),
+            'map_transitions' => Door::query()->whereIn('id', $mapTransitionIds)->orderBy('id')->get()
+                ->mapWithKeys(fn (Door $transition): array => [(string) $transition->id => $this->snapshotMapTransition($transition)])->all(),
         ];
     }
 
@@ -1895,6 +2100,23 @@ class AiChangeSetService
         ];
     }
 
+    /** @return array<string, mixed> */
+    private function snapshotMapTransition(Door $transition): array
+    {
+        return [
+            'id' => $transition->id,
+            'map_id' => $transition->map_id,
+            'x' => $transition->x,
+            'y' => $transition->y,
+            'go_map_id' => $transition->go_map_id,
+            'go_x' => $transition->go_x,
+            'go_y' => $transition->go_y,
+            'min_lvl' => $transition->min_lvl,
+            'max_lvl' => $transition->max_lvl,
+            'required_base_item_id' => $transition->required_base_item_id,
+        ];
+    }
+
     /** @param array<string, mixed> $snapshot */
     private function restoreDialog(array $snapshot): void
     {
@@ -1956,6 +2178,56 @@ class AiChangeSetService
         BaseItem::query()->findOrFail($snapshot['id'])->forceFill($snapshot)->save();
     }
 
+    /** @param array<string, mixed> $snapshot */
+    private function restoreMapTransition(array $snapshot): void
+    {
+        $transition = Door::query()->find($snapshot['id']) ?? new Door;
+        $transition->forceFill($snapshot)->save();
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $references
+     * @return array<string, mixed>
+     */
+    private function mapTransitionFields(array $data, array $references, ?Door $transition = null): array
+    {
+        $fields = [];
+        $mapping = [
+            'source_map_id' => 'map_id',
+            'source_x' => 'x',
+            'source_y' => 'y',
+            'destination_map_id' => 'go_map_id',
+            'destination_x' => 'go_x',
+            'destination_y' => 'go_y',
+            'min_level' => 'min_lvl',
+            'max_level' => 'max_lvl',
+            'required_base_item_id' => 'required_base_item_id',
+        ];
+
+        foreach ($mapping as $input => $column) {
+            if (array_key_exists($input, $data)) {
+                $fields[$column] = $data[$input];
+            }
+        }
+
+        if (array_key_exists('required_base_item_key', $data)) {
+            $fields['required_base_item_id'] = $data['required_base_item_key'] === null
+                ? null
+                : $references['items'][$data['required_base_item_key']];
+        }
+
+        if ($transition === null) {
+            $fields += [
+                'min_lvl' => null,
+                'max_lvl' => null,
+                'required_base_item_id' => null,
+            ];
+        }
+
+        return $fields;
+    }
+
     /** @param array<string, mixed> $data */
     private function applyBaseItemData(BaseItem $baseItem, array $data): void
     {
@@ -2002,6 +2274,13 @@ class AiChangeSetService
 
     private function assertCreatedEntitiesHaveNoOutsideReferences(array $result): void
     {
+        $createdTransitionIds = data_get($result, 'created.map_transitions', []);
+        if (HotelRoom::query()->whereIn('door_id', $createdTransitionIds)->exists()) {
+            throw ValidationException::withMessages([
+                'change_set' => 'Nie można cofnąć commita: utworzone przejście zostało później przypisane do pokoju hotelowego.',
+            ]);
+        }
+
         $createdDialogIds = data_get($result, 'created.dialogs', []);
         $touchedNpcIds = array_merge(data_get($result, 'created.npcs', []), data_get($result, 'updated.npcs', []));
         $outsideNpc = Npc::query()

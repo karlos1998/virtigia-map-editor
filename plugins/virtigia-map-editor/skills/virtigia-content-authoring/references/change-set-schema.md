@@ -250,3 +250,52 @@ Pozycja musi być wolna i mieścić się w `0–79`. Można zamiast niej podać 
 ```
 
 Istniejący item wskazuje się przez `item_id`, a utworzony wcześniej w tym commicie przez `item_key`.
+
+## Przejścia między mapami
+
+Przed przygotowaniem operacji przeczytaj [map-transitions.md](map-transitions.md) i wywołaj `inspect_map_transitions` dla obu map. Jeden rekord oznacza tylko jeden kierunek.
+
+```json
+{
+  "type": "create_map_transition",
+  "data": {
+    "source_map_id": 1,
+    "source_x": 47,
+    "source_y": 18,
+    "destination_map_id": 22,
+    "destination_x": 0,
+    "destination_y": 18,
+    "min_level": 20,
+    "max_level": 80,
+    "required_base_item_id": 25543
+  }
+}
+```
+
+Dla przejścia dwukierunkowego dodaj drugą operację `create_map_transition` z odwróconymi mapami i współrzędnymi. Każdy kierunek ma własne ograniczenia.
+
+Edycja istniejącego rekordu zmienia wyłącznie wymienione pola:
+
+```json
+{
+  "type": "update_map_transition",
+  "transition_id": 912,
+  "data": {
+    "destination_x": 1,
+    "destination_y": 18,
+    "min_level": null,
+    "required_base_item_id": null
+  }
+}
+```
+
+Nowy item utworzony wcześniej w tym samym commicie można wskazać przez `required_base_item_key`. Nie podawaj go jednocześnie z `required_base_item_id`.
+
+```json
+{
+  "type": "delete_map_transition",
+  "transition_id": 912
+}
+```
+
+Usunięcie dotyczy tylko wskazanego kierunku i jest odrzucane, jeśli przejście należy do pokoju hotelowego.
