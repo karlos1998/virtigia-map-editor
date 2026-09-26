@@ -1,87 +1,83 @@
 <script setup lang="ts">
 import AppLayout from '@/layout/AppLayout.vue';
-import { MapResource } from '@/Resources/Map.resource';
-import {computed, ref} from 'vue';
-import {Link, router, useForm} from '@inertiajs/vue3';
+import ItemHeader from '@/Components/ItemHeader.vue';
+import MapImageCropper, { type MapImageExport } from '@/Pages/Map/Components/MapImageCropper.vue';
+import { ref } from 'vue';
+import { useForm } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
-import {NpcResource, NpcWithLocationResource} from '@/Resources/Npc.resource';
-import { DoorResource } from '@/Resources/Door.resource';
-import { useConfirm } from 'primevue';
-import ItemHeader from "@/Components/ItemHeader.vue";
-import EditOption from "@/Pages/Dialog/Modals/EditOption.vue";
-import {DynamicDialogCloseOptions, DynamicDialogInstance} from "primevue/dynamicdialogoptions";
-import {useDialog} from "primevue/usedialog";
-import AddNpcToMap from "@/Pages/Map/Modals/AddNpcToMap.vue";
 
-const src = ref(null);
+type MapImageCropperExpose = {
+    exportImage: () => Promise<MapImageExport | null>;
+};
+
+const cropper = ref<MapImageCropperExpose | null>(null);
+const imageReady = ref(false);
+const exportError = ref('');
 
 const form = useForm({
-    img: new Image(),
+    img: '',
     name: '',
     fileName: '',
-})
+});
 
-function onFileSelect(event) {
-    const file = event.files[0];
-    const reader = new FileReader();
+const submit = async (): Promise<void> => {
+    exportError.value = '';
+    const image = await cropper.value?.exportImage();
 
-    form.fileName = file.name
+    if (!image) {
+        exportError.value = 'Wybierz i przygotuj grafikę mapy przed zapisaniem.';
 
-    reader.onload = async (e) => {
-        src.value = e.target.result;
+        return;
+    }
 
-        const img = new Image();
-        img.onload = () => {
-            form.img = img;
-        };
-        img.src = e.target.result as string;
-    };
-
-    reader.readAsDataURL(file);
-}
-
-const submit = () => {
-    form
-        .transform(({name, img, fileName}) => {
-            console.log(img);
-            return {
-                name,
-                img: img.src,
-                fileName,
-            }
-        })
-        .post(route('maps.store'));
-}
+    form.img = image.dataUrl;
+    form.fileName = image.fileName;
+    form.post(route('maps.store'), {
+        preserveScroll: true,
+    });
+};
 </script>
 
 <template>
     <AppLayout>
-
-
-        <ItemHeader
-            :route-back="route('maps.index')"
-        >
+        <ItemHeader :route-back="route('maps.index')">
             <template #header>
                 Tworzenie nowej mapy
             </template>
         </ItemHeader>
 
+        <div class="card flex flex-col gap-6">
+            <div>
+                <h1 class="text-2xl font-semibold text-gray-900">Przygotuj grafikę</h1>
+                <p class="mt-1 text-gray-600">
+                    Ustal rozmiar mapy w polach, przeskaluj grafikę i przeciągnij ją pod siatką, aby wybrać kadr.
+                </p>
+            </div>
 
-        <div class="card">
-            <FileUpload mode="basic" @select="onFileSelect" customUpload auto severity="secondary" class="p-button-outlined" />
-            <img v-if="src" :src="src" alt="Image" class="rounded-xl w-full sm:w-64" />
-            <Message severity="error" v-if="form.img.width % 32 || form.img.height % 32">Błędna grafika! Mapa musi mieć wymiary podzielne przez 32</Message>
+            <MapImageCropper ref="cropper" @ready-change="imageReady = $event" />
 
-            <InputText type="text" v-model="form.name" placeholder="Nazwa Mapy" />
-            <Message v-if="form.errors.name" severity="error" size="small" variant="simple">{{ form.errors.name }}</Message>
-            <Message v-if="form.errors.img" severity="error" size="small" variant="simple">{{ form.errors.img }}</Message>
-            <Message v-if="form.errors.fileName" severity="error" size="small" variant="simple">{{ form.errors.fileName }}</Message>
+            <div class="rounded-xl border border-gray-200 bg-gray-50 p-5">
+                <label for="map-name" class="mb-2 block text-sm font-medium text-gray-700">Nazwa mapy</label>
+                <InputText id="map-name" v-model="form.name" class="w-full" placeholder="Np. Stare podziemia" />
 
-            <Button type="submit" severity="secondary" label="Utwórz mape" @click="submit" :loading="form.processing" />
+                <div class="mt-3 flex flex-col gap-2">
+                    <Message v-if="form.errors.name" severity="error" size="small" variant="simple">{{ form.errors.name }}</Message>
+                    <Message v-if="form.errors.img" severity="error" size="small" variant="simple">{{ form.errors.img }}</Message>
+                    <Message v-if="form.errors.fileName" severity="error" size="small" variant="simple">{{ form.errors.fileName }}</Message>
+                    <Message v-if="exportError" severity="error" size="small" variant="simple">{{ exportError }}</Message>
+                </div>
+
+                <div class="mt-5 flex justify-end">
+                    <Button
+                        type="button"
+                        icon="pi pi-check"
+                        label="Utwórz mapę"
+                        :disabled="!imageReady || form.processing"
+                        :loading="form.processing"
+                        @click="submit"
+                    />
+                </div>
+            </div>
         </div>
     </AppLayout>
 </template>
-
-<style scoped>
-
-</style>

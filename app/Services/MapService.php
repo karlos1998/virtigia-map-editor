@@ -102,11 +102,11 @@ final class MapService extends BaseService
     /**
      * @throws ValidationException
      */
-    public function store(string $imgBase64, string $fileName, string $name)
+    public function store(string $imgBase64, string $fileName, string $name): Map
     {
         $imageData = $this->assetService->storeFromBase64('img/locations/'.session('world').'/', $imgBase64, $fileName);
-        $width = $imageData['width'] / 32;
-        $height = $imageData['height'] / 32;
+        $width = intdiv($imageData['width'], 32);
+        $height = intdiv($imageData['height'], 32);
 
         $map = $this->mapModel->create([
             'name' => $name,

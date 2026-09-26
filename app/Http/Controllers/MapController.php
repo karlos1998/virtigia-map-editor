@@ -48,7 +48,11 @@ class MapController extends Controller
 
     public function store(StoreMapRequest $request)
     {
-        $map = $this->mapService->store($request->img, $request->fileName, $request->name);
+        $map = $this->mapService->store(
+            $request->imageDataUri(),
+            $request->fileName(),
+            $request->name(),
+        );
 
         return to_route('maps.show', $map->id);
     }
