@@ -1,15 +1,15 @@
 {
   "name": "virtigia-map-editor",
   "version": "0.5.0+codex.20260926210433",
-  "description": "Tworzy kompletne questy, pe\u0142ne grafy dialog\u00f3w i BaseItemy Virtigii oraz analizuje walk\u0119 i loot Retro przez bezpieczne narz\u0119dzia Map Editora.",
+  "description": "Tworzy kompletne questy, pe\u0142ne grafy dialog\u00f3w i BaseItemy Virtigii, przegl\u0105da referencje graficzne oraz analizuje walk\u0119 i loot Retro przez bezpieczne narz\u0119dzia Map Editora.",
   "author": {
     "name": "Virtigia"
   },
   "skills": "./skills/",
   "interface": {
     "displayName": "Virtigia Map Editor",
-    "shortDescription": "Questy, pe\u0142ne dialogi, BaseItemy i walka Retro.",
-    "longDescription": "Firmowa wtyczka do tworzenia quest\u00f3w, pe\u0142nych graf\u00f3w dialog\u00f3w z regu\u0142ami, akcjami, fokusem kamery, minigrami i teleportami, a tak\u017ce BaseItem\u00f3w oraz analizy NPC, ekwipunku, umiej\u0119tno\u015bci i dropu Retro.",
+    "shortDescription": "Questy, dialogi, BaseItemy, grafiki i walka Retro.",
+    "longDescription": "Firmowa wtyczka do tworzenia quest\u00f3w, pe\u0142nych graf\u00f3w dialog\u00f3w z regu\u0142ami, akcjami, fokusem kamery, minigrami i teleportami, a tak\u017ce BaseItem\u00f3w, przegl\u0105dania stylu map, item\u00f3w i NPC oraz analizy NPC, ekwipunku, umiej\u0119tno\u015bci i dropu Retro.",
     "developerName": "Virtigia",
     "category": "Productivity",
     "capabilities": [
@@ -19,6 +19,7 @@
     "defaultPrompt": [
       "Znajd\u017a Roana w Ithan na Retro i poka\u017c jego kontekst.",
       "Sklonuj item, popraw jego statystyki i przygotuj commit.",
+      "Poka\u017c mi przyk\u0142ady grafik item\u00f3w i opisz ich wsp\u00f3lny styl.",
       "Por\u00f3wnaj legalne buildy na Retro przeciwko herosowi."
     ]
   },

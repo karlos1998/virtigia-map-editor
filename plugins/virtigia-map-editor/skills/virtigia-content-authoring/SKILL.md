@@ -1,6 +1,6 @@
 ---
 name: virtigia-content-authoring
-description: Create or edit Virtigia quests, dialogue graphs, BaseItems, shop and loot assignments, and placed NPCs, or analyze Retro combat and drops through the Virtigia Map Editor MCP. Use for world content, item graphics and attributes, builds, previewable AI commits, or rollback. Do not use it to create BaseNPC definitions or maps.
+description: Create or edit Virtigia quests, dialogue graphs, BaseItems, shop and loot assignments, and placed NPCs, browse existing map, item and NPC graphics for visual-style references, or analyze Retro combat and drops through the Virtigia Map Editor MCP. Use for world content, item graphics and attributes, visual analysis, builds, previewable AI commits, or rollback. Do not use it to create BaseNPC definitions or maps.
 ---
 
 # Virtigia Content Authoring
@@ -12,12 +12,13 @@ Treat the Map Editor MCP as the source of truth. Never guess record IDs or game-
 1. Call `profile` to confirm the employee identity and available worlds.
 2. Use the world named by the user. If none is named, state that you are using `retro` before drafting changes.
 3. Call `search_game_content` to resolve every referenced NPC, map, item, shop, quest, and dialog. If results are ambiguous, ask the user which exact result they mean.
-4. Before writing player-facing dialogue, call `get_writing_context` and follow [content-style.md](references/content-style.md).
-5. For every quest, read [quest-progress.md](references/quest-progress.md). A description never implements a kill, time, or next-day transition. Before repairing an existing quest, call `get_quest`.
-6. For every non-trivial dialog, call `get_dialog_capabilities` and read [dialog-mechanics.md](references/dialog-mechanics.md). Before changing an existing dialog, also call `get_dialog_graph`. Use `patch_dialog`; a shared dialog is intentionally changed for every NPC that uses it and is not a reason to stop.
-7. Build operations using [change-set-schema.md](references/change-set-schema.md), then call `draft_change_set`.
-8. Show the user a compact summary of the validated draft, including real quest progression conditions. Call `apply_change_set` only after the user explicitly approves that draft.
-9. After applying a quest change, call `get_quest` and compare every target ID, quantity, timer and destination with the request. Report the created or changed IDs returned by the server.
+4. If the request depends on how a map, item or NPC looks, read [visual-references.md](references/visual-references.md) and call `browse_visual_references` for several relevant examples. Do not infer style from a `src` path alone.
+5. Before writing player-facing dialogue, call `get_writing_context` and follow [content-style.md](references/content-style.md).
+6. For every quest, read [quest-progress.md](references/quest-progress.md). A description never implements a kill, time, or next-day transition. Before repairing an existing quest, call `get_quest`.
+7. For every non-trivial dialog, call `get_dialog_capabilities` and read [dialog-mechanics.md](references/dialog-mechanics.md). Before changing an existing dialog, also call `get_dialog_graph`. Use `patch_dialog`; a shared dialog is intentionally changed for every NPC that uses it and is not a reason to stop.
+8. Build operations using [change-set-schema.md](references/change-set-schema.md), then call `draft_change_set`.
+9. Show the user a compact summary of the validated draft, including real quest progression conditions. Call `apply_change_set` only after the user explicitly approves that draft.
+10. After applying a quest change, call `get_quest` and compare every target ID, quantity, timer and destination with the request. Report the created or changed IDs returned by the server.
 
 For rollback, call `list_change_sets`, identify the exact commit, and call `revert_change_set` only after confirmation. Rollback may be refused when later manual or AI edits touched the same records.
 
@@ -26,7 +27,7 @@ For rollback, call `list_change_sets`, identify the exact commit, and call `reve
 For BaseItem work, read [base-items.md](references/base-items.md).
 
 1. Before cloning, scaling or editing, call `get_base_item` and use its exact current fields as the baseline.
-2. A wholly new item needs an attached PNG/GIF image exactly 32×32. A clone may reuse the source image unless the user supplies a replacement.
+2. Before designing or evaluating a new item graphic, read [visual-references.md](references/visual-references.md) and browse several existing items from the same category and a comparable rarity. A wholly new item needs an attached PNG/GIF image exactly 32×32. A clone may reuse the source image unless the user supplies a replacement.
 3. Use `attributes_patch` and `remove_attributes` for targeted edits. When asked for a percentage improvement, calculate and show every exact before/after numeric value; preserve unrelated fields.
 4. Before assigning to a shop, call `get_shop_inventory`. Select an explicit free position from `0` to `79`; there are 8 columns and 10 rows, and `position = row × 8 + column`.
 5. Add shop and BaseNPC loot assignments in the same draft when requested. Reference a newly created item in dialogue rules/actions with `@item:<key>`.

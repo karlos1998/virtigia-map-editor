@@ -1,7 +1,7 @@
 interface:
   display_name: "Virtigia – zawartość, itemy i analiza"
-  short_description: "Questy, BaseItemy i analiza walk Retro"
-  default_prompt: "Use $virtigia-content-authoring to create or edit Virtigia content and BaseItems, or analyze a Retro build through the Map Editor MCP."
+  short_description: "Questy, BaseItemy, grafiki i analiza Retro"
+  default_prompt: "Use $virtigia-content-authoring to create or edit Virtigia content and BaseItems, inspect visual references, or analyze a Retro build through the Map Editor MCP."
 
 dependencies:
   tools:

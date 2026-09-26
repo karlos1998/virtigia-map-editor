@@ -4,6 +4,7 @@ namespace Tests\Feature\Mcp;
 
 use App\Mcp\Tools\Virtigia\AnalyzeRetroLootTool;
 use App\Mcp\Tools\Virtigia\ApplyChangeSetTool;
+use App\Mcp\Tools\Virtigia\BrowseVisualReferencesTool;
 use App\Mcp\Tools\Virtigia\DraftChangeSetTool;
 use App\Mcp\Tools\Virtigia\GetBaseItemTool;
 use App\Mcp\Tools\Virtigia\GetDialogCapabilitiesTool;
@@ -544,6 +545,7 @@ class VirtigiaContentServerTest extends TestCase
         return [
             'profile' => [ProfileTool::class, 'profile'],
             'search' => [SearchGameContentTool::class, 'search_game_content'],
+            'visual references' => [BrowseVisualReferencesTool::class, 'browse_visual_references'],
             'base item' => [GetBaseItemTool::class, 'get_base_item'],
             'shop inventory' => [GetShopInventoryTool::class, 'get_shop_inventory'],
             'writing context' => [GetWritingContextTool::class, 'get_writing_context'],
