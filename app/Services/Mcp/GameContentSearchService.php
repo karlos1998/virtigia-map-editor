@@ -260,6 +260,40 @@ class GameContentSearchService
     }
 
     /** @return array<string, mixed> */
+    public function map(string $world, int $mapId): array
+    {
+        $world = $this->worldService->use($world);
+        $map = GameMap::query()->findOrFail($mapId);
+        $collision = (string) $map->col;
+
+        return [
+            'world' => $world,
+            'map' => [
+                'id' => $map->id,
+                'name' => $map->name,
+                'src' => $map->src,
+                'image_url' => AssetUrl::map($map->src),
+                'width_tiles' => (int) $map->x,
+                'height_tiles' => (int) $map->y,
+                'width_pixels' => (int) $map->x * 32,
+                'height_pixels' => (int) $map->y * 32,
+                'collision' => $collision,
+                'collision_rows' => str_split($collision, (int) $map->x),
+                'blocked_count' => substr_count($collision, '1'),
+            ],
+            'collision_format' => [
+                'tile_size_pixels' => 32,
+                'walkable' => '0',
+                'blocked' => '1',
+                'index_formula' => 'index = y * width_tiles + x',
+                'order' => 'Każdy wiersz od lewej do prawej, następnie kolejny wiersz od góry do dołu; bez separatorów.',
+                'required_length' => (int) $map->x * (int) $map->y,
+                'out_of_bounds' => 'Pola poza mapą są zawsze traktowane jako zablokowane.',
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
     public function mapTransitions(string $world, int $mapId): array
     {
         $world = $this->worldService->use($world);
@@ -646,8 +680,8 @@ class GameContentSearchService
             ],
             'dialog_counter_scopes' => collect(DialogCounterScope::cases())->map(fn (DialogCounterScope $scope): string => $scope->value)->all(),
             'npc_placement' => [
-                'base_npc_id' => 'must reference an existing BaseNPC; AI cannot create BaseNPC definitions or sprites',
-                'locations' => 'one placed NPC may have one or more existing map locations, each with map_id, x and y',
+                'base_npc' => 'use an existing base_npc_id or base_npc_key created earlier in the same commit',
+                'locations' => 'one placed NPC may have one or more locations; use existing map_id or map_key created earlier in the same commit, with x and y',
                 'dialog' => 'may reference an existing dialog_id or a dialog_key created earlier in the same change set',
                 'enabled' => 'boolean visibility/availability flag',
                 'auto_start_dialog' => 'boolean; starts the assigned dialog automatically when the player enters range',
@@ -658,12 +692,13 @@ class GameContentSearchService
                 'dialog graph patches and all node/rule/action fields described above',
                 'existing shop/hotel assignment inside dialog nodes',
                 'camera focus using existing NPC locations or coordinates',
-                'placed NPCs based on existing BaseNPC records',
+                'new maps from supplied PNG/JPEG graphics and exact row-major collision editing',
+                'new BaseNPC definitions from supplied PNG/GIF graphics and placed NPCs',
                 'BaseItems, shop inventory slots and BaseNPC loot membership',
                 'directed map transitions with coordinates, level ranges and required BaseItems',
             ],
             'not_exposed_for_ai_writes' => [
-                'BaseNPC definitions, maps and graphic-dependent assets',
+                'generated or guessed map/BaseNPC graphics; the source graphic must be supplied',
                 'hotels/rooms, dialog counters and seasonal-event creation',
                 'books, audio, map tracks, respawn/spawn points and special attacks',
             ],

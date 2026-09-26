@@ -1,6 +1,6 @@
 ---
 name: virtigia-content-authoring
-description: Create or edit Virtigia quests, dialogue graphs, directed map transitions, BaseItems, shop and loot assignments, and placed NPCs, browse existing map, item and NPC graphics for visual-style references, or analyze Retro combat and drops through the Virtigia Map Editor MCP. Use for world content, routes, item graphics and attributes, visual analysis, builds, previewable AI commits, or rollback. Do not use it to create BaseNPC definitions or maps.
+description: Create or edit Virtigia maps and collisions, BaseNPC definitions from supplied graphics, quests, dialogue graphs, directed map transitions, BaseItems, shop and loot assignments, and placed NPCs; browse visual references; or analyze Retro combat and drops through the Map Editor MCP. Use for world content, routes, graphics, attributes, builds, previewable AI commits, or rollback.
 ---
 
 # Virtigia Content Authoring
@@ -16,10 +16,12 @@ Treat the Map Editor MCP as the source of truth. Never guess record IDs or game-
 5. Before writing player-facing dialogue, call `get_writing_context` and follow [content-style.md](references/content-style.md).
 6. For every quest, read [quest-progress.md](references/quest-progress.md). A description never implements a kill, time, or next-day transition. Before repairing an existing quest, call `get_quest`.
 7. For every non-trivial dialog, call `get_dialog_capabilities` and read [dialog-mechanics.md](references/dialog-mechanics.md). Before changing an existing dialog, also call `get_dialog_graph`. Use `patch_dialog`; a shared dialog is intentionally changed for every NPC that uses it and is not a reason to stop.
-8. For every map-transition request, read [map-transitions.md](references/map-transitions.md) and call `inspect_map_transitions` for every affected map before drafting.
-9. Build operations using [change-set-schema.md](references/change-set-schema.md), then call `draft_change_set`.
-10. Show the user a compact summary of the validated draft, including both transition directions and their requirements plus real quest progression conditions. Call `apply_change_set` only after the user explicitly approves that draft.
-11. After applying a quest change, call `get_quest` and compare every target ID, quantity, timer and destination with the request. After a transition change, call `inspect_map_transitions` again for both maps and verify coordinates, requirements and the exact return pair. Report the created or changed IDs returned by the server.
+8. For map creation or collision changes, read [map-authoring.md](references/map-authoring.md). Call `inspect_map` before changing an existing map.
+9. For BaseNPC creation or placement, read [base-npcs.md](references/base-npcs.md). A new BaseNPC always needs a graphic supplied by the user.
+10. For every map-transition request, read [map-transitions.md](references/map-transitions.md) and call `inspect_map_transitions` for every affected map before drafting.
+11. Build operations using [change-set-schema.md](references/change-set-schema.md), then call `draft_change_set`.
+12. Show the user a compact summary of the validated draft, including map dimensions/collision changes, BaseNPC rendering mode, both transition directions and requirements, and real quest progression conditions. Call `apply_change_set` only after the user explicitly approves that draft.
+13. After applying a quest change, call `get_quest` and compare every target ID, quantity, timer and destination with the request. After a map change call `inspect_map`; after a transition change call `inspect_map_transitions` again for both maps. Report the created or changed IDs returned by the server.
 
 For rollback, call `list_change_sets`, identify the exact commit, and call `revert_change_set` only after confirmation. Rollback may be refused when later manual or AI edits touched the same records.
 
@@ -51,8 +53,8 @@ These tools currently support only `retro`. They construct fake characters, item
 
 ## Hard boundaries
 
-- Never create BaseNPC definitions, maps, NPC sprites, outfits, or unrelated assets. BaseItem icons are allowed only through the validated 32×32 item-image field.
-- `place_npc` may only instantiate an existing BaseNPC on an existing map.
+- Never invent, synthesize, or guess a map/BaseNPC graphic. Creation is allowed only when the user supplied the source PNG/JPEG/GIF accepted by [map-authoring.md](references/map-authoring.md) or [base-npcs.md](references/base-npcs.md).
+- `place_npc` may use an existing record or a `base_npc_key`/`map_key` created earlier in the same commit.
 - A map transition is one direction. Never infer, edit, or delete the return direction without inspecting it and including a separate explicit operation.
 - Never delete a transition whose `hotel_room` is non-null. Preserve directional level and item requirements unless the user asked to change them.
 - Quests and dialogs may reference existing items or BaseItems created earlier in the same commit through `@item:<key>`.

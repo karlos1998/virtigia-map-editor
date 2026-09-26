@@ -5,6 +5,9 @@ namespace App\Services\Mcp;
 use App\Enums\BaseItemCategory;
 use App\Enums\BaseItemCurrency;
 use App\Enums\BaseItemRarity;
+use App\Enums\BaseNpcCategory;
+use App\Enums\BaseNpcRank;
+use App\Enums\Profession;
 use App\Models\AiChangeSet;
 use App\Models\BaseItem;
 use App\Models\BaseNpc;
@@ -27,9 +30,12 @@ use App\Models\Shop;
 use App\Models\ShopItem;
 use App\Models\User;
 use App\Services\BaseItemService;
+use App\Services\BaseNpcService;
 use App\Services\DialogLayoutService;
+use App\Services\MapService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -50,6 +56,9 @@ class AiChangeSetService
         'update_base_item',
         'attach_item_to_shop',
         'attach_item_to_base_npc_loot',
+        'create_map',
+        'update_map_collisions',
+        'create_base_npc',
         'create_map_transition',
         'update_map_transition',
         'delete_map_transition',
@@ -59,6 +68,8 @@ class AiChangeSetService
         private readonly McpWorldService $worldService,
         private readonly DialogLayoutService $dialogLayoutService,
         private readonly BaseItemService $baseItemService,
+        private readonly MapService $mapService,
+        private readonly BaseNpcService $baseNpcService,
     ) {}
 
     /** @param array<int, array<string, mixed>> $operations */
@@ -114,7 +125,7 @@ class AiChangeSetService
 
         try {
             [$result, $beforeSnapshot, $afterSnapshot] = DB::connection($this->connectionName())->transaction(
-                fn (): array => $this->executeOperations($operations),
+                fn (): array => $this->executeOperations($operations, $changeSet->world),
             );
         } catch (Throwable $throwable) {
             $changeSet->update([
@@ -193,6 +204,23 @@ class AiChangeSetService
             ShopItem::query()->whereIn('id', data_get($result, 'created.shop_items', []))->delete();
             BaseNpcLoot::query()->whereIn('id', data_get($result, 'created.base_npc_loots', []))->delete();
 
+            foreach (BaseNpc::query()->whereIn('id', data_get($result, 'created.base_npcs', []))->get() as $baseNpc) {
+                Storage::disk('s3')->delete('img/npc/'.ltrim((string) $baseNpc->src, '/'));
+                $baseNpc->delete();
+            }
+
+            foreach (data_get($before, 'maps', []) as $snapshot) {
+                GameMap::query()->findOrFail($snapshot['id'])->forceFill($snapshot)->save();
+            }
+
+            foreach (GameMap::query()->whereIn('id', data_get($result, 'created.maps', []))->get() as $map) {
+                Storage::disk('s3')->delete('img/locations/'.ltrim((string) $map->src, '/'));
+                if ($map->thumbnail_src) {
+                    Storage::disk('s3')->delete('img/locations/'.ltrim((string) $map->thumbnail_src, '/'));
+                }
+                $map->delete();
+            }
+
             foreach (data_get($before, 'base_items', []) as $snapshot) {
                 $this->restoreBaseItem($snapshot);
             }
@@ -269,6 +297,9 @@ class AiChangeSetService
         $stepKeys = [];
         $dialogKeys = [];
         $itemKeys = [];
+        $mapKeys = [];
+        $baseNpcKeys = [];
+        $plannedMaps = [];
         $plannedShopPositions = [];
         $plannedBaseNpcLoots = [];
         $plannedTransitionTiles = [];
@@ -279,7 +310,7 @@ class AiChangeSetService
             $data = $operation['data'] ?? [];
             $prefix = 'Operacja '.($index + 1);
 
-            if (in_array($type, ['create_quest', 'create_dialog', 'create_base_item', 'clone_base_item'], true)) {
+            if (in_array($type, ['create_quest', 'create_dialog', 'create_base_item', 'clone_base_item', 'create_map', 'create_base_npc'], true)) {
                 $key = $operation['key'] ?? null;
                 if (! is_string($key) || $key === '') {
                     $errors[] = "{$prefix}: pole key jest wymagane dla {$type}.";
@@ -290,6 +321,8 @@ class AiChangeSetService
                 $bucket = match ($type) {
                     'create_quest' => $questKeys,
                     'create_dialog' => $dialogKeys,
+                    'create_map' => $mapKeys,
+                    'create_base_npc' => $baseNpcKeys,
                     default => $itemKeys,
                 };
                 if (in_array($key, $bucket, true)) {
@@ -300,9 +333,28 @@ class AiChangeSetService
                     $questKeys[] = $key;
                 } elseif ($type === 'create_dialog') {
                     $dialogKeys[] = $key;
-                } else {
+                } elseif (in_array($type, ['create_base_item', 'clone_base_item'], true)) {
                     $itemKeys[] = $key;
+                } elseif ($type === 'create_map') {
+                    $mapKeys[] = $key;
+                } else {
+                    $baseNpcKeys[] = $key;
                 }
+            }
+
+            if ($type === 'create_map') {
+                $dimensions = $this->validateCreateMapOperation($data, $prefix, $errors);
+                if ($dimensions !== null) {
+                    $plannedMaps[(string) $operation['key']] = [...$dimensions, 'name' => (string) ($data['name'] ?? '')];
+                }
+            }
+
+            if ($type === 'update_map_collisions') {
+                $this->validateMapCollisionOperation($operation, $plannedMaps, $prefix, $errors);
+            }
+
+            if ($type === 'create_base_npc') {
+                $this->validateCreateBaseNpcOperation($data, $prefix, $errors);
             }
 
             if ($type === 'create_quest') {
@@ -339,16 +391,14 @@ class AiChangeSetService
             }
 
             if ($type === 'place_npc') {
-                if (! BaseNpc::query()->whereKey($operation['base_npc_id'] ?? null)->exists()) {
-                    $errors[] = "{$prefix}: można wystawić NPC tylko z istniejącego base_npc_id.";
-                }
+                $this->validateBaseNpcReference($operation, $baseNpcKeys, $prefix, $errors);
 
                 $locations = $operation['locations'] ?? [];
                 if (! is_array($locations) || $locations === []) {
                     $errors[] = "{$prefix}: podaj co najmniej jedną lokalizację NPC.";
                 } else {
                     foreach ($locations as $locationIndex => $location) {
-                        $map = GameMap::query()->find($location['map_id'] ?? null);
+                        $map = $this->mapDimensionsFromReference($location, $plannedMaps);
                         if ($map === null) {
                             $errors[] = "{$prefix}: lokalizacja ".($locationIndex + 1).' wskazuje nieistniejącą mapę.';
 
@@ -357,8 +407,8 @@ class AiChangeSetService
 
                         $x = filter_var($location['x'] ?? null, FILTER_VALIDATE_INT);
                         $y = filter_var($location['y'] ?? null, FILTER_VALIDATE_INT);
-                        if ($x === false || $y === false || $x < 0 || $y < 0 || $x >= $map->x || $y >= $map->y) {
-                            $errors[] = "{$prefix}: lokalizacja ".($locationIndex + 1)." wykracza poza mapę [{$map->name}].";
+                        if ($x === false || $y === false || $x < 0 || $y < 0 || $x >= $map['x'] || $y >= $map['y']) {
+                            $errors[] = "{$prefix}: lokalizacja ".($locationIndex + 1)." wykracza poza mapę [{$map['name']}].";
                         }
                     }
                 }
@@ -377,7 +427,7 @@ class AiChangeSetService
             }
 
             if ($type === 'attach_item_to_base_npc_loot') {
-                $this->validateBaseNpcLootOperation($operation, $itemKeys, $plannedBaseNpcLoots, $prefix, $errors);
+                $this->validateBaseNpcLootOperation($operation, $itemKeys, $baseNpcKeys, $plannedBaseNpcLoots, $prefix, $errors);
             }
 
             if (in_array($type, ['create_map_transition', 'update_map_transition', 'delete_map_transition'], true)) {
@@ -412,7 +462,7 @@ class AiChangeSetService
             }
         }
 
-        $warnings[] = 'Commit może zarządzać przejściami map, BaseItemami, sklepami, lootem, questami i dialogami. Nadal nie tworzy BaseNPC ani map.';
+        $warnings[] = 'Nowa mapa i nowy BaseNPC wymagają jawnie dostarczonej grafiki. Commit nie generuje ani nie zgaduje assetów.';
 
         return [
             'valid' => $errors === [],
@@ -905,6 +955,233 @@ class AiChangeSetService
         $errors[] = "{$prefix}: podaj istniejący dialog_id albo dialog_key tworzony w tym samym commicie.";
     }
 
+    /**
+     * @param  array<int, string>  $errors
+     * @return array{x: int, y: int}|null
+     */
+    private function validateCreateMapOperation(array $data, string $prefix, array &$errors): ?array
+    {
+        $allowedFields = ['name', 'image_data_uri', 'collision', 'blocked_tiles'];
+        $unknownFields = array_values(array_diff(array_keys($data), $allowedFields));
+        if ($unknownFields !== []) {
+            $errors[] = "{$prefix}: nieobsługiwane pola mapy: ".implode(', ', $unknownFields).'.';
+        }
+
+        if (! is_string($data['name'] ?? null) || mb_strlen(trim($data['name'])) < 4 || mb_strlen($data['name']) > 50) {
+            $errors[] = "{$prefix}: nazwa mapy musi mieć od 4 do 50 znaków.";
+        }
+
+        $imageInfo = $this->decodedImageInfo($data['image_data_uri'] ?? null, ['image/png', 'image/jpeg']);
+        if ($imageInfo === null) {
+            $errors[] = "{$prefix}: grafika mapy musi być prawidłowym PNG albo JPEG przekazanym jako data URI.";
+
+            return null;
+        }
+
+        [$width, $height] = $imageInfo;
+        if ($width % 32 !== 0 || $height % 32 !== 0) {
+            $errors[] = "{$prefix}: szerokość i wysokość grafiki mapy muszą być podzielne przez 32 px.";
+        }
+        if ($width > 4096 || $height > 4096) {
+            $errors[] = "{$prefix}: mapa może mieć maksymalnie 128 × 128 pól (4096 × 4096 px).";
+        }
+
+        $dimensions = ['x' => intdiv($width, 32), 'y' => intdiv($height, 32)];
+        if (array_key_exists('collision', $data) && array_key_exists('blocked_tiles', $data)) {
+            $errors[] = "{$prefix}: podaj collision albo blocked_tiles, nie oba.";
+        }
+        if (array_key_exists('collision', $data)) {
+            $this->validateCollisionString($data['collision'], $dimensions, $prefix, $errors);
+        }
+        if (array_key_exists('blocked_tiles', $data)) {
+            $this->validateCollisionTiles($data['blocked_tiles'], $dimensions, $prefix, $errors);
+        }
+
+        return $dimensions;
+    }
+
+    /** @param array<string, array{x: int, y: int, name: string}> $plannedMaps @param array<int, string> $errors */
+    private function validateMapCollisionOperation(array $operation, array $plannedMaps, string $prefix, array &$errors): void
+    {
+        $map = $this->mapDimensionsFromReference($operation, $plannedMaps);
+        if ($map === null) {
+            $errors[] = "{$prefix}: podaj istniejący map_id albo map_key mapy utworzonej wcześniej w tym commicie.";
+
+            return;
+        }
+
+        $data = $operation['data'] ?? [];
+        $allowedFields = ['mode', 'collision', 'tiles'];
+        $unknownFields = array_values(array_diff(array_keys($data), $allowedFields));
+        if ($unknownFields !== []) {
+            $errors[] = "{$prefix}: nieobsługiwane pola kolizji: ".implode(', ', $unknownFields).'.';
+        }
+
+        $mode = $data['mode'] ?? null;
+        if (! in_array($mode, ['replace', 'block', 'unblock'], true)) {
+            $errors[] = "{$prefix}: mode kolizji musi mieć wartość replace, block albo unblock.";
+
+            return;
+        }
+
+        if ($mode === 'replace') {
+            if (array_key_exists('tiles', $data)) {
+                $errors[] = "{$prefix}: tryb replace przyjmuje collision, a nie tiles.";
+            }
+            $this->validateCollisionString($data['collision'] ?? null, $map, $prefix, $errors);
+        } else {
+            if (array_key_exists('collision', $data)) {
+                $errors[] = "{$prefix}: tryb {$mode} przyjmuje tiles, a nie collision.";
+            }
+            $this->validateCollisionTiles($data['tiles'] ?? null, $map, $prefix, $errors);
+        }
+    }
+
+    /** @param array{x: int, y: int} $map @param array<int, string> $errors */
+    private function validateCollisionString(mixed $collision, array $map, string $prefix, array &$errors): void
+    {
+        $expectedLength = $map['x'] * $map['y'];
+        if (! is_string($collision) || strlen($collision) !== $expectedLength || preg_match('/^[01]+$/', $collision) !== 1) {
+            $errors[] = "{$prefix}: collision musi być stringiem dokładnie {$expectedLength} zer i jedynek (wierszami od lewej do prawej).";
+        }
+    }
+
+    /** @param array{x: int, y: int} $map @param array<int, string> $errors */
+    private function validateCollisionTiles(mixed $tiles, array $map, string $prefix, array &$errors): void
+    {
+        if (! is_array($tiles) || $tiles === []) {
+            $errors[] = "{$prefix}: tiles/blocked_tiles musi zawierać co najmniej jedno pole {x, y}.";
+
+            return;
+        }
+
+        foreach ($tiles as $index => $tile) {
+            if (! is_array($tile) || ! is_int($tile['x'] ?? null) || ! is_int($tile['y'] ?? null)
+                || $tile['x'] < 0 || $tile['y'] < 0 || $tile['x'] >= $map['x'] || $tile['y'] >= $map['y']) {
+                $errors[] = "{$prefix}: pole kolizji ".($index + 1).' wykracza poza mapę albo nie ma całkowitych x i y.';
+            }
+        }
+    }
+
+    /** @param array<int, string> $errors */
+    private function validateCreateBaseNpcOperation(array $data, string $prefix, array &$errors): void
+    {
+        $allowedFields = [
+            'name', 'image_data_uri', 'level', 'rank', 'category', 'profession', 'type', 'facing',
+            'draw_offset_x', 'draw_offset_y', 'is_aggressive', 'divine_intervention', 'guaranteed_loot',
+            'min_respawn_time', 'max_respawn_time',
+        ];
+        $unknownFields = array_values(array_diff(array_keys($data), $allowedFields));
+        if ($unknownFields !== []) {
+            $errors[] = "{$prefix}: nieobsługiwane pola BaseNPC: ".implode(', ', $unknownFields).'.';
+        }
+
+        if (! is_string($data['name'] ?? null) || mb_strlen(trim($data['name'])) < 2 || mb_strlen($data['name']) > 100) {
+            $errors[] = "{$prefix}: nazwa BaseNPC musi mieć od 2 do 100 znaków.";
+        }
+        if (! is_int($data['level'] ?? null) || $data['level'] < 0) {
+            $errors[] = "{$prefix}: level BaseNPC musi być nieujemną liczbą całkowitą.";
+        }
+        $this->validateEnumValue($data, 'rank', BaseNpcRank::valuesToList(), $prefix, $errors);
+        $this->validateEnumValue($data, 'category', BaseNpcCategory::valuesToList(), $prefix, $errors);
+        $this->validateEnumValue($data, 'profession', Profession::valuesToList(), $prefix, $errors);
+        foreach (['rank', 'category'] as $requiredField) {
+            if (! array_key_exists($requiredField, $data)) {
+                $errors[] = "{$prefix}: data.{$requiredField} jest wymagane dla nowego BaseNPC.";
+            }
+        }
+        if (array_key_exists('type', $data) && ! in_array($data['type'], [0, 4], true)) {
+            $errors[] = "{$prefix}: type BaseNPC może mieć wartość 0 (zwykły, interaktywny) albo 4 (warstwa dekoracyjna).";
+        }
+        if (array_key_exists('facing', $data) && (! is_int($data['facing']) || $data['facing'] < 0 || $data['facing'] > 3)) {
+            $errors[] = "{$prefix}: facing musi mieć wartość 0=południe, 1=północ, 2=zachód albo 3=wschód.";
+        }
+        foreach (['draw_offset_x', 'draw_offset_y'] as $field) {
+            if (array_key_exists($field, $data) && (! is_int($data[$field]) || $data[$field] < -256 || $data[$field] > 256)) {
+                $errors[] = "{$prefix}: {$field} musi być liczbą całkowitą od -256 do 256.";
+            }
+        }
+        foreach (['is_aggressive', 'divine_intervention', 'guaranteed_loot'] as $field) {
+            if (array_key_exists($field, $data) && ! is_bool($data[$field])) {
+                $errors[] = "{$prefix}: {$field} musi być wartością logiczną.";
+            }
+        }
+        foreach (['min_respawn_time', 'max_respawn_time'] as $field) {
+            if (array_key_exists($field, $data) && $data[$field] !== null && (! is_int($data[$field]) || $data[$field] < 0)) {
+                $errors[] = "{$prefix}: {$field} musi być nieujemną liczbą całkowitą albo null.";
+            }
+        }
+        if (isset($data['min_respawn_time'], $data['max_respawn_time']) && $data['max_respawn_time'] < $data['min_respawn_time']) {
+            $errors[] = "{$prefix}: max_respawn_time nie może być mniejsze niż min_respawn_time.";
+        }
+
+        $imageInfo = $this->decodedImageInfo($data['image_data_uri'] ?? null, ['image/png', 'image/gif']);
+        if ($imageInfo === null || $imageInfo[0] > 230 || $imageInfo[1] > 230) {
+            $errors[] = "{$prefix}: grafika BaseNPC musi być prawidłowym PNG albo GIF do 230 × 230 px przekazanym jako data URI.";
+        }
+    }
+
+    /** @param array<int, string> $baseNpcKeys @param array<int, string> $errors */
+    private function validateBaseNpcReference(array $operation, array $baseNpcKeys, string $prefix, array &$errors): void
+    {
+        $baseNpcId = $operation['base_npc_id'] ?? null;
+        $baseNpcKey = $operation['base_npc_key'] ?? null;
+        if ($baseNpcId !== null && $baseNpcKey !== null) {
+            $errors[] = "{$prefix}: podaj base_npc_id albo base_npc_key, nie oba.";
+
+            return;
+        }
+        if (is_int($baseNpcId) && BaseNpc::query()->whereKey($baseNpcId)->exists()) {
+            return;
+        }
+        if (is_string($baseNpcKey) && in_array($baseNpcKey, $baseNpcKeys, true)) {
+            return;
+        }
+
+        $errors[] = "{$prefix}: podaj istniejący base_npc_id albo base_npc_key utworzony wcześniej w tym commicie.";
+    }
+
+    /**
+     * @param  array<string, array{x: int, y: int, name: string}>  $plannedMaps
+     * @return array{x: int, y: int, name: string}|null
+     */
+    private function mapDimensionsFromReference(array $reference, array $plannedMaps): ?array
+    {
+        $mapId = $reference['map_id'] ?? null;
+        $mapKey = $reference['map_key'] ?? null;
+        if ($mapId !== null && $mapKey !== null) {
+            return null;
+        }
+        if (is_int($mapId)) {
+            $map = GameMap::query()->find($mapId);
+
+            return $map === null ? null : ['x' => (int) $map->x, 'y' => (int) $map->y, 'name' => (string) $map->name];
+        }
+        if (is_string($mapKey) && isset($plannedMaps[$mapKey])) {
+            return $plannedMaps[$mapKey];
+        }
+
+        return null;
+    }
+
+    /** @param array<int, string> $allowedMimes @return array{0: int, 1: int}|null */
+    private function decodedImageInfo(mixed $image, array $allowedMimes): ?array
+    {
+        if (! is_string($image) || strlen($image) > 30_000_000
+            || preg_match('/^data:image\/(png|jpeg|gif);base64,/', $image, $matches) !== 1) {
+            return null;
+        }
+        $comma = strpos($image, ',');
+        $decoded = $comma === false ? false : base64_decode(substr($image, $comma + 1), true);
+        $imageInfo = is_string($decoded) ? @getimagesizefromstring($decoded) : false;
+        $declaredMime = 'image/'.$matches[1];
+        if ($imageInfo === false || ($imageInfo['mime'] ?? null) !== $declaredMime || ! in_array($declaredMime, $allowedMimes, true)) {
+            return null;
+        }
+
+        return [(int) $imageInfo[0], (int) $imageInfo[1]];
+    }
+
     /** @param array<int, string> $errors */
     private function validateBaseItemOperation(array $operation, string $prefix, array &$errors): void
     {
@@ -1105,35 +1382,38 @@ class AiChangeSetService
         return $position ?? $gridPosition;
     }
 
-    /** @param array<int, string> $itemKeys @param array<int, array<int, string>> $plannedBaseNpcLoots @param array<int, string> $errors */
+    /** @param array<int, string> $itemKeys @param array<int, string> $baseNpcKeys @param array<string, array<int, string>> $plannedBaseNpcLoots @param array<int, string> $errors */
     private function validateBaseNpcLootOperation(
         array $operation,
         array $itemKeys,
+        array $baseNpcKeys,
         array &$plannedBaseNpcLoots,
         string $prefix,
         array &$errors,
     ): void {
-        $baseNpcId = (int) ($operation['base_npc_id'] ?? 0);
-        if (! BaseNpc::query()->whereKey($baseNpcId)->exists()) {
-            $errors[] = "{$prefix}: base_npc_id nie wskazuje istniejącego BaseNPC.";
-        }
+        $this->validateBaseNpcReference($operation, $baseNpcKeys, $prefix, $errors);
+        $baseNpcId = $operation['base_npc_id'] ?? null;
+        $baseNpcKey = $operation['base_npc_key'] ?? null;
+        $baseNpcReference = is_int($baseNpcId) ? 'id:'.$baseNpcId : (is_string($baseNpcKey) ? 'key:'.$baseNpcKey : null);
 
         $itemReference = $this->validateItemReference($operation, $itemKeys, $prefix, $errors);
-        if ($itemReference === null || $baseNpcId < 1) {
+        if ($itemReference === null || $baseNpcReference === null) {
             return;
         }
 
-        $plannedBaseNpcLoots[$baseNpcId] ??= BaseNpcLoot::query()
-            ->where('base_npc_id', $baseNpcId)
-            ->pluck('base_item_id')
-            ->map(fn ($value): string => 'id:'.(int) $value)
-            ->all();
+        $plannedBaseNpcLoots[$baseNpcReference] ??= is_int($baseNpcId)
+            ? BaseNpcLoot::query()
+                ->where('base_npc_id', $baseNpcId)
+                ->pluck('base_item_id')
+                ->map(fn ($value): string => 'id:'.(int) $value)
+                ->all()
+            : [];
 
-        if (in_array($itemReference, $plannedBaseNpcLoots[$baseNpcId], true)) {
+        if (in_array($itemReference, $plannedBaseNpcLoots[$baseNpcReference], true)) {
             $errors[] = "{$prefix}: ten item jest już lootem wskazanego BaseNPC.";
         }
 
-        $plannedBaseNpcLoots[$baseNpcId][] = $itemReference;
+        $plannedBaseNpcLoots[$baseNpcReference][] = $itemReference;
     }
 
     /** @param array<int, string> $itemKeys @param array<int, string> $errors */
@@ -1349,7 +1629,7 @@ class AiChangeSetService
      * @param  array<int, array<string, mixed>>  $operations
      * @return array{0: array<string, mixed>, 1: array<string, mixed>, 2: array<string, mixed>}
      */
-    private function executeOperations(array $operations): array
+    private function executeOperations(array $operations, string $world): array
     {
         $result = [
             'created' => [
@@ -1360,12 +1640,72 @@ class AiChangeSetService
                 'shop_items' => [],
                 'base_npc_loots' => [],
                 'map_transitions' => [],
+                'maps' => [],
+                'base_npcs' => [],
             ],
-            'updated' => ['quests' => [], 'dialogs' => [], 'npcs' => [], 'base_items' => [], 'map_transitions' => []],
+            'updated' => ['quests' => [], 'dialogs' => [], 'npcs' => [], 'base_items' => [], 'map_transitions' => [], 'maps' => []],
             'deleted' => ['map_transitions' => []],
-            'references' => ['quests' => [], 'steps' => [], 'dialogs' => [], 'items' => []],
+            'references' => ['quests' => [], 'steps' => [], 'dialogs' => [], 'items' => [], 'maps' => [], 'base_npcs' => []],
         ];
-        $before = ['quests' => [], 'dialogs' => [], 'npcs' => [], 'base_items' => [], 'map_transitions' => []];
+        $before = ['quests' => [], 'dialogs' => [], 'npcs' => [], 'base_items' => [], 'map_transitions' => [], 'maps' => []];
+
+        foreach ($operations as $operation) {
+            if ($operation['type'] === 'create_map') {
+                $data = $operation['data'];
+                $mime = str_starts_with($data['image_data_uri'], 'data:image/png') ? 'png' : 'jpg';
+                $fileName = Str::slug($data['name']).'-'.Str::lower(Str::random(10)).'.'.$mime;
+                $map = $this->mapService->store($data['image_data_uri'], $fileName, $data['name'], $world);
+                if (isset($data['collision'])) {
+                    $map->forceFill(['col' => $data['collision']])->save();
+                } elseif (isset($data['blocked_tiles'])) {
+                    $map->forceFill(['col' => $this->collisionWithTiles($map, $data['blocked_tiles'], '1')])->save();
+                }
+                $result['created']['maps'][] = $map->id;
+                $result['references']['maps'][$operation['key']] = $map->id;
+            }
+
+            if ($operation['type'] === 'create_base_npc') {
+                $data = $operation['data'];
+                $baseNpc = $this->baseNpcService->storeSimpleForWorld([
+                    'image' => $data['image_data_uri'],
+                    'name' => $data['name'],
+                    'lvl' => $data['level'],
+                    'rank' => $data['rank'],
+                    'category' => $data['category'],
+                ], $world);
+                $baseNpc->forceFill([
+                    'profession' => $data['profession'] ?? Profession::w->value,
+                    'type' => $data['type'] ?? 0,
+                    'wt' => $data['facing'] ?? 0,
+                    'draw_offset_x' => $data['draw_offset_x'] ?? 0,
+                    'draw_offset_y' => $data['draw_offset_y'] ?? 0,
+                    'is_aggressive' => $data['is_aggressive'] ?? ($data['category'] === BaseNpcCategory::MOB->value),
+                    'divine_intervention' => $data['divine_intervention'] ?? false,
+                    'guaranteed_loot' => $data['guaranteed_loot'] ?? false,
+                    'min_respawn_time' => $data['min_respawn_time'] ?? null,
+                    'max_respawn_time' => $data['max_respawn_time'] ?? null,
+                ])->save();
+                $result['created']['base_npcs'][] = $baseNpc->id;
+                $result['references']['base_npcs'][$operation['key']] = $baseNpc->id;
+            }
+        }
+
+        foreach ($operations as $operation) {
+            if ($operation['type'] !== 'update_map_collisions') {
+                continue;
+            }
+
+            $map = GameMap::query()->findOrFail($this->resolveMapId($operation, $result['references']));
+            if (! in_array($map->id, $result['created']['maps'], true)) {
+                $before['maps'][(string) $map->id] ??= $this->snapshotMap($map);
+                $result['updated']['maps'][] = $map->id;
+            }
+            $data = $operation['data'];
+            $collision = $data['mode'] === 'replace'
+                ? $data['collision']
+                : $this->collisionWithTiles($map, $data['tiles'], $data['mode'] === 'block' ? '1' : '0');
+            $map->forceFill(['col' => $collision])->save();
+        }
 
         foreach ($operations as $operation) {
             if (! in_array($operation['type'], ['create_base_item', 'clone_base_item', 'update_base_item'], true)) {
@@ -1563,7 +1903,7 @@ class AiChangeSetService
             if ($operation['type'] === 'place_npc') {
                 $npc = new Npc;
                 $npc->forceFill([
-                    'base_npc_id' => $operation['base_npc_id'],
+                    'base_npc_id' => $this->resolveBaseNpcId($operation, $result['references']),
                     'dialog_id' => isset($operation['dialog_id']) || isset($operation['dialog_key'])
                         ? $this->resolveDialogId($operation, $result['references'])
                         : null,
@@ -1574,7 +1914,7 @@ class AiChangeSetService
 
                 foreach ($operation['locations'] as $location) {
                     $npc->locations()->create([
-                        'map_id' => $location['map_id'],
+                        'map_id' => $this->resolveMapId($location, $result['references']),
                         'x' => $location['x'],
                         'y' => $location['y'],
                     ]);
@@ -1596,7 +1936,7 @@ class AiChangeSetService
             if ($operation['type'] === 'attach_item_to_base_npc_loot') {
                 $baseNpcLoot = new BaseNpcLoot;
                 $baseNpcLoot->forceFill([
-                    'base_npc_id' => $operation['base_npc_id'],
+                    'base_npc_id' => $this->resolveBaseNpcId($operation, $result['references']),
                     'base_item_id' => $this->resolveItemId($operation, $result['references']),
                 ])->save();
                 $result['created']['base_npc_loots'][] = $baseNpcLoot->id;
@@ -1951,6 +2291,11 @@ class AiChangeSetService
             data_get($result, 'updated.map_transitions', []),
             data_get($result, 'deleted.map_transitions', []),
         )));
+        $mapIds = array_values(array_unique(array_merge(
+            data_get($result, 'created.maps', []),
+            data_get($result, 'updated.maps', []),
+        )));
+        $baseNpcIds = data_get($result, 'created.base_npcs', []);
 
         return [
             'quests' => Quest::query()->whereIn('id', $questIds)->orderBy('id')->get()
@@ -1967,6 +2312,10 @@ class AiChangeSetService
                 ->mapWithKeys(fn (BaseNpcLoot $baseNpcLoot): array => [(string) $baseNpcLoot->id => $this->snapshotBaseNpcLoot($baseNpcLoot)])->all(),
             'map_transitions' => Door::query()->whereIn('id', $mapTransitionIds)->orderBy('id')->get()
                 ->mapWithKeys(fn (Door $transition): array => [(string) $transition->id => $this->snapshotMapTransition($transition)])->all(),
+            'maps' => GameMap::query()->whereIn('id', $mapIds)->orderBy('id')->get()
+                ->mapWithKeys(fn (GameMap $map): array => [(string) $map->id => $this->snapshotMap($map)])->all(),
+            'base_npcs' => BaseNpc::query()->whereIn('id', $baseNpcIds)->orderBy('id')->get()
+                ->mapWithKeys(fn (BaseNpc $baseNpc): array => [(string) $baseNpc->id => $this->snapshotBaseNpc($baseNpc)])->all(),
         ];
     }
 
@@ -2114,6 +2463,49 @@ class AiChangeSetService
             'min_lvl' => $transition->min_lvl,
             'max_lvl' => $transition->max_lvl,
             'required_base_item_id' => $transition->required_base_item_id,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function snapshotMap(GameMap $map): array
+    {
+        return [
+            'id' => $map->id,
+            'name' => $map->name,
+            'src' => $map->src,
+            'thumbnail_src' => $map->thumbnail_src,
+            'x' => $map->x,
+            'y' => $map->y,
+            'col' => $map->col,
+            'battleground' => $map->battleground,
+            'battleground2' => $map->battleground2,
+            'water' => $map->water,
+            'pvp' => $map->pvp?->value ?? $map->getRawOriginal('pvp'),
+            'is_teleport_locked' => $map->is_teleport_locked,
+            'is_grouping_locked' => $map->is_grouping_locked,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function snapshotBaseNpc(BaseNpc $baseNpc): array
+    {
+        return [
+            'id' => $baseNpc->id,
+            'name' => $baseNpc->name,
+            'src' => $baseNpc->src,
+            'lvl' => $baseNpc->lvl,
+            'type' => $baseNpc->type,
+            'wt' => $baseNpc->wt,
+            'draw_offset_x' => $baseNpc->draw_offset_x,
+            'draw_offset_y' => $baseNpc->draw_offset_y,
+            'rank' => $baseNpc->rank?->value,
+            'category' => $baseNpc->category?->value,
+            'profession' => $baseNpc->profession?->value,
+            'is_aggressive' => $baseNpc->is_aggressive,
+            'divine_intervention' => $baseNpc->divine_intervention,
+            'guaranteed_loot' => $baseNpc->guaranteed_loot,
+            'min_respawn_time' => $baseNpc->min_respawn_time,
+            'max_respawn_time' => $baseNpc->max_respawn_time,
         ];
     }
 
@@ -2281,6 +2673,36 @@ class AiChangeSetService
             ]);
         }
 
+        $createdNpcIds = data_get($result, 'created.npcs', []);
+        foreach (GameMap::query()->whereIn('id', data_get($result, 'created.maps', []))->get() as $map) {
+            $outsideDoor = Door::query()
+                ->where(fn ($query) => $query->where('map_id', $map->id)->orWhere('go_map_id', $map->id))
+                ->whereNotIn('id', $createdTransitionIds)
+                ->exists();
+            $outsideNpc = NpcLocation::query()
+                ->where('map_id', $map->id)
+                ->whereNotIn('npc_id', $createdNpcIds)
+                ->exists();
+            if ($outsideDoor || $outsideNpc || $this->mapService->getDialogNodesTeleportingToMap($map)->isNotEmpty()
+                || $this->mapService->getItemsTeleportingToMap($map)->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'change_set' => "Nie można cofnąć commita: utworzona mapa [{$map->id}] została później użyta poza tym commitem.",
+                ]);
+            }
+        }
+
+        $createdBaseNpcLootIds = data_get($result, 'created.base_npc_loots', []);
+        foreach (BaseNpc::query()->whereIn('id', data_get($result, 'created.base_npcs', []))->get() as $baseNpc) {
+            $outsideNpc = Npc::query()->where('base_npc_id', $baseNpc->id)->whereNotIn('id', $createdNpcIds)->exists();
+            $outsideLoot = BaseNpcLoot::query()->where('base_npc_id', $baseNpc->id)->whereNotIn('id', $createdBaseNpcLootIds)->exists();
+            if ($outsideNpc || $outsideLoot || $baseNpc->specialAttacks()->exists()
+                || $baseNpc->mobSpecies()->exists() || $baseNpc->seasonalEvents()->exists()) {
+                throw ValidationException::withMessages([
+                    'change_set' => "Nie można cofnąć commita: utworzony BaseNPC [{$baseNpc->id}] został później użyty poza tym commitem.",
+                ]);
+            }
+        }
+
         $createdDialogIds = data_get($result, 'created.dialogs', []);
         $touchedNpcIds = array_merge(data_get($result, 'created.npcs', []), data_get($result, 'updated.npcs', []));
         $outsideNpc = Npc::query()
@@ -2306,7 +2728,6 @@ class AiChangeSetService
 
         $createdItemIds = data_get($result, 'created.base_items', []);
         $createdShopItemIds = data_get($result, 'created.shop_items', []);
-        $createdBaseNpcLootIds = data_get($result, 'created.base_npc_loots', []);
         foreach (BaseItem::query()->whereIn('id', $createdItemIds)->get() as $baseItem) {
             $hasOutsideShop = ShopItem::query()
                 ->where('item_id', $baseItem->id)
@@ -2373,6 +2794,33 @@ class AiChangeSetService
         return isset($operation['item_id'])
             ? (int) $operation['item_id']
             : (int) data_get($references, 'items.'.$operation['item_key']);
+    }
+
+    /** @param array<string, mixed> $references */
+    private function resolveMapId(array $reference, array $references): int
+    {
+        return isset($reference['map_id'])
+            ? (int) $reference['map_id']
+            : (int) data_get($references, 'maps.'.$reference['map_key']);
+    }
+
+    /** @param array<string, mixed> $references */
+    private function resolveBaseNpcId(array $operation, array $references): int
+    {
+        return isset($operation['base_npc_id'])
+            ? (int) $operation['base_npc_id']
+            : (int) data_get($references, 'base_npcs.'.$operation['base_npc_key']);
+    }
+
+    /** @param array<int, array{x: int, y: int}> $tiles */
+    private function collisionWithTiles(GameMap $map, array $tiles, string $value): string
+    {
+        $collision = str_pad((string) $map->col, (int) $map->x * (int) $map->y, '0');
+        foreach ($tiles as $tile) {
+            $collision[((int) $tile['y'] * (int) $map->x) + (int) $tile['x']] = $value;
+        }
+
+        return $collision;
     }
 
     private function resolvedShopPosition(array $operation): int

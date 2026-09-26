@@ -174,21 +174,80 @@ Usuwanie jest jawne przez `delete_node_ids`, `delete_option_ids` i `delete_edge_
 
 Można podać istniejące `dialog_id` zamiast `dialog_key`.
 
-## Rozmieszczenie istniejącego BaseNPC
+## Nowa mapa i kolizje
+
+Pełne zasady grafiki, kolejności bitów i wzór indeksu są w [map-authoring.md](map-authoring.md).
+
+```json
+{
+  "type": "create_map",
+  "key": "rabbit_meadow",
+  "data": {
+    "name": "Królicza polana",
+    "image_data_uri": "data:image/png;base64,...",
+    "blocked_tiles": [
+      {"x": 0, "y": 0},
+      {"x": 1, "y": 0}
+    ]
+  }
+}
+```
+
+Zamiast `blocked_tiles` można podać pełny `collision`. Bez obu pól serwer tworzy string samych zer.
+
+Zmiana istniejącej albo utworzonej wcześniej mapy:
+
+```json
+{
+  "type": "update_map_collisions",
+  "map_id": 12,
+  "data": {
+    "mode": "block",
+    "tiles": [{"x": 7, "y": 4}]
+  }
+}
+```
+
+`mode` to `block`, `unblock` albo `replace`. Dla `replace` przekaż `collision`; dla pozostałych trybów przekaż `tiles`. Zamiast `map_id` można użyć `map_key` utworzonego wcześniej w tym samym commicie.
+
+## Nowy BaseNPC i rozmieszczenie NPC
+
+Zasady grafiki, animacji, `type`, kierunku i offsetów są w [base-npcs.md](base-npcs.md).
+
+```json
+{
+  "type": "create_base_npc",
+  "key": "meadow_guard",
+  "data": {
+    "name": "Strażnik polany",
+    "image_data_uri": "data:image/gif;base64,...",
+    "level": 20,
+    "rank": "NORMAL",
+    "category": "NPC",
+    "profession": "w",
+    "type": 0,
+    "facing": 0,
+    "draw_offset_x": 0,
+    "draw_offset_y": 0
+  }
+}
+```
+
+Następnie można go wystawić na istniejącej albo nowej mapie:
 
 ```json
 {
   "type": "place_npc",
-  "base_npc_id": 7,
+  "base_npc_key": "meadow_guard",
   "enabled": true,
   "dialog_key": "roan_package_dialog",
   "locations": [
-    {"map_id": 1, "x": 21, "y": 38}
+    {"map_key": "rabbit_meadow", "x": 21, "y": 38}
   ]
 }
 ```
 
-Ta operacja tworzy wyłącznie instancję NPC. `base_npc_id` i każdy `map_id` muszą już istnieć.
+`place_npc` tworzy instancję NPC. Można użyć istniejących `base_npc_id`/`map_id` albo lokalnych `base_npc_key`/`map_key` utworzonych wcześniej w tym samym commicie.
 
 ## BaseItem
 
@@ -249,7 +308,7 @@ Pozycja musi być wolna i mieścić się w `0–79`. Można zamiast niej podać 
 }
 ```
 
-Istniejący item wskazuje się przez `item_id`, a utworzony wcześniej w tym commicie przez `item_key`.
+Istniejący item wskazuje się przez `item_id`, a utworzony wcześniej w tym commicie przez `item_key`. BaseNPC wskazuje się przez istniejące `base_npc_id` albo `base_npc_key` utworzone wcześniej w tym commicie.
 
 ## Przejścia między mapami
 

@@ -346,7 +346,13 @@ final class BaseNpcService extends BaseService
             ->log('attach-base-npc-loots');
     }
 
-    public function storeSimple(mixed $validated)
+    public function storeSimple(mixed $validated): BaseNpc
+    {
+        return $this->storeSimpleForWorld($validated, (string) session('world'));
+    }
+
+    /** @param array<string, mixed> $validated */
+    public function storeSimpleForWorld(array $validated, string $world): BaseNpc
     {
         // Extract image data
         $base64 = $validated['image'];
@@ -363,7 +369,7 @@ final class BaseNpcService extends BaseService
         }
 
         // Set the storage path to retro/new
-        $storagePath = 'img/npc/'.session('world').'/new/';
+        $storagePath = 'img/npc/'.$world.'/new/';
         $filePath = "{$storagePath}{$fileName}.{$extension}";
 
         // Check if file exists and generate a unique name if needed
@@ -381,7 +387,7 @@ final class BaseNpcService extends BaseService
         $baseNpc->lvl = $validated['lvl'];
         $baseNpc->rank = $validated['rank'];
         $baseNpc->category = $validated['category'];
-        $baseNpc->src = session('world')."/new/{$fileName}.{$extension}";
+        $baseNpc->src = $world."/new/{$fileName}.{$extension}";
         $baseNpc->save();
 
         return $baseNpc;

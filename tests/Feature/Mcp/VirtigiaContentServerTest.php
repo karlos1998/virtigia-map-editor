@@ -13,6 +13,7 @@ use App\Mcp\Tools\Virtigia\GetQuestTool;
 use App\Mcp\Tools\Virtigia\GetRetroBuildOptionsTool;
 use App\Mcp\Tools\Virtigia\GetShopInventoryTool;
 use App\Mcp\Tools\Virtigia\GetWritingContextTool;
+use App\Mcp\Tools\Virtigia\InspectMapTool;
 use App\Mcp\Tools\Virtigia\InspectMapTransitionsTool;
 use App\Mcp\Tools\Virtigia\InspectRetroNpcTool;
 use App\Mcp\Tools\Virtigia\ListChangeSetsTool;
@@ -107,7 +108,7 @@ class VirtigiaContentServerTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => 321, 'login' => 'quest-maker']);
     }
 
-    public function test_forbidden_base_npc_creation_is_rejected(): void
+    public function test_incomplete_base_npc_creation_is_rejected(): void
     {
         $validation = app(AiChangeSetService::class)->validateOperations([
             ['type' => 'create_base_npc', 'data' => ['name' => 'NPC AI']],
@@ -115,6 +116,134 @@ class VirtigiaContentServerTest extends TestCase
 
         $this->assertFalse($validation['valid']);
         $this->assertNotEmpty($validation['errors']);
+    }
+
+    public function test_map_and_base_npc_can_be_created_placed_inspected_and_reverted(): void
+    {
+        Storage::fake('s3');
+        app(McpWorldService::class)->use('test');
+
+        try {
+            $user = \App\Models\User::factory()->create();
+            $service = app(AiChangeSetService::class);
+            $changeSet = $service->draft($user, 'test', 'Nowa mapa i BaseNPC', null, [[
+                'type' => 'create_map',
+                'key' => 'training_ground',
+                'data' => [
+                    'name' => 'Polana treningowa',
+                    'image_data_uri' => $this->imageDataUri(64, 64),
+                    'blocked_tiles' => [
+                        ['x' => 1, 'y' => 0],
+                        ['x' => 0, 'y' => 1],
+                    ],
+                ],
+            ], [
+                'type' => 'create_base_npc',
+                'key' => 'training_guard',
+                'data' => [
+                    'name' => 'Strażnik polany',
+                    'image_data_uri' => $this->imageDataUri(32, 48),
+                    'level' => 20,
+                    'rank' => 'NORMAL',
+                    'category' => 'NPC',
+                    'profession' => 'w',
+                    'type' => 0,
+                    'facing' => 3,
+                ],
+            ], [
+                'type' => 'place_npc',
+                'base_npc_key' => 'training_guard',
+                'locations' => [[
+                    'map_key' => 'training_ground',
+                    'x' => 0,
+                    'y' => 0,
+                ]],
+            ], [
+                'type' => 'update_map_collisions',
+                'map_key' => 'training_ground',
+                'data' => [
+                    'mode' => 'block',
+                    'tiles' => [['x' => 1, 'y' => 1]],
+                ],
+            ]]);
+
+            $applied = $service->apply($user, $changeSet->id, 1);
+            $mapId = $applied->result['references']['maps']['training_ground'];
+            $baseNpcId = $applied->result['references']['base_npcs']['training_guard'];
+            $map = GameMap::query()->findOrFail($mapId);
+            $baseNpc = BaseNpc::query()->findOrFail($baseNpcId);
+            $inspection = app(GameContentSearchService::class)->map('test', $mapId);
+
+            $this->assertSame(2, $map->x);
+            $this->assertSame(2, $map->y);
+            $this->assertSame('0111', $map->col);
+            $this->assertSame(['01', '11'], $inspection['map']['collision_rows']);
+            $this->assertSame('index = y * width_tiles + x', $inspection['collision_format']['index_formula']);
+            $this->assertSame(3, $baseNpc->wt);
+            $this->assertTrue(\App\Models\Npc::query()->where('base_npc_id', $baseNpcId)->exists());
+            $this->assertTrue(\App\Models\NpcLocation::query()->where([
+                'map_id' => $mapId,
+                'x' => 0,
+                'y' => 0,
+            ])->exists());
+            Storage::disk('s3')->assertExists('img/locations/'.$map->src);
+            Storage::disk('s3')->assertExists('img/npc/'.$baseNpc->src);
+
+            $service->revert($user, $changeSet->id);
+
+            $this->assertFalse(GameMap::query()->whereKey($mapId)->exists());
+            $this->assertFalse(BaseNpc::query()->whereKey($baseNpcId)->exists());
+            Storage::disk('s3')->assertMissing('img/locations/'.$map->src);
+            Storage::disk('s3')->assertMissing('img/npc/'.$baseNpc->src);
+        } finally {
+            DynamicModel::clearGlobalConnection();
+        }
+    }
+
+    public function test_map_collision_rejects_wrong_row_major_string_length(): void
+    {
+        app(McpWorldService::class)->use('test');
+
+        try {
+            $map = $this->createMap('Mapa kolizji MCP', 4, 3);
+            $validation = app(AiChangeSetService::class)->validateOperations([[
+                'type' => 'update_map_collisions',
+                'map_id' => $map->id,
+                'data' => ['mode' => 'replace', 'collision' => '0101'],
+            ]]);
+
+            $this->assertFalse($validation['valid']);
+            $this->assertStringContainsString('dokładnie 12 zer i jedynek', implode(' ', $validation['errors']));
+        } finally {
+            GameMap::query()->where('name', 'Mapa kolizji MCP')->delete();
+            DynamicModel::clearGlobalConnection();
+        }
+    }
+
+    public function test_existing_map_collision_patch_can_be_reverted(): void
+    {
+        app(McpWorldService::class)->use('test');
+
+        try {
+            $user = \App\Models\User::factory()->create();
+            $map = $this->createMap('Mapa cofania kolizji MCP', 3, 2);
+            $map->forceFill(['col' => '000000'])->save();
+            $service = app(AiChangeSetService::class);
+            $changeSet = $service->draft($user, 'test', 'Blokada pola mapy', null, [[
+                'type' => 'update_map_collisions',
+                'map_id' => $map->id,
+                'data' => ['mode' => 'block', 'tiles' => [['x' => 2, 'y' => 1]]],
+            ]]);
+
+            $service->apply($user, $changeSet->id, 1);
+            $this->assertSame('000001', $map->fresh()->col);
+
+            $service->revert($user, $changeSet->id);
+            $this->assertSame('000000', $map->fresh()->col);
+        } finally {
+            GameMap::query()->where('name', 'Mapa cofania kolizji MCP')->delete();
+            DynamicModel::clearGlobalConnection();
+        }
     }
 
     public function test_new_base_item_with_valid_image_can_be_drafted(): void
@@ -666,6 +795,7 @@ class VirtigiaContentServerTest extends TestCase
             'profile' => [ProfileTool::class, 'profile'],
             'search' => [SearchGameContentTool::class, 'search_game_content'],
             'visual references' => [BrowseVisualReferencesTool::class, 'browse_visual_references'],
+            'map' => [InspectMapTool::class, 'inspect_map'],
             'map transitions' => [InspectMapTransitionsTool::class, 'inspect_map_transitions'],
             'base item' => [GetBaseItemTool::class, 'get_base_item'],
             'shop inventory' => [GetShopInventoryTool::class, 'get_shop_inventory'],
@@ -686,7 +816,12 @@ class VirtigiaContentServerTest extends TestCase
 
     private function itemImageDataUri(): string
     {
-        $image = imagecreatetruecolor(32, 32);
+        return $this->imageDataUri(32, 32);
+    }
+
+    private function imageDataUri(int $width, int $height): string
+    {
+        $image = imagecreatetruecolor($width, $height);
         ob_start();
         imagepng($image);
         $contents = (string) ob_get_clean();

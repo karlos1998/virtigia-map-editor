@@ -101,4 +101,4 @@ Istniejące liczniki, eventy, hotele i sklepy wyszukuj przez `search_game_conten
 
 ## Zakres AI
 
-MCP może budować i patchować cały opisany graf, ale nie tworzy BaseNPC, map, grafik, hoteli/pokoi, liczników dialogowych, eventów sezonowych, drzwi, książek, audio, map tracków, spawnów ani special attacków. Może odwoływać się do istniejących rekordów udostępnionych przez narzędzia odczytu.
+MCP może budować i patchować cały opisany graf oraz tworzyć mapy i BaseNPC z grafik dostarczonych przez użytkownika. Nie tworzy hoteli/pokoi, liczników dialogowych, eventów sezonowych, książek, audio, map tracków, spawnów ani special attacków. Może odwoływać się do istniejących rekordów udostępnionych przez narzędzia odczytu.
