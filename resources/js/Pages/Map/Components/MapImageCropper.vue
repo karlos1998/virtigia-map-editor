@@ -2,8 +2,9 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue';
 
 export interface MapImageExport {
-    dataUrl: string;
+    file: File;
     fileName: string;
+    size: number;
     pixelWidth: number;
     pixelHeight: number;
     tileWidth: number;
@@ -17,6 +18,11 @@ const emit = defineEmits<{
 const TILE_SIZE = 32;
 const MAX_TILES_PER_SIDE = 128;
 const MAX_PREVIEW_HEIGHT = 680;
+const MAX_UPLOAD_BYTES = 24 * 1024 * 1024;
+const formatOptions = [
+    { label: 'JPEG · mniejszy plik', value: 'image/jpeg' },
+    { label: 'PNG · bezstratny', value: 'image/png' },
+];
 
 const previewCanvas = ref<HTMLCanvasElement | null>(null);
 const previewShell = ref<HTMLElement | null>(null);
@@ -24,12 +30,15 @@ const sourceImage = shallowRef<HTMLImageElement | null>(null);
 const sourceObjectUrl = ref<string | null>(null);
 const sourceWidth = ref(0);
 const sourceHeight = ref(0);
+const sourceFileSize = ref(0);
 const tileWidth = ref(1);
 const tileHeight = ref(1);
 const zoomPercent = ref(100);
 const offsetX = ref(0);
 const offsetY = ref(0);
-const fileName = ref('mapa.png');
+const fileName = ref('mapa.jpg');
+const outputFormat = ref<'image/jpeg' | 'image/png'>('image/jpeg');
+const jpegQuality = ref(85);
 const selectionError = ref('');
 const shellWidth = ref(0);
 const hoverTile = ref<{ x: number; y: number } | null>(null);
@@ -52,7 +61,12 @@ const minimumZoom = computed(() => {
     ) * 100;
 });
 const maximumZoom = computed(() => Math.max(400, Math.ceil(minimumZoom.value * 4)));
-const isReady = computed(() => sourceImage.value !== null && /^[a-zA-Z0-9_-]+\.png$/i.test(fileName.value));
+const outputExtension = computed(() => outputFormat.value === 'image/jpeg' ? 'jpg' : 'png');
+const isReady = computed(() => {
+    const extension = outputExtension.value.replace('.', '\\.');
+
+    return sourceImage.value !== null && new RegExp(`^[a-zA-Z0-9_-]+\\.${extension}$`, 'i').test(fileName.value);
+});
 const scaleDescription = computed(() => {
     if (!sourceImage.value) {
         return '';
@@ -74,6 +88,9 @@ watch([tileWidth, tileHeight], () => {
     centerImage();
 });
 watch([zoomPercent, offsetX, offsetY, shellWidth, hoverTile], scheduleDraw, { deep: true });
+watch(outputFormat, () => {
+    fileName.value = fileName.value.replace(/\.[^.]+$/, `.${outputExtension.value}`);
+});
 
 onMounted(() => {
     resizeObserver = new ResizeObserver(([entry]) => {
@@ -118,6 +135,7 @@ function onFileSelect(event: { files?: File[] }): void {
     }
 
     sourceObjectUrl.value = URL.createObjectURL(file);
+    sourceFileSize.value = file.size;
     const image = new Image();
 
     image.onload = () => {
@@ -145,7 +163,15 @@ function sanitizeFileName(originalName: string): string {
         .replace(/[^a-zA-Z0-9_-]+/g, '_')
         .replace(/^_+|_+$/g, '') || 'mapa';
 
-    return `${baseName}.png`;
+    return `${baseName}.${outputExtension.value}`;
+}
+
+function formatBytes(bytes: number): string {
+    if (bytes < 1024 * 1024) {
+        return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
 function setTileWidth(value: number | null): void {
@@ -424,9 +450,29 @@ async function exportImage(): Promise<MapImageExport | null> {
         sourceHeight.value * imageScale,
     );
 
+    const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+            (result) => result ? resolve(result) : reject(new Error('Nie udało się zoptymalizować obrazu.')),
+            outputFormat.value,
+            outputFormat.value === 'image/jpeg' ? jpegQuality.value / 100 : undefined,
+        );
+    });
+
+    if (blob.size > MAX_UPLOAD_BYTES) {
+        throw new Error(
+            `Gotowa grafika ma ${formatBytes(blob.size)}. Limit wynosi 24 MB — wybierz JPEG albo zmniejsz obszar mapy.`,
+        );
+    }
+
+    const outputFile = new File([blob], fileName.value, {
+        type: outputFormat.value,
+        lastModified: Date.now(),
+    });
+
     return {
-        dataUrl: canvas.toDataURL('image/png'),
+        file: outputFile,
         fileName: fileName.value,
+        size: outputFile.size,
         pixelWidth: outputPixelWidth.value,
         pixelHeight: outputPixelHeight.value,
         tileWidth: tileWidth.value,
@@ -499,6 +545,28 @@ defineExpose({ exportImage });
                         <div>{{ outputPixelWidth }} × {{ outputPixelHeight }} px po zapisaniu</div>
                     </div>
 
+                    <div class="flex flex-col gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                        <div>
+                            <div class="text-sm font-semibold text-emerald-950">Optymalizacja przed wysłaniem</div>
+                            <p class="mt-1 text-xs text-emerald-900">
+                                Źródło ma {{ formatBytes(sourceFileSize) }}. JPEG 85% jest zalecany dla map i zwykle znacznie zmniejsza plik.
+                                PNG zachowuje przezroczystość, ale może być dużo cięższy.
+                            </p>
+                        </div>
+                        <SelectButton
+                            v-model="outputFormat"
+                            :options="formatOptions"
+                            option-label="label"
+                            option-value="value"
+                            :allow-empty="false"
+                            class="w-full"
+                        />
+                        <label v-if="outputFormat === 'image/jpeg'" class="flex flex-col gap-2 text-sm font-medium text-emerald-950">
+                            Jakość JPEG: {{ jpegQuality }}%
+                            <input v-model.number="jpegQuality" type="range" min="70" max="95" step="1" class="w-full accent-emerald-600">
+                        </label>
+                    </div>
+
                     <div class="flex flex-col gap-2">
                         <div class="flex items-center justify-between gap-3">
                             <label for="map-zoom" class="text-sm font-medium text-gray-700">Skala grafiki</label>
@@ -526,7 +594,7 @@ defineExpose({ exportImage });
                         <InputText v-model="fileName" />
                     </label>
                     <Message v-if="!isReady" severity="warn" size="small">
-                        Nazwa pliku może zawierać litery, cyfry, „_” i „-” oraz musi kończyć się na .png.
+                        Nazwa pliku może zawierać litery, cyfry, „_” i „-” oraz musi kończyć się na .{{ outputExtension }}.
                     </Message>
 
                     <div class="rounded-lg border border-gray-200 p-3 text-sm text-gray-600">

@@ -7,6 +7,7 @@ use App\Http\Resources\MapResource;
 use App\Models\Door;
 use App\Models\Map;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -20,6 +21,7 @@ final class MapService extends BaseService
     public function __construct(
         private readonly Map $mapModel,
         private readonly AssetService $assetService,
+        private readonly MapImageOptimizer $mapImageOptimizer,
         private readonly RespawnPointService $respawnPointService,
         private readonly ThumbnailService $thumbnailService,
     ) {}
@@ -106,8 +108,26 @@ final class MapService extends BaseService
     {
         $world ??= (string) session('world');
         $imageData = $this->assetService->storeFromBase64('img/locations/'.$world.'/', $imgBase64, $fileName);
-        $width = intdiv($imageData['width'], 32);
-        $height = intdiv($imageData['height'], 32);
+
+        return $this->createMap($imageData['width'], $imageData['height'], $fileName, $name, $world);
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    public function storeUploaded(UploadedFile $image, string $fileName, string $name, ?string $world = null): Map
+    {
+        $world ??= (string) session('world');
+        $optimizedImage = $this->mapImageOptimizer->optimize($image);
+        $this->assetService->store('img/locations/'.$world.'/', $optimizedImage['contents'], $fileName);
+
+        return $this->createMap($optimizedImage['width'], $optimizedImage['height'], $fileName, $name, $world);
+    }
+
+    private function createMap(int $pixelWidth, int $pixelHeight, string $fileName, string $name, string $world): Map
+    {
+        $width = intdiv($pixelWidth, 32);
+        $height = intdiv($pixelHeight, 32);
 
         $map = $this->mapModel->create([
             'name' => $name,

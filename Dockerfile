@@ -63,6 +63,7 @@ RUN apk add --no-cache \
     && apk del .build-deps
 
 COPY docker/production/php/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY docker/production/php/uploads.ini /usr/local/etc/php/conf.d/99-map-uploads.ini
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 COPY . .

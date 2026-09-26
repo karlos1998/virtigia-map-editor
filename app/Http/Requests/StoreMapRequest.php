@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\UploadedFile;
 
 class StoreMapRequest extends FormRequest
 {
@@ -25,9 +26,11 @@ class StoreMapRequest extends FormRequest
                 'min:4',
                 'max:50',
             ],
-            'img' => [
+            'image' => [
                 'required',
-                'string',
+                'file',
+                'mimes:png,jpg,jpeg',
+                'max:24576',
                 fn (string $attribute, mixed $value, Closure $fail) => $this->validateImage($attribute, $value, $fail),
             ],
             'fileName' => [
@@ -44,9 +47,15 @@ class StoreMapRequest extends FormRequest
         return $this->string('name')->toString();
     }
 
-    public function imageDataUri(): string
+    public function image(): UploadedFile
     {
-        return $this->string('img')->toString();
+        $image = $this->file('image');
+
+        if (! $image instanceof UploadedFile) {
+            throw new \LogicException('The validated map image is missing.');
+        }
+
+        return $image;
     }
 
     public function fileName(): string
@@ -57,22 +66,13 @@ class StoreMapRequest extends FormRequest
     /** @param  Closure(string): void  $fail */
     private function validateImage(string $attribute, mixed $value, Closure $fail): void
     {
-        if (! is_string($value) || ! preg_match('/^data:image\/(png|jpeg);base64,/', $value)) {
-            $fail('Grafika mapy musi być plikiem PNG albo JPEG zakodowanym jako data URI.');
+        if (! $value instanceof UploadedFile || ! $value->isValid()) {
+            $fail('Nie udało się odebrać grafiki mapy.');
 
             return;
         }
 
-        $encodedImage = substr($value, strpos($value, ',') + 1);
-        $imageData = base64_decode($encodedImage, true);
-
-        if ($imageData === false) {
-            $fail('Nie udało się odczytać danych grafiki mapy.');
-
-            return;
-        }
-
-        $imageInfo = @getimagesizefromstring($imageData);
+        $imageInfo = @getimagesize($value->getRealPath());
 
         if ($imageInfo === false) {
             $fail('Przesłane dane nie zawierają prawidłowej grafiki.');
@@ -100,5 +100,15 @@ class StoreMapRequest extends FormRequest
         if ($width > $maximumPixelsPerSide || $height > $maximumPixelsPerSide) {
             $fail('Mapa może mieć maksymalnie 128 × 128 pól, czyli 4096 × 4096 px.');
         }
+    }
+
+    public function messages(): array
+    {
+        return [
+            'image.required' => 'Wybierz grafikę mapy.',
+            'image.file' => 'Grafika mapy musi być plikiem.',
+            'image.mimes' => 'Grafika mapy musi być w formacie PNG albo JPEG.',
+            'image.max' => 'Wynikowa grafika jest większa niż 24 MB. Wybierz optymalizację JPEG albo zmniejsz mapę.',
+        ];
     }
 }

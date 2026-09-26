@@ -3,6 +3,7 @@
 namespace Tests\Unit\Http\Requests;
 
 use App\Http\Requests\StoreMapRequest;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Validator;
 use Tests\TestCase;
 
@@ -12,7 +13,7 @@ class StoreMapRequestTest extends TestCase
     {
         $validator = Validator::make([
             'name' => 'Mapa testowa',
-            'img' => $this->imageDataUri(96, 64),
+            'image' => UploadedFile::fake()->image('mapa_testowa.png', 96, 64),
             'fileName' => 'mapa_testowa.png',
         ], (new StoreMapRequest)->rules());
 
@@ -23,34 +24,23 @@ class StoreMapRequestTest extends TestCase
     {
         $validator = Validator::make([
             'name' => 'Mapa testowa',
-            'img' => $this->imageDataUri(97, 64),
+            'image' => UploadedFile::fake()->image('mapa_testowa.png', 97, 64),
             'fileName' => 'mapa_testowa.png',
         ], (new StoreMapRequest)->rules());
 
         $this->assertTrue($validator->fails());
-        $this->assertStringContainsString('podzielną przez 32', $validator->errors()->first('img'));
+        $this->assertStringContainsString('podzielną przez 32', $validator->errors()->first('image'));
     }
 
     public function test_it_rejects_a_map_larger_than_the_editor_limit(): void
     {
         $validator = Validator::make([
             'name' => 'Mapa testowa',
-            'img' => $this->imageDataUri(4128, 32),
+            'image' => UploadedFile::fake()->image('mapa_testowa.png', 4128, 32),
             'fileName' => 'mapa_testowa.png',
         ], (new StoreMapRequest)->rules());
 
         $this->assertTrue($validator->fails());
-        $this->assertStringContainsString('128 × 128 pól', $validator->errors()->first('img'));
-    }
-
-    private function imageDataUri(int $width, int $height): string
-    {
-        $image = imagecreatetruecolor($width, $height);
-        ob_start();
-        imagepng($image);
-        $binary = (string) ob_get_clean();
-        imagedestroy($image);
-
-        return 'data:image/png;base64,'.base64_encode($binary);
+        $this->assertStringContainsString('128 × 128 pól', $validator->errors()->first('image'));
     }
 }

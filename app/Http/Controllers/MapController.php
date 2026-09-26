@@ -48,8 +48,8 @@ class MapController extends Controller
 
     public function store(StoreMapRequest $request)
     {
-        $map = $this->mapService->store(
-            $request->imageDataUri(),
+        $map = $this->mapService->storeUploaded(
+            $request->image(),
             $request->fileName(),
             $request->name(),
         );
