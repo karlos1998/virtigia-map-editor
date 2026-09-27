@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Mcp;
 
+use App\Mcp\Servers\VirtigiaContentServer;
 use App\Mcp\Tools\Virtigia\AnalyzeRetroLootTool;
 use App\Mcp\Tools\Virtigia\ApplyChangeSetTool;
 use App\Mcp\Tools\Virtigia\BrowseVisualReferencesTool;
@@ -42,12 +43,33 @@ use App\Services\Mcp\RetroEngineAnalysisService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Mcp\Server\Methods\ListTools;
+use Laravel\Mcp\Server\Transport\FakeTransporter;
+use Laravel\Mcp\Server\Transport\JsonRpcRequest;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class VirtigiaContentServerTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_complete_tool_catalog_is_returned_in_one_page(): void
+    {
+        $server = app()->make(VirtigiaContentServer::class, [
+            'transport' => new FakeTransporter,
+        ]);
+        $request = new JsonRpcRequest(1, 'tools/list', []);
+        $response = app(ListTools::class)->handle($request, $server->createContext());
+        $payload = json_decode($response->toJson(), true, flags: JSON_THROW_ON_ERROR);
+        $toolNames = array_column($payload['result']['tools'], 'name');
+
+        $this->assertCount(count(self::toolNames()), $toolNames);
+        $this->assertArrayNotHasKey('nextCursor', $payload['result']);
+        $this->assertContains('inspect_map_transitions', $toolNames);
+        $this->assertContains('draft_change_set', $toolNames);
+        $this->assertContains('apply_change_set', $toolNames);
+        $this->assertContains('revert_change_set', $toolNames);
+    }
 
     public function test_protected_resource_metadata_points_to_virtigia_oauth(): void
     {
