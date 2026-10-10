@@ -113,9 +113,9 @@ const model = ref([
                 route: 'titan-doors.index',
             },
             {
-                label: 'Kalendarz nagród',
+                label: 'Kalendarze nagród',
                 icon: 'pi pi-calendar',
-                route: 'calendar-days.index',
+                route: 'reward-calendars.index',
             },
             {
                 label: 'Mapa Świata',

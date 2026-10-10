@@ -11,7 +11,6 @@ use App\Http\Controllers\BaseItemController;
 use App\Http\Controllers\BaseItemDuplicateViewController;
 use App\Http\Controllers\BaseNpcController;
 use App\Http\Controllers\BookController;
-use App\Http\Controllers\CalendarDayController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DialogController;
 use App\Http\Controllers\DoorController;
@@ -27,6 +26,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuestController;
 use App\Http\Controllers\QuestStepController;
 use App\Http\Controllers\RenewableMapItemController;
+use App\Http\Controllers\RewardCalendarController;
 use App\Http\Controllers\SeasonalEventController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SpecialAttackController;
@@ -257,12 +257,15 @@ Route::middleware(['auth'])->group(function () {
                     Route::patch('quests/{quest}', [QuestController::class, 'update'])->name('quests.update');
                     Route::delete('quests/{quest}', [QuestController::class, 'destroy'])->name('quests.destroy');
 
-                    // Calendar days routes (single global calendar)
-                    Route::get('calendar-days', [CalendarDayController::class, 'index'])->name('calendar-days.index');
-                    Route::post('calendar-days', [CalendarDayController::class, 'store'])->name('calendar-days.store');
-                    Route::post('calendar-days/items', [CalendarDayController::class, 'addItem'])->name('calendar-days.items.store');
-                    Route::delete('calendar-days/items/{id}', [CalendarDayController::class, 'removeItem'])->name('calendar-days.items.destroy');
-                    Route::delete('calendar-days/{day}', [CalendarDayController::class, 'destroy'])->name('calendar-days.destroy');
+                    // Reward calendars (kalendarze nagród z przypisanymi dniami)
+                    Route::get('reward-calendars', [RewardCalendarController::class, 'index'])->name('reward-calendars.index');
+                    Route::post('reward-calendars', [RewardCalendarController::class, 'store'])->name('reward-calendars.store');
+                    Route::get('reward-calendars/{rewardCalendar}', [RewardCalendarController::class, 'show'])->name('reward-calendars.show');
+                    Route::patch('reward-calendars/{rewardCalendar}', [RewardCalendarController::class, 'update'])->name('reward-calendars.update');
+                    Route::delete('reward-calendars/{rewardCalendar}', [RewardCalendarController::class, 'destroy'])->name('reward-calendars.destroy');
+                    Route::post('reward-calendars/{rewardCalendar}/days', [RewardCalendarController::class, 'storeDay'])->name('reward-calendars.days.store');
+                    Route::patch('reward-calendars/{rewardCalendar}/days/{rewardCalendarDay}', [RewardCalendarController::class, 'updateDay'])->name('reward-calendars.days.update');
+                    Route::delete('reward-calendars/{rewardCalendar}/days/{rewardCalendarDay}', [RewardCalendarController::class, 'destroyDay'])->name('reward-calendars.days.destroy');
                     // Quest Step routes
                     Route::post('quests/{quest}/steps', [QuestStepController::class, 'store'])->name('quests.steps.store');
                     Route::patch('quests/{quest}/steps/{step}', [QuestStepController::class, 'update'])->name('quests.steps.update');
