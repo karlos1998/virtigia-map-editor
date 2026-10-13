@@ -22,6 +22,7 @@ const toast = useToast();
 
 // Local state for pet fields
 const petSrc = ref<string>('');
+const petName = ref<string>('');
 const petActions = ref<string[]>([]);
 const newActionName = ref<string>('');
 const isSyncingFromProps = ref(false);
@@ -66,6 +67,7 @@ const imageForm = useForm({
 const initializeFromAttributes = () => {
     isSyncingFromProps.value = true;
     petSrc.value = props.attributes?.petSrc ?? '';
+    petName.value = props.attributes?.petName ?? '';
     petActions.value = [...(props.attributes?.petActions ?? [])];
     isSyncingFromProps.value = false;
 };
@@ -75,6 +77,7 @@ initializeFromAttributes();
 
 const buildNormalizedAttributes = (source: {
     petSrc?: string | null;
+    petName?: string | null;
     petActions?: string[] | null;
 }) => {
     const normalizedAttributes: Record<string, string | string[]> = {};
@@ -83,6 +86,11 @@ const buildNormalizedAttributes = (source: {
 
     if (normalizedPetSrc !== '') {
         normalizedAttributes.petSrc = normalizedPetSrc;
+    }
+
+    const normalizedPetName = source.petName?.trim() ?? '';
+    if (normalizedPetName !== '') {
+        normalizedAttributes.petName = normalizedPetName;
     }
 
     if (normalizedPetActions.length > 0) {
@@ -94,11 +102,13 @@ const buildNormalizedAttributes = (source: {
 
 const normalizedPropsPetState = computed(() => JSON.stringify(buildNormalizedAttributes({
     petSrc: props.attributes?.petSrc,
+    petName: props.attributes?.petName,
     petActions: props.attributes?.petActions ?? [],
 })));
 
 const normalizedLocalPetState = computed(() => JSON.stringify(buildNormalizedAttributes({
     petSrc: petSrc.value,
+    petName: petName.value,
     petActions: petActions.value,
 })));
 
@@ -116,6 +126,7 @@ watch(normalizedLocalPetState, () => {
 
     const {
         petSrc: _petSrc,
+        petName: _petName,
         petActions: _petActions,
         ...remainingAttributes
     } = props.attributes ?? {};
@@ -124,6 +135,7 @@ watch(normalizedLocalPetState, () => {
         ...remainingAttributes,
         ...buildNormalizedAttributes({
             petSrc: petSrc.value,
+            petName: petName.value,
             petActions: petActions.value,
         }),
     });
@@ -326,6 +338,7 @@ onMounted(() => {
                 </span>
             </div>
             <div class="text-sm text-gray-700">
+                <p>Nazwa w grze: <strong>{{ petName.trim() || baseItem?.name }}</strong></p>
                 <p v-if="petSrc">Źródło grafiki: <strong>{{ petSrc }}</strong></p>
                 <p v-if="petActions.length > 0">Akcje: <strong>{{ petActions.join(', ') }}</strong></p>
             </div>
@@ -370,6 +383,22 @@ onMounted(() => {
                 </div>
                 <small class="text-gray-500 mt-2">
                     Jeśli ilość jest ustawiona, każde użycie maskotki zużywa jedną sztukę. Pusta ilość oznacza nielimitowane użycia.
+                </small>
+            </div>
+
+            <!-- Name shown on the summoned pet -->
+            <div class="field">
+                <label for="petName" class="block font-semibold mb-2">Nazwa zwierzaka (opcjonalnie)</label>
+                <InputText
+                    id="petName"
+                    v-model="petName"
+                    :placeholder="baseItem?.name ? `np. Kot (domyślnie: ${baseItem.name})` : 'np. Kot'"
+                    maxlength="100"
+                    class="w-full"
+                />
+                <small class="text-gray-500 block mt-1">
+                    Nazwa przywołanego zwierzaka w grze. Gdy pusta, zwierzak nosi nazwę przedmiotu.
+                    Działa też dla maskotek, które gracze już mają (po ponownym przywołaniu).
                 </small>
             </div>
 

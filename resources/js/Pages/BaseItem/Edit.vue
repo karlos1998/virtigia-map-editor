@@ -320,6 +320,9 @@ const save = async () => {
         if (form.attributes.petActions) {
             specialAttributes.petActions = form.attributes.petActions;
         }
+        if (form.attributes.petName) {
+            specialAttributes.petName = form.attributes.petName;
+        }
 
         // First apply scaled attributes, then overlay special attributes
         finalAttributes = {
