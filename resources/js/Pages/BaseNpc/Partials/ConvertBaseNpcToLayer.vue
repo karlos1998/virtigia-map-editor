@@ -11,6 +11,25 @@ const props = defineProps<{
 const isConfirmDialogVisible = ref(false);
 const isRevertConfirmDialogVisible = ref(false);
 
+const layerDepthOptions = [
+  { value: "Y_SORT", label: "Wg pozycji", description: "Postać niżej jest na wierzchu, postać wyżej (za warstwą) jest zasłonięta. Np. kolumny, ściany, posągi." },
+  { value: "ABOVE", label: "Zawsze nad postaciami", description: "Zawsze zasłania postacie. Np. pajęczyny, korony drzew, dachy." },
+  { value: "BELOW", label: "Zawsze pod postaciami", description: "Nigdy nie zasłania postaci. Np. dywany, plamy, ślady na ziemi." },
+];
+
+const layerDepth = ref(props.baseNpc.layer_depth ?? "Y_SORT");
+const savingLayerDepth = ref(false);
+
+const updateLayerDepth = () => {
+  savingLayerDepth.value = true;
+  router.patch(route("base-npcs.layer-depth.update", props.baseNpc.id), { layer_depth: layerDepth.value }, {
+    preserveScroll: true,
+    onFinish: () => {
+      savingLayerDepth.value = false;
+    },
+  });
+};
+
 const convertToLayer = () => {
   router.post(route("base-npcs.convert-to-layer", props.baseNpc.id), {}, {
     onSuccess: () => {
@@ -47,6 +66,23 @@ const revertFromLayer = () => {
         Warstwa to specjalny typ NPC, który może być używany do tworzenia złożonych struktur na mapie.
         Konwersja na warstwę zmienia typ NPC na 4. Możesz również cofnąć tę zmianę, przywracając typ 0.
       </p>
+    </div>
+
+    <div v-if="baseNpc.type === 4" class="mb-3">
+      <label for="layer-depth" class="block font-bold mb-2">Rysowanie względem postaci</label>
+      <Select
+        inputId="layer-depth"
+        v-model="layerDepth"
+        :options="layerDepthOptions"
+        optionLabel="label"
+        optionValue="value"
+        :disabled="savingLayerDepth"
+        class="w-full"
+        @change="updateLayerDepth"
+      />
+      <small class="block mt-2">
+        {{ layerDepthOptions.find(option => option.value === layerDepth)?.description }}
+      </small>
     </div>
 
     <div class="flex justify-content-end">

@@ -21,6 +21,7 @@ class BaseNpc extends DynamicModel
         'wt',
         'draw_offset_x',
         'draw_offset_y',
+        'layer_depth',
         'rank',
         'category',
         'profession',
@@ -49,6 +50,7 @@ class BaseNpc extends DynamicModel
     protected $attributes = [
         'draw_offset_x' => 0,
         'draw_offset_y' => 0,
+        'layer_depth' => 'Y_SORT',
     ];
 
 

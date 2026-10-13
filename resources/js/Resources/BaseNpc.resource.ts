@@ -18,6 +18,7 @@ export interface BaseNpcResource {
     divine_intervention: boolean | null
     draw_offset_x: number
     draw_offset_y: number
+    layer_depth: 'Y_SORT' | 'ABOVE' | 'BELOW'
     drop_chances: number[] | null
     min_respawn_time: number | null
     max_respawn_time: number | null

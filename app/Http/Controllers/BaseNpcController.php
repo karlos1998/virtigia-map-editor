@@ -239,6 +239,20 @@ class BaseNpcController extends Controller
     }
 
     /**
+     * How a layer is drawn relative to characters
+     */
+    public function updateLayerDepth(Request $request, BaseNpc $baseNpc)
+    {
+        $validated = $request->validate([
+            'layer_depth' => ['required', 'string', 'in:Y_SORT,ABOVE,BELOW'],
+        ]);
+
+        $this->baseNpcService->update($baseNpc, $validated);
+
+        return back();
+    }
+
+    /**
      * Revert a BaseNpc from a layer to a regular NPC (type 0)
      */
     public function revertFromLayer(BaseNpc $baseNpc)

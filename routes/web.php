@@ -317,6 +317,7 @@ Route::middleware(['auth'])->group(function () {
                     Route::post('base-npcs/{sourceBaseNpc}/transfer-npcs', [BaseNpcController::class, 'transferNpcs'])->name('base-npcs.transfer-npcs');
                     Route::post('base-npcs/{baseNpc}/convert-to-layer', [BaseNpcController::class, 'convertToLayer'])->name('base-npcs.convert-to-layer');
                     Route::post('base-npcs/{baseNpc}/revert-from-layer', [BaseNpcController::class, 'revertFromLayer'])->name('base-npcs.revert-from-layer');
+                    Route::patch('base-npcs/{baseNpc}/layer-depth', [BaseNpcController::class, 'updateLayerDepth'])->name('base-npcs.layer-depth.update');
 
                     Route::get('special-attacks', [SpecialAttackController::class, 'index'])->name('special-attacks.index');
                     Route::get('special-attacks/create', [SpecialAttackController::class, 'create'])->name('special-attacks.create');
