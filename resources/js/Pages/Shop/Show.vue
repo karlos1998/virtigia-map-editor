@@ -23,7 +23,7 @@ import BaseItemSearchSelect from "@/Components/BaseItemSearchSelect.vue";
 
 const props = defineProps<{
     shop: ShopResource
-    items: BaseItemWithPosition
+    items: BaseItemWithPosition[]
 }>()
 
 const toast = useToast();
@@ -79,7 +79,9 @@ const addItem = (event: MouseEvent) => {
 
 
 const confirm = useConfirm();
-const deleteItem = (event, position: number) => {
+const selectedItem = ref<BaseItemResource | null>(null);
+const deleteItem = (event: MouseEvent, item: BaseItemWithPosition) => {
+    selectedItem.value = item;
     confirm.require({
         target: event.currentTarget,
         message: 'Usunąć ten przedmiot ze sklepu?',
@@ -97,7 +99,7 @@ const deleteItem = (event, position: number) => {
 
             router.delete(route('shops.items.destroy', {
                 shop: props.shop.id,
-                position,
+                position: item.position,
             }), {
                 onError: (errors) =>  {
                     toast.add({
@@ -184,7 +186,7 @@ const savePriceSettings = () => {
 };
 
 const openBaseItemInNewTab = (itemId: number) => {
-    window.open(route('base-items.show', itemId), '_blank');
+    window.open(route('base-items.show', itemId), '_blank', 'noopener,noreferrer');
 };
 
 const showAllItems = ref(false);
@@ -198,7 +200,20 @@ const toggleShowAllItems = () => {
     <AppLayout>
 
 
-        <ConfirmPopup />
+        <ConfirmPopup>
+            <template #message="{ message }">
+                <div>
+                    <p>{{ message.message }}</p>
+                    <Button
+                        v-if="selectedItem"
+                        label="Podgląd przedmiotu"
+                        icon="pi pi-external-link"
+                        severity="secondary"
+                        @click="openBaseItemInNewTab(selectedItem.id)"
+                    />
+                </div>
+            </template>
+        </ConfirmPopup>
 
         <ItemHeader
             :route-back="route('shops.index')"
@@ -334,7 +349,7 @@ const toggleShowAllItems = () => {
                     <Item
                         v-if="test"
                         :title="`[${item.id}] ${item.name}`"
-                        @click="deleteItem($event, item.position)"
+                        @click="deleteItem($event, item)"
                         v-for="item in items"
                         :item
                         v-tip="itemTip({ ...item, stat: item.stats })"
@@ -342,7 +357,7 @@ const toggleShowAllItems = () => {
                     <Item
                         v-else
                         :title="`[${item.id}] ${item.name}`"
-                        @click="deleteItem($event, item.position)"
+                        @click="deleteItem($event, item)"
                         v-for="item in items"
                         :item
                         v-tip.item.top.show-id="item"
