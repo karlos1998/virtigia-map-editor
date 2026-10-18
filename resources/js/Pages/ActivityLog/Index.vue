@@ -4,7 +4,7 @@ import AppLayout from "@/layout/AppLayout.vue";
 import AdvanceTable from "@advance-table/Components/AdvanceTable.vue";
 import AdvanceColumn from "@advance-table/Components/AdvanceColumn.vue";
 
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
 import {ref} from "vue";
 import Panel from 'primevue/panel';
@@ -14,6 +14,9 @@ import Column from 'primevue/column';
 import SelectButton from 'primevue/selectbutton';
 import Button from 'primevue/button';
 import Avatar from 'primevue/avatar';
+import MultiSelect from 'primevue/multiselect';
+
+const page = usePage();
 
 type Data = {
     data: any
@@ -243,7 +246,27 @@ const formatDate = (dateString) => {
                     </template>
                 </AdvanceColumn>
 
-                <Column field="world" header="Świat" />
+                <Column
+                    field="world"
+                    header="Świat"
+                    :show-filter-match-modes="false"
+                    :show-filter-operator="false"
+                    :show-add-button="false"
+                >
+                    <template #filter="{ filterModel }">
+                        <MultiSelect
+                            v-model="filterModel.value"
+                            :options="page.props.auth.world_templates"
+                            option-label="label"
+                            option-value="value"
+                            placeholder="Wybierz światy"
+                            aria-label="Filtruj według świata"
+                            filter
+                            show-clear
+                            class="min-w-48"
+                        />
+                    </template>
+                </Column>
 
                 <template #expansion="{data}: Data">
                     <div class="p-4">
