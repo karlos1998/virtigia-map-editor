@@ -22,6 +22,7 @@ type MigrationStep = {
 type Status = {
     id: number; target_template_id: number; status: string; progress: number; message: string;
     summary: Record<string, Counts> | null; expires_at: string | null; snapshot_pruned: boolean;
+    schema_differences?: { table: string; column: string; source: unknown; target: unknown }[];
     table_labels?: Record<string, string>;
     migration_steps?: MigrationStep[] | null;
 };
@@ -56,7 +57,7 @@ const migrationGroups = computed(() => (['source', 'target'] as const).map((role
     const steps = (status.value?.migration_steps ?? []).filter((step) => step.role === role);
     return { role, name: steps[0]?.template_name, steps, completed: steps.filter((step) => step.status === 'completed').length };
 }).filter((group) => group.steps.length > 0));
-const migrationLabel = (step: MigrationStep): string => step.name === '__repository' ? 'Przygotowanie rejestru migracji' : step.name;
+const migrationLabel = (step: MigrationStep): string => step.name === '__current' ? 'Rejestr sprawdzony — brak zaległych migracji' : step.name === '__repository' ? 'Przygotowanie rejestru migracji' : step.name;
 const migrationState = (value: MigrationStep['status']): string => ({ pending: 'Oczekuje', running: 'W trakcie', completed: 'Wykonana', failed: 'Błąd' })[value];
 const tableLabel = (name: string): string => status.value?.table_labels?.[name] ?? name;
 const summary = computed(() => Object.entries(status.value?.summary ?? {}).map(([name, counts]) => ({ name, label: tableLabel(name), ...counts })));
@@ -242,6 +243,16 @@ onBeforeUnmount(() => { session++; detailRequest++; clearTimeout(timer); clearTi
                             </div>
                         </div>
                     </div>
+                </section>
+                <section v-if="status.schema_differences?.length" class="flex flex-col gap-2">
+                    <p class="font-semibold">Różnice w strukturze tabel ({{ status.schema_differences.length }})</p>
+                    <p class="text-sm">Lista pokazuje definicje kolumn, a nie zmiany danych. Brak kolumny oznaczono kreską.</p>
+                    <DataTable :value="status.schema_differences" paginator :rows="10" scrollable scroll-height="24rem" size="small" class="text-sm">
+                        <Column field="table" header="Tabela" />
+                        <Column field="column" header="Kolumna" />
+                        <Column header="Template bazowy"><template #body="{ data }"><pre class="whitespace-pre-wrap break-words text-xs">{{ format(data.source) }}</pre></template></Column>
+                        <Column header="Produkcja"><template #body="{ data }"><pre class="whitespace-pre-wrap break-words text-xs">{{ format(data.target) }}</pre></template></Column>
+                    </DataTable>
                 </section>
                 <template v-if="status.summary && !status.snapshot_pruned">
                     <p class="text-sm">To migawka z momentu porównania. Późniejsze zmiany bazy edytowalnej wymagają nowego porównania. Podgląd można zatwierdzić przez 24 godziny.</p>

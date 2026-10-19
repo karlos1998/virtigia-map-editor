@@ -31,6 +31,7 @@ class WorldTemplateMigrationService
             foreach (['source' => $source, 'target' => $target] as $role => $connection) {
                 $template = $role === 'source' ? $update->sourceTemplate : $update->targetTemplate;
                 $repository = $this->repository($connection->getName());
+                $firstStep = count($steps);
                 $hasRepository = $repository->repositoryExists();
                 $ran = $hasRepository ? $repository->getRan() : [];
                 $migrator = new Migrator($repository, app('db'), new Filesystem, new Dispatcher(app()));
@@ -43,10 +44,16 @@ class WorldTemplateMigrationService
                         $steps[] = $this->step($template->id, $template->name, $role, $name);
                     }
                 }
+                if (count($steps) === $firstStep) {
+                    $steps[] = [...$this->step($template->id, $template->name, $role, '__current'), 'status' => 'completed'];
+                }
             }
             $update->update(['migration_steps' => $steps, 'message' => 'Przygotowano listę brakujących migracji.']);
 
             foreach ($steps as $index => $step) {
+                if ($step['status'] === 'completed') {
+                    continue;
+                }
                 $runner = $runners[$step['role']];
                 $steps[$index]['status'] = 'running';
                 $steps[$index]['started_at'] = now()->toIso8601String();

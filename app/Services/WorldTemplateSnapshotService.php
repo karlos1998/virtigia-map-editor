@@ -62,7 +62,7 @@ class WorldTemplateSnapshotService
             }
 
             $columns = collect($schema->getColumns($table))
-                ->map(fn (array $column): array => array_intersect_key($column, array_flip(['name', 'type', 'nullable', 'generation'])))
+                ->map(fn (array $column): array => $this->columnDefinition($connection, $column))
                 ->sortBy('name')->values()->all();
             $manifest[$table] = ['keys' => $keys, 'columns' => $columns];
         }
@@ -72,6 +72,38 @@ class WorldTemplateSnapshotService
         }
 
         return $manifest;
+    }
+
+    private function columnDefinition(Connection $connection, array $column): array
+    {
+        $definition = array_intersect_key($column, array_flip(['name', 'type', 'nullable', 'generation']));
+        if (in_array($connection->getDriverName(), ['mysql', 'mariadb'], true) && ! str_contains(strtolower($definition['type']), 'zerofill')) {
+            $definition['type'] = preg_replace('/^(tinyint|smallint|mediumint|int|bigint)\\(\\d+\\)/i', '$1', $definition['type']);
+        }
+
+        return $definition;
+    }
+
+    /** @return list<array{table: string, column: string, source: mixed, target: mixed}> */
+    private function schemaDifferences(array $source, array $target): array
+    {
+        $differences = [];
+        foreach ($source as $table => $definition) {
+            if ($definition['keys'] !== $target[$table]['keys']) {
+                $differences[] = ['table' => $table, 'column' => 'PRIMARY KEY', 'source' => $definition['keys'], 'target' => $target[$table]['keys']];
+            }
+            $sourceColumns = array_column($definition['columns'], null, 'name');
+            $targetColumns = array_column($target[$table]['columns'], null, 'name');
+            foreach (array_unique([...array_keys($sourceColumns), ...array_keys($targetColumns)]) as $name) {
+                $before = $sourceColumns[$name] ?? null;
+                $after = $targetColumns[$name] ?? null;
+                if ($before !== $after) {
+                    $differences[] = ['table' => $table, 'column' => $name, 'source' => $before, 'target' => $after];
+                }
+            }
+        }
+
+        return $differences;
     }
 
     /** @return Generator<int, array<string, mixed>> */
@@ -110,8 +142,13 @@ class WorldTemplateSnapshotService
     {
         [$source, $target] = $this->connections($update);
         $schema = $this->schema($source);
-        if ($schema !== $this->schema($target)) {
-            throw new RuntimeException('Schematy baz różnią się. Ujednolić migracje przed aktualizacją.');
+        $differences = $this->schemaDifferences($schema, $this->schema($target));
+        if ($differences !== []) {
+            $update->update(['manifest' => ['schema_differences' => $differences]]);
+            $message = $update->migration_steps !== null
+                ? 'Sprawdzono migracje, ale definicje tabel nadal się różnią. Szczegóły poniżej. Ponowne uruchomienie tych samych migracji nie naprawi tych różnic.'
+                : 'Schematy baz różnią się. Sprawdź migracje oraz szczegóły różnic poniżej.';
+            throw new RuntimeException($message);
         }
 
         $summary = [];

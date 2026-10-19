@@ -524,8 +524,9 @@ class WorldTemplateUpdateTest extends TestCase
         $this->target->table('migrations')->where('migration', '!=', '')->delete();
         $next = app(WorldTemplateUpdateService::class)->migrate($this->production, 1);
         (new ProcessWorldTemplateMigrations($next->id))->handle($migrations);
-        $this->assertCount(1, $next->fresh()->migration_steps);
-        $this->assertSame('target', $next->fresh()->migration_steps[0]['role']);
+        $this->assertCount(2, $next->fresh()->migration_steps);
+        $this->assertSame('__current', $next->fresh()->migration_steps[0]['name']);
+        $this->assertSame('target', $next->fresh()->migration_steps[1]['role']);
         $this->assertSame('completed', $next->fresh()->migration_steps[0]['status']);
         $this->assertSame('superseded', $update->fresh()->status);
     }
@@ -632,8 +633,36 @@ class WorldTemplateUpdateTest extends TestCase
         (new ProcessWorldTemplateUpdate($first->id))->handle(app(WorldTemplateSnapshotService::class));
         $second = app(WorldTemplateUpdateService::class)->migrate($this->production, 1);
         (new ProcessWorldTemplateMigrations($second->id))->handle($migrations);
-        $this->assertSame([], $second->fresh()->migration_steps);
+        $this->assertSame(['__current', '__current'], array_column($second->fresh()->migration_steps, 'name'));
+        $this->assertSame(['completed', 'completed'], array_column($second->fresh()->migration_steps, 'status'));
         $this->assertSame('queued', $second->fresh()->status);
         $this->assertSame(1, $this->source->table('migrations')->count());
+    }
+
+    public function test_schema_drift_after_migrations_shows_details_and_preserves_the_migration_result(): void
+    {
+        $migrations = $this->migrationFixture([$this->addQualityMigration()]);
+        $first = app(WorldTemplateUpdateService::class)->migrate($this->production, 1);
+        (new ProcessWorldTemplateMigrations($first->id))->handle($migrations);
+        (new ProcessWorldTemplateUpdate($first->id))->handle(app(WorldTemplateSnapshotService::class));
+        $this->target->getSchemaBuilder()->table('items', fn (Blueprint $table) => $table->dropColumn('quality'));
+        $second = app(WorldTemplateUpdateService::class)->migrate($this->production, 1);
+        (new ProcessWorldTemplateMigrations($second->id))->handle($migrations);
+        $job = new ProcessWorldTemplateUpdate($second->id);
+        try {
+            $job->handle(app(WorldTemplateSnapshotService::class));
+            $this->fail('Expected schema drift rejection.');
+        } catch (RuntimeException $error) {
+            $job->failed($error);
+        }
+        $status = $second->fresh()->publicStatus();
+        $this->assertSame('failed', $status['status']);
+        $this->assertStringContainsString('Sprawdzono migracje', $status['message']);
+        $this->assertSame(['__current', '__current'], array_column($status['migration_steps'], 'name'));
+        $this->assertCount(1, $status['schema_differences']);
+        $this->assertSame('items', $status['schema_differences'][0]['table']);
+        $this->assertSame('quality', $status['schema_differences'][0]['column']);
+        $this->assertNull($status['schema_differences'][0]['target']);
+        $this->assertSame('Stary miecz', $this->target->table('items')->where('id', 1)->value('name'));
     }
 }

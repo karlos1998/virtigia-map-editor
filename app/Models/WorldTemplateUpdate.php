@@ -44,6 +44,7 @@ class WorldTemplateUpdate extends Model
     {
         return [
             ...$this->only(['id', 'target_template_id', 'source_template_id', 'status', 'progress', 'message', 'summary', 'expires_at', 'completed_at', 'snapshot_pruned', 'created_at', 'migration_steps']),
+            'schema_differences' => $this->manifest['schema_differences'] ?? [],
             'table_labels' => config('world_templates.update_table_labels'),
         ];
     }
