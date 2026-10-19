@@ -2,15 +2,18 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\ProcessWorldTemplateMigrations;
 use App\Jobs\ProcessWorldTemplateUpdate;
 use App\Models\User;
 use App\Models\WorldTemplate;
 use App\Models\WorldTemplateUpdate;
 use App\Services\Mcp\McpWorldService;
 use App\Services\WorldTemplateConnectionResolver;
+use App\Services\WorldTemplateMigrationService;
 use App\Services\WorldTemplateSnapshotService;
 use App\Services\WorldTemplateUpdateService;
 use Illuminate\Database\Connection;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -38,6 +41,8 @@ class WorldTemplateUpdateTest extends TestCase
     private array $mysqlDatabases = [];
 
     private array $authoringTables = [];
+
+    private array $migrationDirectories = [];
 
     protected function setUp(): void
     {
@@ -102,6 +107,9 @@ class WorldTemplateUpdateTest extends TestCase
         }
         foreach ($this->paths as $path) {
             File::delete($path);
+        }
+        foreach ($this->migrationDirectories as $directory) {
+            File::deleteDirectory($directory);
         }
         foreach (array_reverse($this->mysqlDatabases) as $database) {
             DB::connection('update_test_admin')->getSchemaBuilder()->dropDatabaseIfExists($database);
@@ -441,5 +449,191 @@ class WorldTemplateUpdateTest extends TestCase
         $this->actingAs(User::factory()->create(['roles' => ['administrator']]))
             ->getJson(route('administration.world-template-updates.changes', ['update' => $update->id, 'search' => '_100%!']))
             ->assertOk()->assertJsonPath('total', 1)->assertJsonPath('data.0.row_label', 'Miecz_100%! (id=1)');
+    }
+
+    private function migrationFixture(array $bodies): WorldTemplateMigrationService
+    {
+        $directory = storage_path('framework/template-migrations-'.bin2hex(random_bytes(6)));
+        File::ensureDirectoryExists($directory);
+        $this->migrationDirectories[] = $directory;
+        $files = [];
+        foreach ($bodies as $index => $body) {
+            $name = '2026_10_19_'.str_pad((string) $index, 6, '0', STR_PAD_LEFT).'_fixture';
+            $path = $directory.'/'.$name.'.php';
+            File::put($path, '<?php return new class extends \\Illuminate\\Database\\Migrations\\Migration { public function up(): void { '.$body.' } };');
+            $files[$name] = $path;
+        }
+
+        $service = new class(app(WorldTemplateSnapshotService::class), $files) extends WorldTemplateMigrationService
+        {
+            public function __construct(WorldTemplateSnapshotService $snapshots, private readonly array $files)
+            {
+                parent::__construct($snapshots);
+            }
+
+            protected function migrationFiles(): array
+            {
+                return $this->files;
+            }
+        };
+        $this->instance(WorldTemplateMigrationService::class, $service);
+
+        return $service;
+    }
+
+    private function addQualityMigration(): string
+    {
+        return '\\Illuminate\\Support\\Facades\\Schema::table("items", function (\\Illuminate\\Database\\Schema\\Blueprint $table): void { $table->string("quality")->nullable(); });';
+    }
+
+    public function test_migrations_publish_running_and_completed_steps_then_queue_a_fresh_comparison(): void
+    {
+        $migrations = $this->migrationFixture([$this->addQualityMigration()]);
+        $update = app(WorldTemplateUpdateService::class)->migrate($this->production, 1);
+        $localConnection = DB::getDefaultConnection();
+        $observed = [];
+        DB::listen(function (QueryExecuted $query) use ($update, $localConnection, &$observed): void {
+            if (in_array($query->connectionName, ['update_source', 'update_target'], true) && str_contains(strtolower($query->sql), 'alter table')) {
+                $status = WorldTemplateUpdate::on($localConnection)->findOrFail($update->id)->publicStatus();
+                $observed[] = collect($status['migration_steps'])->where('status', 'running')->count();
+            }
+        });
+        (new ProcessWorldTemplateMigrations($update->id))->handle($migrations);
+        $update->refresh();
+        $this->assertSame('queued', $update->status);
+        $this->assertSame($localConnection, DB::getDefaultConnection());
+        $this->assertSame([1, 1], $observed);
+        $this->assertCount(4, $update->migration_steps);
+        $this->assertSame(['completed'], array_values(array_unique(array_column($update->migration_steps, 'status'))));
+        $this->assertTrue($this->source->getSchemaBuilder()->hasColumn('items', 'quality'));
+        $this->assertTrue($this->target->getSchemaBuilder()->hasColumn('items', 'quality'));
+        $this->assertSame('Stary miecz', $this->target->table('items')->find(1)->name);
+        Queue::assertPushed(ProcessWorldTemplateUpdate::class);
+        (new ProcessWorldTemplateUpdate($update->id))->handle(app(WorldTemplateSnapshotService::class));
+        $this->assertSame('ready', $update->fresh()->status);
+        $this->assertCount(4, $update->fresh()->migration_steps);
+    }
+
+    public function test_only_pending_migrations_run_and_completed_files_are_not_repeated(): void
+    {
+        $migrations = $this->migrationFixture([$this->addQualityMigration()]);
+        $update = app(WorldTemplateUpdateService::class)->migrate($this->production, 1);
+        (new ProcessWorldTemplateMigrations($update->id))->handle($migrations);
+        (new ProcessWorldTemplateUpdate($update->id))->handle(app(WorldTemplateSnapshotService::class));
+        $this->target->getSchemaBuilder()->table('items', fn (Blueprint $table) => $table->dropColumn('quality'));
+        $this->target->table('migrations')->where('migration', '!=', '')->delete();
+        $next = app(WorldTemplateUpdateService::class)->migrate($this->production, 1);
+        (new ProcessWorldTemplateMigrations($next->id))->handle($migrations);
+        $this->assertCount(1, $next->fresh()->migration_steps);
+        $this->assertSame('target', $next->fresh()->migration_steps[0]['role']);
+        $this->assertSame('completed', $next->fresh()->migration_steps[0]['status']);
+        $this->assertSame('superseded', $update->fresh()->status);
+    }
+
+    public function test_migration_failure_preserves_completed_steps_stops_later_steps_and_restores_local_connection(): void
+    {
+        $migrations = $this->migrationFixture([$this->addQualityMigration(), 'throw new \\RuntimeException("Awaria testowej migracji");', 'throw new \\RuntimeException("Ta migracja nie może wystartować");']);
+        $update = app(WorldTemplateUpdateService::class)->migrate($this->production, 1);
+        $local = DB::getDefaultConnection();
+        try {
+            (new ProcessWorldTemplateMigrations($update->id))->handle($migrations);
+            $this->fail('Expected migration failure.');
+        } catch (RuntimeException $error) {
+            $this->assertSame('Awaria testowej migracji', $error->getMessage());
+        }
+        $this->assertSame($local, DB::getDefaultConnection());
+        $update->refresh();
+        $this->assertSame('failed', $update->status);
+        $this->assertSame(['completed', 'completed', 'failed', 'pending'], array_slice(array_column($update->migration_steps, 'status'), 0, 4));
+        $this->assertStringContainsString('Awaria testowej migracji', $update->migration_steps[2]['error']);
+        $this->assertTrue($this->source->getSchemaBuilder()->hasColumn('items', 'quality'));
+        $this->assertFalse($this->target->getSchemaBuilder()->hasColumn('items', 'quality'));
+        $this->assertSame(1, $this->source->table('migrations')->count());
+        Queue::assertNotPushed(ProcessWorldTemplateUpdate::class);
+    }
+
+    public function test_migrations_require_an_administrator_and_explicit_confirmation(): void
+    {
+        $url = route('administration.world-template-updates.migrate', $this->production->id);
+        $this->actingAs(User::factory()->create())->postJson($url, ['confirmed' => true])->assertForbidden();
+        $this->actingAs(User::factory()->create(['roles' => ['administrator']]))->postJson($url)->assertUnprocessable();
+        $this->postJson($url, ['confirmed' => true])->assertStatus(202)->assertJsonPath('status', 'queued_migration');
+        $this->postJson($url, ['confirmed' => true])->assertStatus(202);
+        Queue::assertPushed(ProcessWorldTemplateMigrations::class, 1);
+    }
+
+    public function test_migrations_are_rejected_while_an_update_on_the_same_base_is_running(): void
+    {
+        app(WorldTemplateUpdateService::class)->start($this->production, 1);
+        $this->expectException(ValidationException::class);
+        app(WorldTemplateUpdateService::class)->migrate($this->production, 1);
+    }
+
+    public function test_migrations_invalidate_previews_and_block_other_production_templates_sharing_the_base(): void
+    {
+        $preview = $this->preview();
+        $anotherProduction = $this->makeTemplate('another_production', true, $this->base->id);
+        app(WorldTemplateUpdateService::class)->migrate($this->production, 1);
+        $this->assertSame('superseded', $preview->fresh()->status);
+        $this->expectException(ValidationException::class);
+        app(WorldTemplateUpdateService::class)->start($anotherProduction, 1);
+    }
+
+    public function test_timed_out_migrations_are_not_retried_automatically(): void
+    {
+        $update = WorldTemplateUpdate::query()->create([
+            'target_template_id' => $this->production->id, 'source_template_id' => $this->base->id,
+            'requested_by' => 1, 'status' => 'migrating',
+            'migration_steps' => [['name' => 'interrupted', 'status' => 'running', 'error' => null]],
+        ]);
+        $update->update(['updated_at' => now()->subHours(2)]);
+        $this->artisan('world-template-updates:prune')->assertSuccessful();
+        $this->assertSame('failed', $update->fresh()->status);
+        $this->assertSame('failed', $update->fresh()->migration_steps[0]['status']);
+        Queue::assertNotPushed(ProcessWorldTemplateMigrations::class);
+    }
+
+    public function test_duplicate_migration_jobs_skip_the_already_processed_run(): void
+    {
+        $migrations = $this->migrationFixture([$this->addQualityMigration()]);
+        $update = app(WorldTemplateUpdateService::class)->migrate($this->production, 1);
+        $update->update(['updated_at' => now()->subMinutes(2)]);
+        $this->artisan('world-template-updates:prune')->assertSuccessful();
+        Queue::assertPushed(ProcessWorldTemplateMigrations::class, 2);
+        $job = new ProcessWorldTemplateMigrations($update->id);
+        $job->handle($migrations);
+        $steps = $update->fresh()->migration_steps;
+        $job->handle($migrations);
+        $this->assertSame($steps, $update->fresh()->migration_steps);
+        $this->assertSame(1, $this->target->table('migrations')->count());
+    }
+
+    public function test_migration_timeout_records_failure_even_when_default_connection_is_remote(): void
+    {
+        $update = app(WorldTemplateUpdateService::class)->migrate($this->production, 1);
+        $job = new ProcessWorldTemplateMigrations($update->id);
+        $update->update(['status' => 'migrating', 'migration_steps' => [['name' => 'interrupted', 'status' => 'running', 'error' => null]]]);
+        $local = DB::getDefaultConnection();
+        try {
+            DB::setDefaultConnection('update_source');
+            $job->failed(new RuntimeException('Przekroczono czas migracji.'));
+        } finally {
+            DB::setDefaultConnection($local);
+        }
+        $this->assertSame('failed', $update->fresh()->status);
+        $this->assertSame('failed', $update->fresh()->migration_steps[0]['status']);
+    }
+
+    public function test_a_second_run_with_no_pending_migrations_queues_comparison_without_repeating_ddl(): void
+    {
+        $migrations = $this->migrationFixture([$this->addQualityMigration()]);
+        $first = app(WorldTemplateUpdateService::class)->migrate($this->production, 1);
+        (new ProcessWorldTemplateMigrations($first->id))->handle($migrations);
+        (new ProcessWorldTemplateUpdate($first->id))->handle(app(WorldTemplateSnapshotService::class));
+        $second = app(WorldTemplateUpdateService::class)->migrate($this->production, 1);
+        (new ProcessWorldTemplateMigrations($second->id))->handle($migrations);
+        $this->assertSame([], $second->fresh()->migration_steps);
+        $this->assertSame('queued', $second->fresh()->status);
+        $this->assertSame(1, $this->source->table('migrations')->count());
     }
 }

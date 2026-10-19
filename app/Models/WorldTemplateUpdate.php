@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\DB;
 
 class WorldTemplateUpdate extends Model
 {
+    public const ACTIVE_STATUSES = ['queued', 'comparing', 'queued_apply', 'applying', 'verification_required', 'queued_migration', 'migrating'];
+
     protected $guarded = ['id'];
 
     protected function casts(): array
@@ -19,6 +21,7 @@ class WorldTemplateUpdate extends Model
             'expires_at' => 'datetime',
             'completed_at' => 'datetime',
             'snapshot_pruned' => 'boolean',
+            'migration_steps' => 'array',
         ];
     }
 
@@ -40,7 +43,7 @@ class WorldTemplateUpdate extends Model
     public function publicStatus(): array
     {
         return [
-            ...$this->only(['id', 'target_template_id', 'source_template_id', 'status', 'progress', 'message', 'summary', 'expires_at', 'completed_at', 'snapshot_pruned', 'created_at']),
+            ...$this->only(['id', 'target_template_id', 'source_template_id', 'status', 'progress', 'message', 'summary', 'expires_at', 'completed_at', 'snapshot_pruned', 'created_at', 'migration_steps']),
             'table_labels' => config('world_templates.update_table_labels'),
         ];
     }

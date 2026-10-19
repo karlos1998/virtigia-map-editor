@@ -359,6 +359,7 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('world-templates', [WorldTemplateController::class, 'index'])->name('world-templates.index');
                 Route::post('world-templates', [WorldTemplateController::class, 'store'])->name('world-templates.store');
                 Route::post('world-templates/{template}/updates', [\App\Http\Controllers\Administration\WorldTemplateUpdateController::class, 'store'])->name('world-template-updates.store');
+                Route::post('world-templates/{template}/migrations', [\App\Http\Controllers\Administration\WorldTemplateUpdateController::class, 'migrate'])->name('world-template-updates.migrate');
                 Route::get('world-template-updates/{update}', [\App\Http\Controllers\Administration\WorldTemplateUpdateController::class, 'show'])->name('world-template-updates.show');
                 Route::get('world-template-updates/{update}/changes', [\App\Http\Controllers\Administration\WorldTemplateUpdateController::class, 'changes'])->name('world-template-updates.changes');
                 Route::get('world-template-updates/{update}/changes/{row}', [\App\Http\Controllers\Administration\WorldTemplateUpdateController::class, 'detail'])->whereNumber('row')->name('world-template-updates.detail');

@@ -12,12 +12,18 @@ import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import Paginator from 'primevue/paginator';
 import Tag from 'primevue/tag';
+import Checkbox from 'primevue/checkbox';
 
 type Counts = { added: number; updated: number; deleted: number; unchanged: number };
+type MigrationStep = {
+    template_id: number; template_name: string; role: 'source' | 'target'; name: string;
+    status: 'pending' | 'running' | 'completed' | 'failed'; error: string | null;
+};
 type Status = {
     id: number; target_template_id: number; status: string; progress: number; message: string;
     summary: Record<string, Counts> | null; expires_at: string | null; snapshot_pruned: boolean;
     table_labels?: Record<string, string>;
+    migration_steps?: MigrationStep[] | null;
 };
 type Change = { id: number; table_name: string; row_label: string; change_type: string };
 type Detail = { before: Record<string, unknown> | null; after: Record<string, unknown> | null; changed_columns: string[] };
@@ -27,6 +33,7 @@ const status = ref<Status | null>(null);
 const busy = ref(false);
 const error = ref('');
 const confirmApply = ref(false);
+const confirmMigrations = ref(false);
 const changes = ref<Change[]>([]);
 const changesLoading = ref(false);
 const total = ref(0);
@@ -44,7 +51,13 @@ let session = 0;
 let listRequest = 0;
 let detailRequest = 0;
 const knownStatuses = new Map<number, Status>();
-const running = computed(() => ['queued', 'comparing', 'queued_apply', 'applying', 'verification_required'].includes(status.value?.status ?? ''));
+const running = computed(() => ['queued', 'comparing', 'queued_apply', 'applying', 'verification_required', 'queued_migration', 'migrating'].includes(status.value?.status ?? ''));
+const migrationGroups = computed(() => (['source', 'target'] as const).map((role) => {
+    const steps = (status.value?.migration_steps ?? []).filter((step) => step.role === role);
+    return { role, name: steps[0]?.template_name, steps, completed: steps.filter((step) => step.status === 'completed').length };
+}).filter((group) => group.steps.length > 0));
+const migrationLabel = (step: MigrationStep): string => step.name === '__repository' ? 'Przygotowanie rejestru migracji' : step.name;
+const migrationState = (value: MigrationStep['status']): string => ({ pending: 'Oczekuje', running: 'W trakcie', completed: 'Wykonana', failed: 'Błąd' })[value];
 const tableLabel = (name: string): string => status.value?.table_labels?.[name] ?? name;
 const summary = computed(() => Object.entries(status.value?.summary ?? {}).map(([name, counts]) => ({ name, label: tableLabel(name), ...counts })));
 const changedCount = computed(() => summary.value.reduce((sum, row) => sum + row.added + row.updated + row.deleted, 0));
@@ -86,7 +99,7 @@ const poll = async (generation: number): Promise<void> => {
     } catch (failure) {
         if (generation === session) error.value = errorMessage(failure);
     }
-    if (visible.value && generation === session && running.value) timer = setTimeout(() => poll(generation), 2000);
+    if (visible.value && generation === session && running.value) timer = setTimeout(() => poll(generation), ['queued_migration', 'migrating'].includes(status.value?.status ?? '') ? 1000 : 2000);
 };
 
 const start = async (): Promise<void> => {
@@ -127,6 +140,27 @@ const apply = async (): Promise<void> => {
     }
 };
 
+const migrate = async (): Promise<void> => {
+    const generation = session;
+    busy.value = true;
+    error.value = '';
+    try {
+        const response = await axios.post(route('administration.world-template-updates.migrate', props.template.id), { confirmed: true });
+        if (generation !== session) return;
+        status.value = response.data;
+        knownStatuses.set(props.template.id, response.data);
+        confirmMigrations.value = false;
+        confirmApply.value = false;
+        currentPage.value = 0;
+        clearTimeout(timer);
+        await poll(generation);
+    } catch (failure) {
+        if (generation === session) error.value = errorMessage(failure);
+    } finally {
+        if (generation === session) busy.value = false;
+    }
+};
+
 const showDetail = async (change: Change): Promise<void> => {
     if (!status.value) return;
     const request = ++detailRequest;
@@ -152,6 +186,7 @@ watch(visible, async (open) => {
     clearTimeout(timer);
     clearTimeout(searchTimer);
     confirmApply.value = false;
+    confirmMigrations.value = false;
     detailVisible.value = false;
     detailRequest++;
     busy.value = false;
@@ -186,6 +221,28 @@ onBeforeUnmount(() => { session++; detailRequest++; clearTimeout(timer); clearTi
                 <Message :severity="status.status === 'failed' ? 'error' : status.status === 'completed' ? 'success' : 'info'" :closable="false">{{ status.message }}</Message>
                 <ProgressBar v-if="running" :value="status.progress" :mode="status.progress === 0 ? 'indeterminate' : 'determinate'" />
                 <p v-if="running" class="text-sm text-surface-500">Operacja działa w tle. Możesz zamknąć okno i wrócić przez „Aktualizuj”.</p>
+                <section v-if="migrationGroups.length" class="flex flex-col gap-3" aria-live="polite" aria-label="Postęp migracji">
+                    <h3 class="m-0 text-lg font-semibold">Migracje baz</h3>
+                    <div v-for="group in migrationGroups" :key="group.role" class="rounded-lg border border-surface-200 p-3 dark:border-surface-700">
+                        <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                            <strong>{{ group.role === 'source' ? 'Template bazowy' : 'Produkcja' }}: {{ group.name }}</strong>
+                            <Tag :value="`${group.completed} / ${group.steps.length}`" :severity="group.completed === group.steps.length ? 'success' : 'info'" />
+                        </div>
+                        <div class="flex max-h-80 flex-col gap-3 overflow-auto">
+                            <div v-for="step in group.steps" :key="step.name" class="flex items-start gap-3">
+                                <Checkbox :model-value="step.status === 'completed'" binary disabled :aria-label="`${migrationLabel(step)}: ${migrationState(step.status)}`" class="mt-1 shrink-0" />
+                                <div class="flex min-w-0 flex-1 flex-col gap-1">
+                                    <span class="break-all font-mono text-xs">{{ migrationLabel(step) }}</span>
+                                    <span class="flex items-center gap-2 text-xs" :class="step.status === 'failed' ? 'text-red-600 dark:text-red-300' : 'text-surface-500 dark:text-surface-300'">
+                                        <i v-if="step.status === 'running'" class="pi pi-spin pi-spinner" aria-hidden="true" />
+                                        {{ migrationState(step.status) }}
+                                    </span>
+                                    <span v-if="step.error" class="break-words text-xs text-red-600 dark:text-red-300">{{ step.error }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
                 <template v-if="status.summary && !status.snapshot_pruned">
                     <p class="text-sm">To migawka z momentu porównania. Późniejsze zmiany bazy edytowalnej wymagają nowego porównania. Podgląd można zatwierdzić przez 24 godziny.</p>
                     <p class="font-semibold">Łącznie {{ changedCount }} zmian</p>
@@ -218,6 +275,18 @@ onBeforeUnmount(() => { session++; detailRequest++; clearTimeout(timer); clearTi
                         <Button v-if="canApply && confirmApply" label="Tak, wykonaj aktualizację produkcji" icon="pi pi-upload" severity="danger" :loading="busy" @click="apply" />
                     </div>
                 </template>
+            </template>
+            <template v-if="!running">
+                <Message v-if="confirmMigrations" severity="warn" :closable="false">
+                    Uruchomić brakujące migracje na template bazowym i produkcyjnym? Mogą one zmieniać schemat oraz dane i nie należą do transakcji kopiowania. Po ich zakończeniu automatycznie przygotujemy nowe porównanie. Zapis danych na produkcję wymaga osobnego zatwierdzenia.
+                </Message>
+                <div class="flex flex-wrap justify-end gap-2">
+                    <Button v-if="!confirmMigrations" label="Sprawdź i uruchom migracje" icon="pi pi-database" severity="secondary" :disabled="busy" @click="confirmMigrations = true; confirmApply = false" />
+                    <template v-else>
+                        <Button label="Anuluj migracje" severity="secondary" text :disabled="busy" @click="confirmMigrations = false" />
+                        <Button label="Tak, uruchom migracje" icon="pi pi-play" severity="warn" :loading="busy" @click="migrate" />
+                    </template>
+                </div>
             </template>
         </div>
     </Dialog>

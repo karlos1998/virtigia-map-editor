@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\ProcessWorldTemplateMigrations;
 use App\Jobs\ProcessWorldTemplateUpdate;
 use App\Models\WorldTemplateUpdate;
 use App\Services\WorldTemplateUpdateService;
@@ -18,9 +19,11 @@ class PruneWorldTemplateUpdates extends Command
         WorldTemplateUpdate::query()->whereIn('status', ['queued', 'queued_apply'])
             ->where('updated_at', '<', now()->subMinute())
             ->eachById(fn (WorldTemplateUpdate $update) => ProcessWorldTemplateUpdate::dispatch($update->id, $update->status === 'queued_apply'));
+        WorldTemplateUpdate::query()->where('status', 'queued_migration')->where('updated_at', '<', now()->subMinute())
+            ->eachById(fn (WorldTemplateUpdate $update) => ProcessWorldTemplateMigrations::dispatch($update->id));
 
         WorldTemplateUpdate::query()->where(function ($query): void {
-            $query->where(fn ($query) => $query->whereIn('status', ['comparing', 'applying'])->where('updated_at', '<', now()->subMinutes(70)))
+            $query->where(fn ($query) => $query->whereIn('status', ['comparing', 'applying', 'migrating'])->where('updated_at', '<', now()->subMinutes(70)))
                 ->orWhere(fn ($query) => $query->where('status', 'verification_required')->where('updated_at', '<', now()->subMinutes(5)));
         })
             ->eachById(fn (WorldTemplateUpdate $update) => $updates->recover($update));

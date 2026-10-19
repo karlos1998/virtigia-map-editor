@@ -29,6 +29,11 @@ class WorldTemplateUpdateController extends Controller
         return response()->json($this->updates->approve($update)->publicStatus(), 202);
     }
 
+    public function migrate(WorldTemplateUpdateRequest $request, WorldTemplate $template): JsonResponse
+    {
+        return response()->json($this->updates->migrate($template, (int) $request->user()->id)->publicStatus(), 202);
+    }
+
     public function changes(WorldTemplateUpdateChangesRequest $request, WorldTemplateUpdate $update): JsonResponse
     {
         abort_if($update->snapshot_pruned, 410, 'Migawka wygasła. Przygotuj nowe porównanie.');
