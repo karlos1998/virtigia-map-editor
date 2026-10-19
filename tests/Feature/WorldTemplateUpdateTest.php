@@ -1,0 +1,445 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Jobs\ProcessWorldTemplateUpdate;
+use App\Models\User;
+use App\Models\WorldTemplate;
+use App\Models\WorldTemplateUpdate;
+use App\Services\Mcp\McpWorldService;
+use App\Services\WorldTemplateConnectionResolver;
+use App\Services\WorldTemplateSnapshotService;
+use App\Services\WorldTemplateUpdateService;
+use Illuminate\Database\Connection;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Validation\ValidationException;
+use RuntimeException;
+use Tests\TestCase;
+
+class WorldTemplateUpdateTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private Connection $source;
+
+    private Connection $target;
+
+    private WorldTemplate $production;
+
+    private WorldTemplate $base;
+
+    private array $paths = [];
+
+    private array $mysqlDatabases = [];
+
+    private array $authoringTables = [];
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Queue::fake();
+        $this->authoringTables = config('world_templates.update_tables');
+        config()->set('world_templates.update_tables', ['items', 'nodes', 'links']);
+
+        $passwordFile = getenv('WORLD_TEMPLATE_TEST_MYSQL_PASSWORD_FILE');
+        if ($passwordFile !== false) {
+            config()->set('database.connections.update_test_admin', [
+                'driver' => 'mysql', 'host' => 'mysql', 'port' => 3306,
+                'username' => 'root', 'password' => File::get($passwordFile),
+                'database' => null, 'charset' => 'utf8mb4', 'collation' => 'utf8mb4_unicode_ci',
+            ]);
+        }
+
+        foreach (['update_source', 'update_target'] as $name) {
+            if ($passwordFile !== false) {
+                $database = 'testing_template_'.$name.'_'.getmypid();
+                DB::connection('update_test_admin')->getSchemaBuilder()->createDatabase($database);
+                $this->mysqlDatabases[] = $database;
+                config()->set('database.connections.'.$name, [...config('database.connections.update_test_admin'), 'database' => $database]);
+            } else {
+                $path = database_path($name.'_'.getmypid().'.sqlite');
+                File::put($path, '');
+                $this->paths[] = $path;
+                config()->set('database.connections.'.$name, ['driver' => 'sqlite', 'database' => $path, 'foreign_key_constraints' => true]);
+            }
+            DB::purge($name);
+            $connection = DB::connection($name);
+            $connection->getSchemaBuilder()->create('items', function (Blueprint $table): void {
+                $table->id();
+                $table->string('name');
+            });
+            $connection->getSchemaBuilder()->create('nodes', function (Blueprint $table): void {
+                $table->id();
+                $table->string('text');
+                $table->foreignId('item_id')->nullable()->constrained('items');
+            });
+            $connection->getSchemaBuilder()->create('links', function (Blueprint $table): void {
+                $table->foreignId('node_id')->constrained('nodes');
+                $table->unsignedInteger('position');
+                $table->string('text');
+                $table->primary(['node_id', 'position']);
+            });
+        }
+        $this->source = DB::connection('update_source');
+        $this->target = DB::connection('update_target');
+        $this->base = $this->makeTemplate('update_source', false);
+        $this->production = $this->makeTemplate('update_target', true, $this->base->id);
+        $this->source->table('items')->insert([['id' => 1, 'name' => 'Nowy miecz'], ['id' => 2, 'name' => 'Nowy przedmiot']]);
+        $this->target->table('items')->insert([['id' => 1, 'name' => 'Stary miecz'], ['id' => 3, 'name' => 'Usunięty przedmiot']]);
+        $this->source->table('nodes')->insert(['id' => 5, 'text' => 'Nowy dialog', 'item_id' => 2]);
+        $this->source->table('links')->insert(['node_id' => 5, 'position' => 1, 'text' => 'Nowa opcja']);
+    }
+
+    protected function tearDown(): void
+    {
+        foreach (['update_source', 'update_target'] as $name) {
+            DB::purge($name);
+        }
+        foreach ($this->paths as $path) {
+            File::delete($path);
+        }
+        foreach (array_reverse($this->mysqlDatabases) as $database) {
+            DB::connection('update_test_admin')->getSchemaBuilder()->dropDatabaseIfExists($database);
+        }
+        DB::purge('update_test_admin');
+        parent::tearDown();
+    }
+
+    private function makeTemplate(string $name, bool $production, ?int $baseId = null): WorldTemplate
+    {
+        return WorldTemplate::query()->create([
+            'name' => $name, 'slug' => $name, 'connection_name' => $name,
+            'remote_database_server' => 'main1', 'database_name' => $name,
+            'is_active' => true, 'is_visible' => true, 'is_production' => $production,
+            'base_template_id' => $baseId,
+        ]);
+    }
+
+    private function preview(): WorldTemplateUpdate
+    {
+        $update = app(WorldTemplateUpdateService::class)->start($this->production, 1);
+        (new ProcessWorldTemplateUpdate($update->id))->handle(app(WorldTemplateSnapshotService::class));
+
+        return $update->fresh();
+    }
+
+    private function apply(WorldTemplateUpdate $update): void
+    {
+        app(WorldTemplateUpdateService::class)->approve($update);
+        (new ProcessWorldTemplateUpdate($update->id, true))->handle(app(WorldTemplateSnapshotService::class));
+    }
+
+    public function test_preview_is_persisted_and_production_is_unchanged_until_approval(): void
+    {
+        $update = $this->preview();
+        $this->assertSame('ready', $update->status);
+        $this->assertSame(['added' => 1, 'updated' => 1, 'deleted' => 1, 'unchanged' => 0], $update->summary['items']);
+        $this->assertSame('Stary miecz', $this->target->table('items')->find(1)->name);
+        $this->assertSame(5, $update->snapshotRows()->count());
+        Queue::assertPushed(ProcessWorldTemplateUpdate::class);
+    }
+
+    public function test_approval_copies_the_reviewed_snapshot_preserving_ids_and_unrelated_game_data(): void
+    {
+        $this->target->getSchemaBuilder()->create('characters', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+        });
+        $this->target->table('characters')->insert(['id' => 9, 'name' => 'Gracz']);
+        $update = $this->preview();
+        $this->source->table('items')->where('id', 1)->update(['name' => 'Późniejsza zmiana']);
+        $this->apply($update);
+        $this->assertSame('completed', $update->fresh()->status);
+        $this->assertSame('Nowy miecz', $this->target->table('items')->find(1)->name);
+        $this->assertNull($this->target->table('items')->find(3));
+        $this->assertSame(2, $this->target->table('nodes')->find(5)->item_id);
+        $this->assertSame('Nowa opcja', $this->target->table('links')->first()->text);
+        $this->assertSame('Gracz', $this->target->table('characters')->find(9)->name);
+    }
+
+    public function test_it_rejects_stale_production_without_overwriting_it(): void
+    {
+        $update = $this->preview();
+        $this->target->table('items')->where('id', 1)->update(['name' => 'Zmiana na produkcji']);
+        try {
+            $this->apply($update);
+            $this->fail('Expected stale preview rejection.');
+        } catch (RuntimeException $error) {
+            $this->assertStringContainsString('Produkcja zmieniła', $error->getMessage());
+        }
+        $this->assertSame('Zmiana na produkcji', $this->target->table('items')->find(1)->name);
+        $this->assertNotNull($this->target->table('items')->find(3));
+    }
+
+    public function test_an_invalid_reference_rolls_back_all_previously_copied_tables(): void
+    {
+        $this->source->getSchemaBuilder()->disableForeignKeyConstraints();
+        $this->source->table('nodes')->where('id', 5)->update(['item_id' => 999]);
+        $this->source->getSchemaBuilder()->enableForeignKeyConstraints();
+        $update = $this->preview();
+        try {
+            $this->apply($update);
+            $this->fail('Expected foreign key rejection.');
+        } catch (RuntimeException $error) {
+            $this->assertStringContainsString('narusza powiązania', $error->getMessage());
+        }
+        $this->assertSame('Stary miecz', $this->target->table('items')->find(1)->name);
+        $this->assertNotNull($this->target->table('items')->find(3));
+        $this->assertSame(0, $this->target->table('nodes')->count());
+        $foreignKeys = $this->target->getDriverName() === 'mysql'
+            ? $this->target->selectOne('SELECT @@FOREIGN_KEY_CHECKS AS enabled')->enabled
+            : $this->target->selectOne('PRAGMA foreign_keys')->foreign_keys;
+        $this->assertSame(1, (int) $foreignKeys);
+    }
+
+    public function test_it_preserves_references_from_runtime_tables_by_rejecting_breaking_deletions(): void
+    {
+        $this->target->getSchemaBuilder()->create('character_items', function (Blueprint $table): void {
+            $table->id();
+            $table->foreignId('item_id')->constrained('items');
+        });
+        $this->target->table('character_items')->insert(['item_id' => 3]);
+        try {
+            $this->apply($this->preview());
+            $this->fail('Expected runtime reference rejection.');
+        } catch (RuntimeException $error) {
+            $this->assertStringContainsString('character_items', $error->getMessage());
+        }
+        $this->assertNotNull($this->target->table('items')->find(3));
+        $this->assertSame(1, $this->target->table('character_items')->count());
+    }
+
+    public function test_duplicate_starts_share_a_job_and_duplicate_approval_is_rejected(): void
+    {
+        $service = app(WorldTemplateUpdateService::class);
+        $first = $service->start($this->production, 1);
+        $second = $service->start($this->production, 2);
+        $this->assertSame($first->id, $second->id);
+        Queue::assertPushed(ProcessWorldTemplateUpdate::class, 1);
+        (new ProcessWorldTemplateUpdate($first->id))->handle(app(WorldTemplateSnapshotService::class));
+        $service->approve($first->fresh());
+        $this->expectException(ValidationException::class);
+        $service->approve($first->fresh());
+    }
+
+    public function test_expired_preview_cannot_be_applied(): void
+    {
+        $update = $this->preview();
+        $update->update(['expires_at' => now()->subSecond()]);
+        $this->expectException(ValidationException::class);
+        app(WorldTemplateUpdateService::class)->approve($update);
+    }
+
+    public function test_production_is_not_selectable_or_resolvable_through_editor_or_mcp(): void
+    {
+        $resolver = app(WorldTemplateConnectionResolver::class);
+        $this->assertNotContains($this->production->slug, $resolver->visibleSlugs());
+        $this->assertNotContains($this->production->slug, $resolver->activeSlugs());
+        $this->assertNull($resolver->resolve($this->production->slug));
+        $this->actingAs(User::factory()->create())->post(route('switch-world'), ['world' => $this->production->slug])->assertSessionHasErrors('world');
+        $this->actingAs(User::factory()->create())->withSession(['world' => $this->production->slug])->get(route('maps.index'))->assertRedirect(route('login'));
+        $this->expectException(ValidationException::class);
+        app(McpWorldService::class)->use($this->production->slug);
+    }
+
+    public function test_administrators_get_paginated_lightweight_diff_and_details_are_scoped(): void
+    {
+        $update = $this->preview();
+        $admin = User::factory()->create(['roles' => ['administrator']]);
+        $response = $this->actingAs($admin)->getJson(route('administration.world-template-updates.changes', ['update' => $update->id, 'table' => 'items', 'type' => 'updated']));
+        $response->assertOk()->assertJsonPath('total', 1)->assertJsonMissingPath('data.0.after_data');
+        $rowId = $response->json('data.0.id');
+        $this->getJson(route('administration.world-template-updates.detail', ['update' => $update->id, 'row' => $rowId]))->assertOk()->assertJsonPath('after.name', 'Nowy miecz');
+        $another = $this->preview();
+        $this->getJson(route('administration.world-template-updates.detail', ['update' => $another->id, 'row' => $rowId]))->assertNotFound();
+        $this->getJson(route('administration.world-template-updates.changes', ['update' => $update->id, 'table' => 'characters']))->assertUnprocessable();
+    }
+
+    public function test_non_administrators_cannot_start_inspect_or_apply_updates(): void
+    {
+        $update = $this->preview();
+        $this->actingAs(User::factory()->create());
+        $this->postJson(route('administration.world-template-updates.store', $this->production->id), ['confirmed' => true])->assertForbidden();
+        $this->getJson(route('administration.world-template-updates.show', $update->id))->assertForbidden();
+        $this->getJson(route('administration.world-template-updates.changes', $update->id))->assertForbidden();
+        $this->postJson(route('administration.world-template-updates.approve', $update->id), ['confirmed' => true])->assertForbidden();
+    }
+
+    public function test_update_endpoints_require_explicit_confirmation(): void
+    {
+        $update = $this->preview();
+        $this->actingAs(User::factory()->create(['roles' => ['administrator']]));
+        $this->postJson(route('administration.world-template-updates.store', $this->production->id))->assertUnprocessable();
+        $this->postJson(route('administration.world-template-updates.approve', $update->id))->assertUnprocessable();
+    }
+
+    public function test_schema_changes_are_rejected_before_production_is_touched(): void
+    {
+        $update = $this->preview();
+        $this->target->getSchemaBuilder()->table('items', fn (Blueprint $table) => $table->string('extra')->nullable());
+        try {
+            $this->apply($update);
+            $this->fail('Expected schema rejection.');
+        } catch (RuntimeException $error) {
+            $this->assertStringContainsString('schemat', $error->getMessage());
+        }
+        $this->assertSame('Stary miecz', $this->target->table('items')->find(1)->name);
+    }
+
+    public function test_snapshot_corruption_rolls_back_the_target(): void
+    {
+        $update = $this->preview();
+        $update->snapshotRows()->where('table_name', 'items')->where('change_type', 'updated')->update(['after_data' => json_encode(['id' => 1, 'name' => 'Niepoprawna migawka'])]);
+        try {
+            $this->apply($update);
+            $this->fail('Expected snapshot verification rejection.');
+        } catch (RuntimeException $error) {
+            $this->assertStringContainsString('Weryfikacja kopii', $error->getMessage());
+        }
+        $this->assertSame('Stary miecz', $this->target->table('items')->find(1)->name);
+        $this->assertNotNull($this->target->table('items')->find(3));
+    }
+
+    public function test_it_copies_cyclic_foreign_keys_in_one_transaction(): void
+    {
+        foreach ([$this->source, $this->target] as $connection) {
+            $connection->getSchemaBuilder()->disableForeignKeyConstraints();
+            $connection->getSchemaBuilder()->create('maps', function (Blueprint $table): void {
+                $table->id();
+                $table->foreignId('spawn_id')->nullable()->constrained('spawns');
+            });
+            $connection->getSchemaBuilder()->create('spawns', function (Blueprint $table): void {
+                $table->id();
+                $table->foreignId('map_id')->constrained('maps');
+            });
+            $connection->getSchemaBuilder()->enableForeignKeyConstraints();
+        }
+        config()->set('world_templates.update_tables', ['items', 'nodes', 'links', 'maps', 'spawns']);
+        $this->source->table('maps')->insert(['id' => 11]);
+        $this->source->table('spawns')->insert(['id' => 22, 'map_id' => 11]);
+        $this->source->table('maps')->where('id', 11)->update(['spawn_id' => 22]);
+        $this->apply($this->preview());
+        $this->assertSame(22, $this->target->table('maps')->find(11)->spawn_id);
+        $this->assertSame(11, $this->target->table('spawns')->find(22)->map_id);
+    }
+
+    public function test_large_diff_is_paginated_without_loading_snapshots_into_http_responses(): void
+    {
+        $this->source->table('items')->insert(array_map(fn (int $id): array => ['id' => $id, 'name' => 'Item '.$id], range(100, 1100)));
+        $update = $this->preview();
+        $this->actingAs(User::factory()->create(['roles' => ['administrator']]))
+            ->getJson(route('administration.world-template-updates.changes', ['update' => $update->id, 'table' => 'items', 'page' => 2]))
+            ->assertOk()->assertJsonCount(30, 'data')->assertJsonPath('total', 1004)->assertJsonMissingPath('data.0.after_data');
+        $this->apply($update);
+        $this->assertSame(1003, $this->target->table('items')->count());
+    }
+
+    public function test_interrupted_operation_is_reconciled_and_old_snapshots_are_pruned(): void
+    {
+        $update = $this->preview();
+        $this->apply($update);
+        $update->refresh()->update(['status' => 'applying', 'updated_at' => now()->subHours(2)]);
+        $this->artisan('world-template-updates:prune')->assertSuccessful();
+        $this->assertSame('completed', $update->fresh()->status);
+        $update->refresh()->update(['created_at' => now()->subDays(8)]);
+        $this->artisan('world-template-updates:prune')->assertSuccessful();
+        $this->assertTrue($update->fresh()->snapshot_pruned);
+        $this->assertSame(0, $update->snapshotRows()->count());
+        $this->assertSame('Nowy miecz', $this->target->table('items')->find(1)->name);
+    }
+
+    public function test_the_full_remote_schema_can_be_compared_and_applied_on_mysql(): void
+    {
+        if ($this->source->getDriverName() !== 'mysql') {
+            $this->markTestSkipped('Requires the optional Sail MySQL integration fixture.');
+        }
+        foreach (['update_source', 'update_target'] as $connection) {
+            $this->assertSame(0, Artisan::call('migrate', [
+                '--database' => $connection, '--path' => 'database/migrations/remote',
+                '--force' => true, '--no-interaction' => true,
+            ]), Artisan::output());
+        }
+        config()->set('world_templates.update_tables', $this->authoringTables);
+        $this->assertEqualsCanonicalizing($this->authoringTables, array_values(array_diff($this->source->getSchemaBuilder()->getTableListing(), ['migrations', 'items', 'nodes', 'links'])));
+        $update = $this->preview();
+        $this->assertCount(count($this->authoringTables), $update->manifest);
+        $this->apply($update);
+        $this->assertSame('completed', $update->fresh()->status);
+    }
+
+    public function test_pending_dispatches_are_recovered_and_duplicate_jobs_do_not_repeat_the_operation(): void
+    {
+        $update = app(WorldTemplateUpdateService::class)->start($this->production, 1);
+        $update->update(['updated_at' => now()->subMinutes(2)]);
+        $this->artisan('world-template-updates:prune')->assertSuccessful();
+        Queue::assertPushed(ProcessWorldTemplateUpdate::class, 2);
+        $job = new ProcessWorldTemplateUpdate($update->id);
+        $job->handle(app(WorldTemplateSnapshotService::class));
+        $count = $update->snapshotRows()->count();
+        $job->handle(app(WorldTemplateSnapshotService::class));
+        $this->assertSame($count, $update->snapshotRows()->count());
+        $this->assertSame('ready', $update->fresh()->status);
+    }
+
+    public function test_mysql_references_from_another_database_prevent_breaking_deletions(): void
+    {
+        if ($this->source->getDriverName() !== 'mysql') {
+            $this->markTestSkipped('Requires the optional Sail MySQL integration fixture.');
+        }
+        $database = 'testing_template_runtime_'.getmypid();
+        DB::connection('update_test_admin')->getSchemaBuilder()->createDatabase($database);
+        $this->mysqlDatabases[] = $database;
+        config()->set('database.connections.update_test_runtime', [...config('database.connections.update_test_admin'), 'database' => $database]);
+        $runtime = DB::connection('update_test_runtime');
+        $runtime->getSchemaBuilder()->create('character_items', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('item_id');
+            $table->foreign('item_id')->references('id')->on($this->target->getDatabaseName().'.items');
+        });
+        $runtime->table('character_items')->insert(['item_id' => 3]);
+        try {
+            $this->apply($this->preview());
+            $this->fail('Expected cross-database foreign key rejection.');
+        } catch (RuntimeException $error) {
+            $this->assertStringContainsString('character_items', $error->getMessage());
+        } finally {
+            DB::purge('update_test_runtime');
+        }
+        $this->assertNotNull($this->target->table('items')->find(3));
+    }
+
+    public function test_cleanup_resumes_when_a_pruned_snapshot_still_has_rows(): void
+    {
+        $update = $this->preview();
+        $update->update(['snapshot_pruned' => true, 'created_at' => now()->subDays(8)]);
+        $this->assertGreaterThan(0, $update->snapshotRows()->count());
+        $this->artisan('world-template-updates:prune')->assertSuccessful();
+        $this->assertSame(0, $update->snapshotRows()->count());
+    }
+
+    public function test_confirmed_administrator_requests_start_and_approve_the_update(): void
+    {
+        $this->actingAs(User::factory()->create(['roles' => ['administrator']]));
+        $response = $this->postJson(route('administration.world-template-updates.store', $this->production->id), ['confirmed' => true]);
+        $response->assertStatus(202)->assertJsonPath('status', 'queued');
+        $update = WorldTemplateUpdate::query()->findOrFail($response->json('id'));
+        (new ProcessWorldTemplateUpdate($update->id))->handle(app(WorldTemplateSnapshotService::class));
+        $this->postJson(route('administration.world-template-updates.approve', $update->id), ['confirmed' => true])
+            ->assertStatus(202)->assertJsonPath('status', 'queued_apply');
+        $this->assertSame('Stary miecz', $this->target->table('items')->find(1)->name);
+    }
+
+    public function test_diff_search_treats_wildcard_characters_as_literal_text(): void
+    {
+        $this->source->table('items')->where('id', 1)->update(['name' => 'Miecz_100%!']);
+        $update = $this->preview();
+        $this->actingAs(User::factory()->create(['roles' => ['administrator']]))
+            ->getJson(route('administration.world-template-updates.changes', ['update' => $update->id, 'search' => '_100%!']))
+            ->assertOk()->assertJsonPath('total', 1)->assertJsonPath('data.0.row_label', 'Miecz_100%! (id=1)');
+    }
+}

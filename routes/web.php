@@ -358,6 +358,11 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('database-dumps/{world}/{dump}/download', [DatabaseDumpController::class, 'download'])->name('database-dumps.download');
                 Route::get('world-templates', [WorldTemplateController::class, 'index'])->name('world-templates.index');
                 Route::post('world-templates', [WorldTemplateController::class, 'store'])->name('world-templates.store');
+                Route::post('world-templates/{template}/updates', [\App\Http\Controllers\Administration\WorldTemplateUpdateController::class, 'store'])->name('world-template-updates.store');
+                Route::get('world-template-updates/{update}', [\App\Http\Controllers\Administration\WorldTemplateUpdateController::class, 'show'])->name('world-template-updates.show');
+                Route::get('world-template-updates/{update}/changes', [\App\Http\Controllers\Administration\WorldTemplateUpdateController::class, 'changes'])->name('world-template-updates.changes');
+                Route::get('world-template-updates/{update}/changes/{row}', [\App\Http\Controllers\Administration\WorldTemplateUpdateController::class, 'detail'])->whereNumber('row')->name('world-template-updates.detail');
+                Route::post('world-template-updates/{update}/approve', [\App\Http\Controllers\Administration\WorldTemplateUpdateController::class, 'approve'])->name('world-template-updates.approve');
             });
         Route::get('users', [\App\Http\Controllers\UsersController::class, 'index'])->name('users.index');
         Route::get('users/{user}', [\App\Http\Controllers\UsersController::class, 'show'])->name('users.show');

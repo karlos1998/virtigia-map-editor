@@ -12,6 +12,8 @@ import Dropdown from 'primevue/dropdown';
 import InputText from 'primevue/inputtext';
 import Message from 'primevue/message';
 import Tag from 'primevue/tag';
+import Checkbox from 'primevue/checkbox';
+import WorldTemplateUpdateDialog from './WorldTemplateUpdateDialog.vue';
 import { useToast } from 'primevue/usetoast';
 
 type WorldTemplate = {
@@ -23,6 +25,10 @@ type WorldTemplate = {
     database_name: string;
     is_active: boolean;
     is_visible: boolean;
+    is_production: boolean;
+    base_template_id: number | null;
+    base_template_name: string | null;
+    latest_update: any;
     database_status: 'ok' | 'error';
     database_status_message: string | null;
 };
@@ -44,8 +50,13 @@ const success = computed(() => (page.props.flash as { success?: string | null } 
 const form = useForm({
     name: '',
     remote_database_server: props.defaultRemoteDatabaseServer,
+    is_production: false,
+    base_template_id: null as number | null,
 });
 const showCreateDialog = ref(false);
+const updateTemplate = ref<WorldTemplate | null>(null);
+const showUpdateDialog = ref(false);
+const baseTemplates = computed(() => props.templates.filter((template) => !template.is_production && template.is_active));
 
 const openCreateDialog = (): void => {
     form.clearErrors();
@@ -115,6 +126,14 @@ const showDatabaseStatus = (template: WorldTemplate): void => {
                             </template>
                         </Column>
                         <Column field="database_name" header="Database" sortable />
+                        <Column header="Rodzaj / baza">
+                            <template #body="{ data }">
+                                <div class="flex flex-col gap-2">
+                                    <Tag :value="data.is_production ? 'Produkcyjny · tylko odczyt' : 'Edytowalny'" :severity="data.is_production ? 'warn' : 'info'" />
+                                    <span v-if="data.is_production" class="text-sm">Baza: {{ data.base_template_name }}</span>
+                                </div>
+                            </template>
+                        </Column>
                         <Column header="Status">
                             <template #body="{ data }">
                                 <div class="flex flex-wrap gap-2">
@@ -127,6 +146,17 @@ const showDatabaseStatus = (template: WorldTemplate): void => {
                                         @click="showDatabaseStatus(data)"
                                     />
                                 </div>
+                            </template>
+                        </Column>
+                        <Column header="Aktualizacja">
+                            <template #body="{ data }">
+                                <Button
+                                    v-if="data.is_production"
+                                    label="Aktualizuj"
+                                    icon="pi pi-sync"
+                                    :disabled="!data.is_active"
+                                    @click="updateTemplate = data; showUpdateDialog = true"
+                                />
                             </template>
                         </Column>
                     </DataTable>
@@ -151,7 +181,7 @@ const showDatabaseStatus = (template: WorldTemplate): void => {
         >
             <form class="flex flex-col gap-4" @submit.prevent="submit">
                 <Message v-if="Object.keys(form.errors).length > 0" severity="error" :closable="false">
-                    {{ form.errors.name ?? form.errors.remote_database_server }}
+                    {{ form.errors.name ?? form.errors.remote_database_server ?? form.errors.base_template_id ?? form.errors.is_production }}
                 </Message>
 
                 <div class="flex flex-col gap-2">
@@ -162,6 +192,26 @@ const showDatabaseStatus = (template: WorldTemplate): void => {
                         autofocus
                         :invalid="Boolean(form.errors.name)"
                     />
+                </div>
+                <div class="flex items-center gap-2">
+                    <Checkbox v-model="form.is_production" input-id="world-template-production" binary />
+                    <label for="world-template-production">Template produkcyjny (tylko odczyt)</label>
+                </div>
+                <div v-if="form.is_production" class="flex flex-col gap-2">
+                    <label for="world-template-base">Bazowy template do aktualizacji</label>
+                    <Dropdown
+                        id="world-template-base"
+                        v-model="form.base_template_id"
+                        :options="baseTemplates"
+                        option-label="name"
+                        option-value="id"
+                        placeholder="Wybierz edytowalny template"
+                        filter
+                        :invalid="Boolean(form.errors.base_template_id)"
+                    />
+                    <Message severity="info" :closable="false">
+                        Produkcja nie będzie dostępna w edytorze. Po utworzeniu przygotuj porównanie i zatwierdź pierwszą aktualizację, aby wypełnić ją danymi template’u bazowego.
+                    </Message>
                 </div>
 
                 <div class="flex flex-col gap-2">
@@ -194,5 +244,10 @@ const showDatabaseStatus = (template: WorldTemplate): void => {
                 />
             </template>
         </Dialog>
+        <WorldTemplateUpdateDialog
+            v-if="updateTemplate"
+            v-model:visible="showUpdateDialog"
+            :template="updateTemplate"
+        />
     </AppLayout>
 </template>

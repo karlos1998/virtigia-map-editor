@@ -23,6 +23,7 @@ class WorldTemplateController extends Controller
     {
         return Inertia::render('Administration/WorldTemplates', [
             'templates' => WorldTemplate::query()
+                ->with(['baseTemplate:id,name', 'latestUpdate'])
                 ->orderBy('name')
                 ->get()
                 ->map(function (WorldTemplate $template): array {
@@ -37,6 +38,10 @@ class WorldTemplateController extends Controller
                         'database_name' => $template->database_name,
                         'is_active' => $template->is_active,
                         'is_visible' => $template->is_visible,
+                        'is_production' => $template->is_production,
+                        'base_template_id' => $template->base_template_id,
+                        'base_template_name' => $template->baseTemplate?->name,
+                        'latest_update' => $template->latestUpdate?->publicStatus(),
                         'database_status' => $databaseStatus['status'],
                         'database_status_message' => $databaseStatus['message'],
                     ];

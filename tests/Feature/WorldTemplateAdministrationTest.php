@@ -116,6 +116,38 @@ class WorldTemplateAdministrationTest extends TestCase
         $response->assertForbidden();
     }
 
+    public function test_existing_templates_are_not_production_templates(): void
+    {
+        $this->assertSame(0, WorldTemplate::query()->where('is_production', true)->count());
+        $this->assertSame(5, WorldTemplate::query()->where('is_production', false)->count());
+    }
+
+    public function test_administrator_can_create_production_with_an_editable_base(): void
+    {
+        $base = WorldTemplate::query()->where('slug', 'retro')->firstOrFail();
+        $this->mock(WorldTemplateDatabaseService::class, function ($mock) use ($base): void {
+            $mock->shouldReceive('createTemplate')->once()
+                ->with(Mockery::on(fn (array $attributes): bool => $attributes['is_production'] === true && $attributes['base_template_id'] === $base->id))
+                ->andReturn(new WorldTemplate(['name' => 'Produkcja']));
+        });
+        $this->actingAs($this->makeAdministrator())->post(route('administration.world-templates.store'), [
+            'name' => 'Produkcja', 'remote_database_server' => 'main1',
+            'is_production' => true, 'base_template_id' => $base->id,
+        ])->assertSessionHasNoErrors()->assertRedirect();
+    }
+
+    public function test_production_requires_an_active_non_production_base(): void
+    {
+        $this->actingAs($this->makeAdministrator());
+        $attributes = ['name' => 'Produkcja', 'remote_database_server' => 'main1', 'is_production' => true];
+        $this->post(route('administration.world-templates.store'), $attributes)->assertSessionHasErrors('base_template_id');
+        $base = WorldTemplate::query()->where('slug', 'retro')->firstOrFail();
+        $base->update(['is_production' => true]);
+        $this->post(route('administration.world-templates.store'), [...$attributes, 'base_template_id' => $base->id])->assertSessionHasErrors('base_template_id');
+        $base->update(['is_production' => false, 'is_active' => false]);
+        $this->post(route('administration.world-templates.store'), [...$attributes, 'base_template_id' => $base->id])->assertSessionHasErrors('base_template_id');
+    }
+
     private function makeAdministrator(): User
     {
         return $this->makeUser([

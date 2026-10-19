@@ -63,6 +63,15 @@ return [
             'after_commit' => false,
         ],
 
+        'world-template-updates' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+            'queue' => 'world-template-updates',
+            'retry_after' => 3720,
+            'block_for' => null,
+            'after_commit' => true,
+        ],
+
         'redis' => [
             'driver' => 'redis',
             'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),

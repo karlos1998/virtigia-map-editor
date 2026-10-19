@@ -5,6 +5,43 @@ return [
     'default_remote_database_server' => env('WORLD_TEMPLATE_DEFAULT_REMOTE_DATABASE_SERVER', 'main1'),
     'database_prefix' => env('WORLD_TEMPLATE_DATABASE_PREFIX', 'template_'),
 
+    'update_table_labels' => [
+        'audios' => 'Dźwięki', 'base_items' => 'Przedmioty',
+        'base_item_duplicate_views' => 'Indeks duplikatów przedmiotów',
+        'base_item_usage_views' => 'Indeks użycia przedmiotów',
+        'base_npc_loots' => 'Łupy NPC', 'base_npc_mob_species' => 'Gatunki NPC',
+        'base_npc_seasonal_events' => 'Wydarzenia NPC', 'base_npc_special_attacks' => 'Ataki specjalne NPC',
+        'base_npcs' => 'Szablony NPC', 'books' => 'Książki', 'dialog_counters' => 'Liczniki dialogowe',
+        'dialog_edges' => 'Połączenia dialogów', 'dialog_node_options' => 'Opcje dialogowe',
+        'dialog_nodes' => 'Węzły dialogowe', 'dialogs' => 'Dialogi', 'doors' => 'Przejścia',
+        'hotel_rooms' => 'Pokoje hotelowe', 'hotels' => 'Hotele',
+        'map_track_checkpoint_tiles' => 'Pola punktów kontrolnych',
+        'map_track_checkpoints' => 'Punkty kontrolne tras', 'map_tracks' => 'Trasy', 'maps' => 'Mapy',
+        'mob_species' => 'Gatunki potworów', 'npc_groups' => 'Grupy NPC', 'npc_locations' => 'Lokalizacje NPC',
+        'npcs' => 'NPC na mapach', 'quest_step_auto_progress_mobs' => 'Cele automatycznego postępu zadań',
+        'quest_step_auto_progresses' => 'Automatyczny postęp zadań', 'quest_step_guide_views' => 'Indeks wskazówek zadań',
+        'quest_steps' => 'Etapy zadań', 'quests' => 'Zadania', 'renewable_map_items' => 'Odnawialne przedmioty na mapach',
+        'respawn_points' => 'Punkty odrodzenia', 'reward_calendar_days' => 'Dni kalendarzy nagród',
+        'reward_calendars' => 'Kalendarze nagród', 'seasonal_events' => 'Wydarzenia sezonowe',
+        'shop_items' => 'Asortyment sklepów', 'shops' => 'Sklepy', 'spawn_points' => 'Punkty startowe',
+        'special_attack_damages' => 'Obrażenia ataków specjalnych', 'special_attack_effects' => 'Efekty ataków specjalnych',
+        'special_attacks' => 'Ataki specjalne', 'world_minimap_nodes' => 'Układ minimapy świata',
+    ],
+
+    'update_tables' => [
+        'audios', 'base_item_duplicate_views', 'base_item_usage_views', 'base_items',
+        'base_npc_loots', 'base_npc_mob_species', 'base_npc_seasonal_events',
+        'base_npc_special_attacks', 'base_npcs', 'books', 'dialog_counters',
+        'dialog_edges', 'dialog_node_options', 'dialog_nodes', 'dialogs', 'doors',
+        'hotel_rooms', 'hotels', 'map_track_checkpoint_tiles', 'map_track_checkpoints',
+        'map_tracks', 'maps', 'mob_species', 'npc_groups', 'npc_locations', 'npcs',
+        'quest_step_auto_progress_mobs', 'quest_step_auto_progresses',
+        'quest_step_guide_views', 'quest_steps', 'quests', 'renewable_map_items',
+        'respawn_points', 'reward_calendar_days', 'reward_calendars', 'seasonal_events',
+        'shop_items', 'shops', 'spawn_points', 'special_attack_damages',
+        'special_attack_effects', 'special_attacks', 'world_minimap_nodes',
+    ],
+
     'remote_database_servers' => [
         'main1' => [
             'label' => env('REMOTE_DB_LABEL', 'Main 1'),

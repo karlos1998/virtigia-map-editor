@@ -16,7 +16,7 @@ class WorldTemplateConnectionResolver
     public function visibleOptions(): array
     {
         return $this->templates()
-            ->filter(fn (WorldTemplate $template): bool => $template->is_active && $template->is_visible)
+            ->filter(fn (WorldTemplate $template): bool => $template->is_active && $template->is_visible && ! $template->is_production)
             ->map(fn (WorldTemplate $template): array => $template->toOption())
             ->values()
             ->all();
@@ -28,7 +28,7 @@ class WorldTemplateConnectionResolver
     public function visibleLabels(): array
     {
         return $this->templates()
-            ->filter(fn (WorldTemplate $template): bool => $template->is_active && $template->is_visible)
+            ->filter(fn (WorldTemplate $template): bool => $template->is_active && $template->is_visible && ! $template->is_production)
             ->mapWithKeys(fn (WorldTemplate $template): array => [$template->slug => $template->name])
             ->all();
     }
@@ -47,7 +47,7 @@ class WorldTemplateConnectionResolver
     public function activeSlugs(): array
     {
         return $this->templates()
-            ->filter(fn (WorldTemplate $template): bool => $template->is_active)
+            ->filter(fn (WorldTemplate $template): bool => $template->is_active && ! $template->is_production)
             ->pluck('slug')
             ->values()
             ->all();
@@ -69,13 +69,15 @@ class WorldTemplateConnectionResolver
 
     public function defaultWorldSlug(): string
     {
-        return (string) config('world_templates.default', 'retro');
+        $default = (string) config('world_templates.default', 'retro');
+
+        return in_array($default, $this->visibleSlugs(), true) ? $default : ($this->visibleSlugs()[0] ?? '');
     }
 
     public function resolve(string $slug): ?WorldTemplate
     {
         return $this->templates()
-            ->first(fn (WorldTemplate $template): bool => $template->slug === $slug && $template->is_active);
+            ->first(fn (WorldTemplate $template): bool => $template->slug === $slug && $template->is_active && ! $template->is_production);
     }
 
     public function connectionNameFor(string $slug): ?string

@@ -198,6 +198,16 @@ return [
     */
 
     'defaults' => [
+        'world-template-updates-supervisor' => [
+            'connection' => 'world-template-updates',
+            'queue' => ['world-template-updates'],
+            'balance' => false,
+            'maxProcesses' => 1,
+            'memory' => 256,
+            'tries' => 1,
+            'timeout' => 3660,
+            'sleep' => 1,
+        ],
         'default-supervisor' => [
             'connection' => 'redis',
             'queue' => ['default'],
@@ -232,6 +242,7 @@ return [
 
     'environments' => [
         'production' => [
+            'world-template-updates-supervisor' => [],
             'default-supervisor' => [
                 'maxProcesses' => 10,
                 'balanceMaxShift' => 1,
@@ -243,6 +254,7 @@ return [
         ],
 
         'local' => [
+            'world-template-updates-supervisor' => [],
             'default-supervisor' => [
                 'maxProcesses' => 3,
             ],

@@ -16,7 +16,7 @@ class WorldTemplateDatabaseService
     public function __construct(private readonly WorldTemplateConnectionResolver $connectionResolver) {}
 
     /**
-     * @param  array{name: string, remote_database_server: string}  $attributes
+     * @param  array{name: string, remote_database_server: string, is_production?: bool, base_template_id?: int|null}  $attributes
      */
     public function createTemplate(array $attributes): WorldTemplate
     {
@@ -36,6 +36,8 @@ class WorldTemplateDatabaseService
                     'database_name' => $databaseName,
                     'is_active' => true,
                     'is_visible' => true,
+                    'is_production' => $attributes['is_production'] ?? false,
+                    'base_template_id' => ($attributes['is_production'] ?? false) ? $attributes['base_template_id'] : null,
                 ]);
 
                 $this->createRemoteDatabase($template);

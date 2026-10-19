@@ -20,6 +20,13 @@ class StoreWorldTemplateRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'is_production' => ['sometimes', 'boolean'],
+            'base_template_id' => [
+                'exclude_unless:is_production,true',
+                'required',
+                'integer',
+                Rule::exists('world_templates', 'id')->where('is_production', 0)->where('is_active', 1),
+            ],
             'name' => ['required', 'string', 'max:255', Rule::unique('world_templates', 'name')],
             'remote_database_server' => [
                 'required',
@@ -35,6 +42,8 @@ class StoreWorldTemplateRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'base_template_id.required' => 'Wybierz bazowy template dla produkcji.',
+            'base_template_id.exists' => 'Bazą musi być aktywny, nieprodukcyjny template.',
             'name.required' => 'Podaj nazwę template.',
             'name.unique' => 'Template o takiej nazwie już istnieje.',
             'remote_database_server.required' => 'Wybierz zdalną bazę.',

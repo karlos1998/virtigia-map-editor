@@ -26,6 +26,7 @@ Schedule::command('horizon:snapshot')->everyFiveMinutes();
 Schedule::command('telescope:prune --hours=48')->daily();
 
 Schedule::command('queue:prune-failed --hours=6')->hourly();
+Schedule::command('world-template-updates:prune')->everyTenMinutes()->withoutOverlapping();
 
 Schedule::job(new RecordQueueHeartbeatJob)->everyTenMinutes();
 
