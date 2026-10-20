@@ -63,6 +63,15 @@ return [
             'after_commit' => false,
         ],
 
+        'asset-manager' => [
+            'driver' => 'redis',
+            'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
+            'queue' => 'asset-manager',
+            'retry_after' => 3720,
+            'block_for' => null,
+            'after_commit' => true,
+        ],
+
         'world-template-updates' => [
             'driver' => 'redis',
             'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),

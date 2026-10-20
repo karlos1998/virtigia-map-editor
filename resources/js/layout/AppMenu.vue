@@ -208,6 +208,11 @@ const administrationModel = computed(() => {
             icon: 'pi pi-shield',
             items: [
                 {
+                    label: 'Grafiki i pliki S3',
+                    icon: 'pi pi-images',
+                    route: 'administration.assets.index',
+                },
+                {
                     label: 'Dump bazy danych',
                     icon: 'pi pi-database',
                     route: 'administration.database-dumps.index',

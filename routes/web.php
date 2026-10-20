@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\Administration\AssetManagerController;
 use App\Http\Controllers\Administration\DatabaseDumpController;
 use App\Http\Controllers\Administration\WorldTemplateController;
 use App\Http\Controllers\AiChangeSetController;
@@ -352,6 +353,19 @@ Route::middleware(['auth'])->group(function () {
             ->name('administration.')
             ->middleware(HasRole::class.':administrator')
             ->group(function () {
+                Route::prefix('assets')->name('assets.')->group(function () {
+                    Route::get('/', [AssetManagerController::class, 'index'])->name('index');
+                    Route::get('listing', [AssetManagerController::class, 'listing'])->name('listing');
+                    Route::get('preview', [AssetManagerController::class, 'preview'])->name('preview');
+                    Route::get('thumbnail', [AssetManagerController::class, 'thumbnail'])->name('thumbnail');
+                    Route::get('download', [AssetManagerController::class, 'download'])->name('download');
+                    Route::post('directories', [AssetManagerController::class, 'createDirectory'])->name('directories.store');
+                    Route::post('uploads', [AssetManagerController::class, 'upload'])->name('uploads.store');
+                    Route::get('operations', [AssetManagerController::class, 'operations'])->name('operations.index');
+                    Route::post('operations', [AssetManagerController::class, 'startOperation'])->name('operations.store');
+                    Route::get('operations/{operation}/download', [AssetManagerController::class, 'downloadArchive'])
+                        ->whereUuid('operation')->name('operations.download');
+                });
                 Route::get('database-dumps', [DatabaseDumpController::class, 'index'])->name('database-dumps.index');
                 Route::post('database-dumps/{world}', [DatabaseDumpController::class, 'start'])->name('database-dumps.start');
                 Route::get('database-dumps/{world}/status', [DatabaseDumpController::class, 'status'])->name('database-dumps.status');

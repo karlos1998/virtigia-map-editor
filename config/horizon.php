@@ -198,6 +198,16 @@ return [
     */
 
     'defaults' => [
+        'asset-manager-supervisor' => [
+            'connection' => 'asset-manager',
+            'queue' => ['asset-manager'],
+            'balance' => false,
+            'maxProcesses' => 1,
+            'memory' => 256,
+            'tries' => 1,
+            'timeout' => 3660,
+            'sleep' => 1,
+        ],
         'world-template-updates-supervisor' => [
             'connection' => 'world-template-updates',
             'queue' => ['world-template-updates'],
@@ -242,6 +252,7 @@ return [
 
     'environments' => [
         'production' => [
+            'asset-manager-supervisor' => [],
             'world-template-updates-supervisor' => [],
             'default-supervisor' => [
                 'maxProcesses' => 10,
@@ -254,6 +265,7 @@ return [
         ],
 
         'local' => [
+            'asset-manager-supervisor' => [],
             'world-template-updates-supervisor' => [],
             'default-supervisor' => [
                 'maxProcesses' => 3,
