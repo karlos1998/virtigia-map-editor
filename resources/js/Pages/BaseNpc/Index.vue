@@ -74,7 +74,7 @@ type Data = {
                     </template>
                 </Column>
 
-                <AdvanceColumn field="src" header="Grafika" style="width: 25%">
+                <Column header="Grafika" style="width: 25%">
                     <template #body="{ data }: Data">
 
                         <img
@@ -82,7 +82,7 @@ type Data = {
                             :src="data.src"
                         />
                     </template>
-                </AdvanceColumn>
+                </Column>
 
                 <AdvanceColumn field="name" header="Name" style="width: 25%">
                     <template #body="{ data }: Data">
@@ -167,6 +167,13 @@ type Data = {
                         <Badge :style="{ background: data.is_aggressive ? '#f44336' : '#4caf50' }" class="w-full">
                             {{ data.is_aggressive ? 'Tak' : 'Nie' }}
                         </Badge>
+                    </template>
+                </AdvanceColumn>
+                <AdvanceColumn field="src" header="Nazwa grafiki">
+                    <template #body="{ data }: Data">
+                        <span class="text-sm text-surface-500 dark:text-surface-400 break-all" :title="data.src">
+                            {{ data.src?.split('/').pop() || '—' }}
+                        </span>
                     </template>
                 </AdvanceColumn>
             </AdvanceTable>

@@ -20,6 +20,7 @@ use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownOptions\TableDropdownOption;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableSliderColumn;
+use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableTextColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\TableService;
 
 final class BaseItemService extends BaseService
@@ -48,6 +49,7 @@ final class BaseItemService extends BaseService
             $baseItemsQuery,
             new TableService(
                 columns: [
+                    'src' => new TableTextColumn(placeholder: 'Nazwa grafiki', sortable: true),
 
                     'category_name' => new TableDropdownColumn(
                         placeholder: 'Kategoria',

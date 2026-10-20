@@ -596,9 +596,11 @@ onMounted(() => {
                 </Column>
 
 
-                <AdvanceColumn field="src" header="Link do grafiki">
+                <AdvanceColumn field="src" header="Nazwa grafiki">
                     <template #body="{ data }: Data">
-                        {{data.src}}
+                        <span class="text-sm text-surface-500 dark:text-surface-400 break-all" :title="data.src">
+                            {{ data.src?.split('/').pop() || '—' }}
+                        </span>
                     </template>
                 </AdvanceColumn>
 

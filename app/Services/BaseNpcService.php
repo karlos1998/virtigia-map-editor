@@ -37,7 +37,7 @@ final class BaseNpcService extends BaseService
                 columns: [
                     'id' => new TableTextColumn(sortable: true),
                     'name' => new TableTextColumn(sortable: true),
-                    'src' => new TableTextColumn(sortable: true),
+                    'src' => new TableTextColumn(placeholder: 'Nazwa grafiki', sortable: true),
                     'lvl' => new TableTextColumn(sortable: true),
 
                     'rank' => new TableDropdownColumn(
@@ -78,7 +78,7 @@ final class BaseNpcService extends BaseService
                         ]
                     ),
                 ],
-                globalFilterColumns: ['name', 'rank', 'category', 'profession', 'type', 'is_aggressive'],
+                globalFilterColumns: ['name', 'src', 'rank', 'category', 'profession', 'type', 'is_aggressive'],
                 //                withCount: ['loots'],
             )
         );

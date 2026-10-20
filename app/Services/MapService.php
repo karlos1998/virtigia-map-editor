@@ -66,6 +66,12 @@ final class MapService extends BaseService
                         placeholder: 'Wpisz szukane id',
                         sortable: true,
                     ),
+                    'path' => new TableTextColumn(
+                        placeholder: 'Nazwa grafiki',
+                        sortable: true,
+                        queryPaths: ['src'],
+                        sortPath: 'src',
+                    ),
                     'respawn_point' => new TableDropdownColumn(
                         placeholder: 'Punkt odrodzenia',
                         options: $this->respawnPointService->getRespawnPointsSelectOptions(),

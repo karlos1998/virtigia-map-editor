@@ -168,7 +168,13 @@ const clearAdvancedFilters = () => {
                     </template>
                 </AdvanceColumn>
 
-                <AdvanceColumn field="path" header="Ścieżka" />
+                <AdvanceColumn field="path" header="Nazwa grafiki">
+                    <template #body="{ data }: Data">
+                        <span class="text-sm text-surface-500 dark:text-surface-400 break-all" :title="data.path">
+                            {{ data.path?.split('/').pop() || '—' }}
+                        </span>
+                    </template>
+                </AdvanceColumn>
 
                 <AdvanceColumn field="respawn_point" header="Miejsce odrodzenia">
                     <template #body="{data}">
