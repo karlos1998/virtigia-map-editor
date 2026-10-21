@@ -47,6 +47,53 @@ class PlayingCardArtworkTest extends TestCase
         $this->assertContains($agile['outfitSrc'], ['img/outfits/warrior.png', 'img/outfits/mage.png']);
     }
 
+    public function test_missing_exact_level_uses_nearest_standard_outfit_of_an_allowed_profession(): void
+    {
+        $assets = ['outfits' => [
+            ['profession' => 'w', 'level' => 100, 'type' => 'standard', 'src' => 'img/outfits/far.png'],
+            ['profession' => 'b', 'level' => 140, 'type' => 'standard', 'src' => 'img/outfits/nearest.png'],
+            ['profession' => 'm', 'level' => 150, 'type' => 'standard', 'src' => 'img/outfits/wrong-profession.png'],
+            ['profession' => 'w', 'level' => 150, 'type' => 'crimson', 'src' => 'img/outfits/brotherhood.png'],
+        ], 'backgrounds' => [['src' => 'img/fback/common.png']]];
+        $card = $this->card(15, ['close']);
+        $service = app(PlayingCardArtworkService::class);
+        $result = $service->generate($card, $assets);
+
+        $this->assertSame('img/outfits/nearest.png', $result['outfitSrc']);
+        $this->assertSame('img/fback/common.png', $result['backgroundSrc']);
+        $this->assertSame($result, $service->generate($card, $assets));
+        $this->assertSame(15, $card['strength']);
+    }
+
+    public function test_equidistant_levels_choose_the_lower_level(): void
+    {
+        $assets = ['outfits' => [
+            ['profession' => 'w', 'level' => 160, 'type' => 'standard', 'src' => 'img/outfits/higher.png'],
+            ['profession' => 'p', 'level' => 140, 'type' => 'standard', 'src' => 'img/outfits/lower.png'],
+        ], 'backgrounds' => [['src' => 'img/fback/common.png']]];
+
+        $this->assertSame('img/outfits/lower.png', app(PlayingCardArtworkService::class)->generate($this->card(15, ['close']), $assets)['outfitSrc']);
+    }
+
+    public function test_matching_level_bracket_takes_priority_over_fallback(): void
+    {
+        $assets = ['outfits' => [
+            ['profession' => 'w', 'level' => 149, 'type' => 'standard', 'src' => 'img/outfits/fallback.png'],
+            ['profession' => 'p', 'level' => 159, 'type' => 'standard', 'src' => 'img/outfits/exact-bracket.png'],
+        ], 'backgrounds' => [['src' => 'img/fback/common.png']]];
+
+        $this->assertSame('img/outfits/exact-bracket.png', app(PlayingCardArtworkService::class)->generate($this->card(15, ['close']), $assets)['outfitSrc']);
+    }
+
+    public function test_zero_strength_does_not_fall_back_to_a_non_starting_outfit(): void
+    {
+        $this->expectException(ValidationException::class);
+        app(PlayingCardArtworkService::class)->generate($this->card(0, ['close']), [
+            'outfits' => [['profession' => 'w', 'level' => 10, 'type' => 'standard', 'src' => 'img/outfits/standard.png']],
+            'backgrounds' => [['src' => 'img/fback/common.png']],
+        ]);
+    }
+
     public function test_missing_matching_artwork_has_a_clear_validation_error(): void
     {
         $this->expectException(ValidationException::class);

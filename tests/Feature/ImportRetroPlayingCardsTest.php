@@ -35,6 +35,11 @@ class ImportRetroPlayingCardsTest extends TestCase
         $this->assertCount(0, Storage::disk('s3')->allFiles());
         $this->artisan('card-game:import-retro')->assertSuccessful();
         $this->assertSame(54, BaseItem::on('retro_local')->count());
+        $heroes = BaseItem::on('retro_local')->get()->filter(fn (BaseItem $item): bool => data_get($item->attributes, 'playingCard.strength') === 15);
+        $this->assertCount(2, $heroes);
+        foreach ($heroes as $hero) {
+            $this->assertStringEndsWith('-10.png', data_get($hero->attributes, 'playingCard.artwork.outfitSrc'));
+        }
         $this->assertCount(54, Storage::disk('s3')->allFiles('img/playing-cards/thumbnails'));
         $item = BaseItem::on('retro_local')->firstOrFail();
         $item->update(['name' => 'Własna nazwa', 'src' => 'custom/thumbnail.png']);
@@ -106,7 +111,7 @@ class ImportRetroPlayingCardsTest extends TestCase
             $table->softDeletes();
         });
         $outfits = [];
-        foreach (range(0, 15) as $strength) {
+        foreach (range(0, 10) as $strength) {
             foreach (['w', 'b', 'p', 'm', 'h', 't'] as $profession) {
                 $outfits[] = [
                     'profession' => $profession, 'level' => $strength * 10,

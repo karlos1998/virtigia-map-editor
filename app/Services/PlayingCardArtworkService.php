@@ -35,11 +35,18 @@ class PlayingCardArtworkService
                 });
             }
             $strength = (int) $card['strength'];
-            $outfits = array_values(array_filter($assets['outfits'], fn (array $outfit): bool => in_array($outfit['profession'], $professions, true)
+            $eligibleOutfits = array_values(array_filter($assets['outfits'], fn (array $outfit): bool => in_array($outfit['profession'], $professions, true)
                 && ($strength === 0
                     ? $outfit['type'] === 'noob' && $outfit['level'] === 0
-                    : $outfit['type'] === 'standard' && intdiv($outfit['level'], 10) === $strength)
+                    : $outfit['type'] === 'standard')
             ));
+            $outfits = array_values(array_filter($eligibleOutfits, fn (array $outfit): bool => $strength === 0 || intdiv($outfit['level'], 10) === $strength));
+            if ($outfits === [] && $eligibleOutfits !== [] && $strength > 0) {
+                usort($eligibleOutfits, fn (array $first, array $second): int => [abs($first['level'] - $strength * 10), $first['level']]
+                    <=> [abs($second['level'] - $strength * 10), $second['level']]);
+                $nearestLevel = $eligibleOutfits[0]['level'];
+                $outfits = array_values(array_filter($eligibleOutfits, fn (array $outfit): bool => $outfit['level'] === $nearestLevel));
+            }
             if ($outfits === []) {
                 $levels = $strength === 0 ? '0 (startowy)' : ($strength * 10).'–'.($strength * 10 + 9);
                 throw ValidationException::withMessages(['card' => 'Brak outfitu: siła '.$strength.', profesje '.implode('/', array_unique($professions)).', poziom '.$levels.'. Wybierz własną ilustrację lub uzupełnij katalog outfitów.']);
