@@ -41,7 +41,8 @@ class PlayingCardArtworkService
                     : $outfit['type'] === 'standard' && intdiv($outfit['level'], 10) === $strength)
             ));
             if ($outfits === []) {
-                throw ValidationException::withMessages(['card' => 'Brak zwykłego outfitu dla tej siły i rzędu. Wybierz własną ilustrację.']);
+                $levels = $strength === 0 ? '0 (startowy)' : ($strength * 10).'–'.($strength * 10 + 9);
+                throw ValidationException::withMessages(['card' => 'Brak outfitu: siła '.$strength.', profesje '.implode('/', array_unique($professions)).', poziom '.$levels.'. Wybierz własną ilustrację lub uzupełnij katalog outfitów.']);
             }
             $outfit = $outfits[$seed % count($outfits)]['src'];
         }

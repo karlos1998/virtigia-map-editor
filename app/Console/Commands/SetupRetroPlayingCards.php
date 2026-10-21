@@ -4,6 +4,9 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class SetupRetroPlayingCards extends Command
@@ -39,7 +42,13 @@ class SetupRetroPlayingCards extends Command
             }
         } catch (Throwable $exception) {
             report($exception);
-            if ($exception instanceof QueryException && in_array((int) ($exception->errorInfo[1] ?? 0), [1142, 1143, 1227], true)) {
+            if ($exception instanceof ValidationException) {
+                Log::warning('Retro card import validation failed', ['errors' => $exception->errors()]);
+                $this->error('Import kart został zatrzymany przez walidację:');
+                foreach (Arr::flatten($exception->errors()) as $message) {
+                    $this->line(' - '.$message);
+                }
+            } elseif ($exception instanceof QueryException && in_array((int) ($exception->errorInfo[1] ?? 0), [1142, 1143, 1227], true)) {
                 $username = (string) config('database.connections.retro_local.username');
                 $this->error("MariaDB odrzuciła operację: użytkownik [{$username}] nie ma wymaganych uprawnień.");
                 $this->line('Migracja wymaga ALTER, a import INSERT i UPDATE. Ustaw konto z prawem zapisu w połączeniu retro_local w config/database.php.');

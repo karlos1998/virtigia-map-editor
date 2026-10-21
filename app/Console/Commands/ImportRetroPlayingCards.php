@@ -8,7 +8,9 @@ use App\Services\PlayingCardArtworkService;
 use App\Services\PlayingCardThumbnailService;
 use App\Services\WorldTemplateConnectionResolver;
 use Illuminate\Console\Command;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class ImportRetroPlayingCards extends Command
 {
@@ -35,12 +37,25 @@ class ImportRetroPlayingCards extends Command
         $existing = BaseItem::on('retro_local')->withTrashed()->where('category', BaseItemCategory::PLAYING_CARDS)->get(['id', 'attributes'])
             ->mapWithKeys(fn (BaseItem $item): array => [(string) data_get($item->attributes, 'playingCard.definitionId', '') => $item->id]);
         $planned = [];
+        $errors = [];
         foreach ($catalog as $entry) {
             if ($existing->has($entry['card']['definitionId'])) {
                 continue;
             }
-            $entry['card']['artwork'] = $artwork->generate($entry['card'], $assets);
+            try {
+                $entry['card']['artwork'] = $artwork->generate($entry['card'], $assets);
+            } catch (ValidationException $exception) {
+                $errors[$entry['card']['definitionId']] = array_map(
+                    fn (string $message): string => $entry['label'].': '.$message,
+                    Arr::flatten($exception->errors()),
+                );
+
+                continue;
+            }
             $planned[] = $entry;
+        }
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
         }
         $this->info('Nowych definicji: '.count($planned).'. Istniejące karty zachowują własne nazwy i grafiki.');
         if ($this->option('dry-run')) {
