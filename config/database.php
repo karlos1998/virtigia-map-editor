@@ -33,11 +33,11 @@ return [
 
         'retro_local' => [
             'driver' => 'mysql',
-            'host' => env('RETRO_LOCAL_DB_HOST', 'host.docker.internal'),
-            'port' => env('RETRO_LOCAL_DB_PORT', '3306'),
-            'database' => env('RETRO_LOCAL_DB_DATABASE'),
-            'username' => env('RETRO_LOCAL_DB_USERNAME'),
-            'password' => env('RETRO_LOCAL_DB_PASSWORD', ''),
+            'host' => 'virtigia-engine-mariadb-1',
+            'port' => '3306',
+            'database' => 'retro_database',
+            'username' => 'readonly',
+            'password' => 'virtigia_engine_secure_password',
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',

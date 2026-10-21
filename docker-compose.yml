@@ -21,6 +21,7 @@ services:
             - '.:/var/www/html'
         networks:
             - sail
+            - retro-local
 #        depends_on:
 #            - mysql
 #            - redis
@@ -116,6 +117,9 @@ services:
 networks:
     sail:
         driver: bridge
+    retro-local:
+        external: true
+        name: virtigia-engine_default
 volumes:
 #    sail-mysql:
 #        driver: local

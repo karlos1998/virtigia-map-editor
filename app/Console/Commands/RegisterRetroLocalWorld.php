@@ -36,7 +36,7 @@ class RegisterRetroLocalWorld extends Command
         $username = config('database.connections.retro_local.username');
 
         if (! is_string($database) || trim($database) === '' || ! is_string($username) || trim($username) === '') {
-            $this->error('Uzupełnij RETRO_LOCAL_DB_DATABASE i RETRO_LOCAL_DB_USERNAME w .env edytora.');
+            $this->error('Uzupełnij nazwę bazy i użytkownika połączenia retro_local w config/database.php.');
 
             return self::FAILURE;
         }

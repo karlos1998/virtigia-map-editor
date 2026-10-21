@@ -11,6 +11,17 @@ class RetroLocalWorldTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_local_connection_uses_the_engine_container_without_environment_setup(): void
+    {
+        $connection = config('database.connections.retro_local');
+
+        $this->assertSame('virtigia-engine-mariadb-1', $connection['host']);
+        $this->assertSame('3306', $connection['port']);
+        $this->assertSame('retro_database', $connection['database']);
+        $this->assertSame('readonly', $connection['username']);
+        $this->assertNotEmpty($connection['password']);
+    }
+
     public function test_registration_is_idempotent_and_resolves_the_existing_database(): void
     {
         config()->set('database.connections.retro_local.database', 'engine_local');
@@ -25,7 +36,7 @@ class RetroLocalWorldTest extends TestCase
         $this->assertSame('retro_local', $resolver->connectionNameFor('retro_local'));
         $this->assertTrue($resolver->registerTemplateConnection($resolver->resolve('retro_local')));
         $this->assertSame('engine_local', config('database.connections.retro_local.database'));
-        $this->assertSame('host.docker.internal', config('database.connections.retro_local.host'));
+        $this->assertSame('virtigia-engine-mariadb-1', config('database.connections.retro_local.host'));
     }
 
     public function test_missing_configuration_does_not_register_a_broken_world(): void
