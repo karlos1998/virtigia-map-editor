@@ -18,7 +18,7 @@ class RetroLocalWorldTest extends TestCase
         $this->assertSame('virtigia-engine-mariadb-1', $connection['host']);
         $this->assertSame('3306', $connection['port']);
         $this->assertSame('retro_database', $connection['database']);
-        $this->assertSame('readonly', $connection['username']);
+        $this->assertSame('root', $connection['username']);
         $this->assertNotEmpty($connection['password']);
     }
 
