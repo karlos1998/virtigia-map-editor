@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { PlayingCardIcon } from 'virtigia-tips';
 import InputText from 'primevue/inputtext';
 import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
@@ -46,7 +47,7 @@ async function generateArtwork() {
         const { data } = await axios.post(route('assets.playing-card-artwork'), {card: card.value});
         card.value.artwork = data.artwork;
     } catch (error: any) {
-        previewError.value = error?.response?.data?.errors?.card?.[0] ?? 'Nie udało się pobrać grafik z portalu.';
+        previewError.value = error?.response?.data?.errors?.card?.[0] ?? 'Nie udało się dobrać grafik z S3.';
     } finally {
         generating.value = false;
     }
@@ -169,6 +170,10 @@ watch(() => card.value?.kind, kind => {
                         <img v-if="artUrls.illustrationSrc" :src="artUrls.illustrationSrc" alt="Ilustracja karty" class="playing-card__illustration" />
                         <div v-else-if="artUrls.outfitSrc" class="playing-card__sprite" :style="{ backgroundImage: `url('${artUrls.outfitSrc}')`, backgroundPosition: `${-(card.artwork?.frameX ?? 0) * 32}px ${-(card.artwork?.frameY ?? 0) * 48}px` }" />
                         <span class="playing-card__strength">{{ card.kind === 'unit' ? card.strength : '◆' }}</span>
+                        <div class="playing-card__badges">
+                            <PlayingCardIcon v-for="row in card.rows" :key="row" :type="row" class="playing-card__badge playing-card__badge--row" />
+                            <PlayingCardIcon v-for="ability in card.abilities" :key="ability" :type="ability" class="playing-card__badge playing-card__badge--ability" />
+                        </div>
                         <span v-if="card.hero" class="playing-card__hero">★</span>
                         <span class="playing-card__deck">{{ card.deck }}</span>
                     </div>
@@ -197,4 +202,8 @@ watch(() => card.value?.kind, kind => {
 .playing-card__deck{position:absolute;bottom:8px;left:8px;background:#233957;color:#e9d9b7;padding:3px 9px;border-radius:4px;text-transform:uppercase}
 .playing-card__footer{padding:12px;display:flex;flex-direction:column;gap:6px;text-align:center;min-height:140px;overflow-wrap:anywhere}
 .playing-card__footer strong{font:bold 20px Georgia,serif}.playing-card__footer span{font-size:12px}.playing-card__footer p{font:italic 13px Georgia,serif;white-space:pre-wrap}
+.playing-card__badges{position:absolute;top:64px;left:12px;display:flex;flex-direction:column;gap:7px;max-height:166px;flex-wrap:wrap;align-content:flex-start}
+.playing-card__badge{box-sizing:border-box;width:36px;height:36px;padding:6px;border:2px solid #dbc89c;border-radius:50%;box-shadow:0 2px 4px #0008}
+.playing-card__badge--row{background:#e9b64d;color:#18212c}
+.playing-card__badge--ability{background:#18212c;color:#fff5d8}
 </style>
