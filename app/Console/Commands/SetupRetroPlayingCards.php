@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Database\QueryException;
 use Throwable;
 
 class SetupRetroPlayingCards extends Command
@@ -38,7 +39,13 @@ class SetupRetroPlayingCards extends Command
             }
         } catch (Throwable $exception) {
             report($exception);
-            $this->error('Przygotowanie kart zostało przerwane. Szczegóły błędu znajdziesz w logu aplikacji.');
+            if ($exception instanceof QueryException && in_array((int) ($exception->errorInfo[1] ?? 0), [1142, 1143, 1227], true)) {
+                $username = (string) config('database.connections.retro_local.username');
+                $this->error("MariaDB odrzuciła operację: użytkownik [{$username}] nie ma wymaganych uprawnień.");
+                $this->line('Migracja wymaga ALTER, a import INSERT i UPDATE. Ustaw konto z prawem zapisu w połączeniu retro_local w config/database.php.');
+            } else {
+                $this->error('Przygotowanie kart zostało przerwane. Szczegóły błędu znajdziesz w logu aplikacji.');
+            }
 
             return self::FAILURE;
         }

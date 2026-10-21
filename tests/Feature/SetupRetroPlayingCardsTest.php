@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Console\Commands\SetupRetroPlayingCards;
 use Illuminate\Console\Command;
+use Illuminate\Database\QueryException;
 use Mockery;
+use PDOException;
 use RuntimeException;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
@@ -75,6 +77,28 @@ class SetupRetroPlayingCardsTest extends TestCase
         $text = $output->fetch();
         $this->assertStringContainsString('przerwane', $text);
         $this->assertStringNotContainsString('internal connection details', $text);
+    }
+
+    public function test_missing_database_privileges_explain_the_required_account_without_showing_the_query(): void
+    {
+        config()->set('database.connections.retro_local.username', 'readonly');
+        $previous = new PDOException('ALTER command denied');
+        $previous->errorInfo = ['42000', 1142, 'ALTER command denied'];
+        $exception = new QueryException('retro_local', 'alter table base_items secret_query', [], $previous);
+        $command = Mockery::mock(SetupRetroPlayingCards::class)->makePartial();
+        $command->__construct();
+        $command->shouldReceive('call')->once()->with('world-templates:register-retro-local', ['--no-interaction' => true])->ordered()->andReturn(Command::SUCCESS);
+        $command->shouldReceive('call')->once()->with('migrate', Mockery::type('array'))->ordered()->andThrow($exception);
+        $command->setLaravel($this->app);
+        $output = new BufferedOutput;
+
+        $this->assertSame(Command::FAILURE, $command->run(new ArrayInput([]), $output));
+        $text = $output->fetch();
+        $this->assertStringContainsString('[readonly]', $text);
+        $this->assertStringContainsString('ALTER', $text);
+        $this->assertStringContainsString('INSERT', $text);
+        $this->assertStringNotContainsString('secret_query', $text);
+        $this->assertStringNotContainsString('Gotowe:', $text);
     }
 
     public function test_production_is_rejected_before_any_database_action(): void
