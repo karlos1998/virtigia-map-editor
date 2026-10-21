@@ -1,13 +1,17 @@
 <!doctype html><html lang="pl"><head><meta charset="utf-8"><title>Podgląd oznaczeń kart</title>
-<style>body{background:#e9ecef;margin:30px;font:14px Arial}section>div:first-of-type,section>div:nth-of-type(2)>div:first-child,section>h3{display:none!important}section>div:nth-of-type(2)>div:last-child{display:flex;flex-direction:column;align-items:center}button{margin:8px}</style></head>
+<style>body{background:#e9ecef;margin:30px;font:14px Arial}section:not(.playing-card-tip)>div:first-of-type,section:not(.playing-card-tip)>div:nth-of-type(2)>div:first-child,section:not(.playing-card-tip)>h3{display:none!important}section:not(.playing-card-tip)>div:nth-of-type(2)>div:last-child{display:flex;flex-direction:column;align-items:center}button{margin:8px}</style></head>
 <body><div id="app"></div><script type="module">
-import {createApp,h,ref} from 'vue';
+import {createApp,h,ref,withDirectives} from 'vue';
+import {RockTip,ToolTipDirective} from 'virtigia-tips';
+import 'virtigia-tips/style.css';
 import PrimeVue from 'primevue/config';
 import PlayingCardEditor from '/resources/js/Pages/BaseItem/Components/PlayingCardEditor.vue';
 const attributes=ref({description:'Pozwala wybrać zwykłą jednostkę z własnego stosu odrzuconych i natychmiast ją zagrać.',playingCard:{definitionId:'medic',deck:'retro',kind:'unit',strength:5,hero:false,rows:['siege'],abilities:['medic'],artwork:{illustrationSrc:location.origin+'/tests/fixtures/playing-card-art.svg'}}});
 const choose=(rows,abilities,kind='unit')=>{attributes.value.playingCard={...attributes.value.playingCard,rows,abilities,kind}};
 createApp({render:()=>h('main',[
  h('nav',[h('button',{onClick:()=>choose(['siege'],['medic'])},'Medyk'),h('button',{onClick:()=>choose(['close','ranged'],['bond','morale'])},'Dwa rzędy'),h('button',{onClick:()=>choose([],['storm'],'weather')},'Pogoda'),h('button',{onClick:()=>choose([],['foltest_siegemaster'],'leader')},'Dowódca')]),
+ withDirectives(h('button',{'data-testid':'editor-card-tooltip'},'Tip przedmiotu'),[[ToolTipDirective,{id:1,name:'Medyk Burej Chorągwi',category:'playingCards',rarity:'common',attributes:attributes.value},undefined,{item:true}]]),
+ h(RockTip),
  h(PlayingCardEditor,{name:'Medyk Burej Chorągwi',catalog:[],attributes:attributes.value,'onUpdate:attributes':value=>attributes.value=value})
 ])}).use(PrimeVue).mount('#app');
 </script></body></html>
