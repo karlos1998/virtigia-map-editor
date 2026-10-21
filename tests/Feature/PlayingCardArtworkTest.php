@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 use App\Services\PlayingCardArtworkService;
-use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
@@ -102,13 +102,73 @@ class PlayingCardArtworkTest extends TestCase
         ]);
     }
 
-    public function test_catalog_uses_the_configured_portal_endpoint(): void
+    public function test_catalog_reads_real_path_conventions_from_s3_without_http(): void
     {
-        config()->set('services.playing_card_assets.url', 'https://portal.test/api/playing-card-assets');
+        Storage::fake('s3');
         Http::preventStrayRequests();
-        Http::fake(['https://portal.test/*' => Http::response(['outfits' => [], 'backgrounds' => []])]);
+        foreach (['img/outfits/noob/pm.gif', 'img/outfits/noob/hk.gif', 'img/outfits/woj/20/m_a.gif',
+            'img/outfits/mage/30/f_b.gif', 'img/outfits/h/40/m/new.png', 'img/outfits/p/50/f/new.png',
+            'img/outfits/bd/60/o_shared.gif', 'img/outfits/trop/70/m_x.webp', 'img/outfits/crimson/pm.gif',
+            'img/outfits/custom/unknown.png', 'img/outfits/w/not-a-level/image.png', 'img/outfits/w/20/info.txt',
+            'img/fback/common.png'] as $path) {
+            Storage::disk('s3')->put($path, 'test-image');
+        }
 
-        $this->assertSame(['outfits' => [], 'backgrounds' => []], app(PlayingCardArtworkService::class)->catalog());
-        Http::assertSent(fn (Request $request): bool => $request->url() === 'https://portal.test/api/playing-card-assets');
+        $catalog = app(PlayingCardArtworkService::class)->catalog();
+
+        $this->assertCount(8, $catalog['outfits']);
+        $outfits = array_column($catalog['outfits'], null, 'src');
+        foreach (['woj/20/m_a.gif' => ['w', 20], 'mage/30/f_b.gif' => ['m', 30],
+            'h/40/m/new.png' => ['h', 40], 'p/50/f/new.png' => ['p', 50],
+            'bd/60/o_shared.gif' => ['b', 60], 'trop/70/m_x.webp' => ['t', 70]] as $path => [$profession, $level]) {
+            $this->assertSame($profession, $outfits['img/outfits/'.$path]['profession']);
+            $this->assertSame($level, $outfits['img/outfits/'.$path]['level']);
+            $this->assertSame('standard', $outfits['img/outfits/'.$path]['type']);
+        }
+        $this->assertSame(['profession' => 'p', 'level' => 0, 'type' => 'noob', 'src' => 'img/outfits/noob/pm.gif'], $outfits['img/outfits/noob/pm.gif']);
+        $this->assertSame(['src' => 'img/fback/common.png'], $catalog['backgrounds'][0]);
+        Http::assertNothingSent();
+    }
+
+    public function test_backgrounds_are_listed_from_the_configured_s3_directory(): void
+    {
+        Storage::fake('s3');
+        Http::preventStrayRequests();
+        config()->set('services.playing_card_assets.excluded_backgrounds', ['brotherhood.png']);
+        config()->set('services.playing_card_assets.excluded_outfits', ['img/outfits/w/10/excluded.gif']);
+        foreach (['img/fback/z.webp', 'img/fback/a.PNG', 'img/fback/b.gif', 'img/fback/brotherhood.png',
+            'img/fback/readme.txt', 'img/outfits/w/10/standard.gif', 'img/outfits/w/10/excluded.gif',
+            'img/fback/private/hidden.png'] as $path) {
+            Storage::disk('s3')->put($path, 'test-file');
+        }
+
+        $catalog = app(PlayingCardArtworkService::class)->catalog();
+
+        $this->assertSame([['src' => 'img/fback/a.PNG'], ['src' => 'img/fback/b.gif'], ['src' => 'img/fback/z.webp']], $catalog['backgrounds']);
+        $this->assertCount(1, $catalog['outfits']);
+        Http::assertNothingSent();
+    }
+
+    public function test_empty_s3_folder_reports_the_actual_source(): void
+    {
+        Storage::fake('s3');
+        Http::preventStrayRequests();
+        Storage::disk('s3')->put('img/outfits/w/10/standard.gif', 'test-image');
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Brak obrazów do kart w folderze [img/fback] na dysku [s3].');
+        app(PlayingCardArtworkService::class)->catalog();
+    }
+
+    public function test_unrecognized_outfit_paths_do_not_guess_profession_or_level(): void
+    {
+        Storage::fake('s3');
+        Http::preventStrayRequests();
+        Storage::disk('s3')->put('img/outfits/unknown.gif', 'test-image');
+        Storage::disk('s3')->put('img/fback/common.png', 'test-background');
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Brak rozpoznanych outfitów');
+        app(PlayingCardArtworkService::class)->catalog();
     }
 }

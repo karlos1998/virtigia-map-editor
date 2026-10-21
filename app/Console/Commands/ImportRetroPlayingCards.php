@@ -34,6 +34,8 @@ class ImportRetroPlayingCards extends Command
         $worlds->registerTemplateConnection($world);
         $catalog = json_decode(file_get_contents(resource_path('retro-playing-cards.json')), true, flags: JSON_THROW_ON_ERROR);
         $assets = $artwork->catalog();
+        $this->line('Katalog S3: '.count($assets['outfits']).' outfitów z ['.config('assets.dirs.outfits').']; '.count($assets['backgrounds']).' teł z ['.config('services.playing_card_assets.background_directory').'].');
+
         $existing = BaseItem::on('retro_local')->withTrashed()->where('category', BaseItemCategory::PLAYING_CARDS)->get(['id', 'attributes'])
             ->mapWithKeys(fn (BaseItem $item): array => [(string) data_get($item->attributes, 'playingCard.definitionId', '') => $item->id]);
         $planned = [];

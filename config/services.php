@@ -2,7 +2,9 @@
 
 return [
     'playing_card_assets' => [
-        'url' => env('PLAYING_CARD_ASSETS_URL'),
+        'background_directory' => 'img/fback',
+        'excluded_backgrounds' => [],
+        'excluded_outfits' => [],
     ],
 
     /*

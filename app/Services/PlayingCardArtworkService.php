@@ -2,18 +2,76 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use League\Flysystem\FilesystemException;
 
 class PlayingCardArtworkService
 {
-    /** @return array<string, mixed> */
+    /** @return array{outfits: list<array{profession: string, level: int, type: string, src: string}>, backgrounds: list<array{src: string}>} */
     public function catalog(): array
     {
-        $url = config('services.playing_card_assets.url')
-            ?: rtrim((string) config('services.virtigia_page.url'), '/').'/api/playing-card-assets';
+        return ['outfits' => $this->outfits(), 'backgrounds' => $this->backgrounds()];
+    }
 
-        return Http::acceptJson()->connectTimeout(5)->timeout(15)->get($url)->throw()->json();
+    /** @return list<array{profession: string, level: int, type: string, src: string}> */
+    private function outfits(): array
+    {
+        $directory = trim((string) config('assets.dirs.outfits'), '/');
+        $professions = ['w' => 'w', 'woj' => 'w', 'p' => 'p', 'pal' => 'p', 'b' => 'b', 'bd' => 'b',
+            'm' => 'm', 'mage' => 'm', 'h' => 'h', 't' => 't', 'trop' => 't'];
+        $excluded = config('services.playing_card_assets.excluded_outfits', []);
+        $outfits = [];
+        foreach ($this->imageFiles($directory, recursive: true) as $path) {
+            if (in_array($path, $excluded, true)) {
+                continue;
+            }
+            $parts = explode('/', substr($path, strlen($directory) + 1));
+            $folder = strtolower($parts[0]);
+            if ($folder === 'noob' && count($parts) === 2
+                && preg_match('/^([bwhptm])[mkfo](?:[_-][^.]+)?\.(?:png|gif|jpe?g|webp)$/i', $parts[1], $matches)) {
+                $outfits[] = ['profession' => strtolower($matches[1]), 'level' => 0, 'type' => 'noob', 'src' => $path];
+            } elseif (isset($professions[$folder]) && count($parts) >= 3 && ctype_digit($parts[1])) {
+                $outfits[] = ['profession' => $professions[$folder], 'level' => (int) $parts[1], 'type' => 'standard', 'src' => $path];
+            }
+        }
+        if ($outfits === []) {
+            throw ValidationException::withMessages(['outfits' => "Brak rozpoznanych outfitów w [{$directory}]. Oczekiwane ścieżki: profesja/poziom/plik lub noob/pm.gif."]);
+        }
+
+        return $outfits;
+    }
+
+    /** @return list<array{src: string}> */
+    private function backgrounds(): array
+    {
+        $directory = trim((string) config('services.playing_card_assets.background_directory'), '/');
+        $excluded = config('services.playing_card_assets.excluded_backgrounds', []);
+        $files = array_values(array_filter($this->imageFiles($directory), fn (string $path): bool => ! in_array($path, $excluded, true) && ! in_array(basename($path), $excluded, true)
+        ));
+        if ($files === []) {
+            throw ValidationException::withMessages(['backgrounds' => "Brak obrazów do kart w folderze [{$directory}] na dysku [s3]."]);
+        }
+
+        return array_map(fn (string $path): array => ['src' => $path], $files);
+    }
+
+    /** @return list<string> */
+    private function imageFiles(string $directory, bool $recursive = false): array
+    {
+        try {
+            $disk = Storage::disk('s3');
+            $files = $recursive ? $disk->allFiles($directory) : $disk->files($directory);
+        } catch (FilesystemException $exception) {
+            report($exception);
+
+            throw ValidationException::withMessages(['assets' => "Nie udało się odczytać folderu [{$directory}] na dysku [s3]. Sprawdź dostęp do S3."]);
+        }
+        $files = array_values(array_filter($files, fn (string $path): bool => in_array(strtolower(pathinfo($path, PATHINFO_EXTENSION)), ['png', 'gif', 'jpg', 'jpeg', 'webp'], true)
+        ));
+        sort($files, SORT_STRING);
+
+        return $files;
     }
 
     /**

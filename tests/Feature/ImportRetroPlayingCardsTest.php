@@ -32,13 +32,13 @@ class ImportRetroPlayingCardsTest extends TestCase
 
         $this->artisan('card-game:import-retro', ['--dry-run' => true])->assertSuccessful();
         $this->assertSame(0, BaseItem::on('retro_local')->count());
-        $this->assertCount(0, Storage::disk('s3')->allFiles());
+        $this->assertCount(0, Storage::disk('s3')->allFiles('img/playing-cards/thumbnails'));
         $this->artisan('card-game:import-retro')->assertSuccessful();
         $this->assertSame(54, BaseItem::on('retro_local')->count());
         $heroes = BaseItem::on('retro_local')->get()->filter(fn (BaseItem $item): bool => data_get($item->attributes, 'playingCard.strength') === 15);
         $this->assertCount(2, $heroes);
         foreach ($heroes as $hero) {
-            $this->assertStringEndsWith('-10.png', data_get($hero->attributes, 'playingCard.artwork.outfitSrc'));
+            $this->assertStringContainsString('/100/', data_get($hero->attributes, 'playingCard.artwork.outfitSrc'));
         }
         $this->assertCount(54, Storage::disk('s3')->allFiles('img/playing-cards/thumbnails'));
         $item = BaseItem::on('retro_local')->firstOrFail();
@@ -62,6 +62,7 @@ class ImportRetroPlayingCardsTest extends TestCase
         $this->assertSame('Własny opis karty', $item->fresh()->attributes['description']);
         $this->assertStringStartsWith('playing-cards/thumbnails/', $item->fresh()->src);
         $this->assertCount(55, Storage::disk('s3')->allFiles('img/playing-cards/thumbnails'));
+        Http::assertNothingSent();
     }
 
     public function test_setup_shows_all_missing_artwork_and_writes_no_partial_catalog(): void
@@ -78,15 +79,38 @@ class ImportRetroPlayingCardsTest extends TestCase
             ->assertFailed();
 
         $this->assertSame(0, BaseItem::on('retro_local')->count());
-        $this->assertCount(0, Storage::disk('s3')->allFiles());
+        $this->assertCount(0, Storage::disk('s3')->allFiles('img/playing-cards/thumbnails'));
+        Http::assertNothingSent();
+    }
+
+    public function test_setup_imports_every_card_from_s3_and_can_be_repeated_without_http(): void
+    {
+        $this->prepareImport();
+        config()->set('database.connections.retro_local.username', 'testing');
+
+        $this->artisan('card-game:setup-retro')
+            ->expectsOutputToContain('Katalog S3: 66 outfitów z [img/outfits]; 1 teł z [img/fback].')
+            ->assertSuccessful();
+        $this->assertSame(54, BaseItem::on('retro_local')->count());
+        $this->assertCount(54, Storage::disk('s3')->allFiles('img/playing-cards/thumbnails'));
+        foreach (BaseItem::on('retro_local')->get() as $item) {
+            $this->assertSame('img/fback/common.png', data_get($item->attributes, 'playingCard.artwork.backgroundSrc'));
+            if (data_get($item->attributes, 'playingCard.kind') === 'unit') {
+                Storage::disk('s3')->assertExists(data_get($item->attributes, 'playingCard.artwork.outfitSrc'));
+            }
+        }
+        $this->artisan('card-game:setup-retro')->assertSuccessful();
+        $this->assertSame(54, BaseItem::on('retro_local')->count());
+        $this->assertCount(54, Storage::disk('s3')->allFiles('img/playing-cards/thumbnails'));
+        Http::assertNothingSent();
     }
 
     private function prepareImport(bool $missingOutfits = false): void
     {
         activity()->disableLogging();
         Storage::fake('s3');
+        Storage::disk('s3')->put('img/fback/common.png', 'test-background');
         config()->set('database.connections.retro_local', config('database.connections.'.config('database.default')));
-        config()->set('services.playing_card_assets.url', 'https://portal.test/api/playing-card-assets');
         WorldTemplate::query()->create([
             'name' => 'Retro Local', 'slug' => 'retro_local', 'connection_name' => 'retro_local',
             'remote_database_server' => 'local', 'database_name' => 'testing',
@@ -110,19 +134,15 @@ class ImportRetroPlayingCardsTest extends TestCase
             $table->timestamps();
             $table->softDeletes();
         });
-        $outfits = [];
+        Http::preventStrayRequests();
+        $professions = ['w' => 'woj', 'b' => 'bd', 'p' => 'pal', 'm' => 'mage', 'h' => 'h', 't' => 'trop'];
         foreach (range(0, 10) as $strength) {
-            foreach (['w', 'b', 'p', 'm', 'h', 't'] as $profession) {
-                $outfits[] = [
-                    'profession' => $profession, 'level' => $strength * 10,
-                    'type' => $strength === 0 ? 'noob' : 'standard',
-                    'src' => "img/outfits/{$profession}-{$strength}.png",
-                ];
+            foreach ($professions as $profession => $folder) {
+                $path = $strength === 0 ? "img/outfits/noob/{$profession}m.gif" : "img/outfits/{$folder}/".($strength * 10).'/standard.gif';
+                if (! $missingOutfits || $profession === 'm') {
+                    Storage::disk('s3')->put($path, 'test-outfit');
+                }
             }
         }
-        Http::fake(['https://portal.test/*' => Http::response([
-            'outfits' => $missingOutfits ? [] : $outfits, 'backgrounds' => [['src' => 'https://portal.test/fback/common.png']],
-        ])]);
-
     }
 }
