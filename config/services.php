@@ -1,6 +1,9 @@
 <?php
 
 return [
+    'playing_card_assets' => [
+        'url' => env('PLAYING_CARD_ASSETS_URL'),
+    ],
 
     /*
     |--------------------------------------------------------------------------

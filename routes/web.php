@@ -333,6 +333,8 @@ Route::middleware(['auth'])->group(function () {
                     Route::get('assets/base-npcs/search', [AssetController::class, 'searchNpcs'])->name('assets.base-npcs.search');
                     Route::get('assets/outfits/search', [AssetController::class, 'searchOutfits'])->name('assets.outfits.search');
                     Route::get('assets/sign-url', [AssetController::class, 'signUrl'])->name('assets.sign-url');
+                    Route::post('assets/playing-card-artwork', \App\Http\Controllers\PlayingCardArtworkController::class)->name('assets.playing-card-artwork');
+                    Route::post('assets/playing-card-image', \App\Http\Controllers\PlayingCardImageController::class)->name('assets.playing-card-image');
 
                     Route::post('doors', [DoorController::class, 'store'])->name('doors.store');
                     Route::get('maps/{map}/doors', [DoorController::class, 'byMap'])->name('doors.by-map');

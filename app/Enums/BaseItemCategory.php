@@ -99,4 +99,7 @@ enum BaseItemCategory: string
 
     #[Description('Kuferki')]
     case LOOT_CHESTS = 'lootChests';
+
+    #[Description('Karty do gry')]
+    case PLAYING_CARDS = 'playingCards';
 }

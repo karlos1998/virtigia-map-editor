@@ -1,0 +1,1673 @@
+[
+  {
+    "label": "Róg dowódcy",
+    "sourceId": "commander-s-horn",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 3,
+    "card": {
+      "definitionId": "retro-commander-s-horn",
+      "deck": "retro",
+      "kind": "special",
+      "strength": null,
+      "hero": false,
+      "rows": [
+        "close",
+        "ranged",
+        "siege"
+      ],
+      "abilities": [
+        "horn"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Podwaja siłę zwykłych jednostek w wybranym lub zajmowanym rzędzie. Efekt nie kumuluje się do ×4. Jednostka z tą zdolnością nie wzmacnia sama siebie swoim własnym rogiem."
+  },
+  {
+    "label": "Manekin",
+    "sourceId": "decoy",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 3,
+    "card": {
+      "definitionId": "retro-decoy",
+      "deck": "retro",
+      "kind": "special",
+      "strength": null,
+      "hero": false,
+      "rows": [],
+      "abilities": [
+        "decoy"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Zastępuje zwykłą jednostkę na własnej stronie planszy i zwraca ją na rękę; może odzyskać wrogiego szpiega. Nie zwraca bohaterów."
+  },
+  {
+    "label": "Pożoga",
+    "sourceId": "scorch",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 3,
+    "card": {
+      "definitionId": "retro-scorch",
+      "deck": "retro",
+      "kind": "special",
+      "strength": null,
+      "hero": false,
+      "rows": [],
+      "abilities": [
+        "scorch"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Niszczy zwykłe jednostki o najwyższej bieżącej sile na całej planszy, także własne. Przy remisie niszczy wszystkie o tej sile. Pirat Dimun nie spala siebie podczas własnego wejścia."
+  },
+  {
+    "label": "Czart",
+    "sourceId": "bovine-defense-force",
+    "expansion": "Hearts of Stone",
+    "collectible": false,
+    "copies": 0,
+    "card": {
+      "definitionId": "retro-bovine-defense-force",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 8,
+      "hero": false,
+      "rows": [
+        "close"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": true,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Jednostka bez dodatkowej zdolności."
+  },
+  {
+    "label": "Cirilla Fiona Elen Riannon",
+    "sourceId": "cirilla-fiona-elen-riannon",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-cirilla-fiona-elen-riannon",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 15,
+      "hero": true,
+      "rows": [
+        "close"
+      ],
+      "abilities": [
+        "muster"
+      ],
+      "bondGroup": null,
+      "musterTargets": [
+        "retro-roach"
+      ],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Siła bohatera nie podlega pogodzie, więzi, morale ani rogowi. Bohater jest odporny na Pożogę i nie jest celem Manekina ani Medyka. W profilu next-gen z Płotką dodatkowo przywołuje Płotkę z ręki lub talii."
+  },
+  {
+    "label": "Krowa",
+    "sourceId": "cow",
+    "expansion": "Hearts of Stone",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-cow",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 0,
+      "hero": false,
+      "rows": [
+        "ranged"
+      ],
+      "abilities": [
+        "avenger"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": "retro-bovine-defense-force",
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Po usunięciu Krowy z pola walki przywołuje Bovine Defense Force (Czarta), siła 8, walka wręcz. Kolejność przy końcu rundy i Manekinie wymaga testu zgodności."
+  },
+  {
+    "label": "Jaskier",
+    "sourceId": "dandelion",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-dandelion",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 2,
+      "hero": false,
+      "rows": [
+        "close"
+      ],
+      "abilities": [
+        "horn"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Podwaja siłę zwykłych jednostek w wybranym lub zajmowanym rzędzie. Efekt nie kumuluje się do ×4. Jednostka z tą zdolnością nie wzmacnia sama siebie swoim własnym rogiem."
+  },
+  {
+    "label": "Emiel Regis Rohellec Terzieff",
+    "sourceId": "emiel-regis-rohellec-terzieff",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-emiel-regis-rohellec-terzieff",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 5,
+      "hero": false,
+      "rows": [
+        "close"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Jednostka bez dodatkowej zdolności."
+  },
+  {
+    "label": "Gaunter O'Dimm",
+    "sourceId": "gaunter-o-dimm",
+    "expansion": "Hearts of Stone",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-gaunter-o-dimm",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 2,
+      "hero": false,
+      "rows": [
+        "siege"
+      ],
+      "abilities": [
+        "muster"
+      ],
+      "bondGroup": null,
+      "musterTargets": [
+        "retro-gaunter-o-dimm-darkness"
+      ],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Automatycznie zagrywa wskazane karty z ręki i talii, bez dobierania ich na rękę i bez sięgania do odrzuconych. Konkretne cele podaje pole muster_targets."
+  },
+  {
+    "label": "Gaunter O'Dimm: Darkness",
+    "sourceId": "gaunter-o-dimm-darkness",
+    "expansion": "Hearts of Stone",
+    "collectible": true,
+    "copies": 3,
+    "card": {
+      "definitionId": "retro-gaunter-o-dimm-darkness",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 4,
+      "hero": false,
+      "rows": [
+        "ranged"
+      ],
+      "abilities": [
+        "muster"
+      ],
+      "bondGroup": null,
+      "musterTargets": [
+        "retro-gaunter-o-dimm-darkness"
+      ],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Automatycznie zagrywa wskazane karty z ręki i talii, bez dobierania ich na rękę i bez sięgania do odrzuconych. Konkretne cele podaje pole muster_targets."
+  },
+  {
+    "label": "Geralt z Rivii",
+    "sourceId": "geralt-of-rivia",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-geralt-of-rivia",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 15,
+      "hero": true,
+      "rows": [
+        "close"
+      ],
+      "abilities": [
+        "muster"
+      ],
+      "bondGroup": null,
+      "musterTargets": [
+        "retro-roach"
+      ],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Siła bohatera nie podlega pogodzie, więzi, morale ani rogowi. Bohater jest odporny na Pożogę i nie jest celem Manekina ani Medyka. W profilu next-gen z Płotką dodatkowo przywołuje Płotkę z ręki lub talii."
+  },
+  {
+    "label": "Tajemniczy elf",
+    "sourceId": "mysterious-elf",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-mysterious-elf",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 0,
+      "hero": true,
+      "rows": [
+        "close"
+      ],
+      "abilities": [
+        "spy"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Siła bohatera nie podlega pogodzie, więzi, morale ani rogowi. Bohater jest odporny na Pożogę i nie jest celem Manekina ani Medyka. Trafia na stronę przeciwnika i dodaje mu punkty; zagrywający dobiera do dwóch kart ze swojej talii."
+  },
+  {
+    "label": "Olgierd von Everec",
+    "sourceId": "olgierd-von-everec",
+    "expansion": "Hearts of Stone",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-olgierd-von-everec",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 6,
+      "hero": false,
+      "rows": [
+        "close",
+        "ranged"
+      ],
+      "abilities": [
+        "morale"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Daje +1 pozostałym zwykłym jednostkom w tym samym rzędzie. Kilka źródeł morale sumuje się; źródło nie wzmacnia samo siebie. Przy zagraniu można wybrać walkę wręcz lub dystans. Karta nie przesuwa się później samodzielnie."
+  },
+  {
+    "label": "Płotka",
+    "sourceId": "roach",
+    "expansion": "Next-gen 4.0",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-roach",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 3,
+      "hero": false,
+      "rows": [
+        "close"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Jednostka bez dodatkowej zdolności."
+  },
+  {
+    "label": "Triss Merigold",
+    "sourceId": "triss-merigold",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-triss-merigold",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 7,
+      "hero": true,
+      "rows": [
+        "close"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Siła bohatera nie podlega pogodzie, więzi, morale ani rogowi. Bohater jest odporny na Pożogę i nie jest celem Manekina ani Medyka."
+  },
+  {
+    "label": "Vesemir",
+    "sourceId": "vesemir",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-vesemir",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 6,
+      "hero": false,
+      "rows": [
+        "close"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Jednostka bez dodatkowej zdolności."
+  },
+  {
+    "label": "Villentretenmerth",
+    "sourceId": "villentretenmerth",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-villentretenmerth",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 7,
+      "hero": false,
+      "rows": [
+        "close"
+      ],
+      "abilities": [
+        "scorch_c"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Jeśli siła odpowiedniego rzędu przeciwnika wynosi co najmniej 10, niszczy jego najsilniejsze zwykłe jednostki w tym rzędzie (wszystkie przy remisie). Szczegóły progu przy bohaterach wymagają sprawdzenia w grze."
+  },
+  {
+    "label": "Yennefer z Vengerbergu",
+    "sourceId": "yennefer-of-vengerberg",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-yennefer-of-vengerberg",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 7,
+      "hero": true,
+      "rows": [
+        "ranged"
+      ],
+      "abilities": [
+        "medic"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Siła bohatera nie podlega pogodzie, więzi, morale ani rogowi. Bohater jest odporny na Pożogę i nie jest celem Manekina ani Medyka. Pozwala wybrać zwykłą jednostkę z własnego stosu odrzuconych i natychmiast ją zagrać. Ponownie uruchamia zdolności przy zagraniu. Wyklucza bohaterów i karty specjalne."
+  },
+  {
+    "label": "Zoltan Chivay",
+    "sourceId": "zoltan-chivay",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-zoltan-chivay",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 5,
+      "hero": false,
+      "rows": [
+        "close"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Jednostka bez dodatkowej zdolności."
+  },
+  {
+    "label": "Trzaskający mróz",
+    "sourceId": "biting-frost",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 3,
+    "card": {
+      "definitionId": "retro-biting-frost",
+      "deck": "retro",
+      "kind": "weather",
+      "strength": null,
+      "hero": false,
+      "rows": [],
+      "abilities": [
+        "frost"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Ustawia siłę zwykłych jednostek odpowiedniego rzędu po obu stronach na 1, przed naliczeniem dalszych modyfikatorów. Bohaterowie są odporni."
+  },
+  {
+    "label": "Czyste niebo",
+    "sourceId": "clear-weather",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 3,
+    "card": {
+      "definitionId": "retro-clear-weather",
+      "deck": "retro",
+      "kind": "weather",
+      "strength": null,
+      "hero": false,
+      "rows": [],
+      "abilities": [
+        "clear"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Usuwa działające efekty pogody z planszy obu graczy, również Sztorm ze Skellige."
+  },
+  {
+    "label": "Gęsta mgła",
+    "sourceId": "impenetrable-fog",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 3,
+    "card": {
+      "definitionId": "retro-impenetrable-fog",
+      "deck": "retro",
+      "kind": "weather",
+      "strength": null,
+      "hero": false,
+      "rows": [],
+      "abilities": [
+        "fog"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Ustawia siłę zwykłych jednostek odpowiedniego rzędu po obu stronach na 1, przed naliczeniem dalszych modyfikatorów. Bohaterowie są odporni."
+  },
+  {
+    "label": "Sztorm ze Skellige",
+    "sourceId": "skellige-storm",
+    "expansion": "Blood and Wine",
+    "collectible": true,
+    "copies": 3,
+    "card": {
+      "definitionId": "retro-skellige-storm",
+      "deck": "retro",
+      "kind": "weather",
+      "strength": null,
+      "hero": false,
+      "rows": [],
+      "abilities": [
+        "storm"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Jednocześnie obejmuje pogodą rzędy dystansowe i oblężnicze obu graczy."
+  },
+  {
+    "label": "Ulewny deszcz",
+    "sourceId": "torrential-rain",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 3,
+    "card": {
+      "definitionId": "retro-torrential-rain",
+      "deck": "retro",
+      "kind": "weather",
+      "strength": null,
+      "hero": false,
+      "rows": [],
+      "abilities": [
+        "rain"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Ustawia siłę zwykłych jednostek odpowiedniego rzędu po obu stronach na 1, przed naliczeniem dalszych modyfikatorów. Bohaterowie są odporni."
+  },
+  {
+    "label": "Foltest: King of Temeria",
+    "sourceId": "foltest-king-of-temeria",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-foltest-king-of-temeria",
+      "deck": "retro",
+      "kind": "leader",
+      "strength": null,
+      "hero": false,
+      "rows": [],
+      "abilities": [
+        "foltest_king"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Zagraj Gęstą mgłę ze swojej talii."
+  },
+  {
+    "label": "Foltest: Lord Commander of the North",
+    "sourceId": "foltest-lord-commander-of-the-north",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-foltest-lord-commander-of-the-north",
+      "deck": "retro",
+      "kind": "leader",
+      "strength": null,
+      "hero": false,
+      "rows": [],
+      "abilities": [
+        "foltest_lord"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Usuń aktywne efekty pogody."
+  },
+  {
+    "label": "Foltest: Son of Medell",
+    "sourceId": "foltest-son-of-medell",
+    "expansion": "Hearts of Stone",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-foltest-son-of-medell",
+      "deck": "retro",
+      "kind": "leader",
+      "strength": null,
+      "hero": false,
+      "rows": [],
+      "abilities": [
+        "foltest_son"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Wykonaj Pożogę dystansowego rzędu przeciwnika przy progu 10."
+  },
+  {
+    "label": "Foltest: The Siegemaster",
+    "sourceId": "foltest-the-siegemaster",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-foltest-the-siegemaster",
+      "deck": "retro",
+      "kind": "leader",
+      "strength": null,
+      "hero": false,
+      "rows": [],
+      "abilities": [
+        "foltest_siegemaster"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Podwój siłę własnych zwykłych jednostek oblężniczych; nie kumuluje się z rogiem."
+  },
+  {
+    "label": "Foltest: The Steel-Forged",
+    "sourceId": "foltest-the-steel-forged",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-foltest-the-steel-forged",
+      "deck": "retro",
+      "kind": "leader",
+      "strength": null,
+      "hero": false,
+      "rows": [],
+      "abilities": [
+        "foltest_steelforged"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Wykonaj Pożogę oblężniczego rzędu przeciwnika przy progu 10."
+  },
+  {
+    "label": "Balista",
+    "sourceId": "ballista",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 2,
+    "card": {
+      "definitionId": "retro-ballista",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 6,
+      "hero": false,
+      "rows": [
+        "siege"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Jednostka bez dodatkowej zdolności."
+  },
+  {
+    "label": "Komandos Niebieskich Pasów",
+    "sourceId": "blue-stripes-commando",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 3,
+    "card": {
+      "definitionId": "retro-blue-stripes-commando",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 4,
+      "hero": false,
+      "rows": [
+        "close"
+      ],
+      "abilities": [
+        "bond"
+      ],
+      "bondGroup": "retro-blue-stripes-commando",
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Przy co najmniej dwóch kartach tej samej grupy siła każdej jest mnożona przez liczbę takich kart w rzędzie. Trzy karty po 4 dają łącznie 36 przed innymi efektami."
+  },
+  {
+    "label": "Katapulta",
+    "sourceId": "catapult",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 2,
+    "card": {
+      "definitionId": "retro-catapult",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 8,
+      "hero": false,
+      "rows": [
+        "siege"
+      ],
+      "abilities": [
+        "bond"
+      ],
+      "bondGroup": "retro-catapult",
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Przy co najmniej dwóch kartach tej samej grupy siła każdej jest mnożona przez liczbę takich kart w rzędzie. Trzy karty po 4 dają łącznie 36 przed innymi efektami."
+  },
+  {
+    "label": "Rębacze z Crinfrid",
+    "sourceId": "crinfrid-reavers-dragon-hunter",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 3,
+    "card": {
+      "definitionId": "retro-crinfrid-reavers-dragon-hunter",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 5,
+      "hero": false,
+      "rows": [
+        "ranged"
+      ],
+      "abilities": [
+        "bond"
+      ],
+      "bondGroup": "retro-crinfrid-reavers-dragon-hunter",
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Przy co najmniej dwóch kartach tej samej grupy siła każdej jest mnożona przez liczbę takich kart w rzędzie. Trzy karty po 4 dają łącznie 36 przed innymi efektami."
+  },
+  {
+    "label": "Dethmold",
+    "sourceId": "dethmold",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-dethmold",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 6,
+      "hero": false,
+      "rows": [
+        "ranged"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Jednostka bez dodatkowej zdolności."
+  },
+  {
+    "label": "Medyk Burej Chorągwi",
+    "sourceId": "dun-banner-medic",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-dun-banner-medic",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 5,
+      "hero": false,
+      "rows": [
+        "siege"
+      ],
+      "abilities": [
+        "medic"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Pozwala wybrać zwykłą jednostkę z własnego stosu odrzuconych i natychmiast ją zagrać. Ponownie uruchamia zdolności przy zagraniu. Wyklucza bohaterów i karty specjalne."
+  },
+  {
+    "label": "Esterad Thyssen",
+    "sourceId": "esterad-thyssen",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-esterad-thyssen",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 10,
+      "hero": true,
+      "rows": [
+        "close"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Siła bohatera nie podlega pogodzie, więzi, morale ani rogowi. Bohater jest odporny na Pożogę i nie jest celem Manekina ani Medyka."
+  },
+  {
+    "label": "John Natalis",
+    "sourceId": "john-natalis",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-john-natalis",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 10,
+      "hero": true,
+      "rows": [
+        "close"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Siła bohatera nie podlega pogodzie, więzi, morale ani rogowi. Bohater jest odporny na Pożogę i nie jest celem Manekina ani Medyka."
+  },
+  {
+    "label": "Kaedweński specjalista oblężeń",
+    "sourceId": "kaedweni-siege-expert",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 3,
+    "card": {
+      "definitionId": "retro-kaedweni-siege-expert",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 1,
+      "hero": false,
+      "rows": [
+        "siege"
+      ],
+      "abilities": [
+        "morale"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Daje +1 pozostałym zwykłym jednostkom w tym samym rzędzie. Kilka źródeł morale sumuje się; źródło nie wzmacnia samo siebie."
+  },
+  {
+    "label": "Keira Metz",
+    "sourceId": "keira-metz",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-keira-metz",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 5,
+      "hero": false,
+      "rows": [
+        "ranged"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Jednostka bez dodatkowej zdolności."
+  },
+  {
+    "label": "Philippa Eilhart",
+    "sourceId": "philippa-eilhart",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-philippa-eilhart",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 10,
+      "hero": true,
+      "rows": [
+        "ranged"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Siła bohatera nie podlega pogodzie, więzi, morale ani rogowi. Bohater jest odporny na Pożogę i nie jest celem Manekina ani Medyka."
+  },
+  {
+    "label": "Biedna piechota",
+    "sourceId": "poor-fucking-infantry",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 4,
+    "card": {
+      "definitionId": "retro-poor-fucking-infantry",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 1,
+      "hero": false,
+      "rows": [
+        "close"
+      ],
+      "abilities": [
+        "bond"
+      ],
+      "bondGroup": "retro-poor-fucking-infantry",
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Przy co najmniej dwóch kartach tej samej grupy siła każdej jest mnożona przez liczbę takich kart w rzędzie. Trzy karty po 4 dają łącznie 36 przed innymi efektami."
+  },
+  {
+    "label": "Książę Stennis",
+    "sourceId": "prince-stennis",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-prince-stennis",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 5,
+      "hero": false,
+      "rows": [
+        "close"
+      ],
+      "abilities": [
+        "spy"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Trafia na stronę przeciwnika i dodaje mu punkty; zagrywający dobiera do dwóch kart ze swojej talii."
+  },
+  {
+    "label": "Redański piechur",
+    "sourceId": "redanian-foot-soldier",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 2,
+    "card": {
+      "definitionId": "retro-redanian-foot-soldier",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 1,
+      "hero": false,
+      "rows": [
+        "close"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Jednostka bez dodatkowej zdolności."
+  },
+  {
+    "label": "Sabrina Glevissig",
+    "sourceId": "sabrina-glevissig",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-sabrina-glevissig",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 4,
+      "hero": false,
+      "rows": [
+        "ranged"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Jednostka bez dodatkowej zdolności."
+  },
+  {
+    "label": "Sheldon Skaggs",
+    "sourceId": "sheldon-skaggs",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-sheldon-skaggs",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 4,
+      "hero": false,
+      "rows": [
+        "ranged"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Jednostka bez dodatkowej zdolności."
+  },
+  {
+    "label": "Wieża oblężnicza",
+    "sourceId": "siege-tower",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-siege-tower",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 6,
+      "hero": false,
+      "rows": [
+        "siege"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Jednostka bez dodatkowej zdolności."
+  },
+  {
+    "label": "Siegfried of Denesle",
+    "sourceId": "siegfried-of-denesle",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-siegfried-of-denesle",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 5,
+      "hero": false,
+      "rows": [
+        "close"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Jednostka bez dodatkowej zdolności."
+  },
+  {
+    "label": "Sigismund Dijkstra",
+    "sourceId": "sigismund-dijkstra",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-sigismund-dijkstra",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 4,
+      "hero": false,
+      "rows": [
+        "close"
+      ],
+      "abilities": [
+        "spy"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Trafia na stronę przeciwnika i dodaje mu punkty; zagrywający dobiera do dwóch kart ze swojej talii."
+  },
+  {
+    "label": "Síle de Tansarville",
+    "sourceId": "sile-de-tansarville",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-sile-de-tansarville",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 5,
+      "hero": false,
+      "rows": [
+        "ranged"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Jednostka bez dodatkowej zdolności."
+  },
+  {
+    "label": "Thaler",
+    "sourceId": "thaler",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-thaler",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 1,
+      "hero": false,
+      "rows": [
+        "siege"
+      ],
+      "abilities": [
+        "spy"
+      ],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Trafia na stronę przeciwnika i dodaje mu punkty; zagrywający dobiera do dwóch kart ze swojej talii."
+  },
+  {
+    "label": "Trebusz",
+    "sourceId": "trebuchet",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 2,
+    "card": {
+      "definitionId": "retro-trebuchet",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 6,
+      "hero": false,
+      "rows": [
+        "siege"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Jednostka bez dodatkowej zdolności."
+  },
+  {
+    "label": "Vernon Roche",
+    "sourceId": "vernon-roche",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-vernon-roche",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 10,
+      "hero": true,
+      "rows": [
+        "close"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Siła bohatera nie podlega pogodzie, więzi, morale ani rogowi. Bohater jest odporny na Pożogę i nie jest celem Manekina ani Medyka."
+  },
+  {
+    "label": "Ves",
+    "sourceId": "ves",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-ves",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 5,
+      "hero": false,
+      "rows": [
+        "close"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Jednostka bez dodatkowej zdolności."
+  },
+  {
+    "label": "Yarpen Zigrin",
+    "sourceId": "yarpen-zigrin",
+    "expansion": "Base game",
+    "collectible": true,
+    "copies": 1,
+    "card": {
+      "definitionId": "retro-yarpen-zigrin",
+      "deck": "retro",
+      "kind": "unit",
+      "strength": 2,
+      "hero": false,
+      "rows": [
+        "close"
+      ],
+      "abilities": [],
+      "bondGroup": null,
+      "musterTargets": [],
+      "avengerTarget": null,
+      "generatedOnly": false,
+      "artwork": {
+        "outfitSrc": null,
+        "backgroundSrc": null,
+        "illustrationSrc": null,
+        "frameX": 0,
+        "frameY": 0
+      }
+    },
+    "description": "Jednostka bez dodatkowej zdolności."
+  }
+]

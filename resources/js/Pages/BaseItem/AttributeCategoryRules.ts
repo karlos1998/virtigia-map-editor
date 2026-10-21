@@ -27,7 +27,8 @@ export type BaseItemCategory =
     | 'blessings'
     | 'pets'
     | 'pouches'
-    | 'lootChests';
+    | 'lootChests'
+    | 'playingCards';
 
 export type AttributeCategoryGroup =
     | 'attributePoint'
@@ -37,6 +38,7 @@ export type AttributeCategoryGroup =
     | 'attackElement';
 
 const ALL_CATEGORIES: BaseItemCategory[] = [
+    'playingCards',
     'oneHanded',
     'armors',
     'twoHanded',

@@ -31,6 +31,21 @@ return [
 
     'connections' => [
 
+        'retro_local' => [
+            'driver' => 'mysql',
+            'host' => env('RETRO_LOCAL_DB_HOST', 'host.docker.internal'),
+            'port' => env('RETRO_LOCAL_DB_PORT', '3306'),
+            'database' => env('RETRO_LOCAL_DB_DATABASE'),
+            'username' => env('RETRO_LOCAL_DB_USERNAME'),
+            'password' => env('RETRO_LOCAL_DB_PASSWORD', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+        ],
+
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DB_URL'),

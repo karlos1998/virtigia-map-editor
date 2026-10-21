@@ -13,11 +13,13 @@ import TeleportToEditor from './Components/TeleportToEditor.vue';
 import OutfitEditor from './Components/OutfitEditor.vue';
 import PetEditor from './Components/PetEditor.vue';
 import LootChestEditor from './Components/LootChestEditor.vue';
+import PlayingCardEditor from './Components/PlayingCardEditor.vue';
 import {calculateBaseItemPrice} from './BaseItemPriceCalculator';
 import JsonEditorVue from 'json-editor-vue'
 
 const props = defineProps<{
     baseItem: BaseItemWithRelations,
+    playingCardCatalog?: Array<{ label: string; card: Record<string, any> }>,
 }>();
 
 // Function to clean corrupted attributes (removes numeric string keys from JSON editor corruption)
@@ -52,6 +54,7 @@ const isPet = computed(() => props.baseItem.category === 'pets');
 const isBook = computed(() => props.baseItem.category === 'books');
 const isMusicBox = computed(() => props.baseItem.category === 'musicBoxes');
 const isLootChest = computed(() => props.baseItem.category === 'lootChests');
+const isPlayingCard = computed(() => props.baseItem.category === 'playingCards');
 const baseItem = computed(() => props.baseItem);
 const persistedPrice = ref(Number(props.baseItem.price ?? 0));
 const price = ref<number | null>(Number(props.baseItem.price ?? 0));
@@ -350,8 +353,8 @@ const save = async () => {
     // Create update data with all three fields
     const updateData = {
         attributes: finalAttributes,
-        attribute_points: (isBook.value || isMusicBox.value || isLootChest.value) ? {} : (form.attribute_points || {}),
-        manual_attribute_points: (isBook.value || isMusicBox.value || isLootChest.value) ? {} : (form.manual_attribute_points || {})
+        attribute_points: (isBook.value || isMusicBox.value || isLootChest.value || isPlayingCard.value) ? {} : (form.attribute_points || {}),
+        manual_attribute_points: (isBook.value || isMusicBox.value || isLootChest.value || isPlayingCard.value) ? {} : (form.manual_attribute_points || {})
     };
 
     // Send the update
@@ -544,6 +547,10 @@ const clearCurrency = () => {
         </div>
         <div v-else-if="isLootChest" class="card">
             <LootChestEditor v-model:attributes="form.attributes" />
+        </div>
+        <div v-else-if="isPlayingCard" class="card">
+            <PlayingCardEditor v-model:attributes="form.attributes" :name="baseItem.name" :catalog="playingCardCatalog ?? []" />
+            <p v-if="form.errors['attributes.playingCard']" class="text-red-600" role="alert">{{ form.errors['attributes.playingCard'] }}</p>
         </div>
 
         <Tabs v-else v-model:value="activeTab" class="card">
