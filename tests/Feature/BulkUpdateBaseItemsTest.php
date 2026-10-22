@@ -110,6 +110,32 @@ class BulkUpdateBaseItemsTest extends TestCase
         $this->assertSame('Opis przedmiotu', $this->baseItemAttributes(1)['description']);
     }
 
+    public function test_it_sets_and_removes_the_cleansing_attribute(): void
+    {
+        $this->bulkUpdate([
+            'item_ids' => [1, 2],
+            'operation' => 'boolean_attribute',
+            'value' => 'removesUpgrade',
+            'enabled' => true,
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        foreach ([1, 2] as $itemId) {
+            $attributes = $this->baseItemAttributes($itemId);
+            $this->assertTrue($attributes['removesUpgrade']);
+            $this->assertSame($itemId * 10, $attributes['needLevel']);
+        }
+
+        $this->bulkUpdate([
+            'item_ids' => [1],
+            'operation' => 'boolean_attribute',
+            'value' => 'removesUpgrade',
+            'enabled' => false,
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $this->assertArrayNotHasKey('removesUpgrade', $this->baseItemAttributes(1));
+        $this->assertTrue($this->baseItemAttributes(2)['removesUpgrade']);
+    }
+
     public function test_it_sets_rarity_and_uses_individually_recalculated_prices(): void
     {
         $this->bulkUpdate([

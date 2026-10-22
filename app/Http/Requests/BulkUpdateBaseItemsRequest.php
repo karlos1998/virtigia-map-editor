@@ -17,6 +17,7 @@ class BulkUpdateBaseItemsRequest extends CurrentWorldRequest
         'isBindPermanentlyAfterBuy',
         'isNonStoreableInDeposit',
         'isNotAuctionable',
+        'removesUpgrade',
         'unbindsOwnerBound',
         'unbindsPermanentlyBound',
         'isRecovered',

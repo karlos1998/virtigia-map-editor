@@ -36,6 +36,7 @@ export const booleanAttributes: BooleanAttribute[] = [
     {key: 'isNonStoreableInDeposit', label: 'Przedmiotu nie można przechowywać w depozycie'},
     ...commonOwnershipAttributes,
     {key: 'isNotAuctionable', label: 'Tego przedmiotu nie można wystawiać na aukcję'},
+    {key: 'removesUpgrade', label: 'Usuwa ulepszenie z wybranego przedmiotu'},
     {key: 'unbindsOwnerBound', label: 'Odwiązuje przedmiot związany z właścicielem'},
     {key: 'unbindsPermanentlyBound', label: 'Odwiązuje przedmiot związany na stałe (też zwykły bind)'},
     {key: 'isRecovered', label: 'Przedmiot odzyskany, obniżona wartość'},

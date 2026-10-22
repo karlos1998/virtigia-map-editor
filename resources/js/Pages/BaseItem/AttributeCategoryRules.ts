@@ -154,6 +154,7 @@ const BOOLEAN_ATTRIBUTE_CATEGORIES: Record<string, readonly BaseItemCategory[]> 
     isBindsAfterEquip: GENERIC_FLAG_ITEMS,
     isNotAuctionable: GENERIC_FLAG_ITEMS,
     isBoundToOwner: GENERIC_FLAG_ITEMS,
+    removesUpgrade: ['upgrades'],
     unbindsOwnerBound: ['upgrades'],
     unbindsPermanentlyBound: ['upgrades'],
     isRecovered: COMBAT_ITEMS,
