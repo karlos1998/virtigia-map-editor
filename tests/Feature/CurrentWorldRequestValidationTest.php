@@ -51,6 +51,16 @@ class CurrentWorldRequestValidationTest extends TestCase
             ->assertJsonPath('item_ids.0', 123);
     }
 
+    protected function tearDown(): void
+    {
+        $connection = DB::connection('retro');
+
+        parent::tearDown();
+
+        $connection->getSchemaBuilder()->dropIfExists('base_items');
+        $connection->disconnect();
+    }
+
     public function test_current_world_request_rejects_missing_ids_on_current_world_connection(): void
     {
         $response = $this
