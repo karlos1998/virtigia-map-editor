@@ -22,6 +22,9 @@ export default defineConfig({
             ]
         })
     ],
+    optimizeDeps: {
+        exclude: ['virtigia-tips'],
+    },
     resolve: {
         alias: {
             '@': fileURLToPath(new URL('./resources/js', import.meta.url)),

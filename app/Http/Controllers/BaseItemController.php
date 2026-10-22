@@ -24,6 +24,7 @@ use App\Models\BaseNpc;
 use App\Models\Shop;
 use App\Services\BaseItemService;
 use App\Services\BaseNpcService;
+use App\Services\PlayingCardThumbnailService;
 use App\Services\ShopService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,6 +37,7 @@ class BaseItemController extends Controller
         private readonly BaseItemService $baseItemService,
         private readonly BaseNpcService $baseNpcService,
         private readonly ShopService $shopService,
+        private readonly PlayingCardThumbnailService $cardThumbnails,
     ) {}
 
     /**
@@ -112,17 +114,25 @@ class BaseItemController extends Controller
     {
         return Inertia::render('BaseItem/Edit', [
             'baseItem' => BaseItemResource::make($baseItem),
+            'playingCardCatalog' => $baseItem->category === BaseItemCategory::PLAYING_CARDS
+                ? json_decode(file_get_contents(resource_path('retro-playing-cards.json')), true, flags: JSON_THROW_ON_ERROR)
+                : [],
         ]);
     }
 
-    public function updateAttributes(BaseItem $baseItem, UpdateItemAttributesRequest $request)
+    public function updateAttributes(BaseItem $baseItem, UpdateItemAttributesRequest $request): RedirectResponse
     {
-        $this->baseItemService->updateAttributes(
-            $baseItem,
-            $request->input('attributes'),
-            $request->input('attribute_points'),
-            $request->input('manual_attribute_points')
-        );
+        $baseItem->getConnection()->transaction(function () use ($baseItem, $request): void {
+            $this->baseItemService->updateAttributes(
+                $baseItem,
+                $request->validated('attributes'),
+                (array) $request->validated('attribute_points', []),
+                (array) $request->validated('manual_attribute_points', [])
+            );
+            if ($baseItem->category === BaseItemCategory::PLAYING_CARDS) {
+                $this->cardThumbnails->save($baseItem, $request->validated('attributes.playingCard'));
+            }
+        });
 
         return to_route('base-items.show', $baseItem->id);
     }

@@ -79,6 +79,16 @@ class MigrateRemoteDatabase extends Command
                 $connection = (string) $target;
             }
 
+            if (! is_array(config("database.connections.{$connection}"))) {
+                $this->components->error("Database connection [{$connection}] is not configured.");
+                $underscoredConnection = str_replace('-', '_', $connection);
+                if ($underscoredConnection !== $connection && is_array(config("database.connections.{$underscoredConnection}"))) {
+                    $this->line("Use [{$underscoredConnection}] with underscores.");
+                }
+
+                return SymfonyCommand::FAILURE;
+            }
+
             $this->components->info("Running remote {$action} for world [{$slug}] using connection [{$connection}].");
 
             if ($this->runRemoteMigration($connection, $action, (bool) $this->option('force')) !== SymfonyCommand::SUCCESS) {

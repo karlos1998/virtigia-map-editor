@@ -1,6 +1,11 @@
 <?php
 
 return [
+    'playing_card_assets' => [
+        'background_directory' => 'img/fback',
+        'excluded_backgrounds' => [],
+        'excluded_outfits' => [],
+    ],
 
     /*
     |--------------------------------------------------------------------------

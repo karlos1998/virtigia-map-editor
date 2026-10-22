@@ -70,6 +70,17 @@ class MigrateRemoteDatabaseCommandTest extends TestCase
         ], $command->runs);
     }
 
+    public function test_a_hyphenated_connection_name_is_rejected_with_the_configured_name_before_migration(): void
+    {
+        $command = new RecordingMigrateRemoteDatabase;
+        $command->setLaravel($this->app);
+        $tester = new CommandTester($command);
+
+        $this->assertSame(SymfonyCommand::FAILURE, $tester->execute(['connection' => 'retro-local']));
+        $this->assertSame([], $command->runs);
+        $this->assertStringContainsString('[retro_local] with underscores', $tester->getDisplay());
+    }
+
     /**
      * @return array<string, mixed>
      */
