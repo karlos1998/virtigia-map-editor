@@ -17,6 +17,11 @@ class QuestResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'seasonal_events' => $this->whenLoaded('seasonalEvents', fn () => $this->seasonalEvents->map(fn ($event) => [
+                'id' => $event->id,
+                'name' => $event->name,
+                'is_currently_active' => $event->isCurrentlyActive(),
+            ])),
             'is_daily' => $this->isDaily(),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

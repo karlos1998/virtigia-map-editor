@@ -13,9 +13,7 @@ final class QuestService extends BaseService
 {
     public function __construct(
         private readonly Quest $questModel,
-    )
-    {
-    }
+    ) {}
 
     public function findAll()
     {
@@ -27,13 +25,19 @@ final class QuestService extends BaseService
                     'is_daily' => new TableDropdownColumn(
                         placeholder: 'Dzienny',
                         options: [
-                            new TableDropdownOption('Tak', fn($query) => $query->whereHas('steps', fn($q) => $q->where('auto_advance_next_day', true))),
-                            new TableDropdownOption('Nie', fn($query) => $query->whereDoesntHave('steps', fn($q) => $q->where('auto_advance_next_day', true))),
+                            new TableDropdownOption('Tak', fn ($query) => $query->whereHas('steps', fn ($q) => $q->where('auto_advance_next_day', true))),
+                            new TableDropdownOption('Nie', fn ($query) => $query->whereDoesntHave('steps', fn ($q) => $q->where('auto_advance_next_day', true))),
                         ]
                     ),
                 ],
                 globalFilterColumns: ['name']
             ),
         );
+    }
+
+    /** @param list<int> $seasonalEventIds */
+    public function syncSeasonalEvents(Quest $quest, array $seasonalEventIds): void
+    {
+        $quest->seasonalEvents()->sync($seasonalEventIds);
     }
 }

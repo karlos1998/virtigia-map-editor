@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\SyncQuestSeasonalEventsRequest;
 use App\Http\Resources\QuestResource;
 use App\Http\Resources\QuestSearchResource;
 use App\Models\Quest;
 use App\Services\QuestService;
+use App\Services\SeasonalEventService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -42,13 +45,21 @@ class QuestController extends Controller
     /**
      * Display the specified quest.
      */
-    public function show(Quest $quest)
+    public function show(Quest $quest, SeasonalEventService $seasonalEventService)
     {
-        $quest->load(['steps', 'steps.autoProgress.mobs.baseNpc', 'steps.autoProgress.mobs.mobSpecies', 'steps.guideView']);
+        $quest->load(['seasonalEvents', 'steps', 'steps.autoProgress.mobs.baseNpc', 'steps.autoProgress.mobs.mobSpecies', 'steps.guideView']);
 
         return Inertia::render('Quest/Show', [
             'quest' => QuestResource::make($quest),
+            'seasonalEvents' => $seasonalEventService->getAllForList(),
         ]);
+    }
+
+    public function syncSeasonalEvents(Quest $quest, SyncQuestSeasonalEventsRequest $request): RedirectResponse
+    {
+        $this->questService->syncSeasonalEvents($quest, $request->validated('seasonal_event_ids'));
+
+        return to_route('quests.show', $quest->id);
     }
 
     /**

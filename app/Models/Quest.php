@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\JsonQueryHelpers;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
@@ -18,6 +19,11 @@ class Quest extends DynamicModel
     public function steps(): HasMany
     {
         return $this->hasMany(QuestStep::class);
+    }
+
+    public function seasonalEvents(): BelongsToMany
+    {
+        return $this->belongsToMany(SeasonalEvent::class, 'quest_seasonal_events');
     }
 
     public function isDaily(): bool

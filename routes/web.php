@@ -256,6 +256,7 @@ Route::middleware(['auth'])->group(function () {
                     Route::get('quests/{quest}', [QuestController::class, 'show'])->name('quests.show');
                     Route::get('quests/{quest}/steps', [QuestController::class, 'getSteps'])->name('quests.steps');
                     Route::patch('quests/{quest}', [QuestController::class, 'update'])->name('quests.update');
+                    Route::patch('quests/{quest}/seasonal-events', [QuestController::class, 'syncSeasonalEvents'])->name('quests.seasonal-events.sync');
                     Route::delete('quests/{quest}', [QuestController::class, 'destroy'])->name('quests.destroy');
 
                     // Reward calendars (kalendarze nagród z przypisanymi dniami)

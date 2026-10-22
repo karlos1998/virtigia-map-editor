@@ -39,6 +39,7 @@ export interface SimpleQuestResource {
 }
 
 export interface QuestWithStepsResource extends QuestResource {
+    seasonal_events: { id: number; name: string; is_currently_active: boolean }[];
     steps: QuestStepResource[];
     dialogs: SimpleDialogResource[];
     nodes: SimpleDialogNodeResource[];

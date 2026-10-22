@@ -3,7 +3,7 @@ import AppLayout from "@/layout/AppLayout.vue";
 import { ref, computed, onMounted, watch } from "vue";
 import { route } from "ziggy-js";
 import { useToast, useConfirm } from "primevue";
-import { Link, router } from "@inertiajs/vue3";
+import { Link, router, useForm } from "@inertiajs/vue3";
 import CreateQuestStepModal from "@/Pages/Quest/Modals/CreateQuestStepModal.vue";
 import EditQuestStepModal from "@/Pages/Quest/Modals/EditQuestStepModal.vue";
 import EditQuestNameModal from "@/Pages/Quest/Modals/EditQuestNameModal.vue";
@@ -13,8 +13,19 @@ import {
 } from "@/Resources/Quest.resource";
 
 const props = defineProps<{
-    quest: QuestWithStepsResource
+    quest: QuestWithStepsResource;
+    seasonalEvents: { id: number; name: string; is_currently_active: boolean }[];
 }>();
+
+const seasonalEventsForm = useForm({
+    seasonal_event_ids: props.quest.seasonal_events.map(event => event.id),
+});
+
+const syncSeasonalEvents = () => {
+    seasonalEventsForm.patch(route('quests.seasonal-events.sync', { quest: props.quest.id }), {
+        preserveScroll: true,
+    });
+};
 
 const toast = useToast();
 const confirm = useConfirm();
@@ -180,6 +191,25 @@ watch(questStepSortDirection, (sortDirection) => {
             v-model:visible="isEditQuestNameModalVisible"
             :quest="quest"
         />
+
+        <div class="card">
+            <form class="flex flex-col gap-3" @submit.prevent="syncSeasonalEvents">
+                <label for="quest-seasonal-events" class="font-semibold">Eventy questa</label>
+                <MultiSelect
+                    input-id="quest-seasonal-events"
+                    v-model="seasonalEventsForm.seasonal_event_ids"
+                    :options="seasonalEvents"
+                    option-label="name"
+                    option-value="id"
+                    display="chip"
+                    filter
+                    placeholder="Brak — quest niezależny od eventów"
+                />
+                <small>Quest będzie widoczny na liście gracza, gdy trwa przynajmniej jeden z wybranych eventów i bieżący krok jest widoczny na liście. Brak eventów oznacza brak ograniczenia. Postęp pozostaje zapisany.</small>
+                <small v-if="Object.keys(seasonalEventsForm.errors).length" class="text-red-500">{{ Object.values(seasonalEventsForm.errors).join(' ') }}</small>
+                <Button type="submit" label="Zapisz eventy" icon="pi pi-save" :loading="seasonalEventsForm.processing" />
+            </form>
+        </div>
 
         <div class="card">
             <div class="flex justify-between items-center mb-4">
