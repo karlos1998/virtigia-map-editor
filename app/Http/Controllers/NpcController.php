@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\AddNpcToGroupRequest;
+use App\Http\Requests\BulkUpdateNpcsRequest;
 use App\Http\Requests\CreateNpcGroupRequest;
+use App\Http\Requests\IndexNpcRequest;
 use App\Http\Requests\StoreNpcLocationRequest;
 use App\Http\Requests\StoreNpcRequest;
 use App\Http\Requests\UpdateNpcLocationRequest;
@@ -23,11 +25,24 @@ class NpcController extends Controller
 {
     public function __construct(private readonly NpcService $npcService) {}
 
-    public function index(Request $request): \Inertia\Response
+    public function index(IndexNpcRequest $request): \Inertia\Response
     {
         return Inertia::render('Npc/Index', [
-            'npcs' => $this->npcService->getAll($request->get('map_id')),
+            'npcs' => $this->npcService->getAll(filters: $request->validated()),
+            ...app(\App\Services\NpcFilterService::class)->options($request->validated()),
+            'availableRanks' => \App\Enums\BaseNpcRank::toDropdownList(),
         ]);
+    }
+
+    public function bulkUpdate(BulkUpdateNpcsRequest $request): \Illuminate\Http\RedirectResponse
+    {
+        $updated = $this->npcService->bulkUpdate($request->validated());
+
+        if (in_array($request->input('operation'), ['enable_aggression', 'disable_aggression'], true)) {
+            return back()->with('success', "Zmieniono agresywność {$updated} bazowych mobów (wszystkie ich instancje).");
+        }
+
+        return back()->with('success', "Zaktualizowano {$updated} instancji NPC.");
     }
 
     public function show(Npc $npc): \Inertia\Response

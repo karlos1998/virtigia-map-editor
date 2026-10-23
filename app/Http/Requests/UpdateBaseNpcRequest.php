@@ -26,6 +26,7 @@ class UpdateBaseNpcRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'instance_dialog_action' => ['nullable', \Illuminate\Validation\Rule::in(['keep', 'detach'])],
             'name' => [
                 'required',
                 'min:3',
@@ -87,7 +88,7 @@ class UpdateBaseNpcRequest extends FormRequest
                 'integer',
                 'min:0',
                 'gte:min_respawn_time',
-            ]
+            ],
         ];
     }
 

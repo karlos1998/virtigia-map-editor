@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Enums\BaseNpcCategory;
 use App\Http\Resources\NpcResource;
+use App\Models\BaseNpc;
 use App\Models\Dialog;
 use App\Models\Npc;
 use App\Models\NpcGroup;
@@ -65,9 +67,10 @@ class NpcService extends BaseService
     /**
      * @throws \Exception
      */
-    public function getAll(?int $mapId = null): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    public function getAll(?int $mapId = null, array $filters = []): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
-        $query = $this->npcModel->with(['locations', 'dialog', 'base']);
+        $query = $this->npcModel->with(['locations.map', 'dialog', 'base']);
+        app(NpcFilterService::class)->apply($query, $filters);
 
         // Filter by map if provided
         if ($mapId) {
@@ -122,6 +125,65 @@ class NpcService extends BaseService
             'x' => $data['location']['x'],
             'y' => $data['location']['y'],
         ])->save();
+    }
+
+    /** @param array{npc_ids: array<int>, operation: string, dialog_id?: int|null, assignment_mode?: string|null} $data */
+    public function bulkUpdate(array $data): int
+    {
+        return $this->npcModel->getConnection()->transaction(function () use ($data): int {
+            if (in_array($data['operation'], ['enable_aggression', 'disable_aggression'], true)) {
+                $bases = BaseNpc::query()->whereIn('id', $this->npcModel->newQuery()
+                    ->whereIn('id', $data['npc_ids'])->select('base_npc_id'))
+                    ->orderBy('id')->lockForUpdate()->get();
+                if ($bases->contains(fn (BaseNpc $base) => $base->category !== BaseNpcCategory::MOB)) {
+                    throw ValidationException::withMessages(['npc_ids' => 'Agresywność można zmieniać tylko dla mobów. Zaznacz instancje z kategorią MOB.']);
+                }
+                $updated = 0;
+                foreach ($bases as $base) {
+                    $base->is_aggressive = $data['operation'] === 'enable_aggression';
+                    if ($base->isDirty()) {
+                        $base->save();
+                        $updated++;
+                    }
+                }
+
+                return $updated;
+            }
+
+            $npcs = $this->npcModel->newQuery()->whereIn('id', $data['npc_ids'])->orderBy('id')->lockForUpdate()->get();
+            if ($data['operation'] === 'enable_auto_dialog' && $npcs->contains(fn (Npc $npc) => $npc->dialog_id === null)) {
+                throw ValidationException::withMessages(['npc_ids' => 'Automatyczny dialog można włączyć tylko instancjom z przypisanym dialogiem.']);
+            }
+            $updated = 0;
+            foreach ($npcs as $npc) {
+                switch ($data['operation']) {
+                    case 'assign_dialog':
+                        if ($data['assignment_mode'] === 'empty' && $npc->dialog_id !== null) {
+                            continue 2;
+                        }
+                        $npc->dialog()->associate($data['dialog_id']);
+                        break;
+                    case 'detach_dialog':
+                        $npc->dialog()->dissociate();
+                        $npc->auto_start_dialog = false;
+                        break;
+                    case 'enable':
+                    case 'disable':
+                        $npc->enabled = $data['operation'] === 'enable';
+                        break;
+                    case 'enable_auto_dialog':
+                    case 'disable_auto_dialog':
+                        $npc->auto_start_dialog = $data['operation'] === 'enable_auto_dialog';
+                        break;
+                }
+                if ($npc->isDirty()) {
+                    $npc->save();
+                    $updated++;
+                }
+            }
+
+            return $updated;
+        });
     }
 
     public function destroyLocation(Npc $npc, NpcLocation $npcLocation): void

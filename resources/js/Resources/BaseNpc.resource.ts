@@ -10,6 +10,7 @@ export interface BaseNpcResource {
     src: string
     lvl: number
     location_count: number
+    dialog_instances_count?: number
     category: BaseNpcCategoryEnum
     rank: BaseNpcRankEnum
     profession: ProfessionEnum

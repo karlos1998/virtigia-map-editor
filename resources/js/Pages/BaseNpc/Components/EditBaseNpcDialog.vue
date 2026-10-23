@@ -68,7 +68,12 @@ const form = useForm({
     drop_chances: normalizeDropChances(baseNpc.drop_chances),
     min_respawn_time: baseNpc.min_respawn_time,
     max_respawn_time: baseNpc.max_respawn_time,
+    instance_dialog_action: null as 'keep' | 'detach' | null,
 })
+
+const convertingToMob = computed(() => baseNpc.category === 'NPC' && form.category === 'MOB');
+const requiresDialogChoice = computed(() => convertingToMob.value && ((baseNpc.dialog_instances_count ?? 0) > 0 || !!form.errors.instance_dialog_action));
+watch(() => form.category, () => { form.instance_dialog_action = null; form.clearErrors('instance_dialog_action'); });
 
 const applyDropChanceBoundaries = (boundaries: number[]): void => {
     boundaryPercentages.value = boundaries.map((value) => Number(value.toFixed(2)));
@@ -214,6 +219,13 @@ const divineInterventionOptions = [
         </div>
         <Message severity="error" size="small" variant="simple">{{ form.errors.category }}</Message>
 
+        <div v-if="requiresDialogChoice" class="flex flex-col gap-3 mb-8">
+            <Message severity="warn">Zmieniasz NPC na MOB. Dialogi są przypisane do {{ baseNpc.dialog_instances_count ?? 0 }} instancji na wszystkich mapach.</Message>
+            <label for="instance-dialog-action">Co zrobić z dialogami instancji?</label>
+            <Select input-id="instance-dialog-action" v-model="form.instance_dialog_action" :options="[{ label: 'Zachowaj dialogi', value: 'keep' }, { label: 'Odepnij dialogi i wyłącz automatyczny dialog', value: 'detach' }]" option-label="label" option-value="value" placeholder="Wybierz przed zapisaniem" />
+            <Message v-if="form.errors.instance_dialog_action" severity="error">{{ form.errors.instance_dialog_action }}</Message>
+        </div>
+
         <div class="flex items-center gap-4 mb-8">
             <label for="category" class="font-semibold w-24">Profesja</label>
             <Select
@@ -324,7 +336,7 @@ const divineInterventionOptions = [
 
         <div class="flex justify-end gap-2">
             <Button type="button" label="Anuluj" severity="secondary" @click="cancel"></Button>
-            <Button :loading="form.processing" type="button" label="Zapisz" @click="confirm"></Button>
+            <Button :loading="form.processing" :disabled="requiresDialogChoice && !form.instance_dialog_action" type="button" label="Zapisz" @click="confirm"></Button>
         </div>
     </Dialog>
 </template>

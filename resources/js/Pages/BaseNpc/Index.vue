@@ -6,6 +6,14 @@ import AdvanceColumn from "@advance-table/Components/AdvanceColumn.vue";
 import {BaseNpcResource} from "@/Resources/BaseNpc.resource";
 import { Link } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
+import NpcAdvancedFilters, {type NpcFilters} from '@/Components/NpcAdvancedFilters.vue';
+
+defineProps<{
+    filters: NpcFilters;
+    selectedMap: { id: number; name: string } | null;
+    selectedDialog: { id: number; name: string } | null;
+    selectedBaseNpc: { id: number; name: string } | null;
+}>();
 
 type Data = {
     data: BaseNpcResource
@@ -28,6 +36,7 @@ type Data = {
 
         <div class="card">
 
+            <NpcAdvancedFilters :filters="filters" :selected-map="selectedMap" :selected-dialog="selectedDialog" :selected-base-npc="selectedBaseNpc" base-list />
             <AdvanceTable
                 prop-name="baseNpcs"
             >

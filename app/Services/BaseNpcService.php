@@ -28,11 +28,11 @@ final class BaseNpcService extends BaseService
     /**
      * @throws \Exception
      */
-    public function getAll(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    public function getAll(array $filters = []): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
         return $this->fetchData(
             BaseNpcResource::class,
-            $this->baseNpcModel,
+            app(NpcFilterService::class)->apply($this->baseNpcModel->newQuery(), $filters, baseList: true),
             new TableService(
                 columns: [
                     'id' => new TableTextColumn(sortable: true),
@@ -124,9 +124,33 @@ final class BaseNpcService extends BaseService
         $baseNpc->delete();
     }
 
-    public function update(BaseNpc $baseNpc, mixed $validated)
+    public function update(BaseNpc $baseNpc, array $validated): void
     {
-        $baseNpc->update($validated);
+        $baseNpc->getConnection()->transaction(function () use ($baseNpc, $validated): void {
+            $baseNpc = $baseNpc->newQuery()->lockForUpdate()->findOrFail($baseNpc->id);
+            $convertingToMob = $baseNpc->category === BaseNpcCategory::NPC
+                && ($validated['category'] ?? null) === BaseNpcCategory::MOB->value;
+            $dialogAction = $validated['instance_dialog_action'] ?? null;
+            unset($validated['instance_dialog_action']);
+
+            if ($convertingToMob) {
+                $instances = $baseNpc->locations()->whereNotNull('dialog_id')->orderBy('id')->lockForUpdate()->get();
+                if ($instances->isNotEmpty() && ! in_array($dialogAction, ['keep', 'detach'], true)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'instance_dialog_action' => "Dialog jest przypisany do {$instances->count()} instancji. Wybierz, czy go zachować, czy odpiąć.",
+                    ]);
+                }
+                if ($dialogAction === 'detach') {
+                    foreach ($instances as $instance) {
+                        $instance->dialog()->dissociate();
+                        $instance->auto_start_dialog = false;
+                        $instance->save();
+                    }
+                }
+            }
+
+            $baseNpc->update($validated);
+        });
     }
 
     public function setGuaranteedLoot(BaseNpc $baseNpc, bool $guaranteed)

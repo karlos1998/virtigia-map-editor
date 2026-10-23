@@ -214,6 +214,7 @@ Route::middleware(['auth'])->group(function () {
                     Route::patch('audios/{audio}', [AudioController::class, 'update'])->name('audios.update');
 
                     Route::get('npcs', [NpcController::class, 'index'])->name('npcs.index');
+                    Route::patch('npcs/bulk/properties', [NpcController::class, 'bulkUpdate'])->name('npcs.bulk.update');
                     Route::get('npcs/search-hero', [NpcController::class, 'searchHero'])->name('npcs.search-hero');
                     Route::get('npcs/{npc}', [NpcController::class, 'show'])->name('npcs.show');
                     Route::patch('npcs/{npc}', [NpcController::class, 'update'])->name('npcs.update');

@@ -9,6 +9,9 @@ export interface NpcResource {
     name: string
     src: string
     lvl: string
+    category: string
+    rank: string
+    is_aggressive: boolean
     type: number
     draw_offset_x: number
     draw_offset_y: number
@@ -42,7 +45,7 @@ type LocationsDto = {
     }[]
 }
 
-export type NpcWithLocationsResource = NpcResource & LocationsDto;
+export type NpcWithLocationsResource = NpcResource & LocationsDto & Details;
 
 export type PureNpcWithOnlyLocationsResource = {
     id: number

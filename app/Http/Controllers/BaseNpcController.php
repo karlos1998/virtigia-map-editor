@@ -8,8 +8,8 @@ use App\Enums\Profession;
 use App\Http\Requests\AttachBaseNpcLootRequest;
 use App\Http\Requests\StoreBaseNpcRequest;
 use App\Http\Requests\StoreSimpleBaseNpcRequest;
-use App\Http\Requests\SyncBaseNpcSeasonalEventsRequest;
 use App\Http\Requests\SyncBaseNpcMobSpeciesRequest;
+use App\Http\Requests\SyncBaseNpcSeasonalEventsRequest;
 use App\Http\Requests\UpdateBaseNpcImageRequest;
 use App\Http\Requests\UpdateBaseNpcRequest;
 use App\Http\Resources\ActivityLogResource;
@@ -29,10 +29,12 @@ class BaseNpcController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(\App\Http\Requests\IndexNpcRequest $request)
     {
         return Inertia::render('BaseNpc/Index', [
-            'baseNpcs' => $this->baseNpcService->getAll(),
+            'baseNpcs' => $this->baseNpcService->getAll($request->validated()),
+            ...app(\App\Services\NpcFilterService::class)->options($request->validated()),
+            'availableRanks' => BaseNpcRank::toDropdownList(),
         ]);
     }
 
@@ -110,7 +112,7 @@ class BaseNpcController extends Controller
             ->get();
 
         return Inertia::render('BaseNpc/Show', [
-            'baseNpc' => BaseNpcResource::make($baseNpc->load(['loots', 'specialAttacks.effects', 'specialAttacks.damages', 'mobSpecies', 'seasonalEvents'])),
+            'baseNpc' => BaseNpcResource::make($baseNpc->load(['loots', 'specialAttacks.effects', 'specialAttacks.damages', 'mobSpecies', 'seasonalEvents'])->loadCount(['locations as dialog_instances_count' => fn ($query) => $query->whereNotNull('dialog_id')])),
             'locations' => $this->baseNpcService->getLocations($baseNpc),
             'logs' => ActivityLogResource::collection($logs),
             'similarBaseNpcs' => Inertia::lazy(fn () => $this->baseNpcService->findSimilarBaseNpcs($baseNpc)),
