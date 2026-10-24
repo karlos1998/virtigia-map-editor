@@ -21,6 +21,7 @@ class MapResource extends JsonResource
     {
         return [
             ...parent::toArray($request),
+            'is_city' => (bool) $this->resource->is_city,
             'path' => $this->resource->src,
             'src' => AssetUrl::map($this->resource->src),
             'thumbnail_src' => $this->resource->thumbnail_src ? AssetUrl::map($this->resource->thumbnail_src) : AssetUrl::map($this->resource->src),

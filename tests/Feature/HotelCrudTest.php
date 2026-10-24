@@ -57,6 +57,7 @@ class HotelCrudTest extends TestCase
 
         Schema::connection('retro')->create('maps', function (Blueprint $table): void {
             $table->id();
+            $table->boolean('is_city')->default(false);
             $table->string('name');
             $table->string('src')->default('');
             $table->unsignedInteger('x')->default(1);

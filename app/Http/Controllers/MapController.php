@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Enums\PvpType;
 use App\Http\Requests\AddWorldMinimapNodeRequest;
+use App\Http\Requests\BulkUpdateMapCityRequest;
 use App\Http\Requests\MapIndexRequest;
 use App\Http\Requests\StoreMapRequest;
 use App\Http\Requests\UpdateMapBattleground2Request;
 use App\Http\Requests\UpdateMapBattlegroundRequest;
+use App\Http\Requests\UpdateMapCityRequest;
 use App\Http\Requests\UpdateMapColsRequest;
 use App\Http\Requests\UpdateMapImageRequest;
 use App\Http\Requests\UpdateMapNameRequest;
@@ -24,6 +26,7 @@ use App\Jobs\RegenerateWorldMinimapJob;
 use App\Models\Map;
 use App\Models\RespawnPoint;
 use App\Models\WorldMinimapNode;
+use App\Services\MapCityService;
 use App\Services\MapService;
 use App\Services\NpcService;
 use App\Services\WorldMinimapService;
@@ -38,6 +41,29 @@ class MapController extends Controller
         private NpcService $npcService,
         private WorldMinimapService $worldMinimapService,
     ) {}
+
+    public function relatedCityMaps(Map $map, MapCityService $service): JsonResponse
+    {
+        return response()->json($service->relatedMaps($map)->map(fn (Map $related): array => [
+            'id' => $related->id, 'name' => $related->name, 'is_city' => $related->is_city,
+        ]));
+    }
+
+    public function updateCity(Map $map, UpdateMapCityRequest $request, MapCityService $service): \Illuminate\Http\RedirectResponse
+    {
+        $data = $request->validated();
+        $service->update($map, (bool) $data['is_city'], $data['related_map_ids'] ?? []);
+
+        return back()->with('success', 'Zapisano ustawienie miasta i wyczerpania.');
+    }
+
+    public function bulkUpdateCity(BulkUpdateMapCityRequest $request, MapCityService $service): \Illuminate\Http\RedirectResponse
+    {
+        $data = $request->validated();
+        $service->updateMany($data['map_ids'], (bool) $data['is_city']);
+
+        return back()->with('success', 'Zaktualizowano ustawienie wyczerpania zaznaczonych map.');
+    }
 
     public function create()
     {

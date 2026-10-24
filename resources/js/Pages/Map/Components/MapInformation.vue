@@ -6,6 +6,7 @@ import { useToast } from 'primevue';
 import { MapResource } from '@/Resources/Map.resource';
 import ReplaceMapImageModal from '@/Pages/Map/Modals/ReplaceMapImageModal.vue';
 import InputSwitch from 'primevue/inputswitch';
+import MapCitySettings from './MapCitySettings.vue';
 
 type BackgroundOption = {
     file: string;
@@ -287,6 +288,7 @@ const updateMapGroupingLocked = () => {
 
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
+                    <MapCitySettings :map="map" class="mb-4" />
                     <h3 class="font-semibold mb-2">Grafika mapy</h3>
                     <Button label="Podmień grafikę" icon="pi pi-image" @click="showReplaceImageModal = true" class="w-full" />
                 </div>

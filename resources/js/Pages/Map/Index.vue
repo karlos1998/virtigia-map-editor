@@ -5,17 +5,20 @@ import AdvanceTable from "@advance-table/Components/AdvanceTable.vue";
 import AdvanceColumn from "@advance-table/Components/AdvanceColumn.vue";
 import {MapResource} from "@/Resources/Map.resource";
 
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, useForm } from '@inertiajs/vue3';
 import {route} from "ziggy-js";
 import {computed, ref} from "vue";
 import Fieldset from 'primevue/fieldset';
 import Checkbox from 'primevue/checkbox';
+import Select from 'primevue/select';
+import Dialog from 'primevue/dialog';
 
 type Data = {
     data: MapResource
 }
 
 type MapFilters = {
+    is_city: boolean | null
     missing_battleground: boolean
 }
 
@@ -24,12 +27,32 @@ const props = withDefaults(defineProps<{
 }>(), {
     filters: () => ({
         missing_battleground: false,
+        is_city: null,
     }),
 });
 
+const cityFilter = ref(props.filters.is_city ?? null);
+const cityOptions = [
+    { label: 'Wszystkie mapy', value: null },
+    { label: 'Wyczerpanie zużywane', value: false },
+    { label: 'Bez zużywania wyczerpania (miasta)', value: true },
+];
+const selectedMaps = ref<MapResource[]>([]);
+const bulkVisible = ref(false);
+const bulkForm = useForm({ map_ids: [] as number[], is_city: true });
+const openBulk = (isCity: boolean) => {
+    bulkForm.clearErrors();
+    bulkForm.map_ids = selectedMaps.value.map(map => map.id);
+    bulkForm.is_city = isCity;
+    bulkVisible.value = true;
+};
+const saveBulk = () => bulkForm.patch(route('maps.bulk.city'), {
+    preserveScroll: true,
+    onSuccess: () => { bulkVisible.value = false; selectedMaps.value = []; },
+});
 const showMissingBattlegrounds = ref(props.filters.missing_battleground);
-const isAdvancedFiltersCollapsed = ref(!showMissingBattlegrounds.value);
-const hasActiveAdvancedFilters = computed(() => showMissingBattlegrounds.value);
+const isAdvancedFiltersCollapsed = ref(!showMissingBattlegrounds.value && cityFilter.value === null);
+const hasActiveAdvancedFilters = computed(() => showMissingBattlegrounds.value || cityFilter.value !== null);
 
 const reloadWithAdvancedFilters = () => {
     const filters: Record<string, string> = {};
@@ -38,6 +61,10 @@ const reloadWithAdvancedFilters = () => {
         filters.missing_battleground = '1';
     }
 
+    if (cityFilter.value !== null) {
+        filters.is_city = cityFilter.value ? '1' : '0';
+    }
+    selectedMaps.value = [];
     router.get(route('maps.index'), filters, {
         only: ['maps', 'filters'],
         preserveState: true,
@@ -47,6 +74,7 @@ const reloadWithAdvancedFilters = () => {
 
 const clearAdvancedFilters = () => {
     showMissingBattlegrounds.value = false;
+    cityFilter.value = null;
     reloadWithAdvancedFilters();
 }
 </script>
@@ -70,7 +98,7 @@ const clearAdvancedFilters = () => {
                 <div class="flex flex-col gap-4">
                     <div class="flex items-center gap-2">
                         <i class="pi pi-filter text-primary" />
-                        <h5 class="m-0">Tła walki</h5>
+                        <h5 class="m-0">Ustawienia map</h5>
                         <Tag v-if="hasActiveAdvancedFilters" value="aktywne" severity="success" />
                     </div>
 
@@ -86,6 +114,10 @@ const clearAdvancedFilters = () => {
                         <span class="font-medium">Pokaż mapy bez nadanego tła walki</span>
                     </label>
 
+                    <label class="flex flex-col gap-2">
+                        <span>Zużywanie wyczerpania</span>
+                        <Select v-model="cityFilter" :options="cityOptions" option-label="label" option-value="value" />
+                    </label>
                     <div class="flex flex-wrap gap-2">
                         <Button
                             label="Zastosuj"
@@ -105,7 +137,22 @@ const clearAdvancedFilters = () => {
                 </div>
             </Fieldset>
 
+            <div class="flex flex-wrap items-center gap-2 mb-4">
+                <span>Zaznaczono: {{ selectedMaps.length }}</span>
+                <Button label="Wyłącz wyczerpanie" :disabled="!selectedMaps.length" @click="openBulk(true)" />
+                <Button label="Włącz wyczerpanie" severity="secondary" :disabled="!selectedMaps.length" @click="openBulk(false)" />
+            </div>
+            <Dialog v-model:visible="bulkVisible" modal header="Masowa zmiana wyczerpania" :closable="!bulkForm.processing" :close-on-escape="!bulkForm.processing">
+                <p>{{ bulkForm.is_city ? 'Wyłączyć' : 'Włączyć' }} zużywanie wyczerpania na {{ bulkForm.map_ids.length }} zaznaczonych mapach?</p>
+                <p class="my-3">Zmiana dotyczy wyłącznie zaznaczonych map.</p>
+                <Message v-for="(message, field) in bulkForm.errors" :key="field" severity="error">{{ message }}</Message>
+                <template #footer>
+                    <Button label="Anuluj" severity="secondary" :disabled="bulkForm.processing" @click="bulkVisible = false" />
+                    <Button label="Potwierdź" :loading="bulkForm.processing" @click="saveBulk" />
+                </template>
+            </Dialog>
             <AdvanceTable
+                v-model:selection="selectedMaps"
                 prop-name="maps"
             >
 
@@ -126,6 +173,8 @@ const clearAdvancedFilters = () => {
                     </div>
                 </template>
 
+                <Column selection-mode="multiple" style="width: 3rem" />
+                <Column header="Wyczerpanie"><template #body="{ data }"><Tag :value="data.is_city ? 'Nie spada (miasto)' : 'Zużywane'" :severity="data.is_city ? 'success' : 'warn'" /></template></Column>
                 <AdvanceColumn field="id" header="ID" style="width: 5%" />
 
                 <Column header="Miniatura" style="width: 80px">

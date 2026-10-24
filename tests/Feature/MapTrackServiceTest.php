@@ -48,6 +48,7 @@ class MapTrackServiceTest extends TestCase
         });
         Schema::create('maps', function (Blueprint $table): void {
             $table->id();
+            $table->boolean('is_city')->default(false);
             $table->string('name');
             $table->unsignedInteger('x');
             $table->unsignedInteger('y');

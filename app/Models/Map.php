@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Map extends DynamicModel
 {
     protected $fillable = [
+        'is_city',
         'name',
         'src',
         'x',
@@ -21,7 +22,10 @@ class Map extends DynamicModel
         'is_grouping_locked',
     ];
 
+    protected $attributes = ['is_city' => false];
+
     protected $casts = [
+        'is_city' => 'boolean',
         'pvp' => PvpType::class,
         'is_teleport_locked' => 'boolean',
         'is_grouping_locked' => 'boolean',

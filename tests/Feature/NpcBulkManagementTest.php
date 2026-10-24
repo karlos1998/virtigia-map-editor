@@ -353,6 +353,7 @@ class NpcBulkManagementTest extends TestCase
         });
         Schema::create('maps', function (Blueprint $table): void {
             $table->id();
+            $table->boolean('is_city')->default(false);
             $table->timestamps();
             $table->string('name');
             $table->string('src');

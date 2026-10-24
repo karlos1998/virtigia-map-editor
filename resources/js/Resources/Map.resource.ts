@@ -16,6 +16,7 @@ export interface MapResource {
 
     // ....
     is_teleport_locked?: boolean
+    is_city: boolean
     is_grouping_locked?: boolean
     respawn_point?: RespawnPointResource
 }

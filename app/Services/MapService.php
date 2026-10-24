@@ -47,7 +47,7 @@ final class MapService extends BaseService
     }
 
     /**
-     * @param  array{missing_battleground?: bool}  $filters
+     * @param  array{missing_battleground?: bool, is_city?: bool|null}  $filters
      *
      * @throws \Exception
      */
@@ -85,10 +85,14 @@ final class MapService extends BaseService
     }
 
     /**
-     * @param  array{missing_battleground?: bool}  $filters
+     * @param  array{missing_battleground?: bool, is_city?: bool|null}  $filters
      */
     private function applyFilters(Builder $query, array $filters): void
     {
+        if (isset($filters['is_city'])) {
+            $query->where('is_city', $filters['is_city']);
+        }
+
         if (($filters['missing_battleground'] ?? false) !== true) {
             return;
         }
@@ -262,6 +266,7 @@ final class MapService extends BaseService
         // Create a new map with the same properties
         $newMap = $this->mapModel->create([
             'name' => $map->name.' (kopia)',
+            'is_city' => $map->is_city,
             'src' => $map->src,
             'x' => $map->x,
             'y' => $map->y,

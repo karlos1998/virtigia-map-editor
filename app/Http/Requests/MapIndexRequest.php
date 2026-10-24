@@ -24,6 +24,7 @@ class MapIndexRequest extends FormRequest
         return [
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
             'missing_battleground' => ['nullable', 'boolean'],
+            'is_city' => ['nullable', 'boolean'],
         ];
     }
 
@@ -37,12 +38,13 @@ class MapIndexRequest extends FormRequest
     }
 
     /**
-     * @return array{missing_battleground: bool}
+     * @return array{missing_battleground: bool, is_city: bool|null}
      */
     public function filters(): array
     {
         return [
             'missing_battleground' => $this->boolean('missing_battleground'),
+            'is_city' => $this->filled('is_city') ? $this->boolean('is_city') : null,
         ];
     }
 }
