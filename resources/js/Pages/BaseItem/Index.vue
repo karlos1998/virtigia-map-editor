@@ -460,7 +460,14 @@ onMounted(() => {
 <!--                    </template>-->
 <!--                </AdvanceColumn>-->
 
-                <AdvanceColumn field="name" header="Name" />
+                <AdvanceColumn field="name" header="Name">
+                    <template #body="{ data }: Data">
+                        <span class="inline-flex items-center gap-2">
+                            {{ data.name }}
+                            <i v-if="data.has_missing_attribute_points" v-tooltip.top="'Brak obliczonych punktów atrybutów. Otwórz przedmiot, aby przeliczyć i porównać wynik.'" class="pi pi-exclamation-triangle text-yellow-500" role="img" aria-label="Brak obliczonych punktów atrybutów" tabindex="0" />
+                        </span>
+                    </template>
+                </AdvanceColumn>
 
                 <AdvanceColumn field="category_name" header="Kategoria">
                     <template #body="{ data }: Data">

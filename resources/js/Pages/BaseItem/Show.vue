@@ -15,6 +15,7 @@ import {useConfirm, useToast} from "primevue";
 import EditBaseItemSrcDialog from "./Components/EditBaseItemSrcDialog.vue";
 import EditBaseItemDialog from "@/Pages/BaseItem/Components/EditBaseItemDialog.vue";
 import BaseItemActivityLogsTable from "./Partials/BaseItemActivityLogsTable.vue";
+import ReverseBaseItemAttributesDialog from "./Components/ReverseBaseItemAttributesDialog.vue";
 
 const { baseItem, logs } = defineProps<{
     baseItem: BaseItemWithRelations,
@@ -90,6 +91,7 @@ const copyConfirm = () => {
 const isEditBaseItemSrcDialogVisible = ref(false);
 
 const isEditBaseItemDialogVisible = ref(false);
+const isReverseAttributesDialogVisible = ref(false);
 </script>
 
 <template>
@@ -101,12 +103,14 @@ const isEditBaseItemDialogVisible = ref(false);
         <EditBaseItemSrcDialog :baseItem v-model:visible="isEditBaseItemSrcDialogVisible" />
 
         <EditBaseItemDialog v-model:visible="isEditBaseItemDialogVisible"  :baseItem />
+        <ReverseBaseItemAttributesDialog v-model:visible="isReverseAttributesDialogVisible" :baseItem />
 
         <ItemHeader
             :route-back="route('base-items.index')"
         >
             <template #header>
                 #{{ baseItem.id }} - {{ baseItem.name }}
+                <i v-if="baseItem.has_missing_attribute_points" v-tooltip.top="'Brak obliczonych punktów atrybutów. Przelicz przedmiot i porównaj wynik.'" class="pi pi-exclamation-triangle text-yellow-500" role="img" aria-label="Brak obliczonych punktów atrybutów" tabindex="0" />
             </template>
 
             <template #right-buttons>
@@ -149,6 +153,13 @@ const isEditBaseItemDialogVisible = ref(false);
             </template>
 
         </ItemHeader>
+
+        <Message v-if="baseItem.has_missing_attribute_points" severity="warn" :closable="false" class="mb-6">
+            <div class="flex flex-wrap items-center gap-3">
+                <span>Ten przedmiot nie ma obliczonych punktów atrybutów.</span>
+                <Button label="Przelicz i porównaj" icon="pi pi-calculator" severity="warn" @click="isReverseAttributesDialogVisible = true" />
+            </div>
+        </Message>
 
         <Message class="mb-6" v-if="baseItem.in_use">
             Przedmiot możesz usunąć jedynie gdy nie jest używany w grze.

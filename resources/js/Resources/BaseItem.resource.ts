@@ -47,6 +47,7 @@ export interface BaseItemResource {
     attribute_points?: Record<string, any> | null
     manual_attribute_points?: Record<string, any> | null
     reverse_attributes?: Record<string, any> | null
+    has_missing_attribute_points: boolean
     need_professions?: (string | null)[]
     need_level?: number | null
     usage_sources: BaseItemUsageSource[]

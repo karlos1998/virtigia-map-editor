@@ -11,6 +11,7 @@ use App\Http\Requests\BulkAttachBaseItemsToShopRequest;
 use App\Http\Requests\BulkDetachBaseItemRelationsRequest;
 use App\Http\Requests\BulkUpdateBaseItemDescriptionRequest;
 use App\Http\Requests\BulkUpdateBaseItemsRequest;
+use App\Http\Requests\ConfirmBaseItemAttributeReverseRequest;
 use App\Http\Requests\CreateBaseItemRequest;
 use App\Http\Requests\IndexBaseItemRequest;
 use App\Http\Requests\UpdateBaseItemImageRequest;
@@ -22,6 +23,7 @@ use App\Http\Resources\BaseItemResource;
 use App\Models\BaseItem;
 use App\Models\BaseNpc;
 use App\Models\Shop;
+use App\Services\BaseItemAttributeReverseService;
 use App\Services\BaseItemService;
 use App\Services\BaseNpcService;
 use App\Services\ShopService;
@@ -113,6 +115,18 @@ class BaseItemController extends Controller
         return Inertia::render('BaseItem/Edit', [
             'baseItem' => BaseItemResource::make($baseItem),
         ]);
+    }
+
+    public function previewAttributeReverse(BaseItem $baseItem, Request $request, BaseItemAttributeReverseService $service): \Illuminate\Http\JsonResponse
+    {
+        return response()->json($service->preview($baseItem, (int) $request->user()->id));
+    }
+
+    public function confirmAttributeReverse(BaseItem $baseItem, ConfirmBaseItemAttributeReverseRequest $request, BaseItemAttributeReverseService $service): RedirectResponse
+    {
+        $service->confirm($baseItem, (int) $request->user()->id, $request->previewToken());
+
+        return to_route('base-items.show', $baseItem->id);
     }
 
     public function updateAttributes(BaseItem $baseItem, UpdateItemAttributesRequest $request)

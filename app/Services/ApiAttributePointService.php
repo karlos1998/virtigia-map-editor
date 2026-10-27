@@ -30,12 +30,13 @@ final class ApiAttributePointService
      * to items, including both regular and manual attribute categories.
      *
      * @return object The attribute points data from external API
+     *
      * @throws \Exception When API call fails or returns invalid data
      */
     public function getAttributePoints(): object
     {
         try {
-            $apiUrl = config('services.margatron_api.base_url') . '/attribute-points';
+            $apiUrl = config('services.margatron_api.base_url').'/attribute-points';
             $timeout = config('services.margatron_api.timeout', 30);
 
             $response = Http::timeout($timeout)->get($apiUrl);
@@ -46,15 +47,15 @@ final class ApiAttributePointService
                 );
             }
 
-            return (object)$response->json();
+            return (object) $response->json();
 
         } catch (\Exception $e) {
             Log::error('Failed to fetch attribute points from external API', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
-            throw new \Exception('Error fetching attribute points: ' . $e->getMessage());
+            throw new \Exception('Error fetching attribute points: '.$e->getMessage());
         }
     }
 
@@ -64,14 +65,14 @@ final class ApiAttributePointService
      * Sends item parameters and attribute point allocations to external API
      * to calculate final scaled attribute values for the item.
      *
-     * @param array $parameters Query parameters including:
-     *                          - lvl: Item level requirement
-     *                          - itemCategory: Item category (armors, weapons, etc.)
-     *                          - rarity: Item rarity (common, unique, etc.)
-     *                          - itemProfessions: Required professions (comma-separated)
-     *                          - Various attribute point values (armor, criticalChance, etc.)
-     *
+     * @param  array  $parameters  Query parameters including:
+     *                             - lvl: Item level requirement
+     *                             - itemCategory: Item category (armors, weapons, etc.)
+     *                             - rarity: Item rarity (common, unique, etc.)
+     *                             - itemProfessions: Required professions (comma-separated)
+     *                             - Various attribute point values (armor, criticalChance, etc.)
      * @return object The scaled attribute values from external API
+     *
      * @throws \Exception When API call fails or returns invalid data
      */
     public function getScaleAttributes(array $parameters = []): object
@@ -87,7 +88,7 @@ final class ApiAttributePointService
             $this->logApiRequest($apiUrl, $sanitizedParameters);
 
             // Make the API call
-            $response = Http::timeout(config('services.margatron_api.timeout', 30))->get($apiUrl);
+            $response = Http::connectTimeout(5)->timeout(config('services.margatron_api.timeout', 30))->get($apiUrl);
 
             // Handle the response
             return $this->handleApiResponse($response, 'scale-attributes', $sanitizedParameters);
@@ -96,10 +97,10 @@ final class ApiAttributePointService
             Log::error('Failed to fetch scale attributes from external API', [
                 'parameters' => $parameters,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
-            throw new \Exception('Error fetching scale attributes: ' . $e->getMessage());
+            throw new \Exception('Error fetching scale attributes: '.$e->getMessage());
         }
     }
 
@@ -109,13 +110,13 @@ final class ApiAttributePointService
      * Sends scaled attribute values to external API to calculate the original
      * attribute point allocations that would produce those scaled values.
      *
-     * @param int $lvl Item level requirement
-     * @param string $category Item category (armors, weapons, etc.)
-     * @param array $itemProfessions Required professions
-     * @param string $rarity Item rarity (common, unique, etc.)
-     * @param array $scaledAttributes Scaled attribute values as key-value pairs
-     *
+     * @param  int  $lvl  Item level requirement
+     * @param  string  $category  Item category (armors, weapons, etc.)
+     * @param  array  $itemProfessions  Required professions
+     * @param  string  $rarity  Item rarity (common, unique, etc.)
+     * @param  array  $scaledAttributes  Scaled attribute values as key-value pairs
      * @return object The attribute points and attack elements from external API
+     *
      * @throws \Exception When API call fails or returns invalid data
      */
     public function getReverseScaleAttributes(int $lvl, string $category, array $itemProfessions, string $rarity, array $scaledAttributes): object
@@ -127,17 +128,17 @@ final class ApiAttributePointService
                 'itemCategory' => $category,
                 'itemProfessions' => $itemProfessions,
                 'rarity' => $rarity,
-                'scaledAttributes' => $scaledAttributes
+                'scaledAttributes' => (object) $scaledAttributes,
             ];
 
             // Build the API request URL
-            $apiUrl = config('services.margatron_api.base_url') . '/reverse-scale-attributes';
+            $apiUrl = config('services.margatron_api.base_url').'/reverse-scale-attributes';
 
             // Log the request for debugging
             $this->logApiRequest($apiUrl, $payload);
 
             // Make the API call (POST with JSON)
-            $response = Http::timeout(config('services.margatron_api.timeout', 30))
+            $response = Http::connectTimeout(5)->timeout(config('services.margatron_api.timeout', 30))
                 ->post($apiUrl, $payload);
 
             // Handle the response
@@ -151,10 +152,10 @@ final class ApiAttributePointService
                 'rarity' => $rarity,
                 'scaledAttributes' => $scaledAttributes,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
-            throw new \Exception('Error fetching reverse scale attributes: ' . $e->getMessage());
+            throw new \Exception('Error fetching reverse scale attributes: '.$e->getMessage());
         }
     }
 
@@ -167,7 +168,7 @@ final class ApiAttributePointService
     /**
      * Sanitize API parameters to ensure proper formatting
      *
-     * @param array $parameters Raw parameters from request
+     * @param  array  $parameters  Raw parameters from request
      * @return array Sanitized parameters ready for API call
      */
     private function sanitizeApiParameters(array $parameters): array
@@ -187,7 +188,7 @@ final class ApiAttributePointService
         }
 
         // Ensure itemProfessions always exists as empty string if not set
-        if (!array_key_exists('itemProfessions', $sanitized)) {
+        if (! array_key_exists('itemProfessions', $sanitized)) {
             $sanitized['itemProfessions'] = '';
         }
 
@@ -197,47 +198,47 @@ final class ApiAttributePointService
     /**
      * Build complete API URL with query parameters
      *
-     * @param string $endpoint The API endpoint (without base URL)
-     * @param array $parameters Query parameters
+     * @param  string  $endpoint  The API endpoint (without base URL)
+     * @param  array  $parameters  Query parameters
      * @return string Complete URL with query string
      */
     private function buildApiUrl(string $endpoint, array $parameters): string
     {
-        $baseUrl = config('services.margatron_api.base_url') . "/{$endpoint}";
+        $baseUrl = config('services.margatron_api.base_url')."/{$endpoint}";
 
         // Manually build query string to preserve empty values
         $queryParts = [];
         foreach ($parameters as $key => $value) {
-            $queryParts[] = $key . '=' . urlencode((string)$value);
+            $queryParts[] = $key.'='.urlencode((string) $value);
         }
 
         $queryString = implode('&', $queryParts);
 
-        return $baseUrl . '?' . $queryString;
+        return $baseUrl.'?'.$queryString;
     }
 
     /**
      * Log API request details for debugging
      *
-     * @param string $url Complete API URL
-     * @param array $parameters Request parameters
-     * @return void
+     * @param  string  $url  Complete API URL
+     * @param  array  $parameters  Request parameters
      */
     private function logApiRequest(string $url, array $parameters): void
     {
         Log::info('External API request initiated', [
             'url' => $url,
-            'parameters' => $parameters
+            'parameters' => $parameters,
         ]);
     }
 
     /**
      * Handle and validate API response
      *
-     * @param \Illuminate\Http\Client\Response $response HTTP response object
-     * @param string $endpoint API endpoint name for logging
-     * @param array $parameters Original request parameters for logging
+     * @param  \Illuminate\Http\Client\Response  $response  HTTP response object
+     * @param  string  $endpoint  API endpoint name for logging
+     * @param  array  $parameters  Original request parameters for logging
      * @return object Validated response data
+     *
      * @throws \Exception When response is invalid
      */
     private function handleApiResponse($response, string $endpoint, array $parameters): object
@@ -245,7 +246,7 @@ final class ApiAttributePointService
         // Log response details
         Log::info("External API response for {$endpoint}", [
             'status' => $response->status(),
-            'body' => $response->body()
+            'body' => $response->body(),
         ]);
 
         // Check for API errors
@@ -253,7 +254,7 @@ final class ApiAttributePointService
             Log::error("External API call failed for {$endpoint}", [
                 'status' => $response->status(),
                 'body' => $response->body(),
-                'parameters' => $parameters
+                'parameters' => $parameters,
             ]);
 
             throw new \Exception(
@@ -268,6 +269,6 @@ final class ApiAttributePointService
             throw new \Exception('External API returned invalid JSON response');
         }
 
-        return (object)$data;
+        return (object) $data;
     }
 }

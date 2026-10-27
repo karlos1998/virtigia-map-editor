@@ -79,6 +79,13 @@ class BaseItem extends DynamicModel
         return $this->hasOne(BaseItemUsageView::class, 'base_item_id');
     }
 
+    public function hasMissingAttributePoints(): bool
+    {
+        return empty($this->attribute_points)
+            && empty($this->manual_attribute_points)
+            && empty($this->reverse_attributes['approved_at']);
+    }
+
     public function hotelRooms()
     {
         return $this->hasMany(HotelRoom::class, 'base_item_id');

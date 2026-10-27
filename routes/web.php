@@ -200,6 +200,8 @@ Route::middleware(['auth'])->group(function () {
                     Route::get('base-items/{baseItem}', [BaseItemController::class, 'show'])->name('base-items.show');
                     Route::get('base-items/{baseItem}/edit', [BaseItemController::class, 'edit'])->name('base-items.edit');
                     Route::patch('base-items/{baseItem}/attributes', [BaseItemController::class, 'updateAttributes'])->name('base-items.attributes.update');
+                    Route::post('base-items/{baseItem}/attribute-reverse/preview', [BaseItemController::class, 'previewAttributeReverse'])->name('base-items.attribute-reverse.preview');
+                    Route::patch('base-items/{baseItem}/attribute-reverse', [BaseItemController::class, 'confirmAttributeReverse'])->name('base-items.attribute-reverse.confirm');
                     Route::get('books', [BookController::class, 'index'])->name('books.index');
                     Route::post('books', [BookController::class, 'store'])->name('books.store');
                     Route::get('books/search', [BookController::class, 'search'])->name('books.search');

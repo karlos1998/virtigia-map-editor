@@ -50,6 +50,7 @@ class BaseItemResource extends JsonResource
             'attribute_points' => $this->resource->attribute_points ?? null,
             'manual_attribute_points' => $this->resource->manual_attribute_points ?? null,
             'reverse_attributes' => $this->resource->reverse_attributes ?? null,
+            'has_missing_attribute_points' => $this->resource->hasMissingAttributePoints(),
 
             'in_use' => $usageView?->is_in_use ?? $this->resource->isInUse(),
             'usage_sources' => $usageSources,
