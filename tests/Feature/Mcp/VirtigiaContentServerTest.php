@@ -26,6 +26,7 @@ use App\Models\BaseItem;
 use App\Models\BaseNpc;
 use App\Models\BaseNpcLoot;
 use App\Models\Dialog;
+use App\Models\DialogCounter;
 use App\Models\Door;
 use App\Models\DynamicModel;
 use App\Models\Hotel;
@@ -667,6 +668,7 @@ class VirtigiaContentServerTest extends TestCase
         $this->assertSame('option.rules decide whether the answer is available to the player.', $capabilities['graph_model']['option_rules']);
         $this->assertSame('edge.rules independently decide whether that particular outgoing branch may be followed. One option may lead to several targets with different edge rules.', $capabilities['graph_model']['edge_rules']);
         $this->assertSame('current character name', $capabilities['text_runtime']['placeholders']['#nick']);
+        $this->assertStringContainsString('the engine replaces this', $capabilities['text_runtime']['placeholders']['[[counter:ID]]']);
         $this->assertSame('source-success', array_key_first($capabilities['node_types']['minigame']['outputs']));
         $this->assertSame('npc', $capabilities['camera_focus']['npc']['type']);
         $this->assertSame('parallel array of quantities, each 1-1000', $capabilities['rules']['items']['value2']);
@@ -675,6 +677,47 @@ class VirtigiaContentServerTest extends TestCase
         $this->assertSame('start combat with the interacted NPC', $capabilities['option_additional_action']['values']['BATTLE']);
         $this->assertContains('directed map transitions with coordinates, level ranges and required BaseItems', $capabilities['supported_authoring']);
         $this->assertContains('hotels/rooms, dialog counters and seasonal-event creation', $capabilities['not_exposed_for_ai_writes']);
+    }
+
+    public function test_dialog_counter_references_are_validated_for_graph_creation_and_patching(): void
+    {
+        app(McpWorldService::class)->use('test');
+
+        try {
+            $counter = DialogCounter::query()->create(['name' => 'Wynik rozmowy', 'scope' => 'character']);
+            $dialog = Dialog::query()->create(['name' => 'Rozmowa o wyniku']);
+            $node = $dialog->nodes()->create([
+                'type' => 'special',
+                'position' => ['x' => 0, 'y' => 0],
+                'content' => 'Dotychczasowa treść.',
+            ]);
+            $service = app(AiChangeSetService::class);
+
+            foreach ([
+                'Wynik: [[counter:'.$counter->id.']].' => true,
+                'Wynik: [[counter:999999999]].' => false,
+                'Wynik: [[counter:abc]].' => false,
+            ] as $content => $expectedValid) {
+                $createValidation = $service->validateOperations([[
+                    'type' => 'create_dialog',
+                    'key' => 'counter_dialog',
+                    'data' => [
+                        'name' => 'Rozmowa o wyniku',
+                        'nodes' => [['key' => 'speech', 'content' => $content]],
+                    ],
+                ]]);
+                $patchValidation = $service->validateOperations([[
+                    'type' => 'patch_dialog',
+                    'dialog_id' => $dialog->id,
+                    'data' => ['nodes' => [['id' => $node->id, 'content' => $content]]],
+                ]]);
+
+                $this->assertSame($expectedValid, $createValidation['valid'], implode('; ', $createValidation['errors']));
+                $this->assertSame($expectedValid, $patchValidation['valid'], implode('; ', $patchValidation['errors']));
+            }
+        } finally {
+            DynamicModel::clearGlobalConnection();
+        }
     }
 
     public function test_map_transitions_can_be_inspected_created_updated_deleted_and_reverted(): void

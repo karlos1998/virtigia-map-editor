@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\DialogCounterReferences;
 use App\Rules\DialogNodeAdditionalActionsValidator;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -25,8 +26,10 @@ class UpdateDialogNodeRequest extends FormRequest
         return [
             'content' => [
                 'required',
+                'string',
                 'min:3',
                 'max:2000',
+                new DialogCounterReferences,
             ],
 
             'additional_actions' => [

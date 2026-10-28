@@ -29,6 +29,7 @@ use App\Models\QuestStepAutoProgressMob;
 use App\Models\Shop;
 use App\Models\ShopItem;
 use App\Models\User;
+use App\Rules\DialogCounterReferences;
 use App\Services\BaseItemService;
 use App\Services\BaseNpcService;
 use App\Services\DialogLayoutService;
@@ -790,6 +791,8 @@ class AiChangeSetService
             }
             $nodeKeys[] = $nodeKey;
 
+            $this->validateDialogContent($node['content'] ?? null, "{$prefix}: węzeł [{$nodeKey}]", $errors);
+
             foreach ($node['options'] ?? [] as $optionIndex => $option) {
                 $optionKey = $option['key'] ?? null;
                 if (! is_string($optionKey) || preg_match('/^[a-z0-9][a-z0-9_-]{0,63}$/', $optionKey) !== 1) {
@@ -856,6 +859,8 @@ class AiChangeSetService
             if ($nodeId !== null && ! in_array($nodeId, $dialogNodeIds, true)) {
                 $errors[] = "{$prefix}: węzeł [{$nodeId}] nie należy do tego dialogu.";
             }
+
+            $this->validateDialogContent($node['content'] ?? null, "{$prefix}: węzeł ".($nodeIndex + 1), $errors);
 
             if (is_string($nodeKey)) {
                 if (in_array($nodeKey, $nodeKeys, true)) {
@@ -936,6 +941,14 @@ class AiChangeSetService
             && ($data['delete_edge_ids'] ?? []) === [] && ! array_key_exists('name', $data)) {
             $errors[] = "{$prefix}: patch dialogu nie zawiera żadnych zmian.";
         }
+    }
+
+    /** @param array<int, string> $errors */
+    private function validateDialogContent(mixed $content, string $prefix, array &$errors): void
+    {
+        (new DialogCounterReferences)->validate('content', $content, function (string $message) use ($prefix, &$errors): void {
+            $errors[] = "{$prefix}: {$message}";
+        });
     }
 
     /** @param array<int, string> $dialogKeys @param array<int, string> $errors */

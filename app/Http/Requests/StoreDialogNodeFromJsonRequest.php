@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\DialogNodeOptionAdditionalAction;
+use App\Rules\DialogCounterReferences;
 use App\Rules\DialogNodeAdditionalActionsValidator;
 use App\Rules\DialogOptionRuleValidator;
 use Closure;
@@ -24,7 +25,7 @@ class StoreDialogNodeFromJsonRequest extends FormRequest
             'node.position' => ['required', 'array'],
             'node.position.x' => ['required', 'numeric'],
             'node.position.y' => ['required', 'numeric'],
-            'node.content' => ['nullable', 'string', 'min:3', 'max:2000'],
+            'node.content' => ['nullable', 'string', 'min:3', 'max:2000', new DialogCounterReferences],
             'node.additional_actions' => [
                 'nullable',
                 'array',

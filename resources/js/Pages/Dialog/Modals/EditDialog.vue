@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, reactive, Ref, ref, watch } from 'vue';
-import Textarea from 'primevue/textarea';
 import Button from 'primevue/button';
 import { DynamicDialogInstance } from 'primevue/dynamicdialogoptions';
 import { route } from 'ziggy-js';
@@ -8,6 +7,7 @@ import axios from 'axios';
 import { useToast } from 'primevue';
 import { DialogNodeAdditionalActionsResource } from '@/Resources/DialogNodeAdditionalActions.resource';
 import AdditionalActionsEditor from '@/Pages/Dialog/Componnts/AdditionalActionsEditor.vue';
+import DialogContentEditor from '@/Pages/Dialog/Componnts/DialogContentEditor.vue';
 import { usePage } from '@inertiajs/vue3';
 import type { DialogNodeActionDataResource, DialogNodeFocusResource } from '@/Resources/DialogNodeActionData.resource';
 import type { NpcWithLocationsResource } from '@/Resources/Npc.resource';
@@ -314,7 +314,7 @@ const save = (): void => {
 
 <template>
     <div class="flex flex-col gap-4">
-        <Textarea v-model="form.content" rows="5" cols="50" />
+        <DialogContentEditor v-model="form.content" />
 
         <div class="flex flex-col gap-3 rounded-lg border border-surface-200 p-3 dark:border-surface-700">
             <h3 class="text-lg font-semibold m-0">Fokus kamery</h3>

@@ -550,6 +550,7 @@ class GameContentSearchService
             ],
             'text_runtime' => [
                 'placeholders' => [
+                    '[[counter:ID]]' => 'NPC node.content only: the engine replaces this with the current counter value after node actions, using the character/user/global scope. Use an existing DialogCounter ID. Uninitialized values are 0. The player receives only the rendered text.',
                     '#nick' => 'current character name',
                     '#lvl' => 'current character level',
                     '#difflvl(N)' => 'absolute difference between the character level and N',
