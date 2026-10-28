@@ -5,7 +5,7 @@ export type DialogNodeAdditionalActionsResource = Partial<Record<DialogNodeAddit
     duration?: number;
 } | {
     value: number | number[] | null;
-    value2?: number[];
+    value2?: number | number[];
     duration?: number;
     scale?: boolean;
 }>>

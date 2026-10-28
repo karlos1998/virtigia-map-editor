@@ -671,6 +671,7 @@ class VirtigiaContentServerTest extends TestCase
         $this->assertSame('npc', $capabilities['camera_focus']['npc']['type']);
         $this->assertSame('parallel array of quantities, each 1-1000', $capabilities['rules']['items']['value2']);
         $this->assertSame('existing DialogCounter ID', $capabilities['rules']['dialogCounter']['value']);
+        $this->assertSame('optional signed 32-bit integer amount to add; defaults to 1; negative values subtract', $capabilities['additional_actions']['actions']['addDialogCounter']['value2']);
         $this->assertSame('start combat with the interacted NPC', $capabilities['option_additional_action']['values']['BATTLE']);
         $this->assertContains('directed map transitions with coordinates, level ranges and required BaseItems', $capabilities['supported_authoring']);
         $this->assertContains('hotels/rooms, dialog counters and seasonal-event creation', $capabilities['not_exposed_for_ai_writes']);

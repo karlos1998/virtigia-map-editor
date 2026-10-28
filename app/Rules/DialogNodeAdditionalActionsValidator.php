@@ -57,6 +57,20 @@ class DialogNodeAdditionalActionsValidator implements ValidationRule
 
                     return;
                 }
+            } elseif ($key === DialogNodeAdditionalAction::ADD_DIALOG_COUNTER->value) {
+                if (! is_numeric($ruleData['value'])) {
+                    $fail("Dla rule: {$key}, wartość musi być liczbą (ID licznika).");
+
+                    return;
+                }
+
+                if (array_key_exists('value2', $ruleData) && (
+                    ! is_int($ruleData['value2']) || $ruleData['value2'] < -2147483648 || $ruleData['value2'] > 2147483647
+                )) {
+                    $fail("Dla rule: {$key}, zmiana licznika musi być liczbą całkowitą od -2147483648 do 2147483647.");
+
+                    return;
+                }
             } elseif ($key === DialogNodeAdditionalAction::BLESSING->value) {
                 $blessingValue = $ruleData['value'] ?? null;
                 if (! is_numeric($blessingValue)) {

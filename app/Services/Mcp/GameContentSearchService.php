@@ -655,7 +655,7 @@ class GameContentSearchService
                     'setQuestStep' => ['value' => 'QuestStep ID or @step:quest-key:step-key'],
                     'blessing' => ['value' => 'existing BaseItem ID with category blessings', 'scale' => 'optional boolean'],
                     'setOutfit' => ['value' => 'existing outfit asset path only', 'duration' => 'minutes; 0 is permanent'],
-                    'addDialogCounter' => ['value' => 'existing DialogCounter ID; increments it'],
+                    'addDialogCounter' => ['value' => 'existing DialogCounter ID', 'value2' => 'optional signed 32-bit integer amount to add; defaults to 1; negative values subtract'],
                     'resetDialogCounter' => ['value' => 'existing DialogCounter ID'],
                     'resetAdditionalAttributePoints' => ['value' => 'number'],
                 ],

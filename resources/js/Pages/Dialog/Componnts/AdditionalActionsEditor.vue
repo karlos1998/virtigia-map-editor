@@ -70,10 +70,9 @@ const addAdditionalAction = (): void => {
         actions.value[action] = { value: '' };
     } else if (action === DialogNodeAdditionalAction.setOutfit) {
         actions.value[action] = { value: '', duration: 0 };
-    } else if (
-        action === DialogNodeAdditionalAction.addDialogCounter ||
-        action === DialogNodeAdditionalAction.resetDialogCounter
-    ) {
+    } else if (action === DialogNodeAdditionalAction.addDialogCounter) {
+        actions.value[action] = { value: null, value2: 1 };
+    } else if (action === DialogNodeAdditionalAction.resetDialogCounter) {
         actions.value[action] = { value: null } as any;
     } else {
         actions.value[action] = { value: 1 };
@@ -103,6 +102,12 @@ const extractBlessingItemId = (action: any): number | null => {
 };
 
 const syncExistingActionState = async (): Promise<void> => {
+    const addCounterAction = actions.value[DialogNodeAdditionalAction.addDialogCounter];
+
+    if (addCounterAction && !('value2' in addCounterAction)) {
+        Object.assign(addCounterAction, { value2: 1 });
+    }
+
     const blessingAction = actions.value[DialogNodeAdditionalAction.blessing] as any;
     const blessingItemId = extractBlessingItemId(blessingAction);
 
@@ -339,6 +344,16 @@ const validate = (): boolean => {
         return false;
     }
 
+    if (addCounterAction) {
+        const amount = 'value2' in addCounterAction ? addCounterAction.value2 : 1;
+
+        if (typeof amount !== 'number' || !Number.isInteger(amount) || amount < -2147483648 || amount > 2147483647) {
+            toast.add({ severity: 'error', summary: 'Błąd', detail: 'Zmiana licznika musi być liczbą całkowitą od -2147483648 do 2147483647', life: 3000 });
+
+            return false;
+        }
+    }
+
     const resetCounterAction = actions.value[DialogNodeAdditionalAction.resetDialogCounter];
 
     if (resetCounterAction && !resetCounterAction.value) {
@@ -506,6 +521,23 @@ defineExpose({
                 placeholder="Wybierz licznik do wyczyszczenia"
                 class="dialog-editor-control dialog-editor-control--wide"
             />
+
+            <label
+                v-if="actions[name] && name === DialogNodeAdditionalAction.addDialogCounter"
+                class="dialog-editor-control flex flex-col gap-2"
+            >
+                <span>Zmiana licznika</span>
+                <InputNumber
+                    v-model="(actions[name] as any).value2"
+                    :min="-2147483648"
+                    :max="2147483647"
+                    :maxFractionDigits="0"
+                    :useGrouping="false"
+                    :step="1"
+                    aria-label="Zmiana licznika"
+                />
+                <small>Domyślnie 1. Wartość ujemna odejmuje od licznika.</small>
+            </label>
 
             <div v-if="actions[name] && name === DialogNodeAdditionalAction.setOutfit" class="dialog-editor-control dialog-editor-control--wide space-y-3 rounded-lg border bg-gray-50 p-3">
                 <div>
