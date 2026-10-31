@@ -61,6 +61,7 @@ const formatRange = (calendar: RewardCalendarListItem) => {
 
 <template>
     <AppLayout>
+        <ConfirmDialog />
         <div class="card mb-4 flex items-center justify-between gap-3">
             <div>
                 <h2 class="text-xl font-semibold">Kalendarze nagród</h2>

@@ -3,7 +3,7 @@ import AppLayout from "@/layout/AppLayout.vue";
 import LootChestEditor from "@/Pages/BaseItem/Components/LootChestEditor.vue";
 import { Link, router, useForm } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
-import { computed, ref } from "vue";
+import { computed, ref, toRaw } from "vue";
 import { useConfirm, useToast } from "primevue";
 import InputSwitch from "primevue/inputswitch";
 import {
@@ -89,11 +89,11 @@ const openEditDay = (day: RewardCalendarDay) => {
     dayForm.month = day.month;
     dayForm.day = day.day;
     dayForm.type = day.type;
-    dayRewardsAttributes.value = day.rewards ? { lootChest: structuredClone(day.rewards) } : {};
+    dayRewardsAttributes.value = day.rewards ? { lootChest: structuredClone(toRaw(day.rewards)) } : {};
     dayTiers.value = (day.tiers ?? []).map((tier) => ({
         uid: createUid(),
         minOpenedDays: tier.minOpenedDays,
-        attributes: { lootChest: structuredClone(tier.rewards) },
+        attributes: { lootChest: structuredClone(toRaw(tier.rewards)) },
     }));
     dayDialogVisible.value = true;
 };
@@ -183,6 +183,7 @@ const normalDaysBefore = (day: RewardCalendarDay) => props.days.filter((other) =
 
 <template>
     <AppLayout>
+        <ConfirmDialog />
         <div class="card mb-4">
             <div class="mb-4 flex items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
