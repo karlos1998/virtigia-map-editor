@@ -505,7 +505,7 @@ function updateBooleanAttribute(attributeKey: string, value: boolean): void {
 /**
  * Update additional attribute value in the form data
  */
-function updateAdditionalAttribute(attributeKey: string, value: number | string | Date | null | string[] | number[]): void {
+function updateAdditionalAttribute(attributeKey: string, value: number | string | Date | null | string[] | Array<number | null>): void {
     if (!form.value.attributes) {
         form.value.attributes = {};
     }
@@ -519,7 +519,11 @@ function updateAdditionalAttribute(attributeKey: string, value: number | string 
     }
 
     // Modify existing attributes object in place instead of reassigning
-    form.value.attributes[attributeKey] = finalValue;
+    if (attributeKey === 'healChanceAfterFight' && Array.isArray(finalValue) && finalValue.every(item => item === null || item === '')) {
+        delete form.value.attributes[attributeKey];
+    } else {
+        form.value.attributes[attributeKey] = finalValue;
+    }
 
     calculateScaleAttributes();
 }
@@ -527,13 +531,13 @@ function updateAdditionalAttribute(attributeKey: string, value: number | string 
 /**
  * Get additional attribute value - converts unix timestamp to Date if needed
  */
-function getAdditionalAttributeValue(attributeKey: string, type: AdditionalAttributeType): number | string | Date | string[] | number[] | null {
+function getAdditionalAttributeValue(attributeKey: string, type: AdditionalAttributeType): number | string | Date | string[] | Array<number | null> | null {
     const value = form.value?.attributes?.[attributeKey];
 
     if (value === null || value === undefined) {
         if (type === 'array') {
             const attr = additionalAttributes.find(a => a.key === attributeKey);
-            return attr?.arraySize ? new Array(attr.arraySize).fill(0) : [];
+            return attr?.arraySize ? new Array(attr.arraySize).fill(null) : [];
         }
         return type === 'int' || type === 'decimal' ? 0 : type === 'string' || type === 'text' ? '' : type === 'multiselect' ? [] : null;
     }
@@ -553,7 +557,7 @@ function getAdditionalAttributeConfig(attributeKey: string): AdditionalAttribute
     return additionalAttributes.find(attr => attr.key === attributeKey);
 }
 
-function normalizeDecimalAttribute(value: number | string | Date | null | string[] | number[]): number {
+function normalizeDecimalAttribute(value: unknown): number {
     const numericValue = typeof value === 'number'
         ? value
         : typeof value === 'string'
@@ -618,9 +622,9 @@ function getArrayConstraint(attributeKey: string, index: number, constraint: 'mi
 /**
  * Get additional attribute value as array
  */
-function getAdditionalAttributeValueAsArray(attributeKey: string): number[] {
+function getAdditionalAttributeValueAsArray(attributeKey: string): Array<number | null> {
     const value = getAdditionalAttributeValue(attributeKey, 'array');
-    return Array.isArray(value) ? value : [];
+    return Array.isArray(value) ? value as Array<number | null> : [];
 }
 
 function isDeepWoundAttackElement(attackElement: string | AttackElement): boolean {
@@ -1483,7 +1487,7 @@ watch(selectedLegendaryBonus, async () => {
                                 v-for="(item, index) in getAdditionalAttributeValueAsArray(attr.key)"
                                 :key="index"
                                 :model-value="item"
-                                @update:model-value="(value: number) => {
+                                @update:model-value="(value: number | null) => {
                                     const arrayValue = [...getAdditionalAttributeValueAsArray(attr.key)];
                                     arrayValue[index] = value;
                                     updateAdditionalAttribute(attr.key, arrayValue);

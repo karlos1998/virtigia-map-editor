@@ -366,11 +366,11 @@ const save = async () => {
                     life: 3000
                 });
             },
-            onError: () => {
+            onError: (errors) => {
                 toast.add({
                     severity: 'error',
                     summary: 'Błąd',
-                    detail: 'Nie udało się zapisać',
+                    detail: String(Object.values(errors)[0] ?? 'Nie udało się zapisać'),
                     life: 3000
                 });
             }
