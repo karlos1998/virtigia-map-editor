@@ -373,6 +373,7 @@ class NpcBulkManagementTest extends TestCase
             $table->softDeletes();
         });
         Schema::create('base_npc_loots', function (Blueprint $table): void {
+            $table->boolean('destroy_on_level_gap')->default(true);
             $table->unsignedBigInteger('base_npc_id');
             $table->unsignedBigInteger('base_item_id');
         });

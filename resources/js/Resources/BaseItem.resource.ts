@@ -26,6 +26,8 @@ export interface BaseItemUsageSource {
 }
 
 export interface BaseItemResource {
+    destroy_on_level_gap?: boolean;
+    suggest_destroy_on_level_gap?: boolean;
     id: number
     name: string
 

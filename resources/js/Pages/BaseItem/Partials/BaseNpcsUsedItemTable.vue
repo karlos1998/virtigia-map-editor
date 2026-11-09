@@ -15,7 +15,13 @@ type Data = {
 <template>
     <DataTable :value="baseNpcs" tableStyle="min-width: 50rem">
         <template #header>
-            Lista powiązanych bazowych NPC, z których można zdobyć przedmiot
+            <div>Lista powiązanych bazowych NPC, z których można zdobyć przedmiot</div>
+            <p
+                v-if="baseNpcs.some(npc => npc.destroy_on_level_gap === true) && baseNpcs.some(npc => npc.destroy_on_level_gap === false)"
+                class="mt-2 text-sm text-amber-600"
+            >
+                Ten przedmiot ma różne ustawienia niszczenia zależnie od moba. Sprawdź, czy chcesz je ujednolicić.
+            </p>
         </template>
 
         <template #empty>
@@ -37,6 +43,11 @@ type Data = {
         <Column field="name" header="Nazwa"></Column>
 
         <Column field="lvl" header="Lvl"></Column>
+        <Column header="Podlega zniszczeniu">
+            <template #body="{ data }: Data">
+                {{ data.destroy_on_level_gap === true ? 'Tak' : data.destroy_on_level_gap === false ? 'Nie' : '—' }}
+            </template>
+        </Column>
 
         <Column header="Action" style="width: 20%">
             <template #body="{data}">

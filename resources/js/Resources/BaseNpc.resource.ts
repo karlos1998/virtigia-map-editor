@@ -5,6 +5,7 @@ import {BaseItemResource} from "./BaseItem.resource";
 import {SpecialAttackResource} from "./SpecialAttack.resource";
 
 export interface BaseNpcResource {
+    destroy_on_level_gap?: boolean;
     id: number
     name: string
     src: string

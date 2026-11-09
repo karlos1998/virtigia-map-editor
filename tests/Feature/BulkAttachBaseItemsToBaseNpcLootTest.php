@@ -62,6 +62,7 @@ class BulkAttachBaseItemsToBaseNpcLootTest extends TestCase
             $table->json('reverse_attributes')->nullable();
             $table->string('rarity')->nullable();
             $table->string('category')->nullable();
+            $table->boolean('suggest_destroy_on_level_gap')->default(true);
             $table->unsignedInteger('price')->nullable();
             $table->string('currency')->nullable();
             $table->unsignedInteger('specific_currency_price')->nullable();
@@ -89,6 +90,7 @@ class BulkAttachBaseItemsToBaseNpcLootTest extends TestCase
         });
 
         Schema::connection($this->worldConnection)->create('base_npc_loots', function (Blueprint $table): void {
+            $table->boolean('destroy_on_level_gap')->default(true);
             $table->id();
             $table->foreignId('base_npc_id');
             $table->foreignId('base_item_id');
@@ -138,6 +140,65 @@ class BulkAttachBaseItemsToBaseNpcLootTest extends TestCase
                 ->where('base_item_id', 2)
                 ->count()
         );
+    }
+
+    public function test_new_loot_uses_npc_and_item_defaults_and_can_be_overridden(): void
+    {
+        $this->seedBaseNpc();
+        $this->seedBaseItems();
+
+        $world = DB::connection($this->worldConnection);
+        $world->table('base_npcs')->where('id', 10)->update(['lvl' => 15]);
+        $world->table('base_items')->where('id', 2)->update(['suggest_destroy_on_level_gap' => false]);
+
+        $this->actingAs($this->makeUser())->withSession(['world' => $this->worldConnection]);
+
+        $this->post(route('base-npcs.loots.attach', ['baseNpc' => 10]), ['baseItemId' => 1])->assertRedirect();
+        $this->assertDatabaseHas('base_npc_loots', ['base_npc_id' => 10, 'base_item_id' => 1, 'destroy_on_level_gap' => false], $this->worldConnection);
+
+        $this->patch(route('base-npcs.loots.update', ['baseNpc' => 10, 'loot' => 1]), [
+            'destroy_on_level_gap' => true,
+        ])->assertRedirect();
+        $this->post(route('base-npcs.loots.attach', ['baseNpc' => 10]), ['baseItemId' => 1])->assertRedirect();
+        $this->assertDatabaseHas('base_npc_loots', ['base_npc_id' => 10, 'base_item_id' => 1, 'destroy_on_level_gap' => true], $this->worldConnection);
+
+        $world->table('base_npcs')->where('id', 10)->update(['lvl' => 16]);
+        $this->post(route('base-items.bulk.base-npc-loots.attach'), ['base_npc_id' => 10, 'item_ids' => [2, 3]])->assertRedirect();
+        $this->assertDatabaseHas('base_npc_loots', ['base_npc_id' => 10, 'base_item_id' => 2, 'destroy_on_level_gap' => false], $this->worldConnection);
+        $this->assertDatabaseHas('base_npc_loots', ['base_npc_id' => 10, 'base_item_id' => 3, 'destroy_on_level_gap' => true], $this->worldConnection);
+    }
+
+    public function test_migration_protects_early_normal_mobs_and_special_item_categories(): void
+    {
+        $this->seedBaseNpc();
+        $this->seedBaseItems();
+        $schema = Schema::connection($this->worldConnection);
+        $schema->dropIfExists('migrations');
+        $schema->table('base_items', fn (Blueprint $table) => $table->dropColumn('suggest_destroy_on_level_gap'));
+        $schema->table('base_npc_loots', fn (Blueprint $table) => $table->dropColumn('destroy_on_level_gap'));
+        $world = DB::connection($this->worldConnection);
+        $world->table('base_items')->where('id', 2)->update(['category' => 'neutrals']);
+        $world->table('base_items')->where('id', 3)->update(['category' => 'quests']);
+        $world->table('base_npcs')->insert([
+            ['id' => 11, 'name' => 'Zwykły 15', 'lvl' => 15, 'rank' => 'NORMAL'],
+            ['id' => 12, 'name' => 'Zwykły 16', 'lvl' => 16, 'rank' => 'NORMAL'],
+            ['id' => 13, 'name' => 'Elita 15', 'lvl' => 15, 'rank' => 'ELITE'],
+        ]);
+        $world->table('base_npc_loots')->insert([
+            ['base_npc_id' => 11, 'base_item_id' => 1],
+            ['base_npc_id' => 12, 'base_item_id' => 1],
+            ['base_npc_id' => 13, 'base_item_id' => 1],
+            ['base_npc_id' => 12, 'base_item_id' => 2],
+            ['base_npc_id' => 12, 'base_item_id' => 3],
+        ]);
+
+        $this->artisan('migrate', [
+            '--database' => $this->worldConnection,
+            '--path' => 'database/migrations/remote/2026_11_09_150000_add_level_gap_rules_to_npc_loot.php',
+        ])->assertSuccessful();
+
+        $this->assertSame([1, 0, 0], $world->table('base_items')->orderBy('id')->pluck('suggest_destroy_on_level_gap')->all());
+        $this->assertSame([0, 1, 1, 0, 0], $world->table('base_npc_loots')->orderBy('id')->pluck('destroy_on_level_gap')->all());
     }
 
     public function test_it_requires_base_npc(): void

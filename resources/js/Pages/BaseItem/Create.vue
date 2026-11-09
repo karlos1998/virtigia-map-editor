@@ -18,6 +18,7 @@ const {baseItemCategoryList, baseItemRarityList, baseItemCurrencyList} = usePage
 const form = useForm({
     name: '',
     category: '',
+    suggest_destroy_on_level_gap: null as boolean | null,
     rarity: '',
     price: 0,
     currency: '',
@@ -128,6 +129,13 @@ const submit = () => {
                             <label for="category">Kategoria *</label>
                         </IftaLabel>
                         <small v-if="form.errors.category" class="p-error">{{ form.errors.category }}</small>
+                        <label class="flex items-center gap-2">
+                            <InputSwitch
+                                :model-value="form.suggest_destroy_on_level_gap ?? !['quests', 'neutrals'].includes(form.category)"
+                                @update:model-value="form.suggest_destroy_on_level_gap = $event"
+                            />
+                            Domyślnie podlega zniszczeniu za różnicę poziomów
+                        </label>
 
                         <IftaLabel>
                             <Dropdown

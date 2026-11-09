@@ -39,6 +39,7 @@ const cleanAttributes = (attrs: any): any => {
 
 // Create form with full baseItem structure - clean attributes on init
 const form = useForm({
+    suggest_destroy_on_level_gap: props.baseItem.suggest_destroy_on_level_gap ?? true,
     attributes: cleanAttributes(props.baseItem.attributes),
     attribute_points: props.baseItem.attribute_points || {},
     manual_attribute_points: props.baseItem.manual_attribute_points || {}
@@ -350,6 +351,7 @@ const save = async () => {
     // Create update data with all three fields
     const updateData = {
         attributes: finalAttributes,
+        suggest_destroy_on_level_gap: form.suggest_destroy_on_level_gap,
         attribute_points: (isBook.value || isMusicBox.value || isLootChest.value) ? {} : (form.attribute_points || {}),
         manual_attribute_points: (isBook.value || isMusicBox.value || isLootChest.value) ? {} : (form.manual_attribute_points || {})
     };
@@ -393,6 +395,7 @@ watch(
     () => props.baseItem,
     (updatedBaseItem) => {
         form.attributes = cleanAttributes(updatedBaseItem.attributes);
+        form.suggest_destroy_on_level_gap = updatedBaseItem.suggest_destroy_on_level_gap ?? true;
         form.attribute_points = updatedBaseItem.attribute_points || {};
         form.manual_attribute_points = updatedBaseItem.manual_attribute_points || {};
         persistedPrice.value = Number(updatedBaseItem.price ?? 0);
@@ -471,6 +474,10 @@ const clearCurrency = () => {
                 Wyświetlane są przeskalowane atrybuty z kalkulatora punktów
             </div>
         </div>
+        <label class="card flex items-center gap-2">
+            <InputSwitch v-model="form.suggest_destroy_on_level_gap" />
+            Domyślnie podlega zniszczeniu za różnicę poziomów
+        </label>
         <div class="card my-4 p-3">
             <h4 class="font-semibold mb-2">Cena przedmiotu</h4>
             <div class="flex flex-wrap items-end gap-3">

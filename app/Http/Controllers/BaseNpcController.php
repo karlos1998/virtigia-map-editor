@@ -11,11 +11,13 @@ use App\Http\Requests\StoreSimpleBaseNpcRequest;
 use App\Http\Requests\SyncBaseNpcMobSpeciesRequest;
 use App\Http\Requests\SyncBaseNpcSeasonalEventsRequest;
 use App\Http\Requests\UpdateBaseNpcImageRequest;
+use App\Http\Requests\UpdateBaseNpcLootRequest;
 use App\Http\Requests\UpdateBaseNpcRequest;
 use App\Http\Resources\ActivityLogResource;
 use App\Http\Resources\BaseNpcResource;
 use App\Models\BaseNpc;
 use App\Services\BaseNpcService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -169,9 +171,18 @@ class BaseNpcController extends Controller
         return response()->json($this->baseNpcService->searchHero($request->get('query', '')));
     }
 
-    public function attachLoot(BaseNpc $baseNpc, AttachBaseNpcLootRequest $request)
+    public function attachLoot(BaseNpc $baseNpc, AttachBaseNpcLootRequest $request): RedirectResponse
     {
         $this->baseNpcService->attachLoot($baseNpc, $request->get('baseItemId'));
+
+        return back();
+    }
+
+    public function updateLoot(BaseNpc $baseNpc, int $loot, UpdateBaseNpcLootRequest $request): RedirectResponse
+    {
+        $this->baseNpcService->updateLootLevelGapRule($baseNpc, $loot, $request->shouldDestroyOnLevelGap());
+
+        return back();
     }
 
     public function detachLoot(BaseNpc $baseNpc, int $loot)
@@ -179,9 +190,11 @@ class BaseNpcController extends Controller
         $this->baseNpcService->detachLoot($baseNpc, $loot);
     }
 
-    public function attachLootsFromBaseNpc(BaseNpc $baseNpc, Request $request)
+    public function attachLootsFromBaseNpc(BaseNpc $baseNpc, Request $request): RedirectResponse
     {
         $this->baseNpcService->attachLootsFromBaseNpc($baseNpc, $request->get('sourceBaseNpcId'));
+
+        return back();
     }
 
     public function updateImage(BaseNpc $baseNpc, UpdateBaseNpcImageRequest $request)

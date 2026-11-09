@@ -135,7 +135,8 @@ class BaseItemController extends Controller
             $baseItem,
             $request->input('attributes'),
             $request->input('attribute_points'),
-            $request->input('manual_attribute_points')
+            $request->input('manual_attribute_points'),
+            $request->has('suggest_destroy_on_level_gap') ? $request->boolean('suggest_destroy_on_level_gap') : null
         );
 
         return to_route('base-items.show', $baseItem->id);

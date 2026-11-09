@@ -26,6 +26,7 @@ class CreateBaseItemRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'suggest_destroy_on_level_gap' => ['sometimes', 'nullable', 'boolean'],
             'name' => [
                 'required',
                 'min:4',
@@ -45,7 +46,7 @@ class CreateBaseItemRequest extends FormRequest
             'price' => [
                 'required',
                 'integer',
-                'max:1000000000'
+                'max:1000000000',
             ],
 
             'currency' => [
@@ -58,8 +59,9 @@ class CreateBaseItemRequest extends FormRequest
                 'string', // Base64 encoded image
                 function ($attribute, $value, $fail) {
                     // Check if it's a valid base64 image format (PNG or GIF)
-                    if (!preg_match('/^data:image\/(png|gif);base64,/', $value)) {
+                    if (! preg_match('/^data:image\/(png|gif);base64,/', $value)) {
                         $fail('Obraz musi być w formacie PNG lub GIF.');
+
                         return;
                     }
 
@@ -67,15 +69,17 @@ class CreateBaseItemRequest extends FormRequest
                     $imageData = substr($value, strpos($value, ',') + 1);
                     $decodedImage = base64_decode($imageData);
 
-                    if (!$decodedImage) {
+                    if (! $decodedImage) {
                         $fail('Nieprawidłowy format obrazu.');
+
                         return;
                     }
 
                     $imageInfo = getimagesizefromstring($decodedImage);
 
-                    if (!$imageInfo) {
+                    if (! $imageInfo) {
                         $fail('Nie można odczytać wymiarów obrazu.');
+
                         return;
                     }
 

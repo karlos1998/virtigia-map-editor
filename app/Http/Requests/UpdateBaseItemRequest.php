@@ -26,6 +26,7 @@ class UpdateBaseItemRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'suggest_destroy_on_level_gap' => ['sometimes', 'boolean'],
             'name' => [
                 'required',
                 'min:4',
@@ -45,7 +46,7 @@ class UpdateBaseItemRequest extends FormRequest
             'price' => [
                 'required',
                 'integer',
-                'max:1000000000'
+                'max:1000000000',
             ],
 
             'currency' => [

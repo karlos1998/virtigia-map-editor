@@ -177,6 +177,7 @@ class BulkManageBaseItemRelationsTest extends TestCase
             $table->timestamps();
         });
         $schema->create('base_npc_loots', function (Blueprint $table): void {
+            $table->boolean('destroy_on_level_gap')->default(true);
             $table->id();
             $table->foreignId('base_npc_id')->constrained('base_npcs')->cascadeOnDelete();
             $table->foreignId('base_item_id')->constrained('base_items')->cascadeOnDelete();

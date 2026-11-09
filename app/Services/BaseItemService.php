@@ -252,8 +252,13 @@ final class BaseItemService extends BaseService
      * @param  array  $attributePoints  Regular attribute points allocation
      * @param  array  $manualAttributePoints  Manual attribute points allocation
      */
-    public function updateAttributes(BaseItem $baseItem, mixed $newAttributes, array $attributePoints = [], array $manualAttributePoints = []): void
-    {
+    public function updateAttributes(
+        BaseItem $baseItem,
+        mixed $newAttributes,
+        array $attributePoints = [],
+        array $manualAttributePoints = [],
+        ?bool $suggestDestroyOnLevelGap = null
+    ): void {
         // Get current attributes to preserve existing data
         $oldAttributes = $baseItem->attributes ?? [];
 
@@ -268,6 +273,7 @@ final class BaseItemService extends BaseService
             'attribute_points' => empty($attributePoints) ? null : $attributePoints,
             'manual_attribute_points' => empty($manualAttributePoints) ? null : $manualAttributePoints,
             'edited_manually' => true,
+            ...($suggestDestroyOnLevelGap === null ? [] : ['suggest_destroy_on_level_gap' => $suggestDestroyOnLevelGap]),
         ]);
 
         // Log the update for auditing
@@ -517,6 +523,7 @@ final class BaseItemService extends BaseService
         // Extract image data before creating the item
         $imageData = $validated['image'] ?? null;
         unset($validated['image']);
+        $validated['suggest_destroy_on_level_gap'] ??= ! in_array($validated['category'] ?? null, ['quests', 'neutrals'], true);
 
         return \DB::transaction(function () use ($validated, $imageData) {
             $baseItem = $this->baseItemModel->create([

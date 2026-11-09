@@ -239,6 +239,12 @@ final class BaseNpcService extends BaseService
         $this->attachLoots($baseNpc, [$baseItem->id]);
     }
 
+    public function updateLootLevelGapRule(BaseNpc $baseNpc, int $loot, bool $shouldDestroy): void
+    {
+        $baseNpc->loots()->findOrFail($loot);
+        $baseNpc->loots()->updateExistingPivot($loot, ['destroy_on_level_gap' => $shouldDestroy]);
+    }
+
     public function detachLoot(BaseNpc $baseNpc, int $loot): void
     {
         $baseItem = $baseNpc->loots()->findOrFail($loot);
@@ -322,7 +328,12 @@ final class BaseNpcService extends BaseService
             ];
         }
 
-        $changes = $baseNpc->loots()->syncWithoutDetaching($uniqueBaseItemIds->all());
+        $lootItems = BaseItem::query()->whereIn('id', $uniqueBaseItemIds)->get()->keyBy('id');
+        $existingIds = $baseNpc->loots()->allRelatedIds()->map(fn ($id): int => (int) $id);
+        $newLoots = $uniqueBaseItemIds->diff($existingIds)->mapWithKeys(fn (int $id): array => [
+            $id => ['destroy_on_level_gap' => \App\Models\BaseNpcLoot::suggestDestroyOnLevelGap($baseNpc, $lootItems[$id])],
+        ]);
+        $changes = $baseNpc->loots()->syncWithoutDetaching($newLoots->all());
         $attachedBaseItemIds = collect($changes['attached'] ?? [])
             ->map(fn (int|string $baseItemId): int => (int) $baseItemId)
             ->values();

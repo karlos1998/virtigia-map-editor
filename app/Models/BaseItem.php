@@ -51,6 +51,7 @@ class BaseItem extends DynamicModel
         'price',
         'currency',
         'specific_currency_price',
+        'suggest_destroy_on_level_gap',
     ];
 
     protected $casts = [
@@ -60,6 +61,7 @@ class BaseItem extends DynamicModel
         'reverse_attributes' => 'json',
         'category' => BaseItemCategory::class,
         'edited_manually' => 'boolean',
+        'suggest_destroy_on_level_gap' => 'boolean',
         'currency' => \App\Enums\BaseItemCurrency::class,
     ];
 
@@ -71,7 +73,7 @@ class BaseItem extends DynamicModel
 
     public function baseNpcs()
     {
-        return $this->belongsToMany(BaseNpc::class, BaseNpcLoot::class, 'base_item_id', 'base_npc_id');
+        return $this->belongsToMany(BaseNpc::class, BaseNpcLoot::class, 'base_item_id', 'base_npc_id')->withPivot('destroy_on_level_gap');
     }
 
     public function usageView(): HasOne

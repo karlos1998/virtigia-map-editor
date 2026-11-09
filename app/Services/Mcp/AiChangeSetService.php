@@ -1947,10 +1947,13 @@ class AiChangeSetService
             }
 
             if ($operation['type'] === 'attach_item_to_base_npc_loot') {
+                $npc = BaseNpc::query()->findOrFail($this->resolveBaseNpcId($operation, $result['references']));
+                $item = BaseItem::query()->findOrFail($this->resolveItemId($operation, $result['references']));
                 $baseNpcLoot = new BaseNpcLoot;
                 $baseNpcLoot->forceFill([
-                    'base_npc_id' => $this->resolveBaseNpcId($operation, $result['references']),
-                    'base_item_id' => $this->resolveItemId($operation, $result['references']),
+                    'base_npc_id' => $npc->id,
+                    'base_item_id' => $item->id,
+                    'destroy_on_level_gap' => BaseNpcLoot::suggestDestroyOnLevelGap($npc, $item),
                 ])->save();
                 $result['created']['base_npc_loots'][] = $baseNpcLoot->id;
             }

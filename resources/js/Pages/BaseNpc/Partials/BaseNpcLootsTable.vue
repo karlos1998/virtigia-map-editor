@@ -99,6 +99,18 @@ const showAttachLootsFromBaseNpcModal = () => {
     })
 }
 
+const savingLootRule = ref<number | null>(null);
+const updateLootRule = (item: BaseItemResource, shouldDestroy: boolean) => {
+    savingLootRule.value = item.id;
+    router.patch(route('base-npcs.loots.update', {baseNpc: baseNpc.id, loot: item.id}), {
+        destroy_on_level_gap: shouldDestroy,
+    }, {
+        preserveScroll: true,
+        onError: (errors) => toast.add({severity: 'error', summary: 'Błąd', detail: Object.values(errors)[0], life: 5000}),
+        onFinish: () => { savingLootRule.value = null; },
+    });
+};
+
 const detachItem = (item: BaseItemResource) => {
     router.delete(route('base-npcs.loots.detach', {
         baseNpc: baseNpc.id,
@@ -184,6 +196,14 @@ const getRarityColor = (rarity: string): string => {
                     <div class="flex-1 min-w-0">
                         <div class="font-medium text-color truncate">{{ item.name }}</div>
                         <div class="text-sm text-color-secondary">{{ item.category }}</div>
+                        <label class="mt-2 flex items-center gap-2 text-sm">
+                            <InputSwitch
+                                :model-value="item.destroy_on_level_gap ?? true"
+                                :disabled="savingLootRule !== null"
+                                @update:model-value="updateLootRule(item, $event)"
+                            />
+                            Podlega zniszczeniu
+                        </label>
                     </div>
                     <div class="flex items-center gap-2">
                         <Link :href="route('base-items.show', {baseItem: item.id})">

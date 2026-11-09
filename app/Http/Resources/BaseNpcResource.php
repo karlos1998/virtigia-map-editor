@@ -39,6 +39,7 @@ class BaseNpcResource extends JsonResource
 
         return [
             ...parent::toArray($request),
+            'destroy_on_level_gap' => $this->whenPivotLoaded('base_npc_loots', fn () => (bool) $this->resource->pivot->destroy_on_level_gap),
 
             'location_count' => $this->resource->locations()->count(),
             'profession_name' => $this->resource->profession->description(),

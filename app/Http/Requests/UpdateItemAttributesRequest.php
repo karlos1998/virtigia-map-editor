@@ -42,6 +42,7 @@ class UpdateItemAttributesRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'suggest_destroy_on_level_gap' => ['sometimes', 'boolean'],
             'attributes' => [
                 'present',
                 'array',

@@ -6,7 +6,6 @@ use App\Enums\BaseNpcCategory;
 use App\Enums\BaseNpcRank;
 use App\Enums\Profession;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 
 class BaseNpc extends DynamicModel
 {
@@ -53,11 +52,10 @@ class BaseNpc extends DynamicModel
         'layer_depth' => 'Y_SORT',
     ];
 
-
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     * Lokalizacja dla np "Królika"
-     * Nie są to respy jednego moba, tylko np kilkadziesiąt miejsc na mapie gdzie taki sam bazowy mob wystepuje
+     *                                                         Lokalizacja dla np "Królika"
+     *                                                         Nie są to respy jednego moba, tylko np kilkadziesiąt miejsc na mapie gdzie taki sam bazowy mob wystepuje
      */
     public function locations()
     {
@@ -66,7 +64,7 @@ class BaseNpc extends DynamicModel
 
     public function loots()
     {
-        return $this->belongsToMany(BaseItem::class, 'base_npc_loots');
+        return $this->belongsToMany(BaseItem::class, 'base_npc_loots')->withPivot('destroy_on_level_gap');
     }
 
     public function specialAttacks()
