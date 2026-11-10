@@ -24,7 +24,10 @@ class ProblemAssetsStackPriceTest extends TestCase
 
     public function test_report_lists_expensive_gold_stacks_from_the_selected_world(): void
     {
-        $world = new WorldTemplate(['connection_name' => config('database.default')]);
+        $connection = 'stack_report_world';
+        config(["database.connections.{$connection}" => config('database.connections.'.config('database.default')),
+        ]);
+        $world = new WorldTemplate(['connection_name' => $connection]);
         $this->mock(WorldTemplateConnectionResolver::class, function (MockInterface $mock) use ($world): void {
             $mock->shouldReceive('resolve')->with('retro')->andReturn($world);
             $mock->shouldReceive('registerTemplateConnection')->with($world)->andReturnTrue();
@@ -33,7 +36,7 @@ class ProblemAssetsStackPriceTest extends TestCase
         config(['cache.stores.redis' => ['driver' => 'array']]);
         $this->withoutVite();
 
-        Schema::create('base_items', function (Blueprint $table): void {
+        Schema::connection($connection)->create('base_items', function (Blueprint $table): void {
             $table->temporary();
             $table->id();
             $table->string('name');
@@ -43,7 +46,7 @@ class ProblemAssetsStackPriceTest extends TestCase
             $table->softDeletes();
         });
 
-        BaseItem::query()->insert([
+        BaseItem::on($connection)->insert([
             ['id' => 28741, 'name' => 'Złociste kulki dziurawienia', 'price' => 152200, 'currency' => 'gold', 'attributes' => '{"quantity":800}', 'deleted_at' => null],
             ['id' => 2, 'name' => 'Na progu', 'price' => 5000000, 'currency' => 'gold', 'attributes' => '{"quantity":"2"}', 'deleted_at' => null],
             ['id' => 3, 'name' => 'Poprawnie wycenione strzały', 'price' => 190, 'currency' => 'gold', 'attributes' => '{"quantity":800}', 'deleted_at' => null],
