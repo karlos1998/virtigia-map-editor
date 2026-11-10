@@ -26,6 +26,7 @@ use App\Http\Controllers\ProblemAssetsController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuestController;
 use App\Http\Controllers\QuestStepController;
+use App\Http\Controllers\QuestWalkthroughController;
 use App\Http\Controllers\RenewableMapItemController;
 use App\Http\Controllers\RewardCalendarController;
 use App\Http\Controllers\SeasonalEventController;
@@ -261,6 +262,8 @@ Route::middleware(['auth'])->group(function () {
                     Route::get('quests/search', [QuestController::class, 'search'])->name('quests.search');
                     Route::get('quests/{quest}', [QuestController::class, 'show'])->name('quests.show');
                     Route::get('quests/{quest}/steps', [QuestController::class, 'getSteps'])->name('quests.steps');
+                    Route::get('quests/{quest}/walkthrough', [QuestWalkthroughController::class, 'show'])->name('quests.walkthrough');
+                    Route::post('quests/{quest}/walkthrough', [QuestWalkthroughController::class, 'regenerate'])->name('quests.walkthrough.regenerate');
                     Route::patch('quests/{quest}', [QuestController::class, 'update'])->name('quests.update');
                     Route::patch('quests/{quest}/seasonal-events', [QuestController::class, 'syncSeasonalEvents'])->name('quests.seasonal-events.sync');
                     Route::delete('quests/{quest}', [QuestController::class, 'destroy'])->name('quests.destroy');

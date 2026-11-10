@@ -218,6 +218,9 @@ watch(questStepSortDirection, (sortDirection) => {
                     <Button icon="pi pi-pencil" text @click="isEditQuestNameModalVisible = true" />
                 </div>
                 <div class="flex gap-2">
+                    <Link :href="route('quests.walkthrough', { quest: quest.id })">
+                        <Button label="Solucja" icon="pi pi-book" severity="secondary" />
+                    </Link>
                     <Button label="Dodaj krok" icon="pi pi-plus" @click="isCreateQuestStepModalVisible = true" />
                     <Button label="Usuń quest" icon="pi pi-trash" severity="danger" @click="deleteQuest" />
                 </div>

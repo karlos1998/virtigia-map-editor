@@ -9,6 +9,7 @@ use App\Jobs\RecordQueueHeartbeatJob;
 use App\Jobs\RefreshBaseItemDuplicateViewJob;
 use App\Jobs\RefreshBaseItemUsageViewBatchJob;
 use App\Jobs\RefreshQuestStepGuideViewBatchJob;
+use App\Jobs\RefreshQuestWalkthroughsJob;
 use App\Jobs\ResetAggressiveNpcsJob;
 use App\Services\WorldTemplateConnectionResolver;
 use Illuminate\Foundation\Inspiring;
@@ -42,4 +43,5 @@ foreach (app(WorldTemplateConnectionResolver::class)->visibleSlugs() as $world) 
     Schedule::job(new RefreshBaseItemUsageViewBatchJob($world))->hourly();
     Schedule::job(new RefreshBaseItemDuplicateViewJob($world))->everyThirtyMinutes();
     Schedule::job(new RefreshQuestStepGuideViewBatchJob($world))->hourly();
+    Schedule::job(new RefreshQuestWalkthroughsJob($world))->hourly();
 }
