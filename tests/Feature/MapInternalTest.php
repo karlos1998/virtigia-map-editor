@@ -52,6 +52,19 @@ class MapInternalTest extends TestCase
         $this->assertSame([1 => 1, 2 => 0], DB::table('maps')->pluck('is_internal', 'id')->map(fn ($value) => (int) $value)->all());
     }
 
+    public function test_migration_marks_polanka_thinkera_as_internal(): void
+    {
+        (require database_path('migrations/remote/2026_11_10_200000_add_is_internal_to_maps_table.php'))->up();
+        DB::table('maps')->insert([
+            ['id' => 1, 'name' => 'Polanka Thinkera'],
+            ['id' => 2, 'name' => 'Thuzal'],
+        ]);
+
+        (require database_path('migrations/remote/2026_11_10_205040_mark_polanka_thinkera_as_internal_map.php'))->up();
+
+        $this->assertSame([1 => 1, 2 => 0], DB::table('maps')->pluck('is_internal', 'id')->map(fn ($value) => (int) $value)->all());
+    }
+
     public function test_map_can_be_marked_internal_from_the_editor(): void
     {
         (require database_path('migrations/remote/2026_11_10_200000_add_is_internal_to_maps_table.php'))->up();
