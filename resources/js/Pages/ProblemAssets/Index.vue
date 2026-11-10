@@ -1,5 +1,36 @@
 <template>
     <AppLayout>
+        <section class="card mb-6" aria-labelledby="suspicious-stacks-title">
+            <h2 id="suspicious-stacks-title" class="text-2xl font-bold mb-2">Podejrzanie drogie stosy – {{ world }}</h2>
+            <p class="mb-4">Stosy co najmniej dwóch sztuk o wartości od {{ formatNumber(suspiciousStackThreshold) }} złota.</p>
+            <p v-if="!suspiciousStacks.data.length">Brak wyników na tej stronie.</p>
+            <div v-else class="overflow-x-auto">
+                <table class="w-full border">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="px-2 py-2 border">Przedmiot</th>
+                            <th scope="col" class="px-2 py-2 border">Cena za sztukę</th>
+                            <th scope="col" class="px-2 py-2 border">Ilość</th>
+                            <th scope="col" class="px-2 py-2 border">Wartość stosu</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="item in suspiciousStacks.data" :key="item.id">
+                            <td class="px-2 py-2 border">
+                                <Link :href="route('base-items.show', item.id)" class="text-primary underline">#{{ item.id }} · {{ item.name }}</Link>
+                            </td>
+                            <td class="px-2 py-2 border">{{ formatNumber(item.price) }}</td>
+                            <td class="px-2 py-2 border">{{ formatNumber(item.quantity) }}</td>
+                            <td class="px-2 py-2 border font-semibold">{{ formatNumber(item.stack_value) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <nav v-if="suspiciousStacks.prev_page_url || suspiciousStacks.next_page_url" class="flex gap-4 mt-4" aria-label="Strony raportu drogich stosów">
+                <Link v-if="suspiciousStacks.prev_page_url" :href="suspiciousStacks.prev_page_url" :only="['suspiciousStacks']" preserve-scroll class="text-primary underline">Poprzednia</Link>
+                <Link v-if="suspiciousStacks.next_page_url" :href="suspiciousStacks.next_page_url" :only="['suspiciousStacks']" preserve-scroll class="text-primary underline">Następna</Link>
+            </nav>
+        </section>
         <div class="card mb-6">
             <h1 class="text-2xl font-bold mb-4">Status sprawdzania assetów – {{ world }}</h1>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -110,8 +141,14 @@
 <script setup>
 import AppLayout from "@/layout/AppLayout.vue";
 import {computed} from 'vue';
+import {Link} from '@inertiajs/vue3';
+import {route} from 'ziggy-js';
+
+const formatNumber = new Intl.NumberFormat('pl-PL').format;
 
 const props = defineProps({
+    suspiciousStacks: Object,
+    suspiciousStackThreshold: Number,
     items: Array,
     npcs: Array,
     world: String,

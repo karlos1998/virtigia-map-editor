@@ -11,6 +11,7 @@ use App\Http\Resources\BaseItemResource;
 use App\Models\BaseItem;
 use App\Services\Traits\UpdateImage;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -27,7 +28,27 @@ final class BaseItemService extends BaseService
 {
     use UpdateImage;
 
+    public const int SUSPICIOUS_STACK_VALUE = 10_000_000;
+
     public function __construct(private readonly BaseItem $baseItemModel) {}
+
+    public function suspiciousStacks(): Paginator
+    {
+        $query = $this->baseItemModel->newQuery();
+        $quantitySelector = $query->getQuery()->getGrammar()->wrap('attributes->quantity');
+        $quantity = "CAST({$quantitySelector} AS SIGNED INTEGER)";
+        $stackValue = "(price * {$quantity})";
+
+        return $query
+            ->select(['id', 'name', 'price'])
+            ->selectRaw("{$quantity} AS quantity, {$stackValue} AS stack_value")
+            ->where('currency', BaseItemCurrency::GOLD->value)
+            ->whereRaw("{$quantity} >= 2")
+            ->whereRaw("{$stackValue} >= ?", [self::SUSPICIOUS_STACK_VALUE])
+            ->orderByDesc('stack_value')
+            ->orderBy('id')
+            ->simplePaginate(25, pageName: 'stacks_page');
+    }
 
     /**§
      * @param  array{description?: string|null, legendary_bonus?: string|null, attribute_keys?: array<int, string>, shop_ids?: array<int, int>}  $filters
