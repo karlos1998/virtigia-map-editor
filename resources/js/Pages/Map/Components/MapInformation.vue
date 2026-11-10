@@ -27,6 +27,7 @@ const toast = useToast();
 const showReplaceImageModal = ref(false);
 const isTeleportLocked = ref(props.map.is_teleport_locked ?? false);
 const isGroupingLocked = ref(props.map.is_grouping_locked ?? false);
+const isInternal = ref(props.map.is_internal ?? false);
 const isBackgroundSectionExpanded = ref(false);
 
 // Static list of battleground images (place these files under public/img/Backgrounds)
@@ -257,6 +258,20 @@ const updateMapTeleportLocked = () => {
     });
 };
 
+const updateMapInternal = () => {
+    router.patch(route('maps.update.internal', props.map.id), {
+        is_internal: isInternal.value
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.add({ severity: 'success', summary: 'Sukces', detail: 'Zapisano typ mapy', life: 3000 });
+        },
+        onError: () => {
+            toast.add({ severity: 'error', summary: 'Błąd', detail: 'Nie udało się zapisać typu mapy', life: 3000 });
+        }
+    });
+};
+
 const updateMapGroupingLocked = () => {
     router.patch(route('maps.update.grouping-locked', props.map.id), {
         is_grouping_locked: isGroupingLocked.value
@@ -342,6 +357,20 @@ const updateMapGroupingLocked = () => {
                     </div>
                     <div v-else class="mt-2 text-green-600 text-sm">
                         Grupowanie dozwolone.
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold mb-2">Mapa wewnętrzna</h3>
+                    <div class="flex items-center gap-2">
+                        <InputSwitch v-model="isInternal" />
+                        <Button label="Zapisz" @click="updateMapInternal"/>
+                    </div>
+                    <div v-if="isInternal" class="mt-2 text-orange-600 text-sm">
+                        Mapa administracyjna/testowa — pomijana w solucjach questów i zwojach szukających herosa.
+                    </div>
+                    <div v-else class="mt-2 text-green-600 text-sm">
+                        Zwykła mapa dla graczy.
                     </div>
                 </div>
             </div>

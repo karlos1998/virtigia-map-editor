@@ -30,6 +30,7 @@ class MapResource extends JsonResource
             'respawn_point' => RespawnPointResource::make($this->resource->respawnPoint),
             'is_teleport_locked' => $this->resource->is_teleport_locked,
             'is_grouping_locked' => $this->resource->is_grouping_locked,
+            'is_internal' => (bool) $this->resource->is_internal,
         ];
     }
 }

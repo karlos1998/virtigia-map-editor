@@ -48,6 +48,7 @@ class QuestWalkthroughWorldData
      * @param  array<int, array<int, array<string, mixed>>>  $itemSources
      * @param  array<int, string>  $dialogCounters
      * @param  array<int, string>  $seasonalEvents
+     * @param  array<int, true>  $internalMapIds  administration/test maps hidden from players
      */
     public function __construct(
         public readonly array $quests,
@@ -67,6 +68,7 @@ class QuestWalkthroughWorldData
         public readonly array $itemSources = [],
         public readonly array $dialogCounters = [],
         public readonly array $seasonalEvents = [],
+        public readonly array $internalMapIds = [],
     ) {
         $this->indexDialogs();
     }
@@ -124,6 +126,11 @@ class QuestWalkthroughWorldData
     public function questIdForStep(int $stepId): ?int
     {
         return $this->stepQuest[$stepId] ?? null;
+    }
+
+    public function isInternalMap(int $mapId): bool
+    {
+        return isset($this->internalMapIds[$mapId]);
     }
 
     public function itemName(int $itemId): string

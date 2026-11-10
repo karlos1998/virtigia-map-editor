@@ -20,6 +20,7 @@ class Map extends DynamicModel
         'pvp',
         'is_teleport_locked',
         'is_grouping_locked',
+        'is_internal',
     ];
 
     protected $attributes = ['is_city' => false];
@@ -29,6 +30,7 @@ class Map extends DynamicModel
         'pvp' => PvpType::class,
         'is_teleport_locked' => 'boolean',
         'is_grouping_locked' => 'boolean',
+        'is_internal' => 'boolean',
     ];
 
     public function npcs()

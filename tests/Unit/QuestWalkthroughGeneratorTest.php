@@ -136,7 +136,8 @@ class QuestWalkthroughGeneratorTest extends TestCase
                 'dialog_id' => $dialogId,
                 'base_npc_id' => $npcId,
                 'auto_start_dialog' => false,
-                'locations' => [['map_id' => 7, 'x' => 6, 'y' => 18]],
+                // Every NPC also stands on an internal admin map, which must never be suggested.
+                'locations' => [['map_id' => 99, 'x' => 31, 'y' => 11], ['map_id' => 7, 'x' => 6, 'y' => 18]],
             ];
             $baseNpcs[$npcId] = ['id' => $npcId, 'name' => $name, 'lvl' => 10, 'src' => null, 'rank' => null];
             $npcId++;
@@ -163,8 +164,9 @@ class QuestWalkthroughGeneratorTest extends TestCase
             baseNpcs: $baseNpcs ?? [],
             baseNpcIdsBySpecies: [],
             mobSpecies: [],
-            maps: [7 => 'Karczma'],
+            maps: [7 => 'Karczma', 99 => 'Siedziba MG'],
             items: [900 => ['id' => 900, 'name' => 'Księga', 'src' => null], 901 => ['id' => 901, 'name' => 'Denar', 'src' => null]],
+            internalMapIds: [99 => true],
         ));
     }
 

@@ -235,6 +235,11 @@ final class MapService extends BaseService
         $map->update(['is_grouping_locked' => $isGroupingLocked]);
     }
 
+    public function updateInternal(Map $map, bool $isInternal): void
+    {
+        $map->update(['is_internal' => $isInternal]);
+    }
+
     /**
      * Remove the specified map from storage.
      */

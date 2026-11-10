@@ -58,7 +58,7 @@ class QuestWalkthroughTest extends TestCase
         $walkthrough = json_decode($row->walkthrough, true);
         $this->assertSame('complete', $row->status);
         $this->assertSame(['Słucham?', 'Pomogę.'], array_column(array_filter($walkthrough['sections'][0]['timeline'], fn ($e) => $e['type'] === 'choose'), 'label'));
-        $this->assertSame('Karczma', $walkthrough['sections'][0]['npcs'][0]['locations'][0]['map_name']);
+        $this->assertSame(['Karczma'], array_column($walkthrough['sections'][0]['npcs'][0]['locations'], 'map_name'));
 
         $this->assertSame(['skipped' => true, 'reason' => 'unchanged'], $service->refreshWorld($this->connection));
 
@@ -123,10 +123,16 @@ class QuestWalkthroughTest extends TestCase
             ['id' => 2, 'source_dialog_id' => 5, 'source_node_id' => 2, 'source_option_id' => 1, 'source_handle' => null, 'target_node_id' => 3, 'rules' => null, 'created_at' => $now, 'updated_at' => $now],
             ['id' => 3, 'source_dialog_id' => 5, 'source_node_id' => 3, 'source_option_id' => 2, 'source_handle' => null, 'target_node_id' => 4, 'rules' => null, 'created_at' => $now, 'updated_at' => $now],
         ]);
-        DB::table('maps')->insert(['id' => 7, 'name' => 'Karczma', 'created_at' => $now, 'updated_at' => $now]);
+        DB::table('maps')->insert([
+            ['id' => 7, 'name' => 'Karczma', 'is_internal' => false, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 8, 'name' => 'Siedziba MG', 'is_internal' => true, 'created_at' => $now, 'updated_at' => $now],
+        ]);
         DB::table('base_npcs')->insert(['id' => 3, 'name' => 'Karczmarz', 'lvl' => 10, 'src' => 'npc.gif', 'rank' => null, 'created_at' => $now, 'updated_at' => $now]);
         DB::table('npcs')->insert(['id' => 9, 'dialog_id' => 5, 'base_npc_id' => 3, 'auto_start_dialog' => false, 'enabled' => true, 'created_at' => $now, 'updated_at' => $now]);
-        DB::table('npc_locations')->insert(['id' => 1, 'npc_id' => 9, 'map_id' => 7, 'x' => 6, 'y' => 18, 'created_at' => $now, 'updated_at' => $now]);
+        DB::table('npc_locations')->insert([
+            ['id' => 1, 'npc_id' => 9, 'map_id' => 8, 'x' => 31, 'y' => 11, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 2, 'npc_id' => 9, 'map_id' => 7, 'x' => 6, 'y' => 18, 'created_at' => $now, 'updated_at' => $now],
+        ]);
     }
 
     private function createTemplateTables(): void
@@ -201,7 +207,10 @@ class QuestWalkthroughTest extends TestCase
             $t->integer('x');
             $t->integer('y');
         });
-        $timestamped('maps', fn (Blueprint $t) => $t->string('name'));
+        $timestamped('maps', function (Blueprint $t): void {
+            $t->string('name');
+            $t->boolean('is_internal')->default(false);
+        });
         $timestamped('base_npcs', function (Blueprint $t): void {
             $t->string('name');
             $t->integer('lvl')->nullable();

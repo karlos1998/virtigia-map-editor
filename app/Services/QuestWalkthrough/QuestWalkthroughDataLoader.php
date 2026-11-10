@@ -178,6 +178,13 @@ class QuestWalkthroughDataLoader
             }
         }
 
+        $internalMapIds = [];
+        if (Schema::connection($connection)->hasColumn('maps', 'is_internal')) {
+            foreach ($db->table('maps')->where('is_internal', true)->pluck('id') as $mapId) {
+                $internalMapIds[(int) $mapId] = true;
+            }
+        }
+
         return new QuestWalkthroughWorldData(
             quests: $quests,
             stepsByQuest: $stepsByQuest,
@@ -193,9 +200,10 @@ class QuestWalkthroughDataLoader
             mobSpecies: $this->names($db, 'mob_species'),
             maps: $this->names($db, 'maps'),
             items: $this->items($db),
-            itemSources: $this->itemSources($connection, $db),
+            itemSources: $this->itemSources($connection, $db, $internalMapIds),
             dialogCounters: $this->names($db, 'dialog_counters'),
             seasonalEvents: Schema::connection($connection)->hasTable('seasonal_events') ? $this->names($db, 'seasonal_events') : [],
+            internalMapIds: $internalMapIds,
         );
     }
 
@@ -254,7 +262,7 @@ class QuestWalkthroughDataLoader
     /**
      * @return array<int, array<int, array<string, mixed>>>
      */
-    private function itemSources(string $connection, ConnectionInterface $db): array
+    private function itemSources(string $connection, ConnectionInterface $db, array $internalMapIds): array
     {
         if (! Schema::connection($connection)->hasTable('base_item_usage_views')) {
             return [];
@@ -263,8 +271,13 @@ class QuestWalkthroughDataLoader
         $sources = [];
         foreach ($db->table('base_item_usage_views')->where('source_count', '>', 0)->get(['base_item_id', 'sources']) as $row) {
             $decoded = $this->json($row->sources);
-            if (is_array($decoded) && $decoded !== []) {
-                $sources[(int) $row->base_item_id] = $decoded;
+            if (! is_array($decoded)) {
+                continue;
+            }
+
+            $playerSources = array_values(array_filter($decoded, fn ($source): bool => ! isset($internalMapIds[(int) data_get($source, 'location.map_id')])));
+            if ($playerSources !== []) {
+                $sources[(int) $row->base_item_id] = $playerSources;
             }
         }
 

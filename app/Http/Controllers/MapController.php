@@ -294,4 +294,9 @@ class MapController extends Controller
     {
         $this->mapService->updateGroupingLocked($map, (bool) $request->input('is_grouping_locked', false));
     }
+
+    public function updateInternal(Map $map, Request $request): void
+    {
+        $this->mapService->updateInternal($map, $request->boolean('is_internal'));
+    }
 }

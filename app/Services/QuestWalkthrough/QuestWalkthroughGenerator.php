@@ -11,7 +11,7 @@ namespace App\Services\QuestWalkthrough;
 class QuestWalkthroughGenerator
 {
     /** Bump whenever the output shape or interpretation changes; forces regeneration. */
-    public const VERSION = 1;
+    public const VERSION = 2;
 
     private const MAX_LOCATIONS = 12;
 
@@ -455,7 +455,7 @@ class QuestWalkthroughGenerator
         foreach (array_slice($baseNpcIds, 0, 15) as $baseNpcId) {
             $locations = [];
             foreach ($this->data->npcsByBaseNpc[$baseNpcId] ?? [] as $npc) {
-                foreach ($npc['locations'] as $location) {
+                foreach ($this->playerLocations($npc['locations']) as $location) {
                     $locations[] = $this->location($location);
                 }
             }
@@ -515,6 +515,12 @@ class QuestWalkthroughGenerator
         $grouped = [];
 
         foreach ($this->data->npcsByDialog[$dialogId] ?? [] as $npc) {
+            $locations = $this->playerLocations($npc['locations']);
+            // An NPC placed only on internal maps cannot be visited by players.
+            if ($locations === [] && $npc['locations'] !== []) {
+                continue;
+            }
+
             $key = $npc['base_npc_id'] ?? 'npc-'.$npc['id'];
             $grouped[$key] ??= [
                 'base_npc_id' => $npc['base_npc_id'],
@@ -525,7 +531,7 @@ class QuestWalkthroughGenerator
             ];
             $grouped[$key]['auto_start_dialog'] = $grouped[$key]['auto_start_dialog'] || $npc['auto_start_dialog'];
 
-            foreach ($npc['locations'] as $location) {
+            foreach ($locations as $location) {
                 $grouped[$key]['locations'][] = $this->location($location);
             }
         }
@@ -537,6 +543,14 @@ class QuestWalkthroughGenerator
 
             return $npc;
         }, $grouped));
+    }
+
+    /**
+     * @return array<int, array>
+     */
+    private function playerLocations(array $locations): array
+    {
+        return array_values(array_filter($locations, fn (array $location): bool => ! $this->data->isInternalMap($location['map_id'])));
     }
 
     private function location(array $location): array
