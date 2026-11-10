@@ -2,7 +2,7 @@
     <AppLayout>
         <section class="card mb-6" aria-labelledby="suspicious-stacks-title">
             <h2 id="suspicious-stacks-title" class="text-2xl font-bold mb-2">Podejrzanie drogie stosy – {{ world }}</h2>
-            <p class="mb-4">Stosy co najmniej dwóch sztuk o wartości od {{ formatNumber(suspiciousStackThreshold) }} złota.</p>
+            <p class="mb-4">Stosy co najmniej dwóch sztuk o wartości od {{ formatNumber(suspiciousStackThreshold) }} złota. Sugestia zakłada, że wpisana cena miała dotyczyć całego stosu.</p>
             <p v-if="!suspiciousStacks.data.length">Brak wyników na tej stronie.</p>
             <div v-else class="overflow-x-auto">
                 <table class="w-full border">
@@ -12,6 +12,7 @@
                             <th scope="col" class="px-2 py-2 border">Cena za sztukę</th>
                             <th scope="col" class="px-2 py-2 border">Ilość</th>
                             <th scope="col" class="px-2 py-2 border">Wartość stosu</th>
+                            <th scope="col" class="px-2 py-2 border">Sugerowana cena za sztukę</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -22,6 +23,7 @@
                             <td class="px-2 py-2 border">{{ formatNumber(item.price) }}</td>
                             <td class="px-2 py-2 border">{{ formatNumber(item.quantity) }}</td>
                             <td class="px-2 py-2 border font-semibold">{{ formatNumber(item.stack_value) }}</td>
+                            <td class="px-2 py-2 border">{{ formatNumber(Math.round(item.price / item.quantity)) }}</td>
                         </tr>
                     </tbody>
                 </table>
