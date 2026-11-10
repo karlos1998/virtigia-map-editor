@@ -49,6 +49,22 @@ class QuestWalkthroughGeneratorTest extends TestCase
         $this->assertSame([['item_id' => 901, 'quantity' => 3]], $summary['rewards']['items']);
     }
 
+    public function test_finished_quest_gets_no_detour_for_items_of_unused_branches(): void
+    {
+        $dialogs = $this->tavernQuest();
+        // An unused branch of the quest dialog asks for a trinket another NPC hands out.
+        $hello = array_key_first(array_filter($this->nodes, fn (array $node) => $node['content'] === 'Szukasz pracy?'));
+        $this->option($hello, 'Mam błyskotkę.', ['items' => ['value' => [950], 'value2' => [1]]]);
+        $merchant = $this->special(200, 'Weź tę błyskotkę.', ['addItems' => ['value' => [950], 'value2' => [1]]]);
+        $this->start(200, $merchant);
+        $this->option($merchant, 'Dzięki.');
+
+        $walkthrough = $this->generator([...$dialogs, 200 => 'Kupiec'])->generate(self::QUEST);
+
+        $this->assertSame('complete', $walkthrough['status']);
+        $this->assertSame([], array_filter($walkthrough['sections'], fn (array $section) => ($section['purpose'] ?? null) === 'item'));
+    }
+
     public function test_option_rules_are_checked_before_the_node_actions_run(): void
     {
         $node = $this->special(10, 'Witaj', ['setQuestStep' => ['value' => 10]]);

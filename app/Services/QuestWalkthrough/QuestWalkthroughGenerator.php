@@ -11,7 +11,7 @@ namespace App\Services\QuestWalkthrough;
 class QuestWalkthroughGenerator
 {
     /** Bump whenever the output shape or interpretation changes; forces regeneration. */
-    public const VERSION = 2;
+    public const VERSION = 3;
 
     private const MAX_LOCATIONS = 12;
 
@@ -86,8 +86,17 @@ class QuestWalkthroughGenerator
             if ($candidates === []) {
                 $candidates = $this->findConversations($simulator, $state, $visitedSteps, true);
             }
-            if ($candidates === [] && $state['quest_started']) {
+            $sideTrip = false;
+            if ($candidates === []) {
+                $deadEnd = $this->deadEnd($current, $sections, $steps, $visitedSteps);
+
+                // A finished quest (or one that never started) needs no detour for missing items.
+                if ($deadEnd['warnings'] === [] || ! $state['quest_started']) {
+                    return $deadEnd;
+                }
+
                 $candidates = $this->findItemConversations($simulator, $state);
+                $sideTrip = true;
             }
 
             if ($candidates === []) {
@@ -109,6 +118,11 @@ class QuestWalkthroughGenerator
 
                 $outcome = $this->walk($simulator, $steps, $nextState, $nextVisited, [...$sections, $candidate], $budget);
 
+                // An item detour only counts when the quest actually moves on afterwards.
+                if ($sideTrip && $this->progress($outcome['sections']) <= $this->progress($sections)) {
+                    continue;
+                }
+
                 if ($outcome['warnings'] === []) {
                     return $outcome;
                 }
@@ -118,7 +132,7 @@ class QuestWalkthroughGenerator
                 }
             }
 
-            return $best;
+            return $best ?? $this->deadEnd($current, $sections, $steps, $visitedSteps);
         }
 
         return ['sections' => $sections, 'warnings' => ['Przerwano analizę: quest wydaje się zapętlony.'], 'finished' => false];
