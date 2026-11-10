@@ -20,6 +20,8 @@ const props = defineProps<{
     meta: {
         available: boolean;
         live_preview: boolean;
+        is_public: boolean;
+        visibility_available: boolean;
         generated_at: string | null;
         checked_at: string | null;
         outdated_generator: boolean;
@@ -30,6 +32,23 @@ const props = defineProps<{
 const toast = useToast();
 const regenerating = ref(false);
 const showNpcLines = ref(false);
+const isPublic = ref(props.meta.is_public);
+
+const updateVisibility = () => {
+    router.patch(route("quests.walkthrough.visibility", { quest: props.quest.id }), { is_public: isPublic.value }, {
+        preserveScroll: true,
+        onSuccess: () => toast.add({
+            severity: "success",
+            summary: "Zapisano",
+            detail: isPublic.value ? "Solucja będzie widoczna na wiki." : "Solucja jest ukryta przed wiki.",
+            life: 3000,
+        }),
+        onError: () => {
+            isPublic.value = !isPublic.value;
+            toast.add({ severity: "error", summary: "Błąd", detail: "Nie udało się zmienić widoczności solucji.", life: 6000 });
+        },
+    });
+};
 
 const regenerate = () => {
     regenerating.value = true;
@@ -143,12 +162,17 @@ const referencedItems = computed(() => Object.values(items.value));
                     <h1 class="mt-2 text-2xl font-bold">{{ quest.name }} — solucja</h1>
                     <div class="mt-2 flex flex-wrap items-center gap-2 text-sm text-surface-600 dark:text-surface-300">
                         <Tag v-if="walkthrough" :severity="statusTag.severity" :value="statusTag.label" />
+                        <Tag v-if="meta.visibility_available && !isPublic" severity="contrast" value="Ukryta przed wiki" />
                         <span>Wygenerowano: {{ date(meta.generated_at) }}</span>
                         <span class="text-surface-400">•</span>
                         <span>Sprawdzono: {{ date(meta.checked_at) }}</span>
                     </div>
                 </div>
                 <div class="flex shrink-0 flex-wrap items-center gap-3">
+                    <div v-if="meta.visibility_available" class="flex items-center gap-2" title="Publiczne solucje może pokazywać wiki dla graczy">
+                        <ToggleSwitch input-id="walkthrough-public" v-model="isPublic" @update:model-value="updateVisibility" />
+                        <label for="walkthrough-public" class="text-sm">Jest publiczna</label>
+                    </div>
                     <div class="flex items-center gap-2">
                         <ToggleSwitch input-id="show-npc-lines" v-model="showNpcLines" />
                         <label for="show-npc-lines" class="text-sm">Kwestie NPC</label>

@@ -14,6 +14,11 @@ class Quest extends DynamicModel
 
     protected $fillable = [
         'name',
+        'walkthrough_is_public',
+    ];
+
+    protected $casts = [
+        'walkthrough_is_public' => 'boolean',
     ];
 
     public function steps(): HasMany

@@ -93,6 +93,32 @@ class QuestWalkthroughTest extends TestCase
                 ->has('walkthrough.sections', 1));
     }
 
+    public function test_walkthrough_is_public_by_default_and_can_be_hidden_from_the_wiki(): void
+    {
+        $this->get(route('quests.walkthrough', 1))
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('meta.visibility_available', false));
+
+        (require database_path('migrations/remote/2026_11_10_200754_add_walkthrough_is_public_to_quests_table.php'))->up();
+
+        $this->get(route('quests.walkthrough', 1))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('meta.visibility_available', true)
+                ->where('meta.is_public', true));
+
+        $this->patch(route('quests.walkthrough.visibility', 1), ['is_public' => false])
+            ->assertRedirect(route('quests.walkthrough', 1));
+        $this->assertSame(0, (int) DB::table('quests')->where('id', 1)->value('walkthrough_is_public'));
+
+        $this->get(route('quests.walkthrough', 1))
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('meta.is_public', false));
+
+        // Regenerating the walkthrough keeps the manual choice.
+        $this->post(route('quests.walkthrough.regenerate', 1));
+        $this->assertSame(0, (int) DB::table('quests')->where('id', 1)->value('walkthrough_is_public'));
+
+        $this->patch(route('quests.walkthrough.visibility', 1), ['is_public' => 'nie'])->assertSessionHasErrors('is_public');
+    }
+
     public function test_job_is_unique_per_world(): void
     {
         $this->assertSame('retro', (new RefreshQuestWalkthroughsJob('retro'))->uniqueId());

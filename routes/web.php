@@ -265,6 +265,7 @@ Route::middleware(['auth'])->group(function () {
                     Route::get('quests/{quest}/steps', [QuestController::class, 'getSteps'])->name('quests.steps');
                     Route::get('quests/{quest}/walkthrough', [QuestWalkthroughController::class, 'show'])->name('quests.walkthrough');
                     Route::post('quests/{quest}/walkthrough', [QuestWalkthroughController::class, 'regenerate'])->name('quests.walkthrough.regenerate');
+                    Route::patch('quests/{quest}/walkthrough/visibility', [QuestWalkthroughController::class, 'updateVisibility'])->name('quests.walkthrough.visibility');
                     Route::patch('quests/{quest}', [QuestController::class, 'update'])->name('quests.update');
                     Route::patch('quests/{quest}/seasonal-events', [QuestController::class, 'syncSeasonalEvents'])->name('quests.seasonal-events.sync');
                     Route::delete('quests/{quest}', [QuestController::class, 'destroy'])->name('quests.destroy');

@@ -28,6 +28,8 @@ class QuestWalkthroughController extends Controller
             'walkthrough' => $this->withAssetUrls($walkthrough),
             'meta' => [
                 'available' => $available,
+                'is_public' => $quest->walkthrough_is_public ?? true,
+                'visibility_available' => array_key_exists('walkthrough_is_public', $quest->getAttributes()),
                 'live_preview' => $record === null,
                 'generated_at' => $record?->generated_at,
                 'checked_at' => $record?->checked_at,
@@ -44,6 +46,15 @@ class QuestWalkthroughController extends Controller
         abort_unless($this->service->isAvailable($connection), 409, 'Brak tabeli quest_walkthroughs w tym świecie — uruchom migracje remote.');
 
         $this->service->refreshQuest($connection, $quest->id);
+
+        return to_route('quests.walkthrough', $quest->id);
+    }
+
+    public function updateVisibility(Request $request, Quest $quest): RedirectResponse
+    {
+        $validated = $request->validate(['is_public' => ['required', 'boolean']]);
+
+        $quest->update(['walkthrough_is_public' => $validated['is_public']]);
 
         return to_route('quests.walkthrough', $quest->id);
     }
