@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ApplySuggestedStackPriceRequest;
+use App\Models\BaseItem;
 use App\Services\BaseItemService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -27,5 +31,16 @@ class ProblemAssetsController extends Controller
             'itemsBatch' => json_decode($items_batch ?? '{}', true),
             'npcsBatch' => json_decode($npcs_batch ?? '{}', true),
         ]);
+    }
+
+    public function applySuggestedPrice(ApplySuggestedStackPriceRequest $request, BaseItem $baseItem, BaseItemService $baseItems): RedirectResponse
+    {
+        if ($request->world() !== $request->session()->get('world')) {
+            throw ValidationException::withMessages(['world' => 'Wybrany świat się zmienił. Sprawdź aktualny raport.']);
+        }
+
+        $baseItems->applySuggestedStackPrice($baseItem, $request->expectedPrice(), $request->expectedQuantity());
+
+        return back();
     }
 }

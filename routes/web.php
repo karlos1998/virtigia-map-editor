@@ -354,6 +354,7 @@ Route::middleware(['auth'])->group(function () {
 
                     Route::get('renewable-items', [RenewableMapItemController::class, 'index'])->name('renewable-items.index');
                     Route::get('/problem-assets', [ProblemAssetsController::class, 'index'])->name('problem-assets.index');
+                    Route::patch('/problem-assets/base-items/{baseItem}/suggested-price', [ProblemAssetsController::class, 'applySuggestedPrice'])->name('problem-assets.apply-suggested-price');
 
                 });
 

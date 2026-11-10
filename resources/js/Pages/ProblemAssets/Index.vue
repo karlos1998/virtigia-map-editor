@@ -1,5 +1,6 @@
 <template>
     <AppLayout>
+        <ConfirmDialog />
         <section class="card mb-6" aria-labelledby="suspicious-stacks-title">
             <h2 id="suspicious-stacks-title" class="text-2xl font-bold mb-2">Podejrzanie drogie stosy – {{ world }}</h2>
             <p class="mb-4">Stosy co najmniej dwóch sztuk o wartości od {{ formatNumber(suspiciousStackThreshold) }} złota. Sugestia zakłada, że wpisana cena miała dotyczyć całego stosu.</p>
@@ -13,6 +14,7 @@
                             <th scope="col" class="px-2 py-2 border">Ilość</th>
                             <th scope="col" class="px-2 py-2 border">Wartość stosu</th>
                             <th scope="col" class="px-2 py-2 border">Sugerowana cena za sztukę</th>
+                            <th scope="col" class="px-2 py-2 border">Akcje</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -23,7 +25,12 @@
                             <td class="px-2 py-2 border">{{ formatNumber(item.price) }}</td>
                             <td class="px-2 py-2 border">{{ formatNumber(item.quantity) }}</td>
                             <td class="px-2 py-2 border font-semibold">{{ formatNumber(item.stack_value) }}</td>
-                            <td class="px-2 py-2 border">{{ formatNumber(Math.round(item.price / item.quantity)) }}</td>
+                            <td class="px-2 py-2 border">{{ formatNumber(item.suggested_price) }}</td>
+                            <td class="px-2 py-2 border">
+                                <Button label="Ustaw sugerowaną cenę" size="small" outlined
+                                        :disabled="savingItemId !== null" :loading="savingItemId === item.id"
+                                        @click="confirmSuggestedPrice(item)" />
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -142,8 +149,9 @@
 
 <script setup>
 import AppLayout from "@/layout/AppLayout.vue";
-import {computed} from 'vue';
-import {Link} from '@inertiajs/vue3';
+import {computed, ref} from 'vue';
+import {Link, router} from '@inertiajs/vue3';
+import {useConfirm, useToast} from 'primevue';
 import {route} from 'ziggy-js';
 
 const formatNumber = new Intl.NumberFormat('pl-PL').format;
@@ -158,6 +166,33 @@ const props = defineProps({
     itemsBatch: Object,
     npcsBatch: Object
 });
+
+const confirm = useConfirm();
+const toast = useToast();
+const savingItemId = ref(null);
+
+function confirmSuggestedPrice(item) {
+    const world = props.world;
+    confirm.require({
+        header: 'Ustawić sugerowaną cenę?',
+        message: `Świat ${world}. #${item.id} · ${item.name}: zmień cenę bazową z ${formatNumber(item.price)} na ${formatNumber(item.suggested_price)} złota za sztukę.`,
+        acceptLabel: 'Ustaw cenę',
+        rejectLabel: 'Anuluj',
+        accept: () => {
+            savingItemId.value = item.id;
+            router.patch(route('problem-assets.apply-suggested-price', item.id), {
+                world,
+                expected_price: item.price,
+                expected_quantity: item.quantity,
+            }, {
+                preserveScroll: true,
+                onSuccess: () => toast.add({severity: 'success', summary: 'Cena bazowa została zmieniona', life: 4000}),
+                onError: (errors) => toast.add({severity: 'error', summary: 'Cena nie została zmieniona', detail: errors.expected_price || errors.world || 'Odśwież raport i spróbuj ponownie.', life: 6000}),
+                onFinish: () => { savingItemId.value = null; },
+            });
+        },
+    });
+}
 
 const sortedItems = computed(() => {
     return [...props.items].sort((a, b) => a.error.localeCompare(b.error));

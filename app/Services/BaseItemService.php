@@ -47,7 +47,46 @@ final class BaseItemService extends BaseService
             ->whereRaw("{$stackValue} >= ?", [self::SUSPICIOUS_STACK_VALUE])
             ->orderByDesc('stack_value')
             ->orderBy('id')
-            ->simplePaginate(25, pageName: 'stacks_page');
+            ->simplePaginate(25, pageName: 'stacks_page')
+            ->through(function (BaseItem $item): array {
+                $price = (int) $item->price;
+                $quantity = (int) $item->quantity;
+
+                return [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'price' => $price,
+                    'quantity' => $quantity,
+                    'stack_value' => (int) $item->stack_value,
+                    'suggested_price' => $this->suggestedStackUnitPrice($price, $quantity),
+                ];
+            });
+    }
+
+    public function applySuggestedStackPrice(BaseItem $baseItem, int $expectedPrice, int $expectedQuantity): void
+    {
+        $baseItem->getConnection()->transaction(function () use ($baseItem, $expectedPrice, $expectedQuantity): void {
+            $item = $baseItem->newQuery()->lockForUpdate()->findOrFail($baseItem->getKey());
+            $price = (int) $item->price;
+            $quantity = (int) ($item->attributes['quantity'] ?? 0);
+
+            if ($item->currency !== BaseItemCurrency::GOLD
+                || $price !== $expectedPrice
+                || $quantity !== $expectedQuantity
+                || $quantity < 2
+                || $item->stackValue() < self::SUSPICIOUS_STACK_VALUE) {
+                throw ValidationException::withMessages([
+                    'expected_price' => 'Dane stosu się zmieniły. Sprawdź aktualny raport przed ponowną próbą.',
+                ]);
+            }
+
+            $item->update(['price' => $this->suggestedStackUnitPrice($price, $quantity)]);
+        });
+    }
+
+    private function suggestedStackUnitPrice(int $price, int $quantity): int
+    {
+        return (int) round($price / $quantity);
     }
 
     /**§
