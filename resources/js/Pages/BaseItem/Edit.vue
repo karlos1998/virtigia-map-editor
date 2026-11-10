@@ -136,11 +136,27 @@ const tooltipAttributes = computed(() => {
     // If we have scale result, merge it with base attributes
     if (scaleResult.value) {
         return {
-            ...scaleResult.value
+            quantity: baseAttributes.quantity,
+            ...scaleResult.value,
         };
     }
 
     return baseAttributes;
+});
+
+const tooltipItem = computed(() => {
+    const item = props.baseItem;
+    const attributes = tooltipAttributes.value;
+    const quantity = Math.max(1, Number(attributes.quantity) || 1);
+    const savedQuantity = Math.max(1, Number(item.attributes?.quantity) || 1);
+
+    return {
+        ...item,
+        attributes,
+        stack_value: quantity === savedQuantity || item.currency === 'dragonTear'
+            ? item.stack_value
+            : item.price * quantity,
+    };
 });
 
 const toast = useToast();
@@ -467,7 +483,7 @@ const clearCurrency = () => {
             <img
                 class="h-12 w-12 object-cover"
                 :src="baseItem.src"
-                v-tip.item.top.show-id="{...baseItem, attributes: tooltipAttributes}"
+                v-tip.item.top.show-id="tooltipItem"
                 alt=""
             /> ^ Podgląd edytowanego przedmiotu
             <div v-if="scaleResult" class="mt-2 text-sm text-green-600">

@@ -43,6 +43,7 @@ export interface BaseItemResource {
     rarity: string
 
     price: number
+    stack_value: number
     currency: string
     currency_name?: string
     specific_currency_price: number | null;

@@ -34,6 +34,7 @@ class BaseItemResource extends JsonResource
 
         return [
             ...parent::toArray($request),
+            'stack_value' => $this->resource->stackValue(),
             'destroy_on_level_gap' => $this->whenPivotLoaded('base_npc_loots', fn () => (bool) $this->resource->pivot->destroy_on_level_gap),
 
             'src' => AssetUrl::item($this->resource->src),

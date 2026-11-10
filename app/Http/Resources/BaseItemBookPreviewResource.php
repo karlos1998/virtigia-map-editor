@@ -20,9 +20,10 @@ class BaseItemBookPreviewResource extends JsonResource
             'category' => (string) ($this->resource->category?->value ?? ''),
             'category_name' => (string) ($this->resource->category?->description() ?? ''),
             'price' => (int) ($this->resource->price ?? 0),
+            'currency' => $this->resource->currency,
+            'stack_value' => $this->resource->stackValue(),
             'attributes' => $attributes,
             'need_level' => (int) ($attributes['needLevel'] ?? 0),
         ];
     }
 }
-

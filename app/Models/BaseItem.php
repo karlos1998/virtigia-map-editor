@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\BaseItemCategory;
+use App\Enums\BaseItemCurrency;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Scout\Engines\MeilisearchEngine;
@@ -62,8 +63,17 @@ class BaseItem extends DynamicModel
         'category' => BaseItemCategory::class,
         'edited_manually' => 'boolean',
         'suggest_destroy_on_level_gap' => 'boolean',
-        'currency' => \App\Enums\BaseItemCurrency::class,
+        'currency' => BaseItemCurrency::class,
     ];
+
+    public function stackValue(): int
+    {
+        $price = (int) $this->price;
+        $itemAttributes = $this->getAttribute('attributes');
+        $quantity = max(1, (int) ($itemAttributes['quantity'] ?? 1));
+
+        return $this->currency === BaseItemCurrency::DRAGON_TEAR ? $price : $price * $quantity;
+    }
 
     public function shops()
     {

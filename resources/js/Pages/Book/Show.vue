@@ -56,6 +56,8 @@ type PreviewItem = {
     category: string
     category_name: string
     price: number
+    stack_value: number
+    currency: string | null
     need_level: number
     attributes?: Record<string, unknown>
 };

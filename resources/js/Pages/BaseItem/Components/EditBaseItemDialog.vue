@@ -117,11 +117,11 @@ const confirm = () => {
                     v-model="form.price"
                     showButtons
                     buttonLayout="horizontal"
-                    :step="5000"
+                    :step="1"
                     :max="1000000000"
                     :min="0"
                 />
-                <label for="price">Wartość</label>
+                <label for="price">{{ form.currency === 'dragonTear' ? 'Cena przedmiotu' : 'Cena za 1 sztukę' }}</label>
             </IftaLabel>
 
             <IftaLabel>

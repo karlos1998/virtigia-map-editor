@@ -27,7 +27,7 @@ import DialogService from 'primevue/dialogservice';
 
 import {createPinia} from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
-import {ToolTipDirective} from "virtigia-tips";
+import {editorTooltip} from "./Components/editorTooltip";
 // import OwnDataTable from '@/../../packages/karlos3098/laravel-primevue-table-service/src/Assets/PrimeVue/4.0.5/OwnDataTable.vue';
 
 import 'virtigia-tips/style.css';
@@ -87,7 +87,7 @@ createInertiaApp({
 
             .use(pinia)
 
-            .directive('tip', ToolTipDirective)
+            .directive('tip', editorTooltip)
 
             // .component('OwnDataTable', OwnDataTable)
 
