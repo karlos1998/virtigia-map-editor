@@ -168,6 +168,74 @@ class BulkAttachBaseItemsToBaseNpcLootTest extends TestCase
         $this->assertDatabaseHas('base_npc_loots', ['base_npc_id' => 10, 'base_item_id' => 3, 'destroy_on_level_gap' => true], $this->worldConnection);
     }
 
+    public function test_high_level_npcs_get_loot_that_is_never_destroyed(): void
+    {
+        $this->seedBaseNpc();
+        $this->seedBaseItems();
+        $world = DB::connection($this->worldConnection);
+        $this->actingAs($this->makeUser())->withSession(['world' => $this->worldConnection]);
+
+        $world->table('base_npcs')->where('id', 10)->update(['lvl' => 260, 'rank' => 'NORMAL']);
+        $this->post(route('base-npcs.loots.attach', ['baseNpc' => 10]), ['baseItemId' => 1])->assertRedirect();
+        $this->assertDatabaseHas('base_npc_loots', ['base_npc_id' => 10, 'base_item_id' => 1, 'destroy_on_level_gap' => true], $this->worldConnection);
+
+        $world->table('base_npcs')->where('id', 10)->update(['lvl' => 270]);
+        $this->post(route('base-npcs.loots.attach', ['baseNpc' => 10]), ['baseItemId' => 3])->assertRedirect();
+        $this->assertDatabaseHas('base_npc_loots', ['base_npc_id' => 10, 'base_item_id' => 3, 'destroy_on_level_gap' => false], $this->worldConnection);
+
+        $world->table('base_npcs')->where('id', 10)->update(['lvl' => 250, 'rank' => 'HERO']);
+        $this->post(route('base-npcs.loots.attach', ['baseNpc' => 10]), ['baseItemId' => 2])->assertRedirect();
+        $this->assertDatabaseHas('base_npc_loots', ['base_npc_id' => 10, 'base_item_id' => 2, 'destroy_on_level_gap' => false], $this->worldConnection);
+    }
+
+    public function test_migration_switches_off_level_gap_rules_for_high_level_npcs(): void
+    {
+        $this->seedBaseItems();
+        $world = DB::connection($this->worldConnection);
+        $world->table('base_npcs')->insert([
+            ['id' => 21, 'name' => 'Heros 249', 'lvl' => 249, 'rank' => 'HERO', 'divine_intervention' => null],
+            ['id' => 22, 'name' => 'Heros 250', 'lvl' => 250, 'rank' => 'HERO', 'divine_intervention' => null],
+            ['id' => 23, 'name' => 'Elita 250', 'lvl' => 250, 'rank' => 'ELITE', 'divine_intervention' => true],
+            ['id' => 24, 'name' => 'Zwykły 260', 'lvl' => 260, 'rank' => 'NORMAL', 'divine_intervention' => null],
+            ['id' => 25, 'name' => 'Zwykły 270', 'lvl' => 270, 'rank' => 'NORMAL', 'divine_intervention' => null],
+        ]);
+        foreach ([21, 22, 23, 24, 25] as $npcId) {
+            $world->table('base_npc_loots')->insert(['base_npc_id' => $npcId, 'base_item_id' => 1, 'destroy_on_level_gap' => true]);
+        }
+
+        $this->artisan('migrate', [
+            '--database' => $this->worldConnection,
+            '--path' => 'database/migrations/remote/2026_11_11_163429_disable_level_gap_rules_for_high_level_npcs.php',
+        ])->assertSuccessful();
+
+        $this->assertSame(
+            [21 => null, 22 => 0, 23 => 0, 24 => 0, 25 => 0],
+            $world->table('base_npcs')->whereIn('id', [21, 22, 23, 24, 25])->orderBy('id')->pluck('divine_intervention', 'id')->map(fn ($value) => $value === null ? null : (int) $value)->all(),
+        );
+        $this->assertSame(
+            [21 => 1, 22 => 0, 23 => 0, 24 => 1, 25 => 0],
+            $world->table('base_npc_loots')->orderBy('base_npc_id')->pluck('destroy_on_level_gap', 'base_npc_id')->map(fn ($value) => (int) $value)->all(),
+        );
+    }
+
+    public function test_new_high_level_npcs_start_without_divine_intervention(): void
+    {
+        \App\Models\DynamicModel::setGlobalConnection($this->worldConnection);
+        Schema::connection($this->worldConnection)->table('base_npcs', function (Blueprint $table): void {
+            $table->integer('draw_offset_x')->default(0);
+            $table->integer('draw_offset_y')->default(0);
+            $table->string('layer_depth')->nullable();
+        });
+        $high = \App\Models\BaseNpc::create(['name' => 'Smok', 'src' => 'x.gif', 'lvl' => 300, 'rank' => 'TITAN', 'category' => 'MOB', 'profession' => 'w']);
+        $low = \App\Models\BaseNpc::create(['name' => 'Wilk', 'src' => 'x.gif', 'lvl' => 20, 'rank' => 'HERO', 'category' => 'MOB', 'profession' => 'w']);
+        $forced = \App\Models\BaseNpc::create(['name' => 'Smok 2', 'src' => 'x.gif', 'lvl' => 300, 'rank' => 'TITAN', 'category' => 'MOB', 'profession' => 'w', 'divine_intervention' => true]);
+
+        $this->assertFalse($high->fresh()->divine_intervention);
+        $this->assertNull($low->fresh()->divine_intervention);
+        $this->assertTrue($forced->fresh()->divine_intervention);
+        \App\Models\DynamicModel::clearGlobalConnection();
+    }
+
     public function test_migration_protects_early_normal_mobs_and_special_item_categories(): void
     {
         $this->seedBaseNpc();

@@ -12,6 +12,18 @@ class BaseNpc extends DynamicModel
     /** @use HasFactory<\Database\Factories\BaseNpcFactory> */
     use HasFactory;
 
+    /** NPCs from this level are created without divine intervention (the engine has no level exception anymore). */
+    public const NO_DIVINE_INTERVENTION_FROM_LEVEL = 250;
+
+    protected static function booted(): void
+    {
+        static::creating(function (BaseNpc $npc): void {
+            if ($npc->divine_intervention === null && (int) $npc->lvl >= self::NO_DIVINE_INTERVENTION_FROM_LEVEL) {
+                $npc->divine_intervention = false;
+            }
+        });
+    }
+
     protected $fillable = [
         'name',
         'src',
