@@ -26,6 +26,7 @@ const props = defineProps<{
     npcs: NpcWithLocationResource[];
     doors: DoorResource[];
     pvpTypeList: { value: number; label: string }[];
+    mapGroupList: { value: string; label: string }[];
     respawnPoints: { id: number; map_id: number; map_name: string; x: number; y: number }[];
     doorsLeadingToMap: DoorResource[];
     dialogNodesTeleportingToMap: any[];
@@ -392,6 +393,7 @@ const handleTrackerPositionChanged = (position: { x: number, y: number }) => {
         <MapInformation
             :map="map"
             :pvp-type-list="pvpTypeList"
+            :map-group-list="mapGroupList"
             :respawn-points="respawnPoints"
         />
 

@@ -16,12 +16,14 @@ type BackgroundOption = {
 const props = defineProps<{
     map: MapResource;
     pvpTypeList: { value: number; label: string }[];
+    mapGroupList: { value: string; label: string }[];
     respawnPoints: { id: number; map_id: number; map_name: string; x: number; y: number }[];
 }>();
 
 // Form variables
 const mapName = ref('');
 const selectedPvpType = ref<number | null>(null);
+const selectedMapGroup = ref<string>(props.map.map_group ?? 'no_group');
 const selectedRespawnPointId = ref<number | null>(null);
 const toast = useToast();
 const showReplaceImageModal = ref(false);
@@ -161,6 +163,20 @@ const updateMapName = () => {
         },
         onError: () => {
             toast.add({ severity: 'error', summary: 'Błąd', detail: 'Nie udało się zaktualizować nazwy mapy', life: 3000 });
+        }
+    });
+};
+
+const updateMapGroup = () => {
+    router.patch(route('maps.update.group', props.map.id), {
+        map_group: selectedMapGroup.value
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            toast.add({ severity: 'success', summary: 'Sukces', detail: 'Grupa mapy została zaktualizowana', life: 3000 });
+        },
+        onError: () => {
+            toast.add({ severity: 'error', summary: 'Błąd', detail: 'Nie udało się zaktualizować grupy mapy', life: 3000 });
         }
     });
 };
@@ -321,6 +337,14 @@ const updateMapGroupingLocked = () => {
                     <div class="flex items-center gap-2">
                         <Dropdown v-model="selectedPvpType" :options="pvpTypeList" optionLabel="label" optionValue="value" class="w-full" />
                         <Button label="Zapisz" @click="updateMapPvp" />
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="font-semibold mb-2">Grupa mapy</h3>
+                    <div class="flex items-center gap-2">
+                        <Dropdown v-model="selectedMapGroup" :options="mapGroupList" optionLabel="label" optionValue="value" class="w-full" />
+                        <Button label="Zapisz" @click="updateMapGroup" />
                     </div>
                 </div>
 

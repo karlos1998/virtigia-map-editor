@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\MapGroup;
 use App\Facades\AssetUrl;
 use App\Models\Map;
 use Illuminate\Http\Request;
@@ -31,6 +32,7 @@ class MapResource extends JsonResource
             'is_teleport_locked' => $this->resource->is_teleport_locked,
             'is_grouping_locked' => $this->resource->is_grouping_locked,
             'is_internal' => (bool) $this->resource->is_internal,
+            'map_group' => $this->resource->map_group?->value ?? MapGroup::NO_GROUP->value,
         ];
     }
 }

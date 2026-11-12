@@ -19,5 +19,6 @@ export interface MapResource {
     is_city: boolean
     is_grouping_locked?: boolean
     is_internal?: boolean
+    map_group?: string
     respawn_point?: RespawnPointResource
 }

@@ -20,15 +20,19 @@ type Data = {
 type MapFilters = {
     is_city: boolean | null
     missing_battleground: boolean
+    map_group: string | null
 }
 
 const props = withDefaults(defineProps<{
     filters?: MapFilters
+    mapGroupList?: { value: string; label: string }[]
 }>(), {
     filters: () => ({
         missing_battleground: false,
         is_city: null,
+        map_group: null,
     }),
+    mapGroupList: () => [],
 });
 
 const cityFilter = ref(props.filters.is_city ?? null);
@@ -37,6 +41,12 @@ const cityOptions = [
     { label: 'Wyczerpanie zużywane', value: false },
     { label: 'Bez zużywania wyczerpania (miasta)', value: true },
 ];
+const mapGroupFilter = ref<string | null>(props.filters.map_group ?? null);
+const mapGroupOptions = computed(() => [
+    { label: 'Wszystkie grupy', value: null },
+    ...props.mapGroupList,
+]);
+const mapGroupLabels = computed(() => Object.fromEntries(props.mapGroupList.map(option => [option.value, option.label])));
 const selectedMaps = ref<MapResource[]>([]);
 const bulkVisible = ref(false);
 const bulkForm = useForm({ map_ids: [] as number[], is_city: true });
@@ -51,8 +61,8 @@ const saveBulk = () => bulkForm.patch(route('maps.bulk.city'), {
     onSuccess: () => { bulkVisible.value = false; selectedMaps.value = []; },
 });
 const showMissingBattlegrounds = ref(props.filters.missing_battleground);
-const isAdvancedFiltersCollapsed = ref(!showMissingBattlegrounds.value && cityFilter.value === null);
-const hasActiveAdvancedFilters = computed(() => showMissingBattlegrounds.value || cityFilter.value !== null);
+const isAdvancedFiltersCollapsed = ref(!showMissingBattlegrounds.value && cityFilter.value === null && mapGroupFilter.value === null);
+const hasActiveAdvancedFilters = computed(() => showMissingBattlegrounds.value || cityFilter.value !== null || mapGroupFilter.value !== null);
 
 const reloadWithAdvancedFilters = () => {
     const filters: Record<string, string> = {};
@@ -63,6 +73,10 @@ const reloadWithAdvancedFilters = () => {
 
     if (cityFilter.value !== null) {
         filters.is_city = cityFilter.value ? '1' : '0';
+    }
+
+    if (mapGroupFilter.value !== null) {
+        filters.map_group = mapGroupFilter.value;
     }
     selectedMaps.value = [];
     router.get(route('maps.index'), filters, {
@@ -75,6 +89,7 @@ const reloadWithAdvancedFilters = () => {
 const clearAdvancedFilters = () => {
     showMissingBattlegrounds.value = false;
     cityFilter.value = null;
+    mapGroupFilter.value = null;
     reloadWithAdvancedFilters();
 }
 </script>
@@ -117,6 +132,11 @@ const clearAdvancedFilters = () => {
                     <label class="flex flex-col gap-2">
                         <span>Zużywanie wyczerpania</span>
                         <Select v-model="cityFilter" :options="cityOptions" option-label="label" option-value="value" />
+                    </label>
+
+                    <label class="flex flex-col gap-2">
+                        <span>Grupa mapy</span>
+                        <Select v-model="mapGroupFilter" :options="mapGroupOptions" option-label="label" option-value="value" />
                     </label>
                     <div class="flex flex-wrap gap-2">
                         <Button
@@ -176,6 +196,7 @@ const clearAdvancedFilters = () => {
                 <Column selection-mode="multiple" style="width: 3rem" />
                 <Column header="Wyczerpanie"><template #body="{ data }"><Tag :value="data.is_city ? 'Nie spada (miasto)' : 'Zużywane'" :severity="data.is_city ? 'success' : 'warn'" /></template></Column>
                 <AdvanceColumn field="id" header="ID" style="width: 5%" />
+                <Column header="Grupa"><template #body="{ data }: Data"><Tag :value="mapGroupLabels[data.map_group ?? 'no_group'] ?? data.map_group" severity="secondary" /></template></Column>
 
                 <Column header="Miniatura" style="width: 80px">
                     <template #body="{ data }: Data">

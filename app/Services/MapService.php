@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\MapGroup;
 use App\Http\Resources\DoorResource;
 use App\Http\Resources\MapResource;
 use App\Models\Door;
@@ -47,7 +48,7 @@ final class MapService extends BaseService
     }
 
     /**
-     * @param  array{missing_battleground?: bool, is_city?: bool|null}  $filters
+     * @param  array{missing_battleground?: bool, is_city?: bool|null, map_group?: string|null}  $filters
      *
      * @throws \Exception
      */
@@ -85,10 +86,14 @@ final class MapService extends BaseService
     }
 
     /**
-     * @param  array{missing_battleground?: bool, is_city?: bool|null}  $filters
+     * @param  array{missing_battleground?: bool, is_city?: bool|null, map_group?: string|null}  $filters
      */
     private function applyFilters(Builder $query, array $filters): void
     {
+        if (isset($filters['map_group'])) {
+            $query->where('map_group', $filters['map_group']);
+        }
+
         if (isset($filters['is_city'])) {
             $query->where('is_city', $filters['is_city']);
         }
@@ -173,6 +178,11 @@ final class MapService extends BaseService
     public function updatePvp(Map $map, int $pvp)
     {
         $map->update(['pvp' => $pvp]);
+    }
+
+    public function updateMapGroup(Map $map, MapGroup $mapGroup): void
+    {
+        $map->update(['map_group' => $mapGroup]);
     }
 
     public function updateRespawnPoint(Map $map, int $respawnPointId)
@@ -279,6 +289,7 @@ final class MapService extends BaseService
             'battleground' => $map->battleground,
             'water' => $map->water,
             'pvp' => $map->pvp,
+            'map_group' => $map->map_group,
         ]);
 
         // Copy respawn point if exists

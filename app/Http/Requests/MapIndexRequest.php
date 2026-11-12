@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\MapGroup;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Enum;
 
 class MapIndexRequest extends FormRequest
 {
@@ -25,6 +27,7 @@ class MapIndexRequest extends FormRequest
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
             'missing_battleground' => ['nullable', 'boolean'],
             'is_city' => ['nullable', 'boolean'],
+            'map_group' => ['nullable', new Enum(MapGroup::class)],
         ];
     }
 
@@ -38,13 +41,14 @@ class MapIndexRequest extends FormRequest
     }
 
     /**
-     * @return array{missing_battleground: bool, is_city: bool|null}
+     * @return array{missing_battleground: bool, is_city: bool|null, map_group: string|null}
      */
     public function filters(): array
     {
         return [
             'missing_battleground' => $this->boolean('missing_battleground'),
             'is_city' => $this->filled('is_city') ? $this->boolean('is_city') : null,
+            'map_group' => $this->filled('map_group') ? (string) $this->input('map_group') : null,
         ];
     }
 }

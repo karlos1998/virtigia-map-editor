@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\MapGroup;
 use App\Enums\PvpType;
 use App\Http\Requests\AddWorldMinimapNodeRequest;
 use App\Http\Requests\BulkUpdateMapCityRequest;
@@ -12,6 +13,7 @@ use App\Http\Requests\UpdateMapBattlegroundRequest;
 use App\Http\Requests\UpdateMapCityRequest;
 use App\Http\Requests\UpdateMapColsRequest;
 use App\Http\Requests\UpdateMapImageRequest;
+use App\Http\Requests\UpdateMapGroupRequest;
 use App\Http\Requests\UpdateMapNameRequest;
 use App\Http\Requests\UpdateMapPvpRequest;
 use App\Http\Requests\UpdateMapRespawnPointRequest;
@@ -90,6 +92,7 @@ class MapController extends Controller
         return Inertia::render('Map/Index', [
             'maps' => $this->mapService->getAll($filters),
             'filters' => $filters,
+            'mapGroupList' => MapGroup::toDropdownList(),
         ]);
     }
 
@@ -165,6 +168,7 @@ class MapController extends Controller
             'doors' => DoorResource::collection($map->doors),
             'renewableItems' => RenewableMapItemResource::collection($map->renewableMapItems),
             'pvpTypeList' => PvpType::toDropdownList(),
+            'mapGroupList' => MapGroup::toDropdownList(),
             'respawnPoints' => RespawnPointResource::collection($respawnPoints),
             'doorsLeadingToMap' => $map->doorsLeadingToMap,
             'dialogNodesTeleportingToMap' => $dialogNodesTeleportingToMap,
@@ -219,6 +223,11 @@ class MapController extends Controller
     public function updatePvp(Map $map, UpdateMapPvpRequest $request): void
     {
         $this->mapService->updatePvp($map, $request->input('pvp'));
+    }
+
+    public function updateMapGroup(Map $map, UpdateMapGroupRequest $request): void
+    {
+        $this->mapService->updateMapGroup($map, $request->mapGroup());
     }
 
     public function updateRespawnPoint(Map $map, UpdateMapRespawnPointRequest $request): void

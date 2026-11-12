@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\MapGroup;
 use App\Enums\PvpType;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -21,6 +22,7 @@ class Map extends DynamicModel
         'is_teleport_locked',
         'is_grouping_locked',
         'is_internal',
+        'map_group',
     ];
 
     protected $attributes = ['is_city' => false];
@@ -31,6 +33,7 @@ class Map extends DynamicModel
         'is_teleport_locked' => 'boolean',
         'is_grouping_locked' => 'boolean',
         'is_internal' => 'boolean',
+        'map_group' => MapGroup::class,
     ];
 
     public function npcs()
