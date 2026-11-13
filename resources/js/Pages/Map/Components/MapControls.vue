@@ -279,7 +279,7 @@ const confirmClearWater = (event) => {
                     <template #option="{ option }">
                         <div class="flex w-full items-center justify-between gap-3">
                             <span>{{ option.name }}</span>
-                            <span class="text-xs text-surface-500">{{ option.width }}x{{ option.height }}</span>
+                            <span class="text-xs text-muted-color">{{ option.width }}x{{ option.height }}</span>
                         </div>
                     </template>
                 </Dropdown>

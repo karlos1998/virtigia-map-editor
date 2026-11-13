@@ -414,10 +414,10 @@ function getAttributePointCardClass(attributeName: string): Array<string | Recor
     return [
         'flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-all duration-200',
         {
-            'bg-orange-50 border-orange-400 ring-1 ring-orange-300': isActive && isIncompatible,
-            'bg-blue-50 border-blue-200': isActive && !isIncompatible,
-            'border-orange-200': !isActive && isIncompatible,
-            'border-gray-200': !isActive && !isIncompatible,
+            'bg-orange-50 border-orange-400 ring-1 ring-orange-300 dark:bg-orange-950 dark:border-orange-800 dark:ring-orange-800': isActive && isIncompatible,
+            'bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800': isActive && !isIncompatible,
+            'border-orange-200 dark:border-orange-800': !isActive && isIncompatible,
+            'border-surface': !isActive && !isIncompatible,
         },
     ];
 }
@@ -429,10 +429,10 @@ function getManualAttributeCardClass(attributeName: string): Array<string | Reco
     return [
         'flex flex-col p-4 border rounded-lg hover:shadow-md transition-all duration-200',
         {
-            'bg-orange-50 border-orange-400 ring-1 ring-orange-300': isActive && isIncompatible,
-            'bg-emerald-100 border-emerald-300 ring-1 ring-emerald-300': isActive && !isIncompatible,
-            'border-orange-200': !isActive && isIncompatible,
-            'border-gray-200': !isActive && !isIncompatible,
+            'bg-orange-50 border-orange-400 ring-1 ring-orange-300 dark:bg-orange-950 dark:border-orange-800 dark:ring-orange-800': isActive && isIncompatible,
+            'bg-emerald-100 border-emerald-300 ring-1 ring-emerald-300 dark:bg-emerald-950 dark:border-emerald-800 dark:ring-emerald-800': isActive && !isIncompatible,
+            'border-orange-200 dark:border-orange-800': !isActive && isIncompatible,
+            'border-surface': !isActive && !isIncompatible,
         },
     ];
 }
@@ -444,10 +444,10 @@ function getBooleanAttributeCardClass(attributeKey: string): Array<string | Reco
     return [
         'flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-all duration-200 active:ring-2 active:ring-blue-400 cursor-pointer',
         {
-            'bg-orange-50 border-orange-400 ring-1 ring-orange-300': isActive && isIncompatible,
-            'bg-blue-100 border-blue-200': isActive && !isIncompatible,
-            'border-orange-200': !isActive && isIncompatible,
-            'border-gray-200': !isActive && !isIncompatible,
+            'bg-orange-50 border-orange-400 ring-1 ring-orange-300 dark:bg-orange-950 dark:border-orange-800 dark:ring-orange-800': isActive && isIncompatible,
+            'bg-blue-100 border-blue-200 dark:bg-blue-950 dark:border-blue-800': isActive && !isIncompatible,
+            'border-orange-200 dark:border-orange-800': !isActive && isIncompatible,
+            'border-surface': !isActive && !isIncompatible,
         },
     ];
 }
@@ -459,10 +459,10 @@ function getAdditionalAttributeCardClass(attribute: AdditionalAttribute): Array<
     return [
         'flex flex-col p-4 border rounded-lg hover:shadow-md transition-all duration-200',
         {
-            'bg-orange-50 border-orange-400 ring-1 ring-orange-300': isActive && isIncompatible,
-            'bg-amber-100 border-amber-300 ring-1 ring-amber-300': isActive && !isIncompatible,
-            'border-orange-200': !isActive && isIncompatible,
-            'border-gray-200': !isActive && !isIncompatible,
+            'bg-orange-50 border-orange-400 ring-1 ring-orange-300 dark:bg-orange-950 dark:border-orange-800 dark:ring-orange-800': isActive && isIncompatible,
+            'bg-amber-100 border-amber-300 ring-1 ring-amber-300 dark:bg-amber-950 dark:border-amber-800 dark:ring-amber-800': isActive && !isIncompatible,
+            'border-orange-200 dark:border-orange-800': !isActive && isIncompatible,
+            'border-surface': !isActive && !isIncompatible,
         },
     ];
 }
@@ -1173,16 +1173,16 @@ watch(selectedLegendaryBonus, async () => {
 <template>
     <!-- Header Section -->
     <header class="mb-6">
-        <h3 class="text-xl font-bold text-gray-800">Kalkulator Punktów Atrybutów</h3>
+        <h3 class="text-xl font-bold text-color">Kalkulator Punktów Atrybutów</h3>
 
         <!-- Summary Info -->
-        <div class="mt-4 p-3 bg-blue-50 rounded-lg space-y-3">
+        <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg space-y-3">
             <div class="flex justify-between items-center">
                 <div>
-                    <div class="font-semibold text-blue-800">
+                    <div class="font-semibold text-blue-800 dark:text-blue-300">
                         Punkty atrybutów: {{ totalPointsUsed }}
                     </div>
-                    <div class="text-xs text-gray-600 mt-1">
+                    <div class="text-xs text-muted-color mt-1">
                         Poziom: {{ selectedLevel }} |
                         Kategoria: {{ props.baseItem?.category || 'brak' }} |
                         Rzadkość: {{ props.baseItem?.rarity || 'brak' }} |
@@ -1192,7 +1192,7 @@ watch(selectedLegendaryBonus, async () => {
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <div v-if="isCalculating" class="flex items-center text-sm text-gray-600">
+                    <div v-if="isCalculating" class="flex items-center text-sm text-muted-color">
                         <ProgressSpinner style="width: 16px; height: 16px;"/>
                         <span class="ml-2">Obliczanie...</span>
                     </div>
@@ -1207,16 +1207,16 @@ watch(selectedLegendaryBonus, async () => {
                 </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-3 rounded-lg border border-blue-100 bg-white/70 p-3">
+            <div class="flex flex-wrap items-center gap-3 rounded-lg border border-blue-100 dark:border-blue-800 bg-[var(--surface-hover)] p-3">
                 <div class="flex items-center gap-3">
                     <InputSwitch v-model="showIncompatibleAttributes" />
-                    <span class="text-sm font-medium text-gray-700">Pokaż niepasujące atrybuty</span>
+                    <span class="text-sm font-medium text-muted-color">Pokaż niepasujące atrybuty</span>
                 </div>
             </div>
 
             <div
                 v-if="incompatibleActiveAttributes.length > 0"
-                class="rounded-lg border border-red-300 bg-red-100 p-3 text-sm text-red-800"
+                class="rounded-lg border border-red-300 dark:border-red-800 bg-red-100 dark:bg-red-950 p-3 text-sm text-red-800 dark:text-red-300"
             >
                 <div class="flex items-start gap-2">
                     <i class="pi pi-exclamation-triangle mt-0.5"></i>
@@ -1234,9 +1234,9 @@ watch(selectedLegendaryBonus, async () => {
             <!-- Bonus Validation -->
             <div v-if="bonusValidation.expected > 0"
                  :class="{
-                         'bg-green-100 border border-green-200 text-green-800': bonusValidation.severity === 'info',
-                         'bg-yellow-100 border border-yellow-200 text-yellow-800': bonusValidation.severity === 'warn',
-                         'bg-red-100 border border-red-200 text-red-800': bonusValidation.severity === 'error'
+                         'bg-green-100 border border-green-200 text-green-800 dark:bg-green-950 dark:border-green-800 dark:text-green-300': bonusValidation.severity === 'info',
+                         'bg-yellow-100 border border-yellow-200 text-yellow-800 dark:bg-yellow-950 dark:border-yellow-800 dark:text-yellow-300': bonusValidation.severity === 'warn',
+                         'bg-red-100 border border-red-200 text-red-800 dark:bg-red-950 dark:border-red-800 dark:text-red-300': bonusValidation.severity === 'error'
                      }"
                  class="p-3 rounded-lg">
                 <div class="flex items-center justify-between">
@@ -1254,11 +1254,11 @@ watch(selectedLegendaryBonus, async () => {
         </div>
 
         <!-- Profession Selection and Level -->
-        <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+        <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 <!-- Profession Selection -->
                 <div>
-                    <div class="font-semibold text-blue-800 mb-2">Profesje:</div>
+                    <div class="font-semibold text-blue-800 dark:text-blue-300 mb-2">Profesje:</div>
                     <MultiSelect v-model="selectedProfessions" :options="professionOptions"
                                  optionLabel="label" optionValue="value"
                                  placeholder="Wybierz profesje"
@@ -1266,7 +1266,7 @@ watch(selectedLegendaryBonus, async () => {
 
                     <!-- Profession Validation -->
                     <div v-if="!professionValidation.isValid" class="mt-2">
-                        <div class="bg-red-100 border border-red-200 text-red-800 p-2 rounded text-sm">
+                        <div class="bg-red-100 dark:bg-red-950 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-300 p-2 rounded text-sm">
                             <div class="flex items-center gap-2">
                                 <i class="pi pi-times-circle"></i>
                                 <span class="font-medium">{{ professionValidation.message }}</span>
@@ -1277,7 +1277,7 @@ watch(selectedLegendaryBonus, async () => {
 
                 <!-- Attack Element Selection -->
                 <div>
-                    <div class="font-semibold text-blue-800 mb-2">Elementy ataku:</div>
+                    <div class="font-semibold text-blue-800 dark:text-blue-300 mb-2">Elementy ataku:</div>
                     <MultiSelect v-model="selectedAttackElements" :options="visibleAttackElements"
                                  optionLabel="description" optionValue="name"
                                  placeholder="Wybierz elementy ataku"
@@ -1286,14 +1286,14 @@ watch(selectedLegendaryBonus, async () => {
 
                 <!-- Level Selection -->
                 <div>
-                    <div class="font-semibold text-blue-800 mb-2">Poziom:</div>
+                    <div class="font-semibold text-blue-800 dark:text-blue-300 mb-2">Poziom:</div>
                     <InputNumber v-model="selectedLevel" showButtons buttonLayout="horizontal" :min="1" :max="1000"
                                  class="w-full" />
                 </div>
 
                 <!-- Legendary Bonus Selection -->
                 <div>
-                    <div class="font-semibold text-blue-800 mb-2">Bonus legendarny:</div>
+                    <div class="font-semibold text-blue-800 dark:text-blue-300 mb-2">Bonus legendarny:</div>
                     <Dropdown v-model="selectedLegendaryBonus" :options="legendaryBonuses" optionLabel="label"
                               optionValue="name"
                               placeholder="Wybierz bonus legendarny" class="w-full"/>
@@ -1306,14 +1306,14 @@ watch(selectedLegendaryBonus, async () => {
     <!-- Loading State -->
     <div v-if="isLoading" class="flex justify-center items-center py-12">
         <ProgressSpinner />
-        <span class="ml-3 text-gray-600">Ładowanie atrybutów...</span>
+        <span class="ml-3 text-muted-color">Ładowanie atrybutów...</span>
     </div>
 
     <!-- Attribute Editors -->
     <div v-else class="space-y-8">
         <!-- Regular Attribute Points -->
         <section>
-            <h4 class="text-lg font-semibold mb-4 text-blue-600 border-b border-blue-200 pb-2 flex justify-between items-center">
+            <h4 class="text-lg font-semibold mb-4 text-blue-600 dark:text-blue-300 border-b border-blue-200 dark:border-blue-800 pb-2 flex justify-between items-center">
                 Punkty Atrybutów
                 <Button @click="resetAttributePoints" icon="pi pi-refresh" severity="success" size="small" text
                         rounded class="h-8 ml-2" label="Resetuj" />
@@ -1325,8 +1325,8 @@ watch(selectedLegendaryBonus, async () => {
                     :class="getAttributePointCardClass(attr.name)"
                 >
                     <div class="flex-1 min-w-0">
-                        <div class="font-medium text-sm text-gray-800 truncate">{{ attr.name }}</div>
-                        <div class="text-xs text-gray-500 mt-1">{{ attr.description }}</div>
+                        <div class="font-medium text-sm text-color truncate">{{ attr.name }}</div>
+                        <div class="text-xs text-muted-color mt-1">{{ attr.description }}</div>
                     </div>
                     <div class="flex items-center gap-3 ml-4">
                         <Button
@@ -1357,7 +1357,7 @@ watch(selectedLegendaryBonus, async () => {
 
         <!-- Manual Attribute Points -->
         <section>
-            <h4 class="text-lg font-semibold mb-4 text-green-600 border-b border-green-200 pb-2">
+            <h4 class="text-lg font-semibold mb-4 text-green-600 dark:text-green-300 border-b border-green-200 dark:border-green-800 pb-2">
                 Manualne Punkty Atrybutów
             </h4>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1367,8 +1367,8 @@ watch(selectedLegendaryBonus, async () => {
                     :class="getManualAttributeCardClass(attr.name)"
                 >
                     <div class="mb-3">
-                        <div class="font-medium text-sm text-gray-800">{{ attr.name }}</div>
-                        <div class="text-xs text-gray-500 mt-1">{{ attr.description }}</div>
+                        <div class="font-medium text-sm text-color">{{ attr.name }}</div>
+                        <div class="text-xs text-muted-color mt-1">{{ attr.description }}</div>
                     </div>
                     <InputNumber
                         :model-value="getAttributeValue(attr.name, true)"
@@ -1384,7 +1384,7 @@ watch(selectedLegendaryBonus, async () => {
 
         <!-- Boolean Attributes -->
         <section>
-            <h4 class="text-lg font-semibold mb-4 text-blue-600 border-b border-blue-200 pb-2 flex justify-between items-center">
+            <h4 class="text-lg font-semibold mb-4 text-blue-600 dark:text-blue-300 border-b border-blue-200 dark:border-blue-800 pb-2 flex justify-between items-center">
                 Atrybuty logiczne
             </h4>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1395,7 +1395,7 @@ watch(selectedLegendaryBonus, async () => {
                     @click="updateBooleanAttribute(attr.key, !getBooleanAttributeValue(attr.key))"
                 >
                     <div class="flex-1 min-w-0">
-                        <div class="font-medium text-sm text-gray-800 truncate">{{ attr.label }}</div>
+                        <div class="font-medium text-sm text-color truncate">{{ attr.label }}</div>
                     </div>
                     <div class="flex items-center gap-3 ml-4">
                         <Checkbox
@@ -1411,7 +1411,7 @@ watch(selectedLegendaryBonus, async () => {
 
         <!-- Additional Attributes -->
         <section>
-            <h4 class="text-lg font-semibold mb-4 text-blue-600 border-b border-blue-200 pb-2 flex justify-between items-center">
+            <h4 class="text-lg font-semibold mb-4 text-blue-600 dark:text-blue-300 border-b border-blue-200 dark:border-blue-800 pb-2 flex justify-between items-center">
                 Dodatkowe Atrybuty
             </h4>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1421,7 +1421,7 @@ watch(selectedLegendaryBonus, async () => {
                     :class="getAdditionalAttributeCardClass(attr)"
                 >
                     <div class="mb-3">
-                        <div class="font-medium text-sm text-gray-800">{{ attr.label }}</div>
+                        <div class="font-medium text-sm text-color">{{ attr.label }}</div>
                     </div>
                     <template v-if="attr.type === 'int'">
                         <InputNumber

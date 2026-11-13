@@ -179,7 +179,7 @@ const submit = () => {
                 Odpięte zostaną tylko zaznaczone przedmioty, które są obecnie przypisane do wybranego celu.
             </Message>
 
-            <small v-for="(error, key) in form.errors" :key="key" class="text-red-500">{{ error }}</small>
+            <small v-for="(error, key) in form.errors" :key="key" class="text-red-500 dark:text-red-300">{{ error }}</small>
         </form>
 
         <template #footer>

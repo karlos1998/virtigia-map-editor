@@ -83,12 +83,16 @@ const showLogoText = computed(() => !isSlim.value && !isSlimPlus.value);
 
 <style lang="scss" scoped>
 .layout-sidebar {
-    @apply fixed left-0 top-0 h-full bg-white dark:bg-gray-800 shadow-md z-50 flex flex-col transition-all duration-300 ease-in-out border-r border-gray-100 dark:border-gray-700 pt-16;
+    @apply fixed left-0 top-0 h-full shadow-md z-50 flex flex-col transition-all duration-300 ease-in-out border-r pt-16;
+    --logo-color: var(--menuitem-text-color);
+    --logo-muted-color: var(--root-menuitem-text-color);
     width: 280px;
+    background: var(--menu-bg);
+    color: var(--menuitem-text-color);
 }
 
 :deep(.layout-horizontal) .layout-sidebar {
-    @apply fixed top-16 left-0 right-0 h-auto w-full border-r-0 border-b border-gray-100 dark:border-gray-700 pt-0;
+    @apply fixed top-16 left-0 right-0 h-auto w-full border-r-0 border-b pt-0;
     z-index: 39;
 }
 
@@ -97,8 +101,15 @@ const showLogoText = computed(() => !isSlim.value && !isSlimPlus.value);
     width: 80px;
 }
 
+.layout-sidebar,
+.sidebar-header,
+.sidebar-user,
+.sidebar-footer {
+    border-color: var(--menu-border-color);
+}
+
 .sidebar-header {
-    @apply flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700;
+    @apply flex items-center justify-between px-4 py-3 border-b;
 }
 
 :deep(.layout-slim) .sidebar-header,
@@ -110,32 +121,14 @@ const showLogoText = computed(() => !isSlim.value && !isSlimPlus.value);
     @apply hidden;
 }
 
-.logo-container {
-    @apply flex items-center;
-}
-
-.logo-icon {
-    @apply flex items-center justify-center w-10 h-10 rounded-lg bg-primary-500 text-white mr-3;
-}
-
-.logo-text {
-    @apply flex flex-col;
-}
-
-.logo-name {
-    @apply font-bold text-gray-800 dark:text-white text-lg;
-}
-
-.logo-subtitle {
-    @apply text-xs text-gray-500 dark:text-gray-400;
-}
-
 .layout-sidebar-anchor {
-    @apply w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200;
+    @apply w-8 h-8 flex items-center justify-center rounded-full transition-colors duration-200;
+    background: var(--menuitem-hover-bg-color);
+    color: var(--menuitem-text-color);
 }
 
 .sidebar-user {
-    @apply px-4 py-3 border-b border-gray-100 dark:border-gray-700;
+    @apply px-4 py-3 border-b;
 }
 
 :deep(.layout-slim) .sidebar-user,
@@ -182,7 +175,8 @@ const showLogoText = computed(() => !isSlim.value && !isSlimPlus.value);
 }
 
 .sidebar-footer {
-    @apply px-4 py-3 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 flex flex-col items-center;
+    @apply px-4 py-3 border-t text-xs flex flex-col items-center;
+    color: var(--root-menuitem-text-color);
 }
 
 :deep(.layout-slim) .sidebar-footer,

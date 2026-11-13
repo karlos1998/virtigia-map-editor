@@ -39,10 +39,12 @@ defineProps({
 }
 
 .logo-name {
-  @apply font-bold text-gray-800 dark:text-white text-lg;
+  @apply font-bold text-lg;
+  color: var(--logo-color, var(--text-color));
 }
 
 .logo-subtitle {
-  @apply text-xs text-gray-500 dark:text-gray-400;
+  @apply text-xs;
+  color: var(--logo-muted-color, var(--text-color-secondary));
 }
 </style>

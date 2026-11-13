@@ -80,14 +80,14 @@ export function useLayout() {
             return;
         }
 
-        document.startViewTransition(() => executeDarkModeToggle(event));
+        document.startViewTransition(executeDarkModeToggle);
     };
 
     const executeDarkModeToggle = () => {
         layoutConfig.darkTheme = !layoutConfig.darkTheme;
         layoutConfig.menuTheme = isDarkTheme.value ? 'dark' : 'light';
 
-        document.documentElement.classList.toggle('app-dark');
+        document.documentElement.classList.toggle('app-dark', layoutConfig.darkTheme);
     };
 
     const setActiveMenuItem = (item) => {

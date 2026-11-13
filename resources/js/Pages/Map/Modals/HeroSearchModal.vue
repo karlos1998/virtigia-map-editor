@@ -84,7 +84,7 @@ const addHeroLocation = () => {
                             v-tip.npc="slotProps.option"
                         />
                         <div class="text-center">
-                            <span class="font-semibold text-gray-800">
+                            <span class="font-semibold text-color">
                                 [{{ slotProps.option.id }}] {{ slotProps.option.name }}
                             </span>
                         </div>
@@ -105,7 +105,7 @@ const addHeroLocation = () => {
                 alt="Option Image"
             />
             <div class="font-bold">{{ selectedHero.name }}</div>
-            <div class="text-sm text-gray-600">
+            <div class="text-sm text-muted-color">
                 Istniejące lokalizacje: {{ selectedHero.locations.length }}
             </div>
         </div>

@@ -74,7 +74,7 @@ const clearItem = () => {
                                     v-tip.item.top.show-id="slotProps.option"
                                 />
                                 <div class="text-center">
-                                    <span class="font-semibold text-gray-800">
+                                    <span class="font-semibold text-color">
                                         [{{ slotProps.option.id }}] {{ slotProps.option.name }}
                                     </span>
                                 </div>
@@ -82,7 +82,7 @@ const clearItem = () => {
                         </div>
                     </template>
                 </AutoComplete>
-                <small class="block mt-1 text-gray-500">Pozostaw puste, jeśli nie ma wymaganego przedmiotu</small>
+                <small class="block mt-1 text-muted-color">Pozostaw puste, jeśli nie ma wymaganego przedmiotu</small>
             </div>
 
             <div class="flex justify-end gap-2 mt-4">

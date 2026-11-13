@@ -11,7 +11,7 @@ const attributes = defineModel<Record<string, any>>('attributes', { required: tr
         <h4 class="font-semibold mb-3">Wspólne atrybuty przedmiotu</h4>
 
         <div class="flex flex-col gap-2">
-            <label for="base-item-description" class="text-sm font-medium text-surface-700">
+            <label for="base-item-description" class="text-sm font-medium text-muted-color">
                 {{ descriptionAttribute.label }}
             </label>
             <Textarea
@@ -29,14 +29,14 @@ const attributes = defineModel<Record<string, any>>('attributes', { required: tr
                 v-for="attribute in commonOwnershipAttributes"
                 :key="attribute.key"
                 :for="`base-item-${attribute.key}`"
-                class="flex items-center gap-3 rounded-lg border border-surface-200 p-3 cursor-pointer"
+                class="flex items-center gap-3 rounded-lg border border-surface p-3 cursor-pointer"
             >
                 <Checkbox
                     :input-id="`base-item-${attribute.key}`"
                     v-model="attributes[attribute.key]"
                     binary
                 />
-                <span class="text-sm font-medium text-surface-700">{{ attribute.label }}</span>
+                <span class="text-sm font-medium text-muted-color">{{ attribute.label }}</span>
             </label>
         </div>
     </section>

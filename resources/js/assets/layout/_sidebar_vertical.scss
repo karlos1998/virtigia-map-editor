@@ -104,21 +104,23 @@
                     transition: transform var(--layout-section-transition-duration);
                 }
 
-                &.active-route {
-                    color: var(--primary-color);
+                &:is(.active-route, :hover, :focus-visible) {
+                    background-color: var(--menuitem-hover-bg-color);
+                    color: var(--menuitem-active-color);
 
                     i {
-                        color: var(--primary-color);
+                        color: inherit;
                     }
                 }
 
-                &:hover {
-                    background-color: var(--menuitem-hover-bg-color);
-                    color: var(--p-primary-600);
+                &.active-route {
+                    font-weight: 700;
+                    box-shadow: inset 3px 0 var(--primary-color);
+                }
 
-                    i {
-                        color: var(--p-primary-600);
-                    }
+                &:focus-visible {
+                    outline: 2px solid currentColor;
+                    outline-offset: -2px;
                 }
             }
 

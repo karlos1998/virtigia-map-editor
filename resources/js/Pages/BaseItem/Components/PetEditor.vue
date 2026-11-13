@@ -324,28 +324,28 @@ onMounted(() => {
         <h3 class="text-xl font-bold mb-4">Edytor Zwierzaka (Pet)</h3>
 
         <div class="mb-4">
-            <p class="text-gray-600 mb-4">
+            <p class="text-muted-color mb-4">
                 Skonfiguruj zwierzaka dla tego przedmiotu. Zwierzak określa towarzysza gracza.
             </p>
         </div>
 
         <!-- Current pet status -->
-        <div v-if="hasPetData" class="mb-4 p-3 bg-green-50 border border-green-200 rounded">
+        <div v-if="hasPetData" class="mb-4 p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded">
             <div class="flex items-center justify-between mb-2">
-                <span class="font-semibold text-green-700">
+                <span class="font-semibold text-green-700 dark:text-green-300">
                     <i class="pi pi-check-circle mr-2"></i>
                     Zwierzak jest skonfigurowany
                 </span>
             </div>
-            <div class="text-sm text-gray-700">
+            <div class="text-sm text-muted-color">
                 <p>Nazwa w grze: <strong>{{ petName.trim() || baseItem?.name }}</strong></p>
                 <p v-if="petSrc">Źródło grafiki: <strong>{{ petSrc }}</strong></p>
                 <p v-if="petActions.length > 0">Akcje: <strong>{{ petActions.join(', ') }}</strong></p>
             </div>
         </div>
 
-        <div v-else class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
-            <p class="text-blue-700">
+        <div v-else class="mb-4 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded">
+            <p class="text-blue-700 dark:text-blue-300">
                 <i class="pi pi-info-circle mr-2"></i>
                 Ten przedmiot nie ma skonfigurowanego zwierzaka
             </p>
@@ -381,7 +381,7 @@ onMounted(() => {
                         />
                     </div>
                 </div>
-                <small class="text-gray-500 mt-2">
+                <small class="text-muted-color mt-2">
                     Jeśli ilość jest ustawiona, każde użycie maskotki zużywa jedną sztukę. Pusta ilość oznacza nielimitowane użycia.
                 </small>
             </div>
@@ -396,7 +396,7 @@ onMounted(() => {
                     maxlength="100"
                     class="w-full"
                 />
-                <small class="text-gray-500 block mt-1">
+                <small class="text-muted-color block mt-1">
                     Nazwa przywołanego zwierzaka w grze. Gdy pusta, zwierzak nosi nazwę przedmiotu.
                     Działa też dla maskotek, które gracze już mają (po ponownym przywołaniu).
                 </small>
@@ -412,7 +412,7 @@ onMounted(() => {
                     placeholder="np. kot01-1.gif"
                     class="w-full mb-2"
                 />
-                <small class="text-gray-500 block mb-2">Nazwa pliku graficznego zwierzaka (np. kot01-1.gif)</small>
+                <small class="text-muted-color block mb-2">Nazwa pliku graficznego zwierzaka (np. kot01-1.gif)</small>
 
                 <!-- Image upload -->
                 <div class="mt-2">
@@ -431,7 +431,7 @@ onMounted(() => {
                             <i class="pi pi-upload mr-2"></i>
                         </template>
                     </FileUpload>
-                    <small v-if="isUploadingImage" class="mt-2 block text-gray-500">Przesyłanie grafiki...</small>
+                    <small v-if="isUploadingImage" class="mt-2 block text-muted-color">Przesyłanie grafiki...</small>
                 </div>
             </div>
 
@@ -440,8 +440,8 @@ onMounted(() => {
                 <label class="block font-semibold mb-2">Podgląd:</label>
                 <div class="flex gap-4 items-start">
                     <!-- Full sprite preview -->
-                    <div class="border border-gray-300 rounded p-2">
-                        <div class="mb-1 text-xs text-gray-600">Pełna grafika:</div>
+                    <div class="border border-surface rounded p-2">
+                        <div class="mb-1 text-xs text-muted-color">Pełna grafika:</div>
                         <img
                             :src="previewImageSrc"
                             alt="Podgląd zwierzaka"
@@ -451,22 +451,22 @@ onMounted(() => {
                     </div>
 
                     <!-- Animated walking preview -->
-                    <div class="border border-gray-300 rounded p-2">
-                        <div class="mb-1 text-xs text-gray-600">Animacja chodzenia:</div>
+                    <div class="border border-surface rounded p-2">
+                        <div class="mb-1 text-xs text-muted-color">Animacja chodzenia:</div>
                         <div
                             :style="animatedSpriteStyle"
-                            class="border border-gray-200"
+                            class="border border-surface"
                         ></div>
-                        <div class="mt-1 text-xs text-gray-500">
+                        <div class="mt-1 text-xs text-muted-color">
                             Klatka {{ currentFrame + 1 }}/4
                         </div>
                     </div>
                 </div>
                 <div class="mt-2">
-                    <small class="text-gray-500">URL: {{ previewImageSrc }}</small>
+                    <small class="text-muted-color">URL: {{ previewImageSrc }}</small>
                 </div>
                 <div class="mt-1">
-                    <small class="text-gray-500">
+                    <small class="text-muted-color">
                         Klatek szerokości: {{ spriteFrames }} (4 chodzenie + {{ petActions.length }} akcji)
                     </small>
                 </div>
@@ -517,13 +517,13 @@ onMounted(() => {
                         :disabled="!newActionName || newActionName.trim() === ''"
                     />
                 </div>
-                <small class="text-gray-500">Dodaj akcje, które zwierzak może wykonywać</small>
+                <small class="text-muted-color">Dodaj akcje, które zwierzak może wykonywać</small>
             </div>
         </div>
 
         <!-- Success message -->
-        <div v-if="hasPetData" class="mt-3 p-3 bg-green-50 border border-green-200 rounded">
-            <p class="text-green-700 text-sm">
+        <div v-if="hasPetData" class="mt-3 p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded">
+            <p class="text-green-700 dark:text-green-300 text-sm">
                 <i class="pi pi-check-circle mr-2"></i>
                 Zwierzak jest poprawnie skonfigurowany. Pamiętaj aby zapisać zmiany głównym przyciskiem "Zapisz" na górze
                 strony.

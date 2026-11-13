@@ -355,7 +355,7 @@ onBeforeUnmount(() => {
                         v-tip.item.top.show-id="option"
                     />
                     <div class="text-center">
-                        <span class="font-semibold text-gray-800">
+                        <span class="font-semibold text-color">
                             [{{ option.id }}] {{ option.name }} ({{ option.in_use ? "W użyciu" : "Nieużywany" }})
                         </span>
                     </div>
@@ -390,7 +390,7 @@ onBeforeUnmount(() => {
                         v-tip.item.top.show-id="option"
                     />
                     <div class="text-center">
-                        <span class="font-semibold text-gray-800">
+                        <span class="font-semibold text-color">
                             [{{ option.id }}] {{ option.name }} ({{ option.in_use ? "W użyciu" : "Nieużywany" }})
                         </span>
                     </div>
@@ -407,7 +407,7 @@ onBeforeUnmount(() => {
                         v-tip.item.top.show-id="value"
                     />
                     <div class="text-center">
-                        <span class="font-semibold text-gray-800">
+                        <span class="font-semibold text-color">
                             [{{ value.id }}] {{ value.name }}
                         </span>
                     </div>

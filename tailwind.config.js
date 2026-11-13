@@ -10,7 +10,7 @@ export default {
         './resources/js/**/*.vue',
     ],
 
-    darkMode: ['selector', '[class*="app-dark"]'],
+    darkMode: ['selector', '.app-dark'],
     plugins: [TailwindCssPrimeUi],
     theme: {
         extend: {

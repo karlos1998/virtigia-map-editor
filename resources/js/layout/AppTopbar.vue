@@ -171,7 +171,7 @@ onUnmounted(() => {
                 v-if="activeMapPreview"
                 class="pointer-events-none fixed inset-0 z-[90] flex items-center justify-center px-6 py-10"
             >
-                <div class="w-full max-w-[38rem] rounded-2xl border border-slate-200/70 bg-white/95 p-4 shadow-2xl backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
+                <div class="w-full max-w-[38rem] rounded-2xl border border-slate-200/70 bg-[var(--surface-overlay)] p-4 shadow-2xl backdrop-blur dark:border-slate-700">
                     <div class="flex items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-950 p-3 dark:border-slate-700">
                         <img
                             :src="activeMapPreview.src"
@@ -204,18 +204,18 @@ onUnmounted(() => {
 
                     <!-- Search Results Dropdown -->
                     <div v-if="showSearchResults"
-                         class="absolute mt-1 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-100 dark:border-gray-700 z-50 max-h-96 overflow-y-auto">
+                         class="absolute mt-1 w-80 bg-[var(--surface-overlay)] rounded-lg shadow-lg border border-surface z-50 max-h-96 overflow-y-auto">
                         <div class="p-3">
-                            <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Wyniki wyszukiwania</h3>
+                            <h3 class="text-sm font-medium text-color mb-2">Wyniki wyszukiwania</h3>
                             <div v-if="isSearching" class="flex justify-center py-4">
                                 <i class="pi pi-spin pi-spinner text-primary-500 text-xl"></i>
                             </div>
                             <ul v-else-if="searchResults.length > 0" class="space-y-1">
                                 <li v-for="result in searchResults" :key="`${result.type}-${result.id}`"
-                                    class="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg cursor-pointer transition-colors duration-200"
+                                    class="p-2 hover:bg-emphasis rounded-lg cursor-pointer transition-colors duration-200"
                                     @click="navigateToResult(result)">
                                     <div class="flex items-center">
-                                        <div class="mr-3 flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-md bg-surface-100 dark:bg-surface-700">
+                                        <div class="mr-3 flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-md bg-[var(--surface-hover)]">
                                             <img
                                                 v-if="result.src && result.type === 'baseitem'"
                                                 :src="result.src"
@@ -250,16 +250,16 @@ onUnmounted(() => {
                                             <i v-else-if="result.type === 'dialog'" class="pi pi-comments text-purple-500"></i>
                                             <i v-else-if="result.type === 'quest'" class="pi pi-flag text-yellow-500"></i>
                                             <i v-else-if="result.type === 'shop'" class="pi pi-shopping-cart text-orange-500"></i>
-                                            <i v-else class="pi pi-file text-gray-500"></i>
+                                            <i v-else class="pi pi-file text-muted-color"></i>
                                         </div>
                                         <div>
-                                            <div class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ result.name }}</div>
-                                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ resultTypeLabel(result.type) }}</div>
+                                            <div class="text-sm font-medium text-color">{{ result.name }}</div>
+                                            <div class="text-xs text-muted-color">{{ resultTypeLabel(result.type) }}</div>
                                         </div>
                                     </div>
                                 </li>
                             </ul>
-                            <div v-else-if="searchQuery.trim().length >= 2" class="text-center text-gray-500 dark:text-gray-400 py-4">
+                            <div v-else-if="searchQuery.trim().length >= 2" class="text-center text-muted-color py-4">
                                 Nie znaleziono wyników dla "{{ searchQuery }}"
                             </div>
                         </div>
@@ -294,10 +294,10 @@ onUnmounted(() => {
                         <div v-else-if="searchResults.length > 0" class="mt-4">
                             <ul class="space-y-2">
                                 <li v-for="result in searchResults" :key="`mobile-${result.type}-${result.id}`"
-                                    class="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg cursor-pointer transition-colors duration-200 border border-gray-100 dark:border-gray-700"
+                                    class="p-3 hover:bg-emphasis rounded-lg cursor-pointer transition-colors duration-200 border border-surface"
                                     @click="navigateToResult(result)">
                                     <div class="flex items-center">
-                                        <div class="mr-3 flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-md bg-surface-100 dark:bg-surface-700">
+                                        <div class="mr-3 flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-md bg-[var(--surface-hover)]">
                                             <img
                                                 v-if="result.src && result.type === 'baseitem'"
                                                 :src="result.src"
@@ -330,18 +330,18 @@ onUnmounted(() => {
                                             <i v-else-if="result.type === 'dialog'" class="pi pi-comments text-purple-500 text-lg"></i>
                                             <i v-else-if="result.type === 'quest'" class="pi pi-flag text-yellow-500 text-lg"></i>
                                             <i v-else-if="result.type === 'shop'" class="pi pi-shopping-cart text-orange-500 text-lg"></i>
-                                            <i v-else class="pi pi-file text-gray-500 text-lg"></i>
+                                            <i v-else class="pi pi-file text-muted-color text-lg"></i>
                                         </div>
                                         <div>
-                                            <div class="text-base font-medium text-gray-700 dark:text-gray-300">{{ result.name }}</div>
-                                            <div class="text-sm text-gray-500 dark:text-gray-400">{{ resultTypeLabel(result.type) }}</div>
+                                            <div class="text-base font-medium text-color">{{ result.name }}</div>
+                                            <div class="text-sm text-muted-color">{{ resultTypeLabel(result.type) }}</div>
                                         </div>
                                     </div>
                                 </li>
                             </ul>
                         </div>
 
-                        <div v-else-if="searchQuery.trim().length >= 2" class="mt-4 text-center text-gray-500 dark:text-gray-400 py-4">
+                        <div v-else-if="searchQuery.trim().length >= 2" class="mt-4 text-center text-muted-color py-4">
                             Nie znaleziono wyników dla "{{ searchQuery }}"
                         </div>
                     </div>
@@ -353,7 +353,7 @@ onUnmounted(() => {
 
                 <li class="mr-2">
                     <div class="flex items-center">
-                        <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">World:</span>
+                        <span class="mr-2 text-sm text-muted-color">World:</span>
                         <Dropdown
                             v-model="selectedWorld"
                             :options="worldOptions"
@@ -372,42 +372,42 @@ onUnmounted(() => {
                         <span class="ml-2 font-medium hidden md:inline">{{ user.name }}</span>
                         <i class="pi pi-chevron-down ml-2 text-xs"></i>
                     </a>
-                    <ul class="!hidden topbar-menu active-topbar-menu !p-3 w-60 z-50 rounded-lg shadow-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700">
-                        <li role="menuitem" class="!m-0 !mb-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200">
+                    <ul class="!hidden topbar-menu active-topbar-menu !p-3 w-60 z-50 rounded-lg shadow-lg bg-[var(--surface-overlay)] border border-surface">
+                        <li role="menuitem" class="!m-0 !mb-2 p-2 hover:bg-emphasis rounded-lg transition-colors duration-200">
                             <Link
                                 :href="route('profile')"
-                                class="flex items-center text-gray-700 dark:text-gray-200"
+                                class="flex items-center text-color"
                             >
                                 <i class="pi pi-fw pi-user mr-2 text-primary-500"></i>
                                 <span>Profil</span>
                             </Link>
                         </li>
-                        <li role="menuitem" class="!m-0 !mb-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200">
+                        <li role="menuitem" class="!m-0 !mb-2 p-2 hover:bg-emphasis rounded-lg transition-colors duration-200">
                             <Link
                                 :href="route('api-tokens.index')"
-                                class="flex items-center text-gray-700 dark:text-gray-200"
+                                class="flex items-center text-color"
                             >
                                 <i class="pi pi-fw pi-key mr-2 text-primary-500"></i>
                                 <span>Tokeny API</span>
                             </Link>
                         </li>
-                        <li role="menuitem" class="!m-0 !mb-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200">
-                            <a href="/api/docs" class="flex items-center text-gray-700 dark:text-gray-200">
+                        <li role="menuitem" class="!m-0 !mb-2 p-2 hover:bg-emphasis rounded-lg transition-colors duration-200">
+                            <a href="/api/docs" class="flex items-center text-color">
                                 <i class="pi pi-fw pi-book mr-2 text-primary-500"></i>
                                 <span>Swagger API</span>
                             </a>
                         </li>
-                        <li role="menuitem" class="!m-0 !mb-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200">
-                            <a href="#" class="flex items-center text-gray-700 dark:text-gray-200">
+                        <li role="menuitem" class="!m-0 !mb-2 p-2 hover:bg-emphasis rounded-lg transition-colors duration-200">
+                            <a href="#" class="flex items-center text-color">
                                 <i class="pi pi-fw pi-cog mr-2 text-primary-500"></i>
                                 <span>Ustawienia</span>
                             </a>
                         </li>
-                        <li role="menuitem" class="!m-0 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200">
+                        <li role="menuitem" class="!m-0 p-2 hover:bg-emphasis rounded-lg transition-colors duration-200">
                             <Link
                                 :href="route('logout')"
                                 method="post"
-                                class="flex items-center text-gray-700 dark:text-gray-200"
+                                class="flex items-center text-color"
                             >
                                 <i class="pi pi-fw pi-sign-out mr-2 text-primary-500"></i>
                                 <span>Wyloguj się</span>
@@ -423,7 +423,7 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .layout-topbar {
-    @apply fixed top-0 left-0 w-full h-16 px-4 flex items-center justify-between bg-white dark:bg-gray-800 shadow-sm z-40 border-b border-gray-100 dark:border-gray-700;
+    @apply fixed top-0 left-0 w-full h-16 px-4 flex items-center justify-between bg-[var(--surface-card)] shadow-sm z-40 border-b border-surface;
 }
 
 .topbar-start {

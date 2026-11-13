@@ -57,13 +57,13 @@ const save = () => {
             <div class="field">
                 <label for="minLevel" class="block mb-2">Minimalny poziom</label>
                 <InputNumber id="minLevel" v-model="minLevel" :min="0" placeholder="Brak limitu" />
-                <small class="block mt-1 text-gray-500">Pozostaw puste, jeśli nie ma minimalnego poziomu</small>
+                <small class="block mt-1 text-muted-color">Pozostaw puste, jeśli nie ma minimalnego poziomu</small>
             </div>
 
             <div class="field">
                 <label for="maxLevel" class="block mb-2">Maksymalny poziom</label>
                 <InputNumber id="maxLevel" v-model="maxLevel" :min="0" placeholder="Brak limitu" />
-                <small class="block mt-1 text-gray-500">Pozostaw puste, jeśli nie ma maksymalnego poziomu</small>
+                <small class="block mt-1 text-muted-color">Pozostaw puste, jeśli nie ma maksymalnego poziomu</small>
             </div>
 
             <div class="flex justify-end gap-2 mt-4">

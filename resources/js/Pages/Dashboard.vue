@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/layout/AppLayout.vue';
+import { useLayout } from '@/layout/composables/layout';
 import { Link, router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import { computed } from 'vue';
@@ -160,6 +161,20 @@ const props = defineProps<{
     recentActivities: RecentActivity[];
 }>();
 
+const { isDarkTheme } = useLayout();
+const chartColors = computed(() => isDarkTheme.value
+    ? { text: '#cbd5e1', grid: 'rgba(148, 163, 184, 0.2)' }
+    : { text: '#475569', grid: 'rgba(71, 85, 105, 0.15)' },
+);
+const chartAxis = computed(() => ({
+    ticks: { color: chartColors.value.text },
+    grid: { color: chartColors.value.grid },
+}));
+const chartLegend = computed(() => ({
+    position: 'bottom',
+    labels: { color: chartColors.value.text },
+}));
+
 const palette = ['#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2', '#db2777', '#475569'];
 
 const dailyChartData = computed(() => ({
@@ -187,7 +202,7 @@ const dailyChartData = computed(() => ({
     ],
 }));
 
-const dailyChartOptions = {
+const dailyChartOptions = computed(() => ({
     responsive: true,
     maintainAspectRatio: false,
     interaction: {
@@ -195,18 +210,20 @@ const dailyChartOptions = {
         intersect: false,
     },
     plugins: {
-        legend: {
-            position: 'bottom',
-        },
+        legend: chartLegend.value,
     },
     scales: {
+        x: chartAxis.value,
         y: {
+            ...chartAxis.value,
             beginAtZero: true,
             ticks: {
+                ...chartAxis.value.ticks,
                 precision: 0,
             },
         },
         y1: {
+            ticks: chartAxis.value.ticks,
             beginAtZero: true,
             position: 'right',
             grid: {
@@ -214,7 +231,7 @@ const dailyChartOptions = {
             },
         },
     },
-};
+}));
 
 const hourlyChartData = computed(() => ({
     labels: props.hourlyActivity.map((point) => point.label),
@@ -228,7 +245,7 @@ const hourlyChartData = computed(() => ({
     ],
 }));
 
-const barChartOptions = {
+const barChartOptions = computed(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -237,14 +254,17 @@ const barChartOptions = {
         },
     },
     scales: {
+        x: chartAxis.value,
         y: {
+            ...chartAxis.value,
             beginAtZero: true,
             ticks: {
+                ...chartAxis.value.ticks,
                 precision: 0,
             },
         },
     },
-};
+}));
 
 const areaChartData = computed(() => ({
     labels: props.activityAreas.map((area) => area.label),
@@ -269,7 +289,7 @@ const eventChartData = computed(() => ({
     ],
 }));
 
-const horizontalBarOptions = {
+const horizontalBarOptions = computed(() => ({
     indexAxis: 'y',
     responsive: true,
     maintainAspectRatio: false,
@@ -279,25 +299,26 @@ const horizontalBarOptions = {
         },
     },
     scales: {
+        y: chartAxis.value,
         x: {
+            ...chartAxis.value,
             beginAtZero: true,
             ticks: {
+                ...chartAxis.value.ticks,
                 precision: 0,
             },
         },
     },
-};
+}));
 
-const doughnutOptions = {
+const doughnutOptions = computed(() => ({
     responsive: true,
     maintainAspectRatio: false,
     cutout: '62%',
     plugins: {
-        legend: {
-            position: 'bottom',
-        },
+        legend: chartLegend.value,
     },
-};
+}));
 
 const topArea = computed(() => props.activityAreas[0]?.label ?? 'Brak danych');
 const busiestHour = computed(() => [...props.hourlyActivity].sort((a, b) => b.count - a.count)[0]);
@@ -358,10 +379,10 @@ const initials = (name?: string | null) => {
 };
 
 const heatmapCellStyle = (cell: HeatmapCell) => {
-    const opacity = cell.count === 0 ? 0.06 : Math.max(0.18, cell.intensity / 100);
+    const intensity = cell.count === 0 ? 0 : Math.max(18, cell.intensity);
 
     return {
-        backgroundColor: `rgba(22, 163, 74, ${opacity})`,
+        '--heatmap-intensity': `${intensity}%`,
     };
 };
 </script>
@@ -736,9 +757,16 @@ const heatmapCellStyle = (cell: HeatmapCell) => {
 
 <style scoped>
 .dashboard-page {
+    --dashboard-heatmap-accent: #86efac;
+    --dashboard-heatmap-text: #14532d;
     display: flex;
     flex-direction: column;
     gap: 1rem;
+}
+
+:global(.app-dark) .dashboard-page {
+    --dashboard-heatmap-accent: #166534;
+    --dashboard-heatmap-text: #dcfce7;
 }
 
 .dashboard-header {
@@ -751,7 +779,7 @@ const heatmapCellStyle = (cell: HeatmapCell) => {
 
 .dashboard-header h1 {
     margin: 0.15rem 0 0;
-    color: #111827;
+    color: var(--text-color);
     font-size: 1.8rem;
     font-weight: 800;
     line-height: 1.15;
@@ -767,7 +795,7 @@ const heatmapCellStyle = (cell: HeatmapCell) => {
 .recent-row small,
 .user-cell small,
 .object-cell small {
-    color: #64748b;
+    color: var(--text-color-secondary);
 }
 
 .dashboard-kicker {
@@ -838,13 +866,13 @@ const heatmapCellStyle = (cell: HeatmapCell) => {
 }
 
 .metric-card {
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--surface-border);
     border-radius: 8px;
     box-shadow: none;
 }
 
 .metric-card strong {
-    color: #0f172a;
+    color: var(--text-color);
     font-size: 1.75rem;
     line-height: 1;
 }
@@ -864,30 +892,26 @@ const heatmapCellStyle = (cell: HeatmapCell) => {
 }
 
 .metric-blue {
-    background: #dbeafe;
-    color: #1d4ed8;
+    @apply bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200;
 }
 
 .metric-green {
-    background: #dcfce7;
-    color: #15803d;
+    @apply bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200;
 }
 
 .metric-amber {
-    background: #fef3c7;
-    color: #b45309;
+    @apply bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200;
 }
 
 .metric-rose {
-    background: #ffe4e6;
-    color: #be123c;
+    @apply bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-200;
 }
 
 .dashboard-panel {
     min-width: 0;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--surface-border);
     border-radius: 8px;
-    background: #ffffff;
+    background: var(--surface-card);
     padding: 1rem;
 }
 
@@ -901,7 +925,7 @@ const heatmapCellStyle = (cell: HeatmapCell) => {
 
 .panel-header h2 {
     margin: 0;
-    color: #0f172a;
+    color: var(--text-color);
     font-size: 1rem;
     font-weight: 800;
 }
@@ -949,7 +973,7 @@ const heatmapCellStyle = (cell: HeatmapCell) => {
 .focus-row,
 .recent-row {
     justify-content: flex-start;
-    border-top: 1px solid #eef2f7;
+    border-top: 1px solid var(--surface-border);
     padding-top: 0.6rem;
 }
 
@@ -968,7 +992,7 @@ const heatmapCellStyle = (cell: HeatmapCell) => {
 .user-cell strong,
 .table-link {
     overflow: hidden;
-    color: #0f172a;
+    color: var(--text-color);
     font-weight: 700;
     text-decoration: none;
     text-overflow: ellipsis;
@@ -976,7 +1000,8 @@ const heatmapCellStyle = (cell: HeatmapCell) => {
 }
 
 .table-link:hover {
-    color: #2563eb;
+    color: var(--primary-color);
+    text-decoration: underline;
 }
 
 .focus-row .p-tag,
@@ -1027,7 +1052,7 @@ const heatmapCellStyle = (cell: HeatmapCell) => {
 .heatmap-corner,
 .heatmap-hour,
 .heatmap-day {
-    color: #64748b;
+    color: var(--text-color-secondary);
     font-size: 0.72rem;
     font-weight: 700;
     text-align: center;
@@ -1045,13 +1070,14 @@ const heatmapCellStyle = (cell: HeatmapCell) => {
     justify-content: center;
     min-height: 1.45rem;
     border-radius: 5px;
-    color: #14532d;
+    background: color-mix(in srgb, var(--dashboard-heatmap-accent) var(--heatmap-intensity), var(--surface-hover));
+    color: var(--dashboard-heatmap-text);
     font-size: 0.65rem;
     font-weight: 800;
 }
 
 .dashboard-table {
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--surface-border);
     border-radius: 8px;
     overflow: hidden;
 }
@@ -1061,8 +1087,8 @@ const heatmapCellStyle = (cell: HeatmapCell) => {
 }
 
 .dashboard-table :deep(.p-datatable-thead > tr > th) {
-    background: #f8fafc;
-    color: #475569;
+    background: var(--surface-hover);
+    color: var(--text-color-secondary);
     font-size: 0.75rem;
     text-transform: uppercase;
 }
@@ -1072,9 +1098,9 @@ const heatmapCellStyle = (cell: HeatmapCell) => {
 }
 
 .empty-state {
-    border: 1px dashed #cbd5e1;
+    border: 1px dashed var(--surface-border);
     border-radius: 8px;
-    color: #64748b;
+    color: var(--text-color-secondary);
     padding: 1rem;
     text-align: center;
 }

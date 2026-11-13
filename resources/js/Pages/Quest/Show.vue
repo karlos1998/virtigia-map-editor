@@ -244,9 +244,9 @@ watch(questStepSortDirection, (sortDirection) => {
             <div v-if="quest.dialogs && quest.dialogs.length > 0" class="mb-4">
                 <h3 class="text-lg font-semibold mb-2">Dialogi powiązane z questem:</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                    <div v-for="dialog in quest.dialogs" :key="dialog.id" class="p-2 border rounded bg-gray-50">
+                    <div v-for="dialog in quest.dialogs" :key="dialog.id" class="quest-relation">
                         <div class="flex items-center">
-                            <i class="pi pi-comments mr-2 text-blue-500"></i>
+                            <i class="pi pi-comments mr-2 text-blue-700 dark:text-blue-300"></i>
                             <span>{{ dialog.name }} (ID: {{ dialog.id }})</span>
                         </div>
                     </div>
@@ -257,9 +257,9 @@ watch(questStepSortDirection, (sortDirection) => {
             <div v-if="quest.nodes && quest.nodes.length > 0" class="mb-4">
                 <h3 class="text-lg font-semibold mb-2">Odpowiedzi dialogowe powiązane z questem:</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                    <div v-for="node in quest.nodes" :key="node.id" class="p-2 border rounded bg-gray-50">
+                    <div v-for="node in quest.nodes" :key="node.id" class="quest-relation">
                         <div class="flex items-center">
-                            <i class="pi pi-comments mr-2 text-blue-500"></i>
+                            <i class="pi pi-comments mr-2 text-blue-700 dark:text-blue-300"></i>
                             <span>{{ node.content }} (ID: {{ node.id }})</span>
                         </div>
                     </div>
@@ -270,9 +270,9 @@ watch(questStepSortDirection, (sortDirection) => {
             <div v-if="quest.nodeOptions && quest.nodeOptions.length > 0" class="mb-4">
                 <h3 class="text-lg font-semibold mb-2">Opcje dialogowe powiązane z questem:</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <div v-for="option in quest.nodeOptions" :key="option.id" class="p-2 border rounded bg-gray-50">
+                    <div v-for="option in quest.nodeOptions" :key="option.id" class="quest-relation">
                         <div class="flex items-center">
-                            <i class="pi pi-reply mr-2 text-green-500"></i>
+                            <i class="pi pi-reply mr-2 text-green-700 dark:text-green-300"></i>
                             <span>{{ option.label }} (ID: {{ option.id }})</span>
                         </div>
                     </div>
@@ -283,7 +283,7 @@ watch(questStepSortDirection, (sortDirection) => {
         <div class="card">
             <h2 class="text-xl font-bold mb-4">Kroki questa</h2>
 
-            <div v-if="quest.steps.length === 0" class="p-4 text-center text-gray-500">
+            <div v-if="quest.steps.length === 0" class="p-4 text-center text-muted-color">
                 Brak kroków dla tego questa. Dodaj pierwszy krok używając przycisku "Dodaj krok".
             </div>
 
@@ -470,9 +470,9 @@ watch(questStepSortDirection, (sortDirection) => {
                                 <div v-if="step.dialogs && step.dialogs.length > 0" class="mb-4">
                                     <h3 class="text-lg font-semibold mb-2">Dialogi powiązane z krokiem:</h3>
                                     <div class="grid grid-cols-1 gap-2">
-                                        <div v-for="dialog in step.dialogs" :key="dialog.id" class="p-2 border rounded bg-gray-50">
+                                        <div v-for="dialog in step.dialogs" :key="dialog.id" class="quest-relation">
                                             <div class="flex items-center">
-                                                <i class="pi pi-comments mr-2 text-blue-500"></i>
+                                                <i class="pi pi-comments mr-2 text-blue-700 dark:text-blue-300"></i>
                                                 <span>{{ dialog.name }} (ID: {{ dialog.id }})</span>
                                             </div>
                                         </div>
@@ -483,9 +483,9 @@ watch(questStepSortDirection, (sortDirection) => {
                                 <div v-if="step.nodes && step.nodes.length > 0" class="mb-4">
                                     <h3 class="text-lg font-semibold mb-2">Odpowiedzi dialogowe powiązane z krokiem:</h3>
                                     <div class="grid grid-cols-1 gap-2">
-                                        <div v-for="node in step.nodes" :key="node.id" class="p-2 border rounded bg-gray-50">
+                                        <div v-for="node in step.nodes" :key="node.id" class="quest-relation">
                                             <div class="flex items-center">
-                                                <i class="pi pi-arrow-down mr-2 text-green-500"></i>
+                                                <i class="pi pi-arrow-down mr-2 text-green-700 dark:text-green-300"></i>
                                                 <span>{{ node.content }} (ID: {{ node.id }})</span>
                                             </div>
                                         </div>
@@ -496,9 +496,9 @@ watch(questStepSortDirection, (sortDirection) => {
                                 <div v-if="step.nodeOptions && step.nodeOptions.length > 0" class="mb-4">
                                     <h3 class="text-lg font-semibold mb-2">Opcje dialogowe powiązane z krokiem:</h3>
                                     <div class="grid grid-cols-1 gap-2">
-                                        <div v-for="option in step.nodeOptions" :key="option.id" class="p-2 border rounded bg-gray-50">
+                                        <div v-for="option in step.nodeOptions" :key="option.id" class="quest-relation">
                                             <div class="flex items-center">
-                                                <i class="pi pi-reply mr-2 text-green-500"></i>
+                                                <i class="pi pi-reply mr-2 text-green-700 dark:text-green-300"></i>
                                                 <span>{{ option.label }} (ID: {{ option.id }})</span>
                                             </div>
                                         </div>
@@ -534,6 +534,11 @@ watch(questStepSortDirection, (sortDirection) => {
 </template>
 
 <style scoped>
+.quest-relation {
+    @apply rounded border border-surface p-2 text-color;
+    background: var(--surface-hover);
+}
+
 .whitespace-pre-wrap {
     white-space: pre-wrap;
 }

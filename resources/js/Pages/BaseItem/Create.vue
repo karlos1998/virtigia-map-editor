@@ -190,24 +190,24 @@ const submit = () => {
                         <small v-if="form.errors.price" class="p-error">{{ form.errors.price }}</small>
 
                         <div class="space-y-2">
-                            <label class="block text-sm font-medium text-gray-700">
+                            <label class="block text-sm font-medium text-muted-color">
                                 Grafika (32x32px) *
                             </label>
                             <input
                                 type="file"
                                 accept="image/png,image/gif"
                                 @change="onFileSelect"
-                                class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
+                                class="block w-full text-sm text-muted-color file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
                                 :class="{'border-red-500': form.errors.image}"
                             />
-                            <small class="text-gray-500">Wymagane wymiary: 32x32 pikseli (PNG lub GIF)</small>
+                            <small class="text-muted-color">Wymagane wymiary: 32x32 pikseli (PNG lub GIF)</small>
                             <small v-if="form.errors.image" class="p-error">{{ form.errors.image }}</small>
 
                             <div v-if="form.image" class="mt-2">
                                 <img
                                     :src="form.image"
                                     alt="Preview"
-                                    class="h-16 w-16 object-cover border-2 border-gray-300 rounded"
+                                    class="h-16 w-16 object-cover border-2 border-surface rounded"
                                 />
                             </div>
                         </div>

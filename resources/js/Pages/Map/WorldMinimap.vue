@@ -362,7 +362,7 @@ onUnmounted(() => {
                                     <div><strong>Pozycja:</strong> {{ Math.round(selectedNode.x) }}, {{ Math.round(selectedNode.y) }}</div>
                                     <Button label="Usuń z minimapy" severity="danger" @click="removeSelectedNode" />
                                 </div>
-                                <div v-else class="text-sm text-gray-500">
+                                <div v-else class="text-sm text-muted-color">
                                     Kliknij mapkę, aby ją zaznaczyć.
                                 </div>
                             </template>
@@ -373,7 +373,7 @@ onUnmounted(() => {
                             <template #content>
                                 <div class="flex flex-col gap-2">
                                     <InputText v-model="mapSearchQuery" placeholder="Szukaj mapy" @input="searchMaps" />
-                                    <div v-if="mapSearchLoading" class="text-xs text-gray-500">Szukam...</div>
+                                    <div v-if="mapSearchLoading" class="text-xs text-muted-color">Szukam...</div>
                                     <div class="max-h-40 overflow-auto border rounded p-1" v-if="mapSearchResults.length">
                                         <button
                                             v-for="result in mapSearchResults"
@@ -413,13 +413,13 @@ onUnmounted(() => {
     position: relative;
     overflow: hidden;
     border-radius: 8px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--surface-border);
 }
 
 .world-map-svg {
     width: 100%;
     height: 75vh;
-    background: #f8fafc;
+    background: var(--surface-hover);
     cursor: grab;
 }
 

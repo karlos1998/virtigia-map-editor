@@ -464,7 +464,7 @@ onMounted(() => {
                     <template #body="{ data }: Data">
                         <span class="inline-flex items-center gap-2">
                             {{ data.name }}
-                            <i v-if="data.has_missing_attribute_points" v-tooltip.top="'Brak obliczonych punktów atrybutów. Otwórz przedmiot, aby przeliczyć i porównać wynik.'" class="pi pi-exclamation-triangle text-yellow-500" role="img" aria-label="Brak obliczonych punktów atrybutów" tabindex="0" />
+                            <i v-if="data.has_missing_attribute_points" v-tooltip.top="'Brak obliczonych punktów atrybutów. Otwórz przedmiot, aby przeliczyć i porównać wynik.'" class="pi pi-exclamation-triangle text-yellow-500 dark:text-yellow-300" role="img" aria-label="Brak obliczonych punktów atrybutów" tabindex="0" />
                         </span>
                     </template>
                 </AdvanceColumn>
@@ -633,7 +633,7 @@ onMounted(() => {
                             autofocus
                             placeholder="Wigilia 2025 r."
                         />
-                        <small v-if="bulkDescriptionForm.errors.search_phrase" class="text-red-500">
+                        <small v-if="bulkDescriptionForm.errors.search_phrase" class="text-red-500 dark:text-red-300">
                             {{ bulkDescriptionForm.errors.search_phrase }}
                         </small>
                     </div>
@@ -646,7 +646,7 @@ onMounted(() => {
                             :class="{ 'p-invalid': bulkDescriptionForm.errors.replacement_phrase }"
                             placeholder="Wigilia #YEAR r."
                         />
-                        <small v-if="bulkDescriptionForm.errors.replacement_phrase" class="text-red-500">
+                        <small v-if="bulkDescriptionForm.errors.replacement_phrase" class="text-red-500 dark:text-red-300">
                             {{ bulkDescriptionForm.errors.replacement_phrase }}
                         </small>
                     </div>
@@ -710,10 +710,10 @@ onMounted(() => {
                                 </div>
                             </template>
                         </AutoComplete>
-                        <small v-if="bulkLootForm.errors.base_npc_id" class="text-red-500">
+                        <small v-if="bulkLootForm.errors.base_npc_id" class="text-red-500 dark:text-red-300">
                             {{ bulkLootForm.errors.base_npc_id }}
                         </small>
-                        <small v-if="bulkLootForm.errors.item_ids" class="text-red-500">
+                        <small v-if="bulkLootForm.errors.item_ids" class="text-red-500 dark:text-red-300">
                             {{ bulkLootForm.errors.item_ids }}
                         </small>
                     </div>

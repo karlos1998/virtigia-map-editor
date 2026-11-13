@@ -132,12 +132,12 @@ const selectOutfit = (filePath: string) => {
         <!-- Loading state -->
         <div v-if="isLoadingTree" class="flex justify-center items-center p-8">
             <ProgressSpinner />
-            <span class="ml-3 text-gray-600">Ładowanie katalogów...</span>
+            <span class="ml-3 text-muted-color">Ładowanie katalogów...</span>
         </div>
 
         <!-- Error state -->
-        <div v-else-if="treeError" class="p-4 bg-red-50 border border-red-200 rounded">
-            <p class="text-red-700">
+        <div v-else-if="treeError" class="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded">
+            <p class="text-red-700 dark:text-red-300">
                 <i class="pi pi-exclamation-triangle mr-2"></i>
                 {{ treeError }}
             </p>
@@ -185,15 +185,15 @@ const selectOutfit = (filePath: string) => {
                 </div>
 
                 <!-- Directory node -->
-                <div v-else class="text-gray-700 text-lg font-medium py-2">
-                    <i class="pi pi-folder mr-2 text-yellow-600"></i>
+                <div v-else class="outfit-folder-label text-muted-color text-lg font-medium py-2">
+                    <i class="pi pi-folder mr-2 text-yellow-600 dark:text-yellow-300"></i>
                     {{ node.label }}
                 </div>
             </template>
         </Tree>
 
         <!-- Empty state -->
-        <div v-else class="p-4 text-center text-gray-600">
+        <div v-else class="p-4 text-center text-muted-color">
             <i class="pi pi-folder-open text-4xl mb-2"></i>
             <p>Brak katalogów lub plików do wyświetlenia</p>
         </div>
@@ -311,7 +311,7 @@ const selectOutfit = (filePath: string) => {
 }
 
 /* Directory styling */
-:deep(.p-tree-node:not(.p-tree-node-leaf) .text-gray-700) {
+:deep(.p-tree-node:not(.p-tree-node-leaf) .outfit-folder-label) {
     padding: 0.25rem 0;
 }
 </style>

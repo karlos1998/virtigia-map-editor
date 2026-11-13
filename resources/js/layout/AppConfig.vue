@@ -32,7 +32,7 @@ const themeOptions = ref([
     { name: 'Dark', value: true }
 ]);
 
-const darkTheme = ref(layout.layoutConfig.darkTheme);
+const darkTheme = computed(() => layout.layoutConfig.darkTheme);
 const menuMode = ref(layout.layoutConfig.menuMode);
 
 const primaryColors = ref([
@@ -396,20 +396,17 @@ const loadLayoutConfigFromStorage = () => {
             }
             layout.layoutConfig.darkTheme = true;
             layout.layoutConfig.menuTheme = 'dark';
-            darkTheme.value = true;
         } else {
             if (document.documentElement.classList.contains('app-dark')) {
                 document.documentElement.classList.remove('app-dark');
             }
             layout.layoutConfig.darkTheme = false;
             layout.layoutConfig.menuTheme = layoutStore.menuTheme || 'light';
-            darkTheme.value = false;
         }
     } else if (document.documentElement.classList.contains('app-dark')) {
         // Fallback to checking the DOM if store doesn't have the setting
         layout.layoutConfig.darkTheme = true;
         layout.layoutConfig.menuTheme = 'dark';
-        darkTheme.value = true;
     }
 
     // Apply primary color
@@ -558,7 +555,7 @@ if(!layoutLoaded.value) {
             <div>
                 <div class="flex flex-col gap-2">
                     <span class="text-lg text-muted-color font-semibold">Color Scheme</span>
-                    <SelectButton v-model="darkTheme" @change="layout.toggleDarkMode" :options="themeOptions"
+                    <SelectButton :model-value="darkTheme" @update:model-value="layout.toggleDarkMode" :options="themeOptions"
                                   optionLabel="name" optionValue="value" :allowEmpty="false" />
                 </div>
             </div>

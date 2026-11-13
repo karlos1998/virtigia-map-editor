@@ -143,15 +143,15 @@ const handleOutfitSelected = (relativePath: string) => {
         <h3 class="text-xl font-bold mb-4">Edytor Stroju (Outfit)</h3>
 
         <div class="mb-4">
-            <p class="text-gray-600 mb-4">
+            <p class="text-muted-color mb-4">
                 Skonfiguruj strój dla tego przedmiotu. Strój określa wygląd gracza po użyciu przedmiotu.
             </p>
         </div>
 
         <!-- Current outfit status -->
-        <div v-if="hasOutfit" class="mb-4 p-3 bg-green-50 border border-green-200 rounded">
+        <div v-if="hasOutfit" class="mb-4 p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded">
             <div class="flex items-center justify-between mb-2">
-                <span class="font-semibold text-green-700">
+                <span class="font-semibold text-green-700 dark:text-green-300">
                     <i class="pi pi-check-circle mr-2"></i>
                     Strój jest skonfigurowany
                 </span>
@@ -164,15 +164,15 @@ const handleOutfitSelected = (relativePath: string) => {
                     @click="removeOutfit"
                 />
             </div>
-            <div class="text-sm text-gray-700">
+            <div class="text-sm text-muted-color">
                 <p>Źródło grafiki: <strong>{{ useOutfitSrc || 'Nie ustawiono' }}</strong></p>
                 <p>Czas trwania: <strong>{{ useOutfitTime }} min</strong></p>
                 <p v-if="cooldownTime">Czas odnowienia: <strong>{{ cooldownTime }} min</strong></p>
             </div>
         </div>
 
-        <div v-else class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
-            <p class="text-blue-700">
+        <div v-else class="mb-4 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded">
+            <p class="text-blue-700 dark:text-blue-300">
                 <i class="pi pi-info-circle mr-2"></i>
                 Ten przedmiot nie ma skonfigurowanego stroju
             </p>
@@ -183,7 +183,7 @@ const handleOutfitSelected = (relativePath: string) => {
             <!-- Outfit source (image filename) -->
             <div class="field">
                 <label for="outfitSrc" class="block font-semibold mb-2">
-                    Źródło Grafiki (Plik GIF) <span class="text-red-500">*</span>
+                    Źródło Grafiki (Plik GIF) <span class="text-red-500 dark:text-red-300">*</span>
                 </label>
                 <div class="flex gap-2">
                     <InputText
@@ -198,7 +198,7 @@ const handleOutfitSelected = (relativePath: string) => {
                         severity="secondary"
                     />
                 </div>
-                <small class="text-gray-500">Nazwa pliku graficznego stroju (np. grzyb.gif)</small>
+                <small class="text-muted-color">Nazwa pliku graficznego stroju (np. grzyb.gif)</small>
             </div>
 
             <!-- Preview image -->
@@ -207,7 +207,7 @@ const handleOutfitSelected = (relativePath: string) => {
                 <img
                     :src="previewImageSrc"
                     alt="Podgląd stroju"
-                    class="h-32 w-32 object-fill border border-gray-300 rounded"
+                    class="h-32 w-32 object-fill border border-surface rounded"
                     @error="(e: Event) => ((e.target as HTMLImageElement).style.display = 'none')"
                 />
             </div>
@@ -225,7 +225,7 @@ const handleOutfitSelected = (relativePath: string) => {
                     :useGrouping="false"
                     suffix=" min"
                 />
-                <small class="text-gray-500">Czas przez który strój jest aktywny (0 = permanentny)</small>
+                <small class="text-muted-color">Czas przez który strój jest aktywny (0 = permanentny)</small>
             </div>
 
             <!-- Cooldown time -->
@@ -241,21 +241,21 @@ const handleOutfitSelected = (relativePath: string) => {
                     :useGrouping="false"
                     suffix=" min"
                 />
-                <small class="text-gray-500">Czas w minutach przed ponownym użyciem stroju</small>
+                <small class="text-muted-color">Czas w minutach przed ponownym użyciem stroju</small>
             </div>
         </div>
 
         <!-- Validation message -->
-        <div v-if="!isValid" class="mt-3 p-3 bg-red-50 border border-red-200 rounded">
-            <p class="text-red-700 text-sm">
+        <div v-if="!isValid" class="mt-3 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded">
+            <p class="text-red-700 dark:text-red-300 text-sm">
                 <i class="pi pi-exclamation-triangle mr-2"></i>
                 Wypełnij wymagane pole: Źródło Grafiki
             </p>
         </div>
 
         <!-- Success message -->
-        <div v-if="isValid && hasOutfit" class="mt-3 p-3 bg-green-50 border border-green-200 rounded">
-            <p class="text-green-700 text-sm">
+        <div v-if="isValid && hasOutfit" class="mt-3 p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded">
+            <p class="text-green-700 dark:text-green-300 text-sm">
                 <i class="pi pi-check-circle mr-2"></i>
                 Strój jest poprawnie skonfigurowany. Pamiętaj aby zapisać zmiany głównym przyciskiem "Zapisz" na górze
                 strony.

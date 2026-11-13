@@ -25,11 +25,11 @@ const items = computed(() => usePage<PageProps<{
 
     <div class="pb-4 text-xl leading-tight">
         <span v-for="(item, index) in items" :key="index">
-            <Link v-if="item.url" :href="item.url" method="get" type="button" class="font-medium text-primary-300">
+            <Link v-if="item.url" :href="item.url" method="get" type="button" class="font-medium text-color underline underline-offset-2">
                 {{ item.name }}
             </Link>
             <span v-if="index < items.length - 1" class="px-2 pi pi-chevron-right"> </span>
-            <span v-else class="text-gray-500">{{ item.name }}</span>
+            <span v-else class="text-muted-color">{{ item.name }}</span>
         </span>
     </div>
 

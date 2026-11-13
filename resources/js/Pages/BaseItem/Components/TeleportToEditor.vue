@@ -2,16 +2,16 @@
         <h3 class="text-xl font-bold mb-4">Edytor Teleportu</h3>
 
         <div class="mb-4">
-            <p class="text-gray-600 mb-4">
+            <p class="text-muted-color mb-4">
                 Skonfiguruj teleport dla tego przedmiotu. Teleport określa docelową mapę i pozycję, do której gracz
                 zostanie przeniesiony.
             </p>
         </div>
 
         <!-- Current teleport status -->
-        <div v-if="hasTeleport" class="mb-4 p-3 bg-green-50 border border-green-200 rounded">
+        <div v-if="hasTeleport" class="mb-4 p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded">
             <div class="flex items-center justify-between mb-2">
-        <span class="font-semibold text-green-700">
+        <span class="font-semibold text-green-700 dark:text-green-300">
           <i class="pi pi-check-circle mr-2"></i>
           Teleport jest skonfigurowany
         </span>
@@ -24,7 +24,7 @@
                     @click="removeTeleport"
                 />
             </div>
-            <div class="text-sm text-gray-700">
+            <div class="text-sm text-muted-color">
                 <p>ID Mapy: <strong>{{ mapId || 'Nie ustawiono' }}</strong></p>
                 <p>Pozycja: <strong>X: {{ xCoord || 0 }}, Y: {{ yCoord || 0 }}</strong></p>
                 <p v-if="mapName">Nazwa mapy: <strong>{{ mapName }}</strong></p>
@@ -32,8 +32,8 @@
             </div>
         </div>
 
-        <div v-else class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
-            <p class="text-blue-700">
+        <div v-else class="mb-4 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded">
+            <p class="text-blue-700 dark:text-blue-300">
                 <i class="pi pi-info-circle mr-2"></i>
                 Ten przedmiot nie ma skonfigurowanego teleportu
             </p>
@@ -47,7 +47,7 @@
             @click="openMapSelectionModal"
             class="w-full"
         />
-        <small class="text-gray-500 block mt-2">Kliknij, aby wybrać mapę i koordynaty docelowe</small>
+        <small class="text-muted-color block mt-2">Kliknij, aby wybrać mapę i koordynaty docelowe</small>
     </div>
 
     <!-- Cooldown time configuration -->
@@ -63,21 +63,21 @@
             :useGrouping="false"
             suffix=" min"
         />
-        <small class="text-gray-500">Czas w minutach przed ponownym użyciem teleportu</small>
+        <small class="text-muted-color">Czas w minutach przed ponownym użyciem teleportu</small>
         </div>
 
         <!-- Validation message -->
         <div v-if="!isValid && (mapId !== null || xCoord !== null || yCoord !== null)"
-             class="mt-3 p-3 bg-red-50 border border-red-200 rounded">
-            <p class="text-red-700 text-sm">
+             class="mt-3 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded">
+            <p class="text-red-700 dark:text-red-300 text-sm">
                 <i class="pi pi-exclamation-triangle mr-2"></i>
                 Wypełnij wymagane pola: ID Mapy, Pozycja X i Pozycja Y
             </p>
         </div>
 
         <!-- Auto-save info -->
-        <div v-if="isValid" class="mt-3 p-3 bg-green-50 border border-green-200 rounded">
-            <p class="text-green-700 text-sm">
+        <div v-if="isValid" class="mt-3 p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded">
+            <p class="text-green-700 dark:text-green-300 text-sm">
                 <i class="pi pi-check-circle mr-2"></i> Teleport jest poprawnie skonfigurowany. Pamiętaj aby zapisać
                 zmiany głównym przyciskiem "Zapisz" na górze strony.
             </p>

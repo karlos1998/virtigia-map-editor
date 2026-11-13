@@ -328,7 +328,7 @@ watch(
 
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <div class="flex flex-col gap-2">
-                <label class="text-sm font-medium text-surface-700">Tryb</label>
+                <label class="text-sm font-medium text-muted-color">Tryb</label>
                 <SelectButton
                     v-model="config.mode"
                     :options="modeOptions"
@@ -340,21 +340,21 @@ watch(
 
             <template v-if="config.mode === 'random'">
                 <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-surface-700">Minimalnie różnych przedmiotów</label>
+                    <label class="text-sm font-medium text-muted-color">Minimalnie różnych przedmiotów</label>
                     <InputNumber v-model="config.minRewards" :min="0" :max="999" show-buttons />
                 </div>
                 <div class="flex flex-col gap-2">
-                    <label class="text-sm font-medium text-surface-700">Maksymalnie różnych przedmiotów</label>
+                    <label class="text-sm font-medium text-muted-color">Maksymalnie różnych przedmiotów</label>
                     <InputNumber v-model="config.maxRewards" :min="config.minRewards" :max="999" show-buttons />
                 </div>
             </template>
 
-            <div v-else class="lg:col-span-2 flex items-end text-sm text-surface-600">
+            <div v-else class="lg:col-span-2 flex items-end text-sm text-muted-color">
                 W trybie pewnym gracz dostaje każdy skonfigurowany wiersz.
             </div>
 
             <div class="flex flex-col gap-2 lg:col-span-3">
-                <label class="text-sm font-medium text-surface-700">Wiązanie przedmiotów zdobytych z kuferka</label>
+                <label class="text-sm font-medium text-muted-color">Wiązanie przedmiotów zdobytych z kuferka</label>
                 <Select
                     v-model="config.rewardBinding"
                     :options="rewardBindingOptions"
@@ -362,20 +362,20 @@ watch(
                     option-value="value"
                     class="w-full"
                 />
-                <small class="text-surface-500">
+                <small class="text-muted-color">
                     Ustawienie dotyczy wszystkich nagród z tego kuferka, nie samego kuferka.
                 </small>
             </div>
         </div>
 
-        <div v-if="config.items.length === 0" class="rounded border border-dashed border-surface-300 p-6 text-center text-surface-500">
+        <div v-if="config.items.length === 0" class="rounded border border-dashed border-surface p-6 text-center text-muted-color">
             Dodaj pierwszy przedmiot do kuferka.
         </div>
 
         <div v-else class="overflow-x-auto">
             <table class="w-full min-w-[900px] border-collapse text-sm">
                 <thead>
-                    <tr class="border-b text-left text-surface-600">
+                    <tr class="border-b text-left text-muted-color">
                         <th class="w-[42%] py-2 pr-3">Przedmiot</th>
                         <th class="w-[16%] py-2 px-3">Szansa</th>
                         <th class="w-[16%] py-2 px-3">Ilość min</th>
@@ -395,7 +395,7 @@ watch(
                             />
                             <div
                                 v-if="reward.resolvedItem"
-                                class="mt-2 flex items-center gap-2 rounded border border-surface-200 bg-surface-50 px-2 py-1 text-xs text-surface-700"
+                                class="mt-2 flex items-center gap-2 rounded border border-surface bg-[var(--surface-hover)] px-2 py-1 text-xs text-muted-color"
                             >
                                 <img
                                     :src="reward.resolvedItem.src"
@@ -407,7 +407,7 @@ watch(
                             </div>
                             <div
                                 v-else-if="reward.baseItemId !== null"
-                                class="mt-2 text-xs text-surface-500"
+                                class="mt-2 text-xs text-muted-color"
                             >
                                 Wybrany przedmiot: #{{ reward.baseItemId }}
                             </div>

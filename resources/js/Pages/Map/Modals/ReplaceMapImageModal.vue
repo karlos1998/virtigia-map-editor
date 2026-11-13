@@ -118,7 +118,7 @@ watch(visible, (newValue) => {
     <div class="card p-fluid">
       <div class="field mb-4">
         <h3 class="font-semibold mb-2">Wybierz nową grafikę</h3>
-        <p class="text-sm text-gray-600 mb-2">
+        <p class="text-sm text-muted-color mb-2">
           Grafika musi mieć wymiary podzielne przez 32 i pasować do wymiarów obecnej mapy ({{ map.x * 32 }}x{{ map.y * 32 }} pikseli).
         </p>
         <FileUpload

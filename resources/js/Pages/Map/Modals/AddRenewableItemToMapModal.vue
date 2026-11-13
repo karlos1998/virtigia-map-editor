@@ -75,7 +75,7 @@ const save = () => {
             <template #option="slotProps">
                 <div class="name-item flex items-center space-x-4">
                     <img class="h-12 w-12 object-cover" :src="slotProps.option.src" alt="Option Image"/>
-                    <span class="font-semibold text-gray-800">[{{ slotProps.option.id }}] {{
+                    <span class="font-semibold text-color">[{{ slotProps.option.id }}] {{
                             slotProps.option.name
                         }}</span>
                 </div>

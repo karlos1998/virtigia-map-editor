@@ -233,11 +233,15 @@ const pathname = computed(() => window.location.pathname);
 }
 
 :deep(.layout-horizontal) .layout-root-submenulist {
-    @apply absolute top-full left-0 bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-100 dark:border-gray-700 min-w-48 z-50 p-2 mt-2;
+    @apply absolute top-full left-0 shadow-lg rounded-lg border min-w-48 z-50 p-2 mt-2;
+    background: var(--menu-bg);
+    border-color: var(--menu-border-color);
 }
 
 :deep(.layout-slim) .layout-root-submenulist,
 :deep(.layout-slim-plus) .layout-root-submenulist {
-    @apply absolute left-full top-0 bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-100 dark:border-gray-700 min-w-48 z-50 p-2;
+    @apply absolute left-full top-0 shadow-lg rounded-lg border min-w-48 z-50 p-2;
+    background: var(--menu-bg);
+    border-color: var(--menu-border-color);
 }
 </style>

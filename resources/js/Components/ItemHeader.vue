@@ -12,7 +12,7 @@ withDefaults(defineProps<{
 <template>
     <div class="card">
         <div class="flex justify-between p-4">
-            <div class="font-medium text-3xl text-gray-900">
+            <div class="font-medium text-3xl text-color">
                 <slot name="header" />
             </div>
             <div class="flex self-start">

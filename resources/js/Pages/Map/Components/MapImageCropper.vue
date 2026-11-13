@@ -485,7 +485,7 @@ defineExpose({ exportImage });
 
 <template>
     <section class="flex flex-col gap-5">
-        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+        <div class="rounded-xl border border-surface bg-gray-50 p-4">
             <div class="flex flex-wrap items-center gap-3">
                 <FileUpload
                     mode="basic"
@@ -498,7 +498,7 @@ defineExpose({ exportImage });
                     class="p-button-outlined"
                     @select="onFileSelect"
                 />
-                <p class="text-sm text-gray-600">
+                <p class="text-sm text-muted-color">
                     Możesz użyć grafiki o dowolnym rozmiarze. Poniżej dopasujesz ją do siatki 32×32 px.
                 </p>
             </div>
@@ -507,16 +507,16 @@ defineExpose({ exportImage });
 
         <template v-if="sourceImage">
             <div class="grid gap-4 xl:grid-cols-[minmax(18rem,23rem)_minmax(0,1fr)]">
-                <aside class="flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                <aside class="flex flex-col gap-5 rounded-xl border border-surface bg-[var(--surface-card)] p-5 shadow-sm">
                     <div>
-                        <h2 class="text-lg font-semibold text-gray-900">Obszar wynikowy</h2>
-                        <p class="mt-1 text-sm text-gray-600">
+                        <h2 class="text-lg font-semibold text-color">Obszar wynikowy</h2>
+                        <p class="mt-1 text-sm text-muted-color">
                             Źródło: {{ sourceWidth }} × {{ sourceHeight }} px
                         </p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
-                        <label class="flex flex-col gap-2 text-sm font-medium text-gray-700">
+                        <label class="flex flex-col gap-2 text-sm font-medium text-color">
                             Szerokość w polach
                             <InputNumber
                                 :model-value="tileWidth"
@@ -527,7 +527,7 @@ defineExpose({ exportImage });
                                 @update:model-value="setTileWidth"
                             />
                         </label>
-                        <label class="flex flex-col gap-2 text-sm font-medium text-gray-700">
+                        <label class="flex flex-col gap-2 text-sm font-medium text-color">
                             Wysokość w polach
                             <InputNumber
                                 :model-value="tileHeight"
@@ -569,8 +569,8 @@ defineExpose({ exportImage });
 
                     <div class="flex flex-col gap-2">
                         <div class="flex items-center justify-between gap-3">
-                            <label for="map-zoom" class="text-sm font-medium text-gray-700">Skala grafiki</label>
-                            <span class="text-sm tabular-nums text-gray-600">{{ zoomPercent.toFixed(1) }}%</span>
+                            <label for="map-zoom" class="text-sm font-medium text-color">Skala grafiki</label>
+                            <span class="text-sm tabular-nums text-muted-color">{{ zoomPercent.toFixed(1) }}%</span>
                         </div>
                         <input
                             id="map-zoom"
@@ -582,14 +582,14 @@ defineExpose({ exportImage });
                             class="w-full accent-blue-600"
                             @input="setZoom(Number(($event.target as HTMLInputElement).value))"
                         >
-                        <p class="text-xs text-gray-500">Rozmiar grafiki po skalowaniu: {{ scaleDescription }}</p>
+                        <p class="text-xs text-muted-color">Rozmiar grafiki po skalowaniu: {{ scaleDescription }}</p>
                         <div class="flex flex-wrap gap-2">
                             <Button label="Wypełnij kadr" icon="pi pi-expand" size="small" severity="secondary" @click="fitImage" />
                             <Button label="Wyśrodkuj" icon="pi pi-align-center" size="small" severity="secondary" outlined @click="centerImage" />
                         </div>
                     </div>
 
-                    <label class="flex flex-col gap-2 text-sm font-medium text-gray-700">
+                    <label class="flex flex-col gap-2 text-sm font-medium text-color">
                         Nazwa pliku wynikowego
                         <InputText v-model="fileName" />
                     </label>
@@ -597,8 +597,8 @@ defineExpose({ exportImage });
                         Nazwa pliku może zawierać litery, cyfry, „_” i „-” oraz musi kończyć się na .{{ outputExtension }}.
                     </Message>
 
-                    <div class="rounded-lg border border-gray-200 p-3 text-sm text-gray-600">
-                        <div class="font-medium text-gray-800">Sterowanie</div>
+                    <div class="rounded-lg border border-surface p-3 text-sm text-muted-color">
+                        <div class="font-medium text-color">Sterowanie</div>
                         <div class="mt-1">Przeciągnij grafikę, aby zmienić kadr. Kółko myszy skaluje względem kursora.</div>
                     </div>
                 </aside>

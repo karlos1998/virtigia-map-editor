@@ -283,7 +283,8 @@ const administrationModel = computed(() => {
 }
 
 .menu-category-label {
-    @apply text-xs font-semibold uppercase text-gray-500 dark:text-gray-400;
+    @apply text-xs font-semibold uppercase;
+    color: var(--root-menuitem-text-color);
 }
 
 .layout-menu {
@@ -295,7 +296,8 @@ const administrationModel = computed(() => {
 }
 
 .menu-separator {
-    @apply border-t border-gray-100 dark:border-gray-700 my-2;
+    @apply border-t my-2;
+    border-color: var(--menu-border-color);
 }
 
 :deep(.p-inputtext) {
@@ -307,11 +309,7 @@ const administrationModel = computed(() => {
 }
 
 :deep(.layout-menuitem-root > .layout-menuitem-link) {
-    @apply rounded-lg transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-gray-700;
-}
-
-:deep(.layout-menuitem-icon) {
-    @apply text-primary-500;
+    @apply rounded-lg transition-colors duration-200;
 }
 
 :deep(.layout-menuitem-text) {
@@ -319,7 +317,7 @@ const administrationModel = computed(() => {
 }
 
 :deep(.layout-submenu-toggler) {
-    @apply text-gray-400;
+    color: var(--menuitem-icon-color);
 }
 
 :deep(.layout-menuitem-badge) {

@@ -14,11 +14,15 @@ import OutfitEditor from './Components/OutfitEditor.vue';
 import PetEditor from './Components/PetEditor.vue';
 import LootChestEditor from './Components/LootChestEditor.vue';
 import {calculateBaseItemPrice} from './BaseItemPriceCalculator';
-import JsonEditorVue from 'json-editor-vue'
+import JsonEditorVue from 'json-editor-vue';
+import 'vanilla-jsoneditor/themes/jse-theme-dark.css';
+import { useLayout } from '@/layout/composables/layout';
 
 const props = defineProps<{
     baseItem: BaseItemWithRelations,
 }>();
+
+const { isDarkTheme } = useLayout();
 
 // Function to clean corrupted attributes (removes numeric string keys from JSON editor corruption)
 const cleanAttributes = (attrs: any): any => {
@@ -486,7 +490,7 @@ const clearCurrency = () => {
                 v-tip.item.top.show-id="tooltipItem"
                 alt=""
             /> ^ Podgląd edytowanego przedmiotu
-            <div v-if="scaleResult" class="mt-2 text-sm text-green-600">
+            <div v-if="scaleResult" class="mt-2 text-sm text-green-600 dark:text-green-300">
                 Wyświetlane są przeskalowane atrybuty z kalkulatora punktów
             </div>
         </div>
@@ -498,7 +502,7 @@ const clearCurrency = () => {
             <h4 class="font-semibold mb-2">Cena przedmiotu</h4>
             <div class="flex flex-wrap items-end gap-3">
                 <div class="flex flex-col gap-1">
-                    <label for="base-item-price" class="text-sm font-medium text-surface-700">Wartość</label>
+                    <label for="base-item-price" class="text-sm font-medium text-muted-color">Wartość</label>
                     <InputNumber
                         input-id="base-item-price"
                         v-model="price"
@@ -518,7 +522,7 @@ const clearCurrency = () => {
                     :disabled="!isPriceChanged || isSavingPrice"
                 />
             </div>
-            <div class="mt-2 text-xs text-gray-700">
+            <div class="mt-2 text-xs text-muted-color">
                 Aktualnie zapisana wartość: <strong>{{ persistedPrice }}</strong> {{ priceCurrencyLabel }}.
                 Propozycja z aktualnych pól: <strong>{{ calculatedPrice }}</strong> {{ priceCurrencyLabel }}.
             </div>
@@ -531,7 +535,7 @@ const clearCurrency = () => {
                         v-if="specificCurrencyPrice !== null"/>
                 <Button label="Zapisz" icon="pi pi-save" class="p-button-success" @click="saveCurrency"/>
             </div>
-            <div v-if="baseItem.specific_currency_price !== null" class="mt-2 text-xs text-gray-700">Aktualna cena
+            <div v-if="baseItem.specific_currency_price !== null" class="mt-2 text-xs text-muted-color">Aktualna cena
                 waluty dla tego itemu: <strong>{{ baseItem.specific_currency_price }}</strong></div>
         </div>
         <CommonItemAttributesEditor v-model:attributes="form.attributes" />
@@ -546,7 +550,7 @@ const clearCurrency = () => {
                 placeholder="Wyszukaj książkę po tytule"
                 fluid
             />
-            <div class="mt-2 text-sm text-surface-500">
+            <div class="mt-2 text-sm text-muted-color">
                 Dla kategorii <strong>books</strong> aktywna jest tylko treść książki (atrybut <code>bookId</code>).
             </div>
         </div>
@@ -561,7 +565,7 @@ const clearCurrency = () => {
                 placeholder="Wyszukaj plik audio po nazwie"
                 fluid
             />
-            <div class="mt-2 text-sm text-surface-500">
+            <div class="mt-2 text-sm text-muted-color">
                 Dla kategorii <strong>musicBoxes</strong> aktywny jest atrybut <code>audioId</code>.
             </div>
         </div>
@@ -598,10 +602,10 @@ const clearCurrency = () => {
                 <TabPanel value="3">
                     <JsonEditorVue
                         v-model="jsonEditorAttributes"
-                        v-bind="{/* local props & attrs */}"
+                        :class="{ 'jse-theme-dark': isDarkTheme }"
                     />
-                    <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-                        <p class="text-yellow-800 text-sm">
+                    <div class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded">
+                        <p class="text-yellow-800 dark:text-yellow-300 text-sm">
                             <i class="pi pi-exclamation-triangle mr-2"></i>
                             <strong>Uwaga:</strong> Zmiany w edytorze JSON zostaną zsynchronizowane po przełączeniu na
                             inną zakładkę lub automatycznie.
