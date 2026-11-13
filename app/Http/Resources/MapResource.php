@@ -28,6 +28,7 @@ class MapResource extends JsonResource
             'thumbnail_src' => $this->resource->thumbnail_src ? AssetUrl::map($this->resource->thumbnail_src) : AssetUrl::map($this->resource->src),
             'battleground' => $this->resource->battleground,
             'battleground2' => $this->resource->battleground2,
+            'battleground3' => $this->resource->battleground3,
             'respawn_point' => RespawnPointResource::make($this->resource->respawnPoint),
             'is_teleport_locked' => $this->resource->is_teleport_locked,
             'is_grouping_locked' => $this->resource->is_grouping_locked,

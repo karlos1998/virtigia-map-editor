@@ -50,6 +50,7 @@ class MapController extends Controller
                 'pvp',
                 'battleground',
                 'battleground2',
+                'battleground3',
                 'is_teleport_locked',
                 'respawn_point_id',
             ])

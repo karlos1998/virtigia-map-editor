@@ -20,6 +20,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'pvp', type: 'integer'),
         new OA\Property(property: 'battleground', type: 'string', nullable: true),
         new OA\Property(property: 'battleground2', type: 'string', nullable: true),
+        new OA\Property(property: 'battleground3', type: 'string', nullable: true),
         new OA\Property(property: 'is_teleport_locked', type: 'boolean'),
         new OA\Property(property: 'respawn_point_id', type: 'integer', nullable: true),
     ]
@@ -45,6 +46,7 @@ class MapListResource extends JsonResource
             'pvp' => $this->pvp?->value ?? $this->pvp,
             'battleground' => $this->battleground,
             'battleground2' => $this->battleground2,
+            'battleground3' => $this->battleground3,
             'is_teleport_locked' => (bool) $this->is_teleport_locked,
             'respawn_point_id' => $this->respawn_point_id,
         ];

@@ -201,6 +201,11 @@ final class MapService extends BaseService
         $map->update(['battleground2' => $battleground2]);
     }
 
+    public function updateBattleground3(Map $map, string $battleground3): void
+    {
+        $map->update(['battleground3' => $battleground3]);
+    }
+
     public function updateWater(Map $map, ?string $water)
     {
         $map->update(['water' => $water ?? '']);
@@ -287,6 +292,8 @@ final class MapService extends BaseService
             'y' => $map->y,
             'col' => $map->col,
             'battleground' => $map->battleground,
+            'battleground2' => $map->battleground2,
+            'battleground3' => $map->battleground3,
             'water' => $map->water,
             'pvp' => $map->pvp,
             'map_group' => $map->map_group,

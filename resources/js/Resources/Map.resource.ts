@@ -13,6 +13,7 @@ export interface MapResource {
     water?: string
     battleground?: string
     battleground2?: string
+    battleground3?: string | null
 
     // ....
     is_teleport_locked?: boolean

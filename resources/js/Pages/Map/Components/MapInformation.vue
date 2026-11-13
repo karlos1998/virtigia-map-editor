@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 import { useToast } from 'primevue';
@@ -7,11 +7,6 @@ import { MapResource } from '@/Resources/Map.resource';
 import ReplaceMapImageModal from '@/Pages/Map/Modals/ReplaceMapImageModal.vue';
 import InputSwitch from 'primevue/inputswitch';
 import MapCitySettings from './MapCitySettings.vue';
-
-type BackgroundOption = {
-    file: string;
-    src: string;
-};
 
 const props = defineProps<{
     map: MapResource;
@@ -103,16 +98,34 @@ const backgroundClassicOptions = backgroundClassicFiles.map((file) => ({
     src: `/BackgroundsClassic/${file}`,
 }));
 
-const selectedBattleground = ref<string | null>(props.map.battleground ?? null);
-const selectedBattleground2 = ref<string | null>(props.map.battleground2 ?? null);
+const backgroundModernOptions = Array.from({ length: 27 }, (_, index) => ({
+    file: `m${index + 1}.jpg`,
+    src: `/BackgroundsModern/m${index + 1}.jpg`,
+}));
 
-const selectedBattlegroundOption = computed(() => {
-    return backgroundOptions.find(background => background.file === selectedBattleground.value) ?? null;
+const backgroundTypes = [
+    { field: 'battleground', label: 'Tło 1 · Stary Classic', options: backgroundOptions },
+    { field: 'battleground2', label: 'Tło 2 · Classic', options: backgroundClassicOptions },
+    { field: 'battleground3', label: 'Tło 3 · Modern', options: backgroundModernOptions },
+] as const;
+type BackgroundField = typeof backgroundTypes[number]['field'];
+
+const selectedBackgrounds = ref<Record<BackgroundField, string | null>>({
+    battleground: props.map.battleground ?? null,
+    battleground2: props.map.battleground2 ?? null,
+    battleground3: props.map.battleground3 ?? null,
 });
 
-const selectedBattleground2Option = computed(() => {
-    return backgroundClassicOptions.find(background => background.file === selectedBattleground2.value) ?? null;
-});
+for (const { field } of backgroundTypes) {
+    watch([() => props.map.id, () => props.map[field]], ([, file]) => {
+        selectedBackgrounds.value[field] = file ?? null;
+    });
+}
+
+const backgroundPickers = computed(() => backgroundTypes.map(background => {
+    const selected = selectedBackgrounds.value[background.field];
+    return { ...background, selected, preview: background.options.find(option => option.file === selected) };
+}));
 
 const backgroundSectionToggleLabel = computed(() => {
     return isBackgroundSectionExpanded.value ? 'Zwiń' : 'Rozwiń';
@@ -137,17 +150,7 @@ onMounted(() => {
     if (props.map.respawn_point) {
         selectedRespawnPointId.value = props.map.respawn_point.id;
     }
-    selectedBattleground.value = props.map.battleground ?? null;
-    selectedBattleground2.value = props.map.battleground2 ?? null;
 });
-
-const selectBattleground = (background: BackgroundOption) => {
-    selectedBattleground.value = background.file;
-};
-
-const selectBattleground2 = (background: BackgroundOption) => {
-    selectedBattleground2.value = background.file;
-};
 
 const toggleBackgroundSection = () => {
     isBackgroundSectionExpanded.value = !isBackgroundSectionExpanded.value;
@@ -209,44 +212,17 @@ const updateMapRespawnPoint = () => {
     });
 };
 
-// Update map battleground
-const updateMapBattleground = () => {
-    router.patch(route('maps.update.battleground', props.map.id), {
-        battleground: selectedBattleground.value
+const updateMapBackground = (field: BackgroundField) => {
+    router.patch(route(`maps.update.${field}`, props.map.id), {
+        [field]: selectedBackgrounds.value[field],
     }, {
+        preserveScroll: true,
         onSuccess: () => {
-            toast.add({severity: 'success', summary: 'Sukces', detail: 'Tło walki zostało zaktualizowane', life: 3000});
+            toast.add({ severity: 'success', summary: 'Sukces', detail: 'Tło walki zostało zaktualizowane', life: 3000 });
         },
         onError: () => {
-            toast.add({
-                severity: 'error',
-                summary: 'Błąd',
-                detail: 'Nie udało się zaktualizować tła walki',
-                life: 3000
-            });
-        }
-    });
-};
-const updateMapBattleground2 = () => {
-    router.patch(route('maps.update.battleground2', props.map.id), {
-        battleground2: selectedBattleground2.value
-    }, {
-        onSuccess: () => {
-            toast.add({
-                severity: 'success',
-                summary: 'Sukces',
-                detail: 'Grafika mapy 2 została zaktualizowana',
-                life: 3000
-            });
+            toast.add({ severity: 'error', summary: 'Błąd', detail: 'Nie udało się zaktualizować tła walki', life: 3000 });
         },
-        onError: () => {
-            toast.add({
-                severity: 'error',
-                summary: 'Błąd',
-                detail: 'Nie udało się zaktualizować grafiki mapy 2',
-                life: 3000
-            });
-        }
     });
 };
 
@@ -405,40 +381,24 @@ const updateMapGroupingLocked = () => {
                 <div>
                     <h2 class="text-xl font-bold">Tła mapy</h2>
                     <div class="text-sm text-surface-500 dark:text-surface-400">
-                        Wybrane grafiki używane są w walce w staryn i nowym oknie.
+                        Wybierz tło okna walki dla każdej wersji klienta.
                     </div>
                 </div>
 
-                <div class="grid min-w-0 flex-1 grid-cols-1 gap-3 md:grid-cols-2 xl:max-w-3xl">
-                    <div class="flex min-w-0 items-center gap-3 rounded-md border border-surface-200 bg-surface-50 p-2 dark:border-surface-700 dark:bg-surface-900/40">
+                <div class="grid min-w-0 flex-1 grid-cols-1 gap-3 md:grid-cols-3 xl:max-w-4xl">
+                    <div v-for="background in backgroundPickers" :key="background.field" class="flex min-w-0 items-center gap-3 rounded-md border border-surface-200 bg-surface-50 p-2 dark:border-surface-700 dark:bg-surface-900/40">
                         <img
-                            v-if="selectedBattlegroundOption"
-                            :src="selectedBattlegroundOption.src"
-                            :alt="selectedBattlegroundOption.file"
+                            v-if="background.preview"
+                            :src="background.preview.src"
+                            :alt="background.preview.file"
                             class="h-14 w-24 shrink-0 rounded object-contain"
                         />
                         <div v-else class="flex h-14 w-24 shrink-0 items-center justify-center rounded bg-surface-100 text-xs text-surface-500 dark:bg-surface-800 dark:text-surface-400">
                             Brak
                         </div>
                         <div class="min-w-0">
-                            <div class="text-xs font-semibold uppercase text-surface-500 dark:text-surface-400">Tło 1</div>
-                            <div class="truncate text-sm font-semibold">{{ selectedBattleground ?? '-' }}</div>
-                        </div>
-                    </div>
-
-                    <div class="flex min-w-0 items-center gap-3 rounded-md border border-surface-200 bg-surface-50 p-2 dark:border-surface-700 dark:bg-surface-900/40">
-                        <img
-                            v-if="selectedBattleground2Option"
-                            :src="selectedBattleground2Option.src"
-                            :alt="selectedBattleground2Option.file"
-                            class="h-14 w-24 shrink-0 rounded object-contain"
-                        />
-                        <div v-else class="flex h-14 w-24 shrink-0 items-center justify-center rounded bg-surface-100 text-xs text-surface-500 dark:bg-surface-800 dark:text-surface-400">
-                            Brak
-                        </div>
-                        <div class="min-w-0">
-                            <div class="text-xs font-semibold uppercase text-surface-500 dark:text-surface-400">Tło 2</div>
-                            <div class="truncate text-sm font-semibold">{{ selectedBattleground2 ?? '-' }}</div>
+                            <div class="text-xs font-semibold uppercase text-surface-500 dark:text-surface-400">{{ background.label }}</div>
+                            <div class="truncate text-sm font-semibold">{{ background.selected ?? '-' }}</div>
                         </div>
                     </div>
                 </div>
@@ -452,23 +412,23 @@ const updateMapGroupingLocked = () => {
                 />
             </div>
 
-            <div v-if="isBackgroundSectionExpanded" class="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
-                <section class="min-w-0">
+            <div v-if="isBackgroundSectionExpanded" class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2 2xl:grid-cols-3">
+                <section v-for="picker in backgroundPickers" :key="picker.field" class="min-w-0">
                     <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <h3 class="font-semibold">Tło mapy 1</h3>
+                            <h3 class="font-semibold">{{ picker.label }}</h3>
                             <div class="text-sm text-surface-500 dark:text-surface-400">
-                                Wybrane: <strong>{{ selectedBattleground ?? '-' }}</strong>
+                                Wybrane: <strong>{{ picker.selected ?? '-' }}</strong>
                             </div>
                         </div>
-                        <Button label="Zapisz tło 1" icon="pi pi-save" :disabled="!selectedBattleground" @click="updateMapBattleground" />
+                        <Button label="Zapisz tło" icon="pi pi-save" :disabled="!picker.selected" @click="updateMapBackground(picker.field)" />
                     </div>
 
                     <div class="mb-4 overflow-hidden rounded-md border border-surface-200 bg-surface-50 dark:border-surface-700 dark:bg-surface-900/40">
                         <img
-                            v-if="selectedBattlegroundOption"
-                            :src="selectedBattlegroundOption.src"
-                            :alt="selectedBattlegroundOption.file"
+                            v-if="picker.preview"
+                            :src="picker.preview.src"
+                            :alt="picker.preview.file"
                             class="h-56 w-full object-contain md:h-72"
                         />
                         <div v-else class="flex h-56 items-center justify-center text-surface-500 dark:text-surface-400 md:h-72">
@@ -478,54 +438,15 @@ const updateMapGroupingLocked = () => {
 
                     <div class="background-picker-grid">
                         <button
-                            v-for="background in backgroundOptions"
+                            v-for="background in picker.options"
                             :key="background.file"
                             type="button"
                             class="background-picker-option"
-                            :class="{ 'is-selected': selectedBattleground === background.file }"
-                            :aria-pressed="selectedBattleground === background.file"
-                            @click="selectBattleground(background)"
+                            :class="{ 'is-selected': picker.selected === background.file }"
+                            :aria-pressed="picker.selected === background.file"
+                            @click="selectedBackgrounds[picker.field] = background.file"
                         >
-                            <img :src="background.src" :alt="background.file" class="background-picker-image" />
-                            <span class="background-picker-label">{{ background.file }}</span>
-                        </button>
-                    </div>
-                </section>
-
-                <section class="min-w-0">
-                    <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <h3 class="font-semibold">Tło mapy 2</h3>
-                            <div class="text-sm text-surface-500 dark:text-surface-400">
-                                Wybrane: <strong>{{ selectedBattleground2 ?? '-' }}</strong>
-                            </div>
-                        </div>
-                        <Button label="Zapisz tło 2" icon="pi pi-save" :disabled="!selectedBattleground2" @click="updateMapBattleground2" />
-                    </div>
-
-                    <div class="mb-4 overflow-hidden rounded-md border border-surface-200 bg-surface-50 dark:border-surface-700 dark:bg-surface-900/40">
-                        <img
-                            v-if="selectedBattleground2Option"
-                            :src="selectedBattleground2Option.src"
-                            :alt="selectedBattleground2Option.file"
-                            class="h-56 w-full object-contain md:h-72"
-                        />
-                        <div v-else class="flex h-56 items-center justify-center text-surface-500 dark:text-surface-400 md:h-72">
-                            Brak wybranego tła
-                        </div>
-                    </div>
-
-                    <div class="background-picker-grid">
-                        <button
-                            v-for="background in backgroundClassicOptions"
-                            :key="background.file"
-                            type="button"
-                            class="background-picker-option"
-                            :class="{ 'is-selected': selectedBattleground2 === background.file }"
-                            :aria-pressed="selectedBattleground2 === background.file"
-                            @click="selectBattleground2(background)"
-                        >
-                            <img :src="background.src" :alt="background.file" class="background-picker-image" />
+                            <img :src="background.src" alt="" loading="lazy" class="background-picker-image" />
                             <span class="background-picker-label">{{ background.file }}</span>
                         </button>
                     </div>

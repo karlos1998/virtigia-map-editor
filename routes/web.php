@@ -174,6 +174,7 @@ Route::middleware(['auth'])->group(function () {
                     Route::patch('maps/{map}/group', [MapController::class, 'updateMapGroup'])->name('maps.update.group');
                     Route::patch('maps/{map}/battleground', [MapController::class, 'updateBattleground'])->name('maps.update.battleground');
                     Route::patch('maps/{map}/battleground2', [MapController::class, 'updateBattleground2'])->name('maps.update.battleground2');
+                    Route::patch('maps/{map}/battleground3', [MapController::class, 'updateBattleground3'])->name('maps.update.battleground3');
                     Route::patch('maps/{map}/respawn-point', [MapController::class, 'updateRespawnPoint'])->name('maps.update.respawn-point');
                     Route::post('maps/{map}/image', [MapController::class, 'updateImage'])->name('maps.update.image');
                     Route::delete('maps/{map}', [MapController::class, 'destroy'])->name('maps.destroy');

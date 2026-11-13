@@ -17,6 +17,7 @@ class Map extends DynamicModel
         'col',
         'battleground',
         'battleground2',
+        'battleground3',
         'water',
         'pvp',
         'is_teleport_locked',

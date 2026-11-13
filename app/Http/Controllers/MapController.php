@@ -9,11 +9,12 @@ use App\Http\Requests\BulkUpdateMapCityRequest;
 use App\Http\Requests\MapIndexRequest;
 use App\Http\Requests\StoreMapRequest;
 use App\Http\Requests\UpdateMapBattleground2Request;
+use App\Http\Requests\UpdateMapBattleground3Request;
 use App\Http\Requests\UpdateMapBattlegroundRequest;
 use App\Http\Requests\UpdateMapCityRequest;
 use App\Http\Requests\UpdateMapColsRequest;
-use App\Http\Requests\UpdateMapImageRequest;
 use App\Http\Requests\UpdateMapGroupRequest;
+use App\Http\Requests\UpdateMapImageRequest;
 use App\Http\Requests\UpdateMapNameRequest;
 use App\Http\Requests\UpdateMapPvpRequest;
 use App\Http\Requests\UpdateMapRespawnPointRequest;
@@ -292,6 +293,13 @@ class MapController extends Controller
     public function updateBattleground2(Map $map, UpdateMapBattleground2Request $request): void
     {
         $this->mapService->updateBattleground2($map, $request->input('battleground2'));
+    }
+
+    public function updateBattleground3(Map $map, UpdateMapBattleground3Request $request): \Illuminate\Http\RedirectResponse
+    {
+        $this->mapService->updateBattleground3($map, $request->battleground3());
+
+        return back();
     }
 
     public function updateTeleportLocked(Map $map, Request $request): void

@@ -2495,6 +2495,7 @@ class AiChangeSetService
             'col' => $map->col,
             'battleground' => $map->battleground,
             'battleground2' => $map->battleground2,
+            'battleground3' => $map->battleground3,
             'water' => $map->water,
             'pvp' => $map->pvp?->value ?? $map->getRawOriginal('pvp'),
             'is_teleport_locked' => $map->is_teleport_locked,
