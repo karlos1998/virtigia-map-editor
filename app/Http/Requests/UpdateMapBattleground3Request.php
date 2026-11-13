@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Services\MapService;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Storage;
 
 class UpdateMapBattleground3Request extends FormRequest
 {
@@ -11,11 +14,18 @@ class UpdateMapBattleground3Request extends FormRequest
         return true;
     }
 
-    /** @return array<string, list<string>> */
+    /** @return array<string, list<string|Closure>> */
     public function rules(): array
     {
         return [
-            'battleground3' => ['required', 'string', 'regex:/\Am(?:[1-9]|1[0-9]|2[0-7])\.jpg\z/'],
+            'battleground3' => [
+                'bail', 'required', 'string', 'max:255', 'regex:'.MapService::MODERN_BATTLEGROUND_FILENAME_PATTERN,
+                function (string $attribute, string $value, Closure $fail): void {
+                    if (! Storage::disk('s3')->fileExists(MapService::MODERN_BATTLEGROUND_DIRECTORY.'/'.$value)) {
+                        $fail('Wybierz tło Modern dostępne w katalogu grafik.');
+                    }
+                },
+            ],
         ];
     }
 

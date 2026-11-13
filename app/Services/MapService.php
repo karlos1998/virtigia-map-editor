@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\MapGroup;
+use App\Facades\AssetUrl;
 use App\Http\Resources\DoorResource;
 use App\Http\Resources\MapResource;
 use App\Models\Door;
@@ -16,9 +17,14 @@ use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableDropdownColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableTextColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\TableService;
+use League\Flysystem\FilesystemException;
 
 final class MapService extends BaseService
 {
+    public const MODERN_BATTLEGROUND_DIRECTORY = 'img/battlegrounds/modern';
+
+    public const MODERN_BATTLEGROUND_FILENAME_PATTERN = '/\Am[1-9][0-9]*\.jpg\z/';
+
     public function __construct(
         private readonly Map $mapModel,
         private readonly AssetService $assetService,
@@ -199,6 +205,29 @@ final class MapService extends BaseService
     public function updateBattleground2(Map $map, ?string $battleground2): void
     {
         $map->update(['battleground2' => $battleground2]);
+    }
+
+    /** @return list<array{file: string, src: string}> */
+    public function modernBattlegroundOptions(): array
+    {
+        try {
+            $files = Storage::disk('s3')->files(self::MODERN_BATTLEGROUND_DIRECTORY);
+        } catch (FilesystemException $exception) {
+            report($exception);
+
+            return [];
+        }
+
+        natsort($files);
+        $options = [];
+        foreach ($files as $path) {
+            $filename = basename($path);
+            if (preg_match(self::MODERN_BATTLEGROUND_FILENAME_PATTERN, $filename)) {
+                $options[] = ['file' => $filename, 'src' => AssetUrl::fromPath($path)];
+            }
+        }
+
+        return $options;
     }
 
     public function updateBattleground3(Map $map, string $battleground3): void

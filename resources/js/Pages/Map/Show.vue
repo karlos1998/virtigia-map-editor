@@ -23,6 +23,7 @@ import RemoveMap from './Partials/RemoveMap.vue';
 
 const props = defineProps<{
     map: MapResource;
+    modernBattlegroundOptions: { file: string; src: string }[];
     npcs: NpcWithLocationResource[];
     doors: DoorResource[];
     pvpTypeList: { value: number; label: string }[];
@@ -394,6 +395,7 @@ const handleTrackerPositionChanged = (position: { x: number, y: number }) => {
             :map="map"
             :pvp-type-list="pvpTypeList"
             :map-group-list="mapGroupList"
+            :modern-battleground-options="modernBattlegroundOptions"
             :respawn-points="respawnPoints"
         />
 

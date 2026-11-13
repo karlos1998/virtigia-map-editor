@@ -6,10 +6,12 @@ use App\Models\DynamicModel;
 use App\Models\Map;
 use App\Models\User;
 use App\Models\WorldTemplate;
+use App\Services\MapService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class MapBattleground3Test extends TestCase
@@ -67,19 +69,37 @@ class MapBattleground3Test extends TestCase
         (require database_path(self::MIGRATION))->up();
         $map = Map::query()->create(['name' => 'Grota', 'battleground2' => '004N.jpg']);
 
+        Storage::fake('s3')->put('img/battlegrounds/modern/m42.jpg', 'image');
         $this->actingAs(User::factory()->create(['roles' => ['admin'], 'permissions' => ['world.write']]))
             ->withSession(['world' => 'retro']);
 
         $url = route('maps.update.battleground3', $map);
 
         $this->from(route('maps.show', $map))
-            ->patch($url, ['battleground3' => 'm27.jpg'])
+            ->patch($url, ['battleground3' => 'm42.jpg'])
             ->assertRedirect(route('maps.show', $map));
 
         $this->patch($url, ['battleground3' => 'm28.jpg'])->assertSessionHasErrors('battleground3');
 
         $map->refresh();
-        $this->assertSame('m27.jpg', $map->battleground3);
+        $this->assertSame('m42.jpg', $map->battleground3);
         $this->assertSame('004N.jpg', $map->battleground2);
+    }
+
+    public function test_catalog_only_lists_modern_backgrounds_from_storage(): void
+    {
+        $disk = Storage::fake('s3');
+        $disk->put('img/battlegrounds/modern/m42.jpg', 'image');
+        $disk->put('img/battlegrounds/modern/m3.jpg', 'image');
+        $disk->put('img/battlegrounds/modern/info.txt', 'text');
+        $disk->put('img/battlegrounds/classic/m2.jpg', 'image');
+
+        config()->set('filesystems.disks.s3', []);
+        $disk->buildTemporaryUrlsUsing(fn (string $path): string => 'https://assets.example.test/'.basename($path));
+
+        $this->assertSame([
+            ['file' => 'm3.jpg', 'src' => 'https://assets.example.test/m3.jpg'],
+            ['file' => 'm42.jpg', 'src' => 'https://assets.example.test/m42.jpg'],
+        ], $this->app->make(MapService::class)->modernBattlegroundOptions());
     }
 }

@@ -165,6 +165,7 @@ class MapController extends Controller
 
         return Inertia::render('Map/Show', [
             'map' => MapResource::make($map),
+            'modernBattlegroundOptions' => fn () => $this->mapService->modernBattlegroundOptions(),
             'npcs' => NpcResource::collection($map->npcs),
             'doors' => DoorResource::collection($map->doors),
             'renewableItems' => RenewableMapItemResource::collection($map->renewableMapItems),

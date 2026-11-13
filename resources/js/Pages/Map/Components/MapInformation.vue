@@ -10,6 +10,7 @@ import MapCitySettings from './MapCitySettings.vue';
 
 const props = defineProps<{
     map: MapResource;
+    modernBattlegroundOptions: { file: string; src: string }[];
     pvpTypeList: { value: number; label: string }[];
     mapGroupList: { value: string; label: string }[];
     respawnPoints: { id: number; map_id: number; map_name: string; x: number; y: number }[];
@@ -98,15 +99,10 @@ const backgroundClassicOptions = backgroundClassicFiles.map((file) => ({
     src: `/BackgroundsClassic/${file}`,
 }));
 
-const backgroundModernOptions = Array.from({ length: 27 }, (_, index) => ({
-    file: `m${index + 1}.jpg`,
-    src: `/BackgroundsModern/m${index + 1}.jpg`,
-}));
-
 const backgroundTypes = [
     { field: 'battleground', label: 'Tło 1 · Stary Classic', options: backgroundOptions },
     { field: 'battleground2', label: 'Tło 2 · Classic', options: backgroundClassicOptions },
-    { field: 'battleground3', label: 'Tło 3 · Modern', options: backgroundModernOptions },
+    { field: 'battleground3', label: 'Tło 3 · Modern' },
 ] as const;
 type BackgroundField = typeof backgroundTypes[number]['field'];
 
@@ -124,7 +120,8 @@ for (const { field } of backgroundTypes) {
 
 const backgroundPickers = computed(() => backgroundTypes.map(background => {
     const selected = selectedBackgrounds.value[background.field];
-    return { ...background, selected, preview: background.options.find(option => option.file === selected) };
+    const options = 'options' in background ? background.options : props.modernBattlegroundOptions;
+    return { ...background, options, selected, preview: options.find(option => option.file === selected) };
 }));
 
 const backgroundSectionToggleLabel = computed(() => {
@@ -421,7 +418,7 @@ const updateMapGroupingLocked = () => {
                                 Wybrane: <strong>{{ picker.selected ?? '-' }}</strong>
                             </div>
                         </div>
-                        <Button label="Zapisz tło" icon="pi pi-save" :disabled="!picker.selected" @click="updateMapBackground(picker.field)" />
+                        <Button label="Zapisz tło" icon="pi pi-save" :disabled="!picker.preview" @click="updateMapBackground(picker.field)" />
                     </div>
 
                     <div class="mb-4 overflow-hidden rounded-md border border-surface-200 bg-surface-50 dark:border-surface-700 dark:bg-surface-900/40">
