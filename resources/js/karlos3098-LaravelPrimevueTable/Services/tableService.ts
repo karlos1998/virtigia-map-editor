@@ -165,7 +165,8 @@ export class TableService<DataType> {
             this.tableData = response.tableData
             this.defineFilters(this.tableData.columns, this.tableData.activeFilters)
             this.loadSort(this.tableData);
-            this.globalFilterValue.value = response.tableData.globalFilter;
+            this.globalFilter = response.tableData.globalFilter ?? '';
+            this.globalFilterValue.value = this.globalFilter;
         }
 
         this.data = response.data

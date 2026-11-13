@@ -3,6 +3,7 @@
 import AppLayout from "@/layout/AppLayout.vue";
 import AdvanceTable from "@advance-table/Components/AdvanceTable.vue";
 import AdvanceColumn from "@advance-table/Components/AdvanceColumn.vue";
+import type { AdvanceTableResponse } from "@advance-table/Services/tableService";
 import {MapResource} from "@/Resources/Map.resource";
 
 import { Link, router, useForm } from '@inertiajs/vue3';
@@ -24,6 +25,7 @@ type MapFilters = {
 }
 
 const props = withDefaults(defineProps<{
+    maps: AdvanceTableResponse<MapResource>
     filters?: MapFilters
     mapGroupList?: { value: string; label: string }[]
 }>(), {
@@ -35,6 +37,7 @@ const props = withDefaults(defineProps<{
     mapGroupList: () => [],
 });
 
+const searchDraft = ref(props.maps.tableData.globalFilter ?? '');
 const cityFilter = ref(props.filters.is_city ?? null);
 const cityOptions = [
     { label: 'Wszystkie mapy', value: null },
@@ -64,27 +67,50 @@ const showMissingBattlegrounds = ref(props.filters.missing_battleground);
 const isAdvancedFiltersCollapsed = ref(!showMissingBattlegrounds.value && cityFilter.value === null && mapGroupFilter.value === null);
 const hasActiveAdvancedFilters = computed(() => showMissingBattlegrounds.value || cityFilter.value !== null || mapGroupFilter.value !== null);
 
-const reloadWithAdvancedFilters = () => {
+const reloadMaps = (advancedFilters: MapFilters, search: string) => {
     const filters: Record<string, string> = {};
 
-    if (showMissingBattlegrounds.value) {
+    if (advancedFilters.missing_battleground) {
         filters.missing_battleground = '1';
     }
 
-    if (cityFilter.value !== null) {
-        filters.is_city = cityFilter.value ? '1' : '0';
+    if (advancedFilters.is_city !== null) {
+        filters.is_city = advancedFilters.is_city ? '1' : '0';
     }
 
-    if (mapGroupFilter.value !== null) {
-        filters.map_group = mapGroupFilter.value;
+    if (advancedFilters.map_group !== null) {
+        filters.map_group = advancedFilters.map_group;
     }
+
+    const { tableData, meta } = props.maps;
     selectedMaps.value = [];
-    router.get(route('maps.index'), filters, {
+    router.get(route('maps.index'), {
+        ...filters,
+        tables: {
+            [tableData.propName]: {
+                globalFilter: search,
+                page: 1,
+                perPage: meta.per_page,
+                filters: JSON.stringify(tableData.activeFilters),
+                sortOrder: tableData.sortOrder,
+                sortField: tableData.sortField,
+            },
+        },
+    }, {
         only: ['maps', 'filters'],
         preserveState: true,
+        preserveScroll: true,
         replace: true,
     });
-}
+};
+
+const searchMaps = () => reloadMaps(props.filters, searchDraft.value.trim());
+
+const reloadWithAdvancedFilters = () => reloadMaps({
+    missing_battleground: showMissingBattlegrounds.value,
+    is_city: cityFilter.value,
+    map_group: mapGroupFilter.value,
+}, props.maps.tableData.globalFilter ?? '');
 
 const clearAdvancedFilters = () => {
     showMissingBattlegrounds.value = false;
@@ -171,28 +197,18 @@ const clearAdvancedFilters = () => {
                     <Button label="Potwierdź" :loading="bulkForm.processing" @click="saveBulk" />
                 </template>
             </Dialog>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                <h4 class="m-0">Lista Map</h4>
+                <form class="flex flex-wrap items-center gap-2" role="search" @submit.prevent="searchMaps">
+                    <InputText v-model="searchDraft" aria-label="Szukaj map" placeholder="Nazwa lub grafika" />
+                    <Button type="submit" label="Szukaj" icon="pi pi-search" />
+                </form>
+            </div>
+
             <AdvanceTable
                 v-model:selection="selectedMaps"
                 prop-name="maps"
             >
-
-                <template #header="{ globalFilterValue, globalFilterUpdated }">
-
-                    <div class="flex flex-wrap gap-2 items-center justify-between">
-                        <h4 class="m-0">Lista Map</h4>
-                        <IconField>
-                            <InputIcon>
-                                <i class="pi pi-search" />
-                            </InputIcon>
-                            <InputText
-                                :value="globalFilterValue"
-                                @update:model-value="globalFilterUpdated"
-                                placeholder="Szukaj"
-                            />
-                        </IconField>
-                    </div>
-                </template>
-
                 <Column selection-mode="multiple" style="width: 3rem" />
                 <Column header="Wyczerpanie"><template #body="{ data }"><Tag :value="data.is_city ? 'Nie spada (miasto)' : 'Zużywane'" :severity="data.is_city ? 'success' : 'warn'" /></template></Column>
                 <AdvanceColumn field="id" header="ID" style="width: 5%" />
