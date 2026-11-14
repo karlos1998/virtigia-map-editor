@@ -59,6 +59,7 @@ export const additionalAttributes: AdditionalAttribute[] = [
     {key: 'healRemaining', label: 'Pełne Uleczenie', type: 'int'},
     {key: 'maxQuantity', label: 'Maksimum sztuk razem', type: 'int'},
     {key: 'expiresOn', label: 'Wygasa', type: 'timestamp', showTime: true, dateFormat: 'dd.mm.yy'},
+    {key: 'combatSelfHeal', label: 'Leczenie w walce (% maks. HP)', type: 'int'},
     {key: 'healthRestorationPercent', label: 'Odnowienie % punktów HP', type: 'int'},
     {key: 'bagCapacity', label: 'Pojemność torby', type: 'int'},
     {key: 'restoreHealthPoints', label: 'Leczy punkty HP', type: 'int'},

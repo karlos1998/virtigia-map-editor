@@ -235,7 +235,7 @@ class DialogOptionRuleValidator implements ValidationRule
 
                     return;
                 }
-            } elseif ($key === DialogNodeOptionRule::HAS_ACTIVE_BLESSING->value) {
+            } elseif (in_array($key, [DialogNodeOptionRule::HAS_ACTIVE_BLESSING->value, DialogNodeOptionRule::BIRTHDAY->value], true)) {
                 if ($ruleData['value'] !== true) {
                     $fail("Dla rule: {$key}, wartość musi być true.");
 

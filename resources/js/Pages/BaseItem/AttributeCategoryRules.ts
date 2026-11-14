@@ -177,6 +177,7 @@ const ADDITIONAL_ATTRIBUTE_CATEGORIES: Record<string, readonly BaseItemCategory[
     healRemaining: ['consumable'],
     maxQuantity: STACKABLE_ITEMS,
     expiresOn: ['blessings', 'consumable', 'talismans'],
+    combatSelfHeal: ['consumable'],
     healthRestorationPercent: ['consumable'],
     bagCapacity: ['backpacks', 'pouches'],
     restoreHealthPoints: ['consumable'],

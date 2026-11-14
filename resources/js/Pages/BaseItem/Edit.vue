@@ -9,6 +9,9 @@ import {useToast} from "primevue";
 import axios from "axios";
 import AttributePointsEditor from './Components/AttributePointsEditor.vue';
 import CommonItemAttributesEditor from './Components/CommonItemAttributesEditor.vue';
+import { useDialog } from 'primevue/usedialog';
+import EditShopNodeDialog from '@/Pages/Dialog/Modals/EditShopNodeDialog.vue';
+import type { ShopResource } from '@/Resources/Shop.resource';
 import TeleportToEditor from './Components/TeleportToEditor.vue';
 import OutfitEditor from './Components/OutfitEditor.vue';
 import PetEditor from './Components/PetEditor.vue';
@@ -48,6 +51,17 @@ const form = useForm({
     attribute_points: props.baseItem.attribute_points || {},
     manual_attribute_points: props.baseItem.manual_attribute_points || {}
 })
+
+const dialog = useDialog();
+function selectScrollShop() {
+    dialog.open(EditShopNodeDialog, {
+        props: { header: 'Zwój wywołania sklepu', modal: true },
+        onClose: ({ data }) => {
+            const shop: ShopResource | undefined = data?.shop;
+            if (shop) form.attributes.openShop = { id: shop.id, name: shop.name };
+        },
+    });
+}
 
 // Local copy of attributes for JSON editor to prevent corruption
 const jsonEditorAttributes = ref(JSON.parse(JSON.stringify(cleanAttributes(props.baseItem.attributes))));
@@ -142,6 +156,8 @@ const tooltipAttributes = computed(() => {
         return {
             quantity: baseAttributes.quantity,
             ...scaleResult.value,
+            openShop: baseAttributes.openShop,
+            combatSelfHeal: baseAttributes.combatSelfHeal,
         };
     }
 
@@ -351,6 +367,14 @@ const save = async () => {
             ...scaleResult.value,
             ...specialAttributes  // Special attributes take priority
         };
+    }
+
+    for (const key of ['openShop', 'combatSelfHeal']) {
+        if (form.attributes[key] != null) {
+            finalAttributes[key] = form.attributes[key];
+        } else {
+            delete finalAttributes[key];
+        }
     }
 
     if (isBook.value) {
@@ -584,6 +608,13 @@ const clearCurrency = () => {
             </TabList>
             <TabPanels>
                 <TabPanel v-if="!isPet" value="0">
+                    <div v-if="baseItem.category === 'consumable'" class="flex flex-wrap items-center gap-3 mb-4">
+                        <span v-if="form.attributes.openShop">Wywołuje sklep: {{ form.attributes.openShop.name }}</span>
+                        <Button type="button" :label="form.attributes.openShop ? 'Zmień sklep' : 'Dodaj zwój wywołania sklepu'"
+                                @click="selectScrollShop" />
+                        <Button v-if="form.attributes.openShop" type="button" label="Usuń atrybut" severity="secondary"
+                                @click="delete form.attributes.openShop" />
+                    </div>
                     <AttributePointsEditor
                         v-model="form"
                         :base-item="baseItem"

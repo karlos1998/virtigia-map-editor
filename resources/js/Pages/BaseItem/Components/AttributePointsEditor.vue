@@ -519,7 +519,8 @@ function updateAdditionalAttribute(attributeKey: string, value: number | string 
     }
 
     // Modify existing attributes object in place instead of reassigning
-    if (attributeKey === 'healChanceAfterFight' && Array.isArray(finalValue) && finalValue.every(item => item === null || item === '')) {
+    if ((attributeKey === 'healChanceAfterFight' && Array.isArray(finalValue) && finalValue.every(item => item === null || item === ''))
+        || (attributeKey === 'combatSelfHeal' && !finalValue)) {
         delete form.value.attributes[attributeKey];
     } else {
         form.value.attributes[attributeKey] = finalValue;
@@ -1426,6 +1427,8 @@ watch(selectedLegendaryBonus, async () => {
                     <template v-if="attr.type === 'int'">
                         <InputNumber
                             :model-value="getAdditionalAttributeValueAsInt(attr.key)"
+                            :min="attr.key === 'combatSelfHeal' ? 0 : undefined"
+                            :max="attr.key === 'combatSelfHeal' ? 100 : undefined"
                             @update:model-value="(value: number | null) => updateAdditionalAttribute(attr.key, value || 0)"
                             showButtons
                             buttonLayout="horizontal"

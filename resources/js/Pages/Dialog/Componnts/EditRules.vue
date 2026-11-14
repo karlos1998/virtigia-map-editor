@@ -121,7 +121,7 @@ const submitNewRule = () => {
         value = null
     } else if (newRule.value === DialogNodeOptionRule.weekday) {
         value = []
-    } else if (newRule.value === DialogNodeOptionRule.hasActiveBlessing) {
+    } else if (newRule.value === DialogNodeOptionRule.hasActiveBlessing || newRule.value === DialogNodeOptionRule.birthday) {
         value = true
     }
 
@@ -289,6 +289,10 @@ watch(
 
         <div v-if="name === DialogNodeOptionRule.brotherhood" class="dialog-editor-hint">
             <b>Wymaga bycia członkiem</b>
+        </div>
+
+        <div v-if="name === DialogNodeOptionRule.birthday" class="dialog-editor-hint">
+            Opcja jest dostępna w dniu urodzin gracza.
         </div>
 
         <div v-if="name === DialogNodeOptionRule.hasActiveBlessing" class="dialog-editor-hint">

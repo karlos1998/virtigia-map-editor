@@ -22,6 +22,14 @@ class DialogOptionRuleValidatorTest extends TestCase
         ]));
     }
 
+    public function test_birthday_requires_true_and_cannot_be_consumed(): void
+    {
+        $rule = DialogNodeOptionRule::BIRTHDAY;
+        self::assertFalse($rule->canBeUsed());
+        self::assertSame([], $this->validateRules([$rule->value => ['value' => true, 'consume' => false]]));
+        self::assertNotSame([], $this->validateRules([$rule->value => ['value' => false, 'consume' => false]]));
+    }
+
     public function test_it_rejects_invalid_time_rule_values(): void
     {
         self::assertNotSame([], $this->validateRules([

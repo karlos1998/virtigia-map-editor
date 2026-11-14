@@ -19,4 +19,5 @@ export enum DialogNodeOptionRule {
     weekday = 'weekday',
     activePlayersOnMap = 'activePlayersOnMap',
     hasActiveBlessing = 'hasActiveBlessing',
+    birthday = 'birthday',
 }

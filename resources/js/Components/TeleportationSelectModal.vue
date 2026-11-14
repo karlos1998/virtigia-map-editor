@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import {inject, onMounted, Ref, ref} from "vue";
+import {inject, onMounted, watch, Ref, ref} from "vue";
 import {debounce} from "chart.js/helpers";
 import axios from "axios";
 import {route} from "ziggy-js";
 import {DialogNodeTeleportationDataResource} from "../Resources/DialogNodeTeleportationData.resource";
 import {MapResource} from "../Resources/Map.resource";
 import {DynamicDialogInstance} from "primevue/dynamicdialogoptions";
+
+import type { DoorResource } from '@/Resources/Door.resource';
+import type { NpcWithLocationResource } from '@/Resources/Npc.resource';
+import CollisionRenderer from '@/Pages/Map/Components/CollisionRenderer.vue';
+import DoorRenderer from '@/Pages/Map/Components/DoorRenderer.vue';
+import NpcRenderer from '@/Pages/Map/Components/NpcRenderer.vue';
 
 // const visible = defineModel<boolean>('visible')
 
@@ -25,6 +31,7 @@ const emit = defineEmits(['selected']);
 
 onMounted(() => {
     teleportation.value = withTeleportationDefaults(dialogRef.value.data?.teleportation);
+    previewMapId.value = teleportation.value?.mapId ?? null;
 })
 
 const scale = ref(1);
@@ -33,6 +40,32 @@ const teleportation = ref<DialogNodeTeleportationDataResource | null>(null);
 
 const selectedMap = ref<MapResource | null>(null);
 const dropdownMaps = ref<MapResource[]>([]);
+const preview = ref<{ map: MapResource; doors: DoorResource[]; npcs: NpcWithLocationResource[] } | null>(null);
+const previewError = ref(false);
+
+const previewMapId = ref<number | null>(null);
+
+watch(() => selectedMap.value?.id, (id) => {
+    previewMapId.value = id ?? null;
+});
+
+watch(previewMapId, async (id, _, onCleanup) => {
+    preview.value = null;
+    previewError.value = false;
+    if (!id) return;
+
+    const controller = new AbortController();
+    onCleanup(() => controller.abort());
+    try {
+        const { data } = await axios.get(route('maps.preview-data', { map: id }), { signal: controller.signal });
+        if (!controller.signal.aborted) {
+            preview.value = data;
+            if (!selectedMap.value) selectedMap.value = data.map;
+        }
+    } catch {
+        if (!controller.signal.aborted) previewError.value = true;
+    }
+});
 
 const normalizeLevelOffset = (value?: number | null) => {
     const numberValue = Number(value ?? 0);
@@ -75,11 +108,8 @@ const setTrackerPosition = (event: MouseEvent) => {
 };
 
 const handleClick = (event: MouseEvent) => {
-    // const position = {
-    //     x: trackerPosition.value.x,
-    //     y: trackerPosition.value.y,
-    // }
-    // emit('selected', position);
+    if (!selectedMap.value || preview.value?.map.id !== selectedMap.value.id) return;
+    setTrackerPosition(event);
     teleportation.value = {
         x: trackerPosition.value.x,
         y: trackerPosition.value.y,
@@ -249,7 +279,7 @@ const cancel = () => {
     </div>
     <div v-else>
         <div class="font-bold text-lg flex flex-row gap-1 w-full">
-            <AutoComplete v-model="selectedMap" :suggestions="dropdownMaps" optionLabel="name"
+            <AutoComplete forceSelection v-model="selectedMap" :suggestions="dropdownMaps" optionLabel="name"
                       placeholder="Szukaj lokacji" class="w-full" @complete="searchOptions"
             >
                 <template #option="slotProps">
@@ -259,22 +289,30 @@ const cancel = () => {
                 </template>
             </AutoComplete>
         </div>
+        <p v-if="previewError" role="alert">Nie udało się załadować podglądu mapy.</p>
         <div
-            v-if="selectedMap && selectedMap.id > 0"
+            v-if="selectedMap && selectedMap.id > 0 && !previewError"
 
         >
+            <p v-if="preview?.map.id !== selectedMap.id" role="status">Ładowanie podglądu mapy…</p>
             <div
+                v-else
                 class="map-container relative"
                 @mousemove="handleMouseMove"
                 :style="{
                     backgroundImage: `url(${selectedMap.src})`,
                     width: `${selectedMap.x * 32 * scale}px`,
                     height: `${selectedMap.y * 32 * scale}px`,
-                    transformOrigin: 'top left',
-                    transform: `translate(${selectedMap.x}px, ${selectedMap.y}px)`,
+
                 }"
                 @click.self="handleClick"
             >
+                <div class="map-overlays pointer-events-none" aria-hidden="true">
+                    <CollisionRenderer :map="preview.map" :scale="scale" :edit-cols-on="false" />
+                    <DoorRenderer :doors="preview.doors" :scale="scale" />
+                    <NpcRenderer :npcs="preview.npcs" :scale="scale" :npc-scale="true"
+                                 :natural-npc-size="false" :add-to-group-mode="false" :source-npc="null" />
+                </div>
                 <div
                     class="mouse-tracker absolute bg-yellow-500/70 pointer-events-none" :style="{
                     width: `${32 * scale}px`,
@@ -288,7 +326,7 @@ const cancel = () => {
 </template>
 
 <style scoped>
-.map-container {
-    
+.map-overlays :deep(*) {
+    pointer-events: none;
 }
 </style>

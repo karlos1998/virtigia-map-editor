@@ -74,6 +74,15 @@ class UpdateItemAttributesRequestTest extends TestCase
         ];
     }
 
+    public function test_shop_scroll_and_combat_healing_attributes(): void
+    {
+        $attributes = ['openShop' => ['id' => 17, 'name' => 'Sklep'], 'combatSelfHeal' => 10];
+        $this->patchJson('/testing/item-attributes', ['attributes' => $attributes])
+            ->assertOk()->assertExactJson(['attributes' => $attributes]);
+        $this->patchJson('/testing/item-attributes', ['attributes' => ['openShop' => ['id' => 17], 'combatSelfHeal' => 101]])
+            ->assertUnprocessable()->assertJsonValidationErrors(['attributes.openShop.name', 'attributes.combatSelfHeal']);
+    }
+
     public function test_attributes_must_still_be_present_and_an_array(): void
     {
         $this->patchJson('/testing/item-attributes', [])->assertUnprocessable()->assertJsonValidationErrors('attributes');

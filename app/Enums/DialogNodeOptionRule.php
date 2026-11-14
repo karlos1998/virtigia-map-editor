@@ -78,6 +78,9 @@ enum DialogNodeOptionRule: string
     #[Description('Aktywne błogosławieństwo')]
     case HAS_ACTIVE_BLESSING = 'hasActiveBlessing';
 
+    #[Description('Urodziny gracza')]
+    case BIRTHDAY = 'birthday';
+
     public function canBeUsed(): bool
     {
         $ref = new ReflectionClassConstant(self::class, $this->name);

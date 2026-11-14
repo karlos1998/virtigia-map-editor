@@ -38,7 +38,7 @@ const cancel = () => {
 <template>
 
     <div class="font-bold text-lg flex flex-row gap-1 w-full">
-        <AutoComplete v-model="selectedShop" :suggestions="dropdownShops" optionLabel="name"
+        <AutoComplete v-model="selectedShop" :suggestions="dropdownShops" optionLabel="name" forceSelection
                       placeholder="Szukaj sklepu" class="w-full" @complete="searchOptions"
         >
             <template #option="slotProps">
@@ -51,7 +51,7 @@ const cancel = () => {
 
     <div class="flex justify-end gap-2">
         <Button type="button" label="Anuluj" severity="secondary" @click="cancel" />
-        <Button type="button" label="Zapisz" @click="save" />
+        <Button type="button" label="Zapisz" :disabled="!selectedShop?.id" @click="save" />
     </div>
 </template>
 
