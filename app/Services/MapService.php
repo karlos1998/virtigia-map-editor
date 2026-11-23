@@ -230,6 +230,12 @@ final class MapService extends BaseService
         return $options;
     }
 
+    /** @param array<string, array<string, bool|float|string>>|null $weatherSettings */
+    public function updateWeatherSettings(Map $map, ?array $weatherSettings): void
+    {
+        $map->update(['weather_settings' => $weatherSettings]);
+    }
+
     public function updateBattleground3(Map $map, string $battleground3): void
     {
         $map->update(['battleground3' => $battleground3]);
@@ -323,6 +329,7 @@ final class MapService extends BaseService
             'battleground' => $map->battleground,
             'battleground2' => $map->battleground2,
             'battleground3' => $map->battleground3,
+            'weather_settings' => $map->weather_settings,
             'water' => $map->water,
             'pvp' => $map->pvp,
             'map_group' => $map->map_group,

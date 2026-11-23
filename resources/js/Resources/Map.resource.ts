@@ -1,6 +1,12 @@
 import {RespawnPointResource} from "@/Resources/RespawnPoint.resource";
 
+export interface MapWeatherSettings {
+    rain?: {enabled: boolean; density: number; speed: number; wind: number};
+    fog?: {enabled: boolean; opacity: number; speedX: number; speedY: number; color: string};
+}
+
 export interface MapResource {
+    weather_settings?: MapWeatherSettings | null;
     id: number
     name: string
     path: string

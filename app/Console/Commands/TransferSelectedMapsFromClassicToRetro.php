@@ -150,6 +150,9 @@ class TransferSelectedMapsFromClassicToRetro extends Command
             $this->copyImageToRetroDirectory("img/locations/{$map->src}");
 
             $mapData = $map->toArray();
+            if (array_key_exists('weather_settings', $mapData)) {
+                $mapData['weather_settings'] = $map->getRawOriginal('weather_settings');
+            }
 
             $mapData['pvp'] = $map->pvp == 2 ? 3 : $map->pvp;
             $mapData['src'] = str_replace('classic', 'retro', $map->src);

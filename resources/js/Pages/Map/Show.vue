@@ -14,6 +14,7 @@ import DetailsCardListItem from "@/Components/DetailsCardListItem.vue";
 
 // Import components
 import MapInformation from './Components/MapInformation.vue';
+import MapWeatherSettings from './Components/MapWeatherSettings.vue';
 import MapControls from './Components/MapControls.vue';
 import MapCoordinates from './Components/MapCoordinates.vue';
 import NpcConfirmPopup from './Components/NpcConfirmPopup.vue';
@@ -399,6 +400,8 @@ const handleTrackerPositionChanged = (position: { x: number, y: number }) => {
             :respawn-points="respawnPoints"
         />
 
+
+        <MapWeatherSettings :map="map" />
 
         <!-- Map Coordinates -->
         <MapCoordinates :x="trackerPosition.x" :y="trackerPosition.y" />

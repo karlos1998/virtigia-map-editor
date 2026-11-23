@@ -24,12 +24,14 @@ class Map extends DynamicModel
         'is_grouping_locked',
         'is_internal',
         'map_group',
+        'weather_settings',
     ];
 
     protected $attributes = ['is_city' => false];
 
     protected $casts = [
         'is_city' => 'boolean',
+        'weather_settings' => 'array',
         'pvp' => PvpType::class,
         'is_teleport_locked' => 'boolean',
         'is_grouping_locked' => 'boolean',

@@ -19,6 +19,7 @@ use App\Http\Requests\UpdateMapNameRequest;
 use App\Http\Requests\UpdateMapPvpRequest;
 use App\Http\Requests\UpdateMapRespawnPointRequest;
 use App\Http\Requests\UpdateMapWaterRequest;
+use App\Http\Requests\UpdateMapWeatherSettingsRequest;
 use App\Http\Requests\UpdateWorldMinimapNodePositionRequest;
 use App\Http\Resources\DoorResource;
 use App\Http\Resources\MapResource;
@@ -235,6 +236,13 @@ class MapController extends Controller
     public function updateRespawnPoint(Map $map, UpdateMapRespawnPointRequest $request): void
     {
         $this->mapService->updateRespawnPoint($map, $request->input('respawn_point_id'));
+    }
+
+    public function updateWeatherSettings(Map $map, UpdateMapWeatherSettingsRequest $request): \Illuminate\Http\RedirectResponse
+    {
+        $this->mapService->updateWeatherSettings($map, $request->weatherSettings());
+
+        return back()->with('success', 'Zapisano pogodę na mapie.');
     }
 
     public function updateWater(Map $map, UpdateMapWaterRequest $request): void
