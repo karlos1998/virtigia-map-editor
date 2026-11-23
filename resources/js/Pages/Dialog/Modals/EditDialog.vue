@@ -9,8 +9,10 @@ import { DialogNodeAdditionalActionsResource } from '@/Resources/DialogNodeAddit
 import AdditionalActionsEditor from '@/Pages/Dialog/Componnts/AdditionalActionsEditor.vue';
 import DialogContentEditor from '@/Pages/Dialog/Componnts/DialogContentEditor.vue';
 import { usePage } from '@inertiajs/vue3';
-import type { DialogNodeActionDataResource, DialogNodeFocusResource } from '@/Resources/DialogNodeActionData.resource';
+import type { DialogAnswerTimeoutAction, DialogNodeActionDataResource, DialogNodeFocusResource } from '@/Resources/DialogNodeActionData.resource';
 import type { NpcWithLocationsResource } from '@/Resources/Npc.resource';
+
+import type {DialogOptionResource} from '@/Resources/DialogOption.resource';
 
 type FocusMode = 'none' | 'npc' | 'coordinates' | 'reset';
 
@@ -28,6 +30,7 @@ type FocusNpcOption = {
 const dialogRef = inject<Ref<DynamicDialogInstance & {
     data: {
         content: string,
+        options: DialogOptionResource[],
         dialog_id: number,
         node_id: number,
         action_data: DialogNodeActionDataResource | null,
@@ -49,6 +52,20 @@ const toast = useToast();
 const page = usePage<{ focusNpcs: NpcWithLocationsResource[] }>();
 const processing = ref(false);
 const copyProcessing = ref(false);
+const timeoutEnabled = ref(false);
+const timeoutSeconds = ref<number | null>(30);
+const timeoutAction = ref<DialogAnswerTimeoutAction>('CLOSE_DIALOG');
+const timeoutOptionId = ref<number | null>(null);
+const timeoutActions = [
+    {label: 'Śmierć', value: 'DEATH'},
+    {label: 'Losowa dostępna odpowiedź', value: 'RANDOM_OPTION'},
+    {label: 'Konkretna odpowiedź', value: 'SELECT_OPTION'},
+    {label: 'Zakończenie dialogu', value: 'CLOSE_DIALOG'},
+];
+const timeoutOptions = computed(() => (dialogRef?.value.data.options ?? []).filter(option =>
+    !(option.edges ?? []).some(edge => Object.hasOwn(edge.rules ?? {}, 'messageContent')),
+));
+
 const focusMode = ref<FocusMode>('none');
 const selectedFocusNpcKey = ref<string | null>(null);
 const focusX = ref<number | null>(null);
@@ -156,6 +173,21 @@ const buildFocusPayload = (): DialogNodeFocusResource | false | null => {
 const buildActionDataPayload = (): DialogNodeActionDataResource | false | null => {
     const actionData = { ...(form.action_data ?? {}) } as DialogNodeActionDataResource;
     delete actionData.focus;
+    delete actionData.answerTimeout;
+    if (timeoutEnabled.value) {
+        if (!Number.isInteger(timeoutSeconds.value) || timeoutSeconds.value! < 1 || timeoutSeconds.value! > 86400) {
+            toast.add({severity: 'error', summary: 'Błąd', detail: 'Podaj czas od 1 do 86400 sekund.', life: 6000});
+            return false;
+        }
+        if (timeoutAction.value === 'SELECT_OPTION' && !timeoutOptions.value.some(option => option.id === timeoutOptionId.value)) {
+            toast.add({severity: 'error', summary: 'Błąd', detail: 'Wybierz odpowiedź po upływie czasu.', life: 6000});
+            return false;
+        }
+        actionData.answerTimeout = {
+            seconds: timeoutSeconds.value!, action: timeoutAction.value,
+            optionId: timeoutAction.value === 'SELECT_OPTION' ? timeoutOptionId.value : null,
+        };
+    }
 
     const focusPayload = buildFocusPayload();
     if (focusPayload === false) {
@@ -231,6 +263,11 @@ onMounted(() => {
         ? dialogRef.value.data?.additional_actions ?? {}
         : {};
 
+    const timeout = form.action_data?.answerTimeout;
+    timeoutEnabled.value = !!timeout;
+    timeoutSeconds.value = timeout?.seconds ?? 30;
+    timeoutAction.value = timeout?.action ?? 'CLOSE_DIALOG';
+    timeoutOptionId.value = timeout?.optionId ?? null;
     initialiseFocusForm(form.action_data?.focus ?? null);
 });
 
@@ -357,6 +394,31 @@ const save = (): void => {
                 Ten node nie zmieni obecnego fokusu kamery.
             </Message>
         </div>
+
+        <fieldset class="flex flex-col gap-3 rounded-lg border border-surface-200 p-3 dark:border-surface-700">
+            <legend class="text-lg font-semibold">Czas na odpowiedź</legend>
+            <div class="flex items-center gap-2">
+                <Checkbox v-model="timeoutEnabled" inputId="answer-timeout-enabled" binary />
+                <label for="answer-timeout-enabled">Włącz limit czasu</label>
+            </div>
+            <template v-if="timeoutEnabled">
+                <div class="flex flex-col gap-1">
+                    <label for="answer-timeout-seconds">Czas w sekundach (1–86400)</label>
+                    <InputNumber v-model="timeoutSeconds" inputId="answer-timeout-seconds" :min="1" :max="86400" :useGrouping="false" />
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label for="answer-timeout-action">Po upływie czasu</label>
+                    <Select v-model="timeoutAction" inputId="answer-timeout-action" :options="timeoutActions" optionLabel="label" optionValue="value" />
+                </div>
+                <div v-if="timeoutAction === 'SELECT_OPTION'" class="flex flex-col gap-1">
+                    <label for="answer-timeout-option">Odpowiedź do wybrania</label>
+                    <Select v-model="timeoutOptionId" inputId="answer-timeout-option" :options="timeoutOptions" optionLabel="label" optionValue="id" placeholder="Wybierz odpowiedź" />
+                </div>
+                <p v-if="timeoutAction === 'RANDOM_OPTION' || timeoutAction === 'SELECT_OPTION'" class="text-sm text-surface-500">
+                    Automatyczny wybór obejmuje odpowiedzi dostępne dla gracza, które nie wymagają wpisania tekstu. Jeśli żadna odpowiedź nie spełnia warunków, dialog zostanie zakończony.
+                </p>
+            </template>
+        </fieldset>
 
         <div class="flex flex-col gap-2">
             <h3 class="text-lg font-semibold m-0">Akcje dodatkowe</h3>

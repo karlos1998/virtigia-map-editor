@@ -81,8 +81,9 @@ class DialogService extends BaseService
                 'additional_actions' => $nodePayload['additional_actions'] ?? null,
             ]);
 
+            $optionIds = [];
             foreach ($optionsPayload as $index => $optionPayload) {
-                $node->options()->create([
+                $option = $node->options()->create([
                     'label' => $optionPayload['label'],
                     'additional_action' => $optionPayload['additional_action'] ?? null,
                     'additional_actions' => $optionPayload['additional_actions'] ?? null,
@@ -90,7 +91,11 @@ class DialogService extends BaseService
                     'rules' => $optionPayload['rules'] ?? null,
                     'order' => $index,
                 ]);
+                if (isset($optionPayload['id'])) {
+                    $optionIds[$optionPayload['id']] = $option->id;
+                }
             }
+            $this->remapAnswerTimeout($node, $optionIds);
 
             return $node->fresh();
         });
@@ -316,6 +321,13 @@ class DialogService extends BaseService
             ]);
         }
 
+        if (data_get($dialogNode->action_data, 'answerTimeout.action') === 'SELECT_OPTION' &&
+            (int) data_get($dialogNode->action_data, 'answerTimeout.optionId') === $dialogNodeOption->id) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'message' => 'Najpierw zmień odpowiedź wybraną dla limitu czasu.',
+            ]);
+        }
+
         $dialogNodeOption->edges()->delete();
         $dialogNodeOption->delete();
     }
@@ -468,6 +480,7 @@ class DialogService extends BaseService
         ]);
 
         // Copy all options
+        $optionIds = [];
         foreach ($dialogNode->options as $option) {
             $newOption = $newNode->options()->create([
                 'label' => $option->label,
@@ -475,6 +488,8 @@ class DialogService extends BaseService
                 'additional_actions' => $option->additional_actions,
                 'rules' => $option->rules,
             ]);
+
+            $optionIds[$option->id] = $newOption->id;
 
             // Copy all edges from this option
             foreach ($option->edges as $edge) {
@@ -485,6 +500,8 @@ class DialogService extends BaseService
                 $newEdge->save();
             }
         }
+
+        $this->remapAnswerTimeout($newNode, $optionIds);
 
         if (in_array($dialogNode->type, ['start', 'randomizer', 'minigame'], true)) {
             $directEdges = $dialogNode->getEdges();
@@ -499,6 +516,19 @@ class DialogService extends BaseService
         }
 
         return $newNode->fresh(['options.edges.targetNode']);
+    }
+
+    /** @param array<int, int> $optionIds */
+    private function remapAnswerTimeout(DialogNode $node, array $optionIds): void
+    {
+        $actionData = $node->action_data;
+        if (data_get($actionData, 'answerTimeout.action') !== 'SELECT_OPTION') {
+            return;
+        }
+
+        $oldOptionId = data_get($actionData, 'answerTimeout.optionId');
+        $actionData['answerTimeout']['optionId'] = $optionIds[$oldOptionId] ?? null;
+        $node->update(['action_data' => $actionData]);
     }
 
     /**
@@ -559,6 +589,7 @@ class DialogService extends BaseService
                 // Store the mapping of original option ID to new option
                 $optionMap[$option->id] = $newOption;
             }
+            $this->remapAnswerTimeout($newNode, array_map(fn (DialogNodeOption $option): int => $option->id, $optionMap));
         }
 
         // Second pass: Create all edges with correct connections

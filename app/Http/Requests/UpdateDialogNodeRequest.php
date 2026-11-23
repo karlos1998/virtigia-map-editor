@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\DialogAnswerTimeout;
 use App\Rules\DialogCounterReferences;
 use App\Rules\DialogNodeAdditionalActionsValidator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -24,6 +25,10 @@ class UpdateDialogNodeRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'action_data.answerTimeout' => ['nullable', new DialogAnswerTimeout(
+                fn () => $this->route('dialogNode')?->options()->with('edges')->get() ?? [],
+                fn () => $this->route('dialogNode')?->type ?? 'special',
+            )],
             'content' => [
                 'required',
                 'string',

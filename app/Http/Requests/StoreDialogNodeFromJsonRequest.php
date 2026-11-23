@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\DialogNodeOptionAdditionalAction;
+use App\Rules\DialogAnswerTimeout;
 use App\Rules\DialogCounterReferences;
 use App\Rules\DialogNodeAdditionalActionsValidator;
 use App\Rules\DialogOptionRuleValidator;
@@ -20,6 +21,11 @@ class StoreDialogNodeFromJsonRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'node.action_data.answerTimeout' => ['nullable', new DialogAnswerTimeout(
+                fn () => $this->input('options', []),
+                fn () => $this->input('node.type'),
+            )],
+            'options.*.id' => ['sometimes', 'integer', 'min:1', 'distinct'],
             'node' => ['required', 'array'],
             'node.type' => ['required', 'in:special,shop,hotel,teleportation,randomizer,profession,minigame'],
             'node.position' => ['required', 'array'],

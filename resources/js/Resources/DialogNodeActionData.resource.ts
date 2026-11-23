@@ -9,7 +9,10 @@ export interface DialogNodeFocusResource {
     y?: number | null;
 }
 
+export type DialogAnswerTimeoutAction = 'DEATH' | 'RANDOM_OPTION' | 'SELECT_OPTION' | 'CLOSE_DIALOG';
+
 export interface DialogNodeActionDataResource {
+    answerTimeout?: {seconds: number; action: DialogAnswerTimeoutAction; optionId?: number | null} | null;
     focus?: DialogNodeFocusResource | null;
     minigame?: {
         type?: string;

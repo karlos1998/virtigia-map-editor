@@ -175,6 +175,7 @@ const editNode = () => {
         },
         data: {
             content: state.value.content,
+            options: options.value,
             dialog_id: props.data.dialog_id,
             node_id: props.id,
             action_data: props.data.action_data,
@@ -247,6 +248,7 @@ export default {
         <div class="whitespace-pre-wrap">
             {{ state.content }}
         </div>
+        <Tag v-if="props.data.action_data?.answerTimeout" class="mt-2" severity="warn" :value="`Czas na odpowiedź: ${props.data.action_data.answerTimeout.seconds}s`" />
         <Tag v-if="focusSummary" class="mt-2" severity="info" :value="focusSummary" />
 
         <div class="options">
