@@ -6,6 +6,19 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateMapWeatherSettingsRequest extends FormRequest
 {
+    private const PARTICLE_EFFECTS = [
+        'rain' => 'deszcz',
+        'snow' => 'śnieg',
+        'bubbles' => 'bąbelki',
+        'fish' => 'ryby',
+        'bats' => 'nietoperze',
+        'halloweenBats' => 'nietoperze halloweenowe',
+        'lights' => 'świetlne cząsteczki',
+        'lanterns' => 'lampiony',
+    ];
+
+    private const OVERLAY_EFFECTS = ['fog' => 'mgła', 'clouds' => 'chmury'];
+
     public function authorize(): bool
     {
         return true;
@@ -14,41 +27,48 @@ class UpdateMapWeatherSettingsRequest extends FormRequest
     /** @return array<string, list<string>> */
     public function rules(): array
     {
-        return [
-            'weather_settings' => ['present', 'nullable', 'array:rain,fog'],
-            'weather_settings.rain' => ['sometimes', 'array:enabled,density,speed,wind', 'required_array_keys:enabled,density,speed,wind'],
-            'weather_settings.rain.enabled' => ['required_with:weather_settings.rain', 'boolean'],
-            'weather_settings.rain.density' => ['required_with:weather_settings.rain', 'numeric', 'between:0,1'],
-            'weather_settings.rain.speed' => ['required_with:weather_settings.rain', 'numeric', 'between:0.1,3'],
-            'weather_settings.rain.wind' => ['required_with:weather_settings.rain', 'numeric', 'between:-2,2'],
-            'weather_settings.fog' => ['sometimes', 'array:enabled,opacity,speedX,speedY,color', 'required_array_keys:enabled,opacity,speedX,speedY,color'],
-            'weather_settings.fog.enabled' => ['required_with:weather_settings.fog', 'boolean'],
-            'weather_settings.fog.opacity' => ['required_with:weather_settings.fog', 'numeric', 'between:0,1'],
-            'weather_settings.fog.speedX' => ['required_with:weather_settings.fog', 'numeric', 'between:-1,1'],
-            'weather_settings.fog.speedY' => ['required_with:weather_settings.fog', 'numeric', 'between:-1,1'],
-            'weather_settings.fog.color' => ['required_with:weather_settings.fog', 'string', 'regex:/\A#[0-9a-fA-F]{6}\z/'],
-        ];
+        $effects = implode(',', array_keys(self::PARTICLE_EFFECTS + self::OVERLAY_EFFECTS));
+        $rules = ['weather_settings' => ['present', 'nullable', 'array:'.$effects]];
+        foreach (array_keys(self::PARTICLE_EFFECTS) as $effect) {
+            $path = 'weather_settings.'.$effect;
+            $rules[$path] = ['sometimes', 'array:enabled,density,speed,wind', 'required_array_keys:enabled,density,speed,wind'];
+            $rules[$path.'.enabled'] = ['required_with:'.$path, 'boolean'];
+            $rules[$path.'.density'] = ['required_with:'.$path, 'numeric', 'between:0,1'];
+            $rules[$path.'.speed'] = ['required_with:'.$path, 'numeric', 'between:0.1,3'];
+            $rules[$path.'.wind'] = ['required_with:'.$path, 'numeric', 'between:-2,2'];
+        }
+        foreach (array_keys(self::OVERLAY_EFFECTS) as $effect) {
+            $path = 'weather_settings.'.$effect;
+            $rules[$path] = ['sometimes', 'array:enabled,opacity,speedX,speedY,color', 'required_array_keys:enabled,opacity,speedX,speedY,color'];
+            $rules[$path.'.enabled'] = ['required_with:'.$path, 'boolean'];
+            $rules[$path.'.opacity'] = ['required_with:'.$path, 'numeric', 'between:0,1'];
+            $rules[$path.'.speedX'] = ['required_with:'.$path, 'numeric', 'between:-1,1'];
+            $rules[$path.'.speedY'] = ['required_with:'.$path, 'numeric', 'between:-1,1'];
+            $rules[$path.'.color'] = ['required_with:'.$path, 'string', 'regex:/\A#[0-9a-fA-F]{6}\z/'];
+        }
+
+        return $rules;
     }
 
     /** @return array<string, string> */
     public function attributes(): array
     {
-        return [
-            'weather_settings.rain.enabled' => 'deszcz',
-            'weather_settings.rain.density' => 'gęstość deszczu',
-            'weather_settings.rain.speed' => 'prędkość deszczu',
-            'weather_settings.rain.wind' => 'wiatr',
-            'weather_settings.fog.enabled' => 'mgła',
-            'weather_settings.fog.opacity' => 'gęstość mgły',
-            'weather_settings.fog.speedX' => 'prędkość pozioma mgły',
-            'weather_settings.fog.speedY' => 'prędkość pionowa mgły',
-            'weather_settings.fog.color' => 'kolor mgły',
-        ];
+        $attributes = [];
+        foreach (self::PARTICLE_EFFECTS as $effect => $label) {
+            foreach (['enabled' => 'włączenie', 'density' => 'gęstość', 'speed' => 'prędkość', 'wind' => 'wiatr'] as $field => $fieldLabel) {
+                $attributes['weather_settings.'.$effect.'.'.$field] = $label.' — '.$fieldLabel;
+            }
+        }
+        foreach (self::OVERLAY_EFFECTS as $effect => $label) {
+            foreach (['enabled' => 'włączenie', 'opacity' => 'krycie', 'speedX' => 'prędkość pozioma', 'speedY' => 'prędkość pionowa', 'color' => 'kolor'] as $field => $fieldLabel) {
+                $attributes['weather_settings.'.$effect.'.'.$field] = $label.' — '.$fieldLabel;
+            }
+        }
+
+        return $attributes;
     }
 
-    /**
-     * @return array{rain?: array{enabled: bool, density: float, speed: float, wind: float}, fog?: array{enabled: bool, opacity: float, speedX: float, speedY: float, color: string}}|null
-     */
+    /** @return array<string, array<string, bool|float|string>>|null */
     public function weatherSettings(): ?array
     {
         $settings = $this->validated('weather_settings');
@@ -56,22 +76,26 @@ class UpdateMapWeatherSettingsRequest extends FormRequest
             return null;
         }
 
-        if (isset($settings['rain'])) {
-            $settings['rain'] = [
-                'enabled' => (bool) $settings['rain']['enabled'],
-                'density' => (float) $settings['rain']['density'],
-                'speed' => (float) $settings['rain']['speed'],
-                'wind' => (float) $settings['rain']['wind'],
-            ];
+        foreach (array_keys(self::PARTICLE_EFFECTS) as $effect) {
+            if (isset($settings[$effect])) {
+                $settings[$effect] = [
+                    'enabled' => (bool) $settings[$effect]['enabled'],
+                    'density' => (float) $settings[$effect]['density'],
+                    'speed' => (float) $settings[$effect]['speed'],
+                    'wind' => (float) $settings[$effect]['wind'],
+                ];
+            }
         }
-        if (isset($settings['fog'])) {
-            $settings['fog'] = [
-                'enabled' => (bool) $settings['fog']['enabled'],
-                'opacity' => (float) $settings['fog']['opacity'],
-                'speedX' => (float) $settings['fog']['speedX'],
-                'speedY' => (float) $settings['fog']['speedY'],
-                'color' => strtoupper($settings['fog']['color']),
-            ];
+        foreach (array_keys(self::OVERLAY_EFFECTS) as $effect) {
+            if (isset($settings[$effect])) {
+                $settings[$effect] = [
+                    'enabled' => (bool) $settings[$effect]['enabled'],
+                    'opacity' => (float) $settings[$effect]['opacity'],
+                    'speedX' => (float) $settings[$effect]['speedX'],
+                    'speedY' => (float) $settings[$effect]['speedY'],
+                    'color' => strtoupper($settings[$effect]['color']),
+                ];
+            }
         }
 
         return $settings;

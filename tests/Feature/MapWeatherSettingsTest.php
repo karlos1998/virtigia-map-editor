@@ -78,6 +78,20 @@ class MapWeatherSettingsTest extends TestCase
         self::assertNull($map->refresh()->weather_settings);
     }
 
+    public function test_explicitly_disabled_snow_is_preserved_alongside_other_disabled_effects(): void
+    {
+        $map = Map::query()->firstOrFail();
+        $weather = $this->weather();
+        foreach ($weather as &$effect) {
+            $effect['enabled'] = false;
+        }
+        unset($effect);
+        $weather['snow'] = ['enabled' => false, 'density' => .5, 'speed' => 1, 'wind' => .2];
+        $this->patch(route('maps.update.weather-settings', $map), ['weather_settings' => $weather])->assertRedirect();
+        self::assertEquals($weather, $map->refresh()->weather_settings);
+        self::assertFalse($map->weather_settings['snow']['enabled']);
+    }
+
     #[DataProvider('invalidSettings')]
     public function test_editor_rejects_invalid_weather_without_overwriting_saved_settings(string $field, mixed $value): void
     {
@@ -106,8 +120,69 @@ class MapWeatherSettingsTest extends TestCase
         $map = Map::query()->firstOrFail();
         $this->patch(route('maps.update.weather-settings', $map), ['weather_settings' => ['rain' => ['density' => .5]]])
             ->assertSessionHasErrors(['weather_settings.rain.enabled', 'weather_settings.rain.speed', 'weather_settings.rain.wind']);
-        $this->patch(route('maps.update.weather-settings', $map), ['weather_settings' => ['snow' => ['enabled' => true]]])
+        $this->patch(route('maps.update.weather-settings', $map), ['weather_settings' => ['thunder' => ['enabled' => true]]])
             ->assertSessionHasErrors('weather_settings');
+    }
+
+    #[DataProvider('newParticleEffects')]
+    public function test_new_particle_effects_save_alongside_existing_rain_and_fog(string $effect): void
+    {
+        $map = Map::query()->firstOrFail();
+        $weather = $this->weather();
+        $weather[$effect] = ['enabled' => true, 'density' => .7, 'speed' => 1.5, 'wind' => -.3];
+        $this->patch(route('maps.update.weather-settings', $map), ['weather_settings' => $weather])->assertRedirect();
+        self::assertEquals($weather, $map->refresh()->weather_settings);
+    }
+
+    public static function newParticleEffects(): array
+    {
+        return array_map(fn (string $effect): array => [$effect], ['snow', 'bubbles', 'fish', 'bats', 'halloweenBats', 'lights', 'lanterns']);
+    }
+
+    #[DataProvider('invalidNewParticleSettings')]
+    public function test_new_particle_effects_enforce_all_parameter_ranges(string $effect, string $field, mixed $value): void
+    {
+        $settings = ['enabled' => true, 'density' => .5, 'speed' => 1, 'wind' => .2];
+        $settings[$field] = $value;
+        $this->patch(route('maps.update.weather-settings', Map::query()->firstOrFail()), ['weather_settings' => [$effect => $settings]])
+            ->assertSessionHasErrors('weather_settings.'.$effect.'.'.$field);
+    }
+
+    public static function invalidNewParticleSettings(): array
+    {
+        $cases = [];
+        foreach (self::newParticleEffects() as [$effect]) {
+            foreach (['enabled' => 'yes', 'density' => 1.1, 'speed' => 0, 'wind' => 2.1] as $field => $value) {
+                $cases[] = [$effect, $field, $value];
+            }
+        }
+
+        return $cases;
+    }
+
+    public function test_clouds_save_independently_and_preserve_legacy_weather_settings(): void
+    {
+        $map = Map::query()->firstOrFail();
+        $weather = $this->weather();
+        $weather['clouds'] = ['enabled' => true, 'opacity' => .45, 'speedX' => .35, 'speedY' => .06, 'color' => '#EBF2FF'];
+        $this->patch(route('maps.update.weather-settings', $map), ['weather_settings' => $weather])->assertRedirect();
+        self::assertEquals($weather, $map->refresh()->weather_settings);
+        $this->patch(route('maps.update.weather-settings', $map), ['weather_settings' => ['clouds' => $weather['clouds']]])->assertRedirect();
+        self::assertEquals(['clouds' => $weather['clouds']], $map->refresh()->weather_settings);
+    }
+
+    #[DataProvider('invalidCloudSettings')]
+    public function test_cloud_parameters_are_validated(string $field, mixed $value): void
+    {
+        $clouds = ['enabled' => true, 'opacity' => .45, 'speedX' => .35, 'speedY' => .06, 'color' => '#EBF2FF'];
+        $clouds[$field] = $value;
+        $this->patch(route('maps.update.weather-settings', Map::query()->firstOrFail()), ['weather_settings' => ['clouds' => $clouds]])
+            ->assertSessionHasErrors('weather_settings.clouds.'.$field);
+    }
+
+    public static function invalidCloudSettings(): array
+    {
+        return [['enabled', null], ['opacity', 1.1], ['speedX', 1.1], ['speedY', -1.1], ['color', 'white']];
     }
 
     public function test_both_map_resources_expose_weather_settings(): void

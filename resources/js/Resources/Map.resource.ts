@@ -1,9 +1,25 @@
 import {RespawnPointResource} from "@/Resources/RespawnPoint.resource";
 
-export interface MapWeatherSettings {
-    rain?: {enabled: boolean; density: number; speed: number; wind: number};
-    fog?: {enabled: boolean; opacity: number; speedX: number; speedY: number; color: string};
+export type MapParticleWeatherName = 'rain' | 'snow' | 'bubbles' | 'fish' | 'bats' | 'halloweenBats' | 'lights' | 'lanterns';
+export type MapOverlayWeatherName = 'fog' | 'clouds';
+
+export interface MapParticleWeatherSettings {
+    enabled: boolean;
+    density: number;
+    speed: number;
+    wind: number;
 }
+
+export interface MapOverlayWeatherSettings {
+    enabled: boolean;
+    opacity: number;
+    speedX: number;
+    speedY: number;
+    color: string;
+}
+
+export type MapWeatherSettings = Partial<Record<MapParticleWeatherName, MapParticleWeatherSettings>>
+    & Partial<Record<MapOverlayWeatherName, MapOverlayWeatherSettings>>;
 
 export interface MapResource {
     weather_settings?: MapWeatherSettings | null;
