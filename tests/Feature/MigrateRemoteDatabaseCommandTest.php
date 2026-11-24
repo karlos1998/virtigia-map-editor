@@ -108,7 +108,7 @@ class RecordingMigrateRemoteDatabase extends MigrateRemoteDatabase
     {
         $this->events[] = "backfill:{$connection}";
 
-        return [1, 0];
+        return [1, []];
     }
 
     protected function runRemoteMigration(string $connection, string $action, bool $force): int

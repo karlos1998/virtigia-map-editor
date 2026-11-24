@@ -98,8 +98,12 @@ class MigrateRemoteDatabase extends Command
             }
 
             if ($refreshQuestAvailability) {
-                [$changed, $uncompiled] = $this->refreshQuestAvailability($questAvailability, $connection);
+                [$changed, $issues] = $this->refreshQuestAvailability($questAvailability, $connection);
+                $uncompiled = array_sum($issues);
                 $this->components->info("Dialog quest availability [{$slug}]: {$changed} refreshed, {$uncompiled} uncompiled.");
+                foreach ($issues as $reason => $count) {
+                    $this->components->warn("Dialog quest availability [{$slug}]: {$reason} ({$count}).");
+                }
             }
         }
 
@@ -120,14 +124,16 @@ class MigrateRemoteDatabase extends Command
         ]);
     }
 
-    /** @return array{int, int} */
+    /** @return array{int, array<string, int>} */
     protected function refreshQuestAvailability(DialogQuestAvailabilityService $availability, string $connection): array
     {
         $database = DB::connection($connection);
         $changed = $availability->refresh($database);
-        $uncompiled = $database->table(DialogQuestAvailabilityService::TABLE)->whereNull('requirements')->count();
+        $issues = $database->table(DialogQuestAvailabilityService::TABLE)->whereNull('requirements')
+            ->selectRaw('fallback_reason, COUNT(*) AS dialog_count')
+            ->groupBy('fallback_reason')->pluck('dialog_count', 'fallback_reason')->all();
 
-        return [$changed, $uncompiled];
+        return [$changed, $issues];
     }
 
     private function resolveRequestedTemplate(

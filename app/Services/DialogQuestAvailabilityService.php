@@ -104,6 +104,7 @@ class DialogQuestAvailabilityService
             $dialogQuests = $visibleQuests->only($dialogSteps->all())->sortKeys()->all();
             $hash = hash('sha256', json_encode([
                 DialogQuestAvailabilityCompiler::FORMAT_VERSION,
+                DialogQuestAvailabilityCompiler::REVISION,
                 $dialogNodes, $dialogOptions, $dialogStarts, $dialogEdges, $dialogQuests,
                 $dialogDirectEdges,
             ], JSON_THROW_ON_ERROR));

@@ -10,6 +10,8 @@ class DialogQuestAvailabilityCompiler
 {
     public const FORMAT_VERSION = 3;
 
+    public const REVISION = 1;
+
     private const TERMINATING_ACTIONS = [
         'BATTLE', 'KILL_AND_LOOT', 'KILL', 'SHOW_MAIL', 'SHOW_AUCTIONS',
         'SHOW_DEPOSIT', 'SHOW_CLAN_DEPOSIT', 'SELF_KILL',
@@ -42,6 +44,10 @@ class DialogQuestAvailabilityCompiler
     /** @return array{requirements: ?array, fallback_reason: ?string} */
     public function compile(array $nodes, array $optionsByNode, array $startEdges, array $edgesByOption, array $edgesByNode, array $visibleQuestsByStep): array
     {
+        if ($visibleQuestsByStep === [] && $this->hasOnlyLocalTargets($nodes, [$startEdges, ...array_values($edgesByOption), ...array_values($edgesByNode)])) {
+            return ['requirements' => [], 'fallback_reason' => null];
+        }
+
         $paths = [];
         $pending = [];
         $examined = 0;
@@ -96,6 +102,19 @@ class DialogQuestAvailabilityCompiler
         }
 
         return ['requirements' => array_values($paths), 'fallback_reason' => null];
+    }
+
+    private function hasOnlyLocalTargets(array $nodes, array $edgeGroups): bool
+    {
+        foreach ($edgeGroups as $edges) {
+            foreach ($edges as $edge) {
+                if (! isset($nodes[$edge->target_node_id])) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     private function professionBranches(array $options, array $edgesByOption): array

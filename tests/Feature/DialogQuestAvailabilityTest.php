@@ -122,8 +122,9 @@ class DialogQuestAvailabilityTest extends TestCase
     public function test_it_records_unsupported_dialogs_and_removes_deleted_dialogs(): void
     {
         DB::table('dialogs')->insert(['id' => 1]);
+        $this->questSteps(100);
         $this->node(11, 1, 'start');
-        $this->node(12, 1, 'special');
+        $this->node(12, 1, 'special', $this->action(100));
         $this->edge(1, 12, sourceNode: 11, rules: ['futureRule' => ['value' => 1]]);
 
         $service = app(DialogQuestAvailabilityService::class);
@@ -137,6 +138,18 @@ class DialogQuestAvailabilityTest extends TestCase
         DB::table('dialogs')->where('id', 1)->delete();
         $service->refresh($this->connection);
         $this->assertDatabaseCount(DialogQuestAvailabilityService::TABLE, 0);
+    }
+
+    public function test_local_dialog_without_quest_actions_compiles_even_with_unknown_rules(): void
+    {
+        DB::table('dialogs')->insert(['id' => 1]);
+        $this->node(11, 1, 'start');
+        $this->node(12, 1, 'special');
+        $this->edge(1, 12, sourceNode: 11, rules: ['futureRule' => ['value' => 1]]);
+
+        $service = app(DialogQuestAvailabilityService::class);
+        $this->assertSame(1, $service->refresh($this->connection));
+        $this->assertSame(['status' => 'ready', 'reason' => null, 'quests' => []], $service->inspect($this->connection, 1));
     }
 
     public function test_profession_uses_first_matching_option_and_first_passing_edge(): void
