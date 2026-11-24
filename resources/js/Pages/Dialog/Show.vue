@@ -14,6 +14,8 @@ import ProfessionNode from '@/Pages/Dialog/ProfessionNode.vue';
 import MinigameNode from '@/Pages/Dialog/MinigameNode.vue';
 import DialogEdge from '@/Pages/Dialog/DialogEdge.vue';
 import DialogActivityLogsTable from '@/Pages/Dialog/Partials/DialogActivityLogsTable.vue';
+import DialogQuestAvailabilityPanel from '@/Pages/Dialog/Partials/DialogQuestAvailabilityPanel.vue';
+import type { DialogQuestAvailability } from '@/Resources/DialogQuestAvailability.resource';
 import { DialogResource } from '@/Resources/Dialog.resource';
 import { NpcWithLocationsResource } from '@/Resources/Npc.resource';
 import { SimpleQuestResource } from '@/Resources/Quest.resource';
@@ -43,6 +45,7 @@ const props = defineProps<{
     npcs: NpcWithLocationsResource[],
     focusNpcs: NpcWithLocationsResource[],
     quests: SimpleQuestResource[],
+    questAvailability: DialogQuestAvailability,
     logs: AdvanceTableResponse<any>,
     dialogNodeOptionAdditionalActionsList: any[],
     availableRules: any[],
@@ -923,9 +926,10 @@ const items = ref([
         <Tabs
             v-model:value="activeTab"
             class="dialog-tabs"
+            scrollable
             :class="{ 'dialog-tabs--scrollable': activeTab !== 'tree' }"
         >
-            <TabList>
+            <TabList :pt="{ tabList: { 'aria-label': 'Podgląd dialogu' } }">
                 <Tab value="general">
                     <i class="pi pi-info-circle mr-2" />
                     Ogólne
@@ -937,6 +941,10 @@ const items = ref([
                 <Tab value="relations">
                     <i class="pi pi-link mr-2" />
                     Powiązania
+                </Tab>
+                <Tab value="quest-marker">
+                    <i class="pi pi-flag mr-2" aria-hidden="true" />
+                    Znacznik questa
                 </Tab>
                 <Tab value="history">
                     <i class="pi pi-history mr-2" />
@@ -1156,6 +1164,10 @@ const items = ref([
                             </div>
                         </section>
                     </div>
+                </TabPanel>
+
+                <TabPanel value="quest-marker" class="dialog-scroll-panel">
+                    <DialogQuestAvailabilityPanel :availability="props.questAvailability" :rules="props.availableRules" />
                 </TabPanel>
 
                 <TabPanel value="history" class="dialog-scroll-panel">

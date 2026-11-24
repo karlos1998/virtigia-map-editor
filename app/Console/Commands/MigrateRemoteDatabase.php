@@ -3,8 +3,10 @@
 namespace App\Console\Commands;
 
 use App\Models\WorldTemplate;
+use App\Services\DialogQuestAvailabilityService;
 use App\Services\WorldTemplateConnectionResolver;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 
 class MigrateRemoteDatabase extends Command
@@ -18,7 +20,8 @@ class MigrateRemoteDatabase extends Command
                             {connection? : World template slug or database connection name}
                             {action=migrate : Action to run: migrate or rollback}
                             {--all : Run the action for every active world template}
-                            {--force : Force the operation to run in production}';
+                            {--force : Force the operation to run in production}
+                            {--refresh-dialog-quest-availability : Generate the quest marker conditions after migrating}';
 
     /**
      * The console command description.
@@ -30,14 +33,21 @@ class MigrateRemoteDatabase extends Command
     /**
      * Execute the console command.
      */
-    public function handle(WorldTemplateConnectionResolver $connectionResolver): int
+    public function handle(WorldTemplateConnectionResolver $connectionResolver, DialogQuestAvailabilityService $questAvailability): int
     {
         $requestedConnection = $this->argument('connection');
         $action = (string) $this->argument('action');
         $all = (bool) $this->option('all');
+        $refreshQuestAvailability = (bool) $this->option('refresh-dialog-quest-availability');
 
         if (! in_array($action, ['migrate', 'rollback'], true)) {
             $this->components->error("Unsupported action [{$action}]. Use migrate or rollback.");
+
+            return SymfonyCommand::FAILURE;
+        }
+
+        if ($refreshQuestAvailability && $action !== 'migrate') {
+            $this->components->error('Quest marker conditions can only be refreshed after migrating.');
 
             return SymfonyCommand::FAILURE;
         }
@@ -86,6 +96,11 @@ class MigrateRemoteDatabase extends Command
 
                 return SymfonyCommand::FAILURE;
             }
+
+            if ($refreshQuestAvailability) {
+                [$changed, $uncompiled] = $this->refreshQuestAvailability($questAvailability, $connection);
+                $this->components->info("Dialog quest availability [{$slug}]: {$changed} refreshed, {$uncompiled} uncompiled.");
+            }
         }
 
         $this->components->info('Remote database migrations completed successfully.');
@@ -103,6 +118,16 @@ class MigrateRemoteDatabase extends Command
             '--force' => $force,
             '--no-interaction' => true,
         ]);
+    }
+
+    /** @return array{int, int} */
+    protected function refreshQuestAvailability(DialogQuestAvailabilityService $availability, string $connection): array
+    {
+        $database = DB::connection($connection);
+        $changed = $availability->refresh($database);
+        $uncompiled = $database->table(DialogQuestAvailabilityService::TABLE)->whereNull('requirements')->count();
+
+        return [$changed, $uncompiled];
     }
 
     private function resolveRequestedTemplate(

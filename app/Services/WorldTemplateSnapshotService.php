@@ -10,7 +10,10 @@ use RuntimeException;
 
 class WorldTemplateSnapshotService
 {
-    public function __construct(private readonly WorldTemplateConnectionResolver $resolver) {}
+    public function __construct(
+        private readonly WorldTemplateConnectionResolver $resolver,
+        private readonly DialogQuestAvailabilityService $questAvailability,
+    ) {}
 
     /** @return array{Connection, Connection} */
     public function connections(WorldTemplateUpdate $update): array
@@ -300,6 +303,7 @@ class WorldTemplateSnapshotService
                     $update->update(['message' => "Skopiowano: {$label}"]);
                 }
                 $update->update(['progress' => 95, 'message' => 'Sprawdzam spójność powiązań przed zatwierdzeniem transakcji.']);
+                $this->questAvailability->refresh($target);
                 $this->assertForeignKeys($target, array_keys($manifest));
             });
         } finally {

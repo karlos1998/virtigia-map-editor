@@ -7,6 +7,7 @@ use App\Jobs\ProcessWorldTemplateUpdate;
 use App\Models\User;
 use App\Models\WorldTemplate;
 use App\Models\WorldTemplateUpdate;
+use App\Services\DialogQuestAvailabilityService;
 use App\Services\Mcp\McpWorldService;
 use App\Services\WorldTemplateConnectionResolver;
 use App\Services\WorldTemplateMigrationService;
@@ -373,11 +374,40 @@ class WorldTemplateUpdateTest extends TestCase
             ]), Artisan::output());
         }
         config()->set('world_templates.update_tables', $this->authoringTables);
-        $this->assertEqualsCanonicalizing($this->authoringTables, array_values(array_diff($this->source->getSchemaBuilder()->getTableListing(), ['migrations', 'items', 'nodes', 'links'])));
+        $this->assertEqualsCanonicalizing(
+            [...$this->authoringTables, 'quest_walkthroughs', DialogQuestAvailabilityService::TABLE],
+            array_values(array_diff($this->source->getSchemaBuilder()->getTableListing(), ['migrations', 'items', 'nodes', 'links'])),
+        );
+        $this->source->table('quests')->insert(['id' => 5, 'name' => 'Zadanie']);
+        $this->source->table('quest_steps')->insert([
+            'id' => 10, 'quest_id' => 5, 'name' => 'Początek', 'visible_in_quest_list' => true,
+        ]);
+        $this->source->table('dialogs')->insert(['id' => 20, 'name' => 'Rozmowa']);
+        $this->source->table('dialog_nodes')->insert([
+            ['id' => 21, 'source_dialog_id' => 20, 'type' => 'start', 'position' => '{}', 'additional_actions' => null],
+            ['id' => 22, 'source_dialog_id' => 20, 'type' => 'minigame', 'position' => '{}', 'additional_actions' => null],
+            ['id' => 23, 'source_dialog_id' => 20, 'type' => 'special', 'position' => '{}', 'additional_actions' => '{"setQuestStep":{"value":10}}'],
+        ]);
+        $this->source->table('dialog_edges')->insert([
+            ['source_dialog_id' => 20, 'source_node_id' => 21, 'target_node_id' => 22, 'source_handle' => null],
+            ['source_dialog_id' => 20, 'source_node_id' => 22, 'target_node_id' => 23, 'source_handle' => 'source-fail'],
+        ]);
+        $this->target->table('dialogs')->insert(['id' => 20, 'name' => 'Poprzednia rozmowa']);
+        $this->target->table(DialogQuestAvailabilityService::TABLE)->insert([
+            'dialog_id' => 20, 'source_hash' => str_repeat('0', 64), 'format_version' => 2,
+            'requirements' => '[{"questId":5,"conditions":[{"check":{"rules":{"percentageChance":{"value":1}},"rollKey":"minigame:2"}}]}]',
+        ]);
+
         $update = $this->preview();
         $this->assertCount(count($this->authoringTables), $update->manifest);
         $this->apply($update);
+
         $this->assertSame('completed', $update->fresh()->status);
+        $this->assertSame(0, $this->source->table(DialogQuestAvailabilityService::TABLE)->count());
+        $published = $this->target->table(DialogQuestAvailabilityService::TABLE)->where('dialog_id', 20)->first();
+        $this->assertSame(3, (int) $published->format_version);
+        $this->assertNull($published->fallback_reason);
+        $this->assertEquals([['questId' => 5, 'conditions' => []]], json_decode($published->requirements, true, flags: JSON_THROW_ON_ERROR));
     }
 
     public function test_pending_dispatches_are_recovered_and_duplicate_jobs_do_not_repeat_the_operation(): void

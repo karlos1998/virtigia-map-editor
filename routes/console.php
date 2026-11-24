@@ -8,6 +8,7 @@ use App\Jobs\FillMissingTeleportMapNamesForWorldJob;
 use App\Jobs\RecordQueueHeartbeatJob;
 use App\Jobs\RefreshBaseItemDuplicateViewJob;
 use App\Jobs\RefreshBaseItemUsageViewBatchJob;
+use App\Jobs\RefreshDialogQuestAvailabilityJob;
 use App\Jobs\RefreshQuestStepGuideViewBatchJob;
 use App\Jobs\RefreshQuestWalkthroughsJob;
 use App\Jobs\ResetAggressiveNpcsJob;
@@ -44,4 +45,5 @@ foreach (app(WorldTemplateConnectionResolver::class)->visibleSlugs() as $world) 
     Schedule::job(new RefreshBaseItemDuplicateViewJob($world))->everyThirtyMinutes();
     Schedule::job(new RefreshQuestStepGuideViewBatchJob($world))->hourly();
     Schedule::job(new RefreshQuestWalkthroughsJob($world))->hourly();
+    Schedule::job(new RefreshDialogQuestAvailabilityJob($world))->hourly();
 }

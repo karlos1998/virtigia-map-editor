@@ -30,6 +30,7 @@ use App\Models\DialogNodeOption;
 use App\Models\Npc;
 use App\Services\DialogActivityLogService;
 use App\Services\DialogLayoutService;
+use App\Services\DialogQuestAvailabilityService;
 use App\Services\DialogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -88,7 +89,7 @@ class DialogController extends Controller
         ]);
     }
 
-    public function show(Dialog $dialog): \Inertia\Response
+    public function show(Dialog $dialog, DialogQuestAvailabilityService $questAvailability): \Inertia\Response
     {
         // Eager load all relationships to improve performance
         $dialog->load([
@@ -148,6 +149,7 @@ class DialogController extends Controller
             'npcs' => NpcResource::collection($dialog->npcs),
             'focusNpcs' => NpcResource::collection($focusNpcs),
             'quests' => SimpleQuestResource::collection($dialog->getRelatedQuests()),
+            'questAvailability' => fn (): array => $questAvailability->inspect($dialog->getConnection(), $dialog->id),
             'logs' => $this->dialogActivityLogService->getForDialog($dialog),
             'dialogNodeOptionAdditionalActionsList' => DialogNodeOptionAdditionalAction::toDropdownList(),
             'availableRules' => DialogNodeOptionRule::list(),
