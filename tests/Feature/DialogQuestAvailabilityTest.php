@@ -152,6 +152,30 @@ class DialogQuestAvailabilityTest extends TestCase
         $this->assertSame(['status' => 'ready', 'reason' => null, 'quests' => []], $service->inspect($this->connection, 1));
     }
 
+    public function test_long_quest_route_ignores_unrelated_branches(): void
+    {
+        DB::table('dialogs')->insert(['id' => 1]);
+        $this->questSteps(100);
+        $this->node(1, 1, 'start');
+        $this->node(90, 1, 'special', $this->action(100));
+        $this->node(91, 1, 'special');
+        $this->edge(1, 2, sourceNode: 1);
+        $this->edge(1, 91, sourceNode: 1, rules: ['futureRule' => ['value' => 1]]);
+
+        for ($nodeId = 2; $nodeId < 90; $nodeId++) {
+            $this->node($nodeId, 1, 'special');
+            DB::table('dialog_node_options')->insert(['id' => $nodeId, 'node_id' => $nodeId]);
+            $this->edge(1, $nodeId + 1, sourceOption: $nodeId);
+        }
+
+        $service = app(DialogQuestAvailabilityService::class);
+        $this->assertSame(1, $service->refresh($this->connection));
+        $paths = $this->requirements(1);
+        $this->assertCount(1, $paths);
+        $this->assertSame(100, $paths[0]['questId']);
+        $this->assertCount(88, $paths[0]['conditions']);
+    }
+
     public function test_profession_uses_first_matching_option_and_first_passing_edge(): void
     {
         DB::table('dialogs')->insert(['id' => 1]);

@@ -10,7 +10,7 @@ class DialogQuestAvailabilityCompiler
 {
     public const FORMAT_VERSION = 3;
 
-    public const REVISION = 1;
+    public const REVISION = 2;
 
     private const TERMINATING_ACTIONS = [
         'BATTLE', 'KILL_AND_LOOT', 'KILL', 'SHOW_MAIL', 'SHOW_AUCTIONS',
@@ -44,9 +44,7 @@ class DialogQuestAvailabilityCompiler
     /** @return array{requirements: ?array, fallback_reason: ?string} */
     public function compile(array $nodes, array $optionsByNode, array $startEdges, array $edgesByOption, array $edgesByNode, array $visibleQuestsByStep): array
     {
-        if ($visibleQuestsByStep === [] && $this->hasOnlyLocalTargets($nodes, [$startEdges, ...array_values($edgesByOption), ...array_values($edgesByNode)])) {
-            return ['requirements' => [], 'fallback_reason' => null];
-        }
+        $questReachableNodes = $this->findNodesThatCanReachQuest($nodes, $optionsByNode, $edgesByOption, $edgesByNode, $visibleQuestsByStep);
 
         $paths = [];
         $pending = [];
@@ -54,12 +52,14 @@ class DialogQuestAvailabilityCompiler
 
         try {
             foreach ($startEdges as $edge) {
-                $pending[] = [(int) $edge->target_node_id, [$this->edgeCondition($edge)], []];
+                if (isset($questReachableNodes[$edge->target_node_id]) || ! isset($nodes[$edge->target_node_id])) {
+                    $pending[] = [(int) $edge->target_node_id, [$this->edgeCondition($edge)], []];
+                }
             }
 
             while ($pending !== []) {
                 [$nodeId, $conditions, $ancestors] = array_pop($pending);
-                if (++$examined > 2048 || count($ancestors) > 64) {
+                if (++$examined > 32768 || count($ancestors) > 256) {
                     throw new DomainException('graph_size');
                 }
                 if (isset($ancestors[$nodeId])) {
@@ -71,12 +71,17 @@ class DialogQuestAvailabilityCompiler
                 $branches = match ($node->type) {
                     'profession' => $this->professionBranches($optionsByNode[$nodeId] ?? [], $edgesByOption),
                     'randomizer' => $this->randomizerBranches($edgesByNode[$nodeId] ?? []),
-                    'minigame' => array_map(fn (stdClass $edge): array => [$edge, $this->edgeCondition($edge)], $edgesByNode[$nodeId] ?? []),
+                    'minigame' => array_map(
+                        fn (stdClass $edge): array => [$edge, $this->edgeCondition($edge)],
+                        $this->questReachableEdges($edgesByNode[$nodeId] ?? [], $questReachableNodes),
+                    ),
                     default => null,
                 };
                 if ($branches !== null) {
                     foreach ($branches as [$edge, $condition]) {
-                        $pending[] = [(int) $edge->target_node_id, [...$conditions, $condition], $ancestors];
+                        if (isset($questReachableNodes[$edge->target_node_id])) {
+                            $pending[] = [(int) $edge->target_node_id, [...$conditions, $condition], $ancestors];
+                        }
                     }
 
                     continue;
@@ -85,14 +90,16 @@ class DialogQuestAvailabilityCompiler
                 $this->addPaths($paths, $node->additional_actions, $conditions, $visibleQuestsByStep);
 
                 foreach ($optionsByNode[$nodeId] ?? [] as $option) {
-                    $optionConditions = [...$conditions, ['optionId' => (int) $option->id, 'check' => $this->ruleCheck($this->rules($option->rules))]];
-                    $this->addPaths($paths, $option->additional_actions, $optionConditions, $visibleQuestsByStep);
-
-                    if (in_array(strtoupper($option->additional_action ?? ''), self::TERMINATING_ACTIONS, true)) {
+                    $optionEdges = $this->isTerminatingOption($option) ? []
+                        : $this->questReachableEdges($edgesByOption[$option->id] ?? [], $questReachableNodes);
+                    if ($optionEdges === [] && $this->startingQuests($option->additional_actions, $visibleQuestsByStep) === []) {
                         continue;
                     }
 
-                    foreach ($edgesByOption[$option->id] ?? [] as $edge) {
+                    $optionConditions = [...$conditions, ['optionId' => (int) $option->id, 'check' => $this->ruleCheck($this->rules($option->rules))]];
+                    $this->addPaths($paths, $option->additional_actions, $optionConditions, $visibleQuestsByStep);
+
+                    foreach ($optionEdges as $edge) {
                         $pending[] = [(int) $edge->target_node_id, [...$optionConditions, $this->edgeCondition($edge, optionEdge: true)], $ancestors];
                     }
                 }
@@ -104,17 +111,77 @@ class DialogQuestAvailabilityCompiler
         return ['requirements' => array_values($paths), 'fallback_reason' => null];
     }
 
-    private function hasOnlyLocalTargets(array $nodes, array $edgeGroups): bool
+    private function findNodesThatCanReachQuest(array $nodes, array $optionsByNode, array $edgesByOption, array $edgesByNode, array $visibleQuestsByStep): array
     {
-        foreach ($edgeGroups as $edges) {
+        $predecessors = [];
+        $reachable = [];
+        foreach ($nodes as $nodeId => $node) {
+            if (in_array($node->type, ['randomizer', 'minigame'], true)) {
+                $edges = $edgesByNode[$nodeId] ?? [];
+            } else {
+                $edges = [];
+                if ($node->type !== 'profession' && $this->startingQuests($node->additional_actions, $visibleQuestsByStep) !== []) {
+                    $reachable[$nodeId] = true;
+                }
+
+                foreach ($optionsByNode[$nodeId] ?? [] as $option) {
+                    if ($node->type === 'profession') {
+                        $edges = [...$edges, ...($edgesByOption[$option->id] ?? [])];
+
+                        continue;
+                    }
+                    if ($this->startingQuests($option->additional_actions, $visibleQuestsByStep) !== []) {
+                        $reachable[$nodeId] = true;
+                    }
+                    if (! $this->isTerminatingOption($option)) {
+                        $edges = [...$edges, ...($edgesByOption[$option->id] ?? [])];
+                    }
+                }
+            }
+
             foreach ($edges as $edge) {
-                if (! isset($nodes[$edge->target_node_id])) {
-                    return false;
+                $target = (int) $edge->target_node_id;
+                $predecessors[$target][] = $nodeId;
+                if (! isset($nodes[$target])) {
+                    $reachable[$target] = true;
                 }
             }
         }
 
-        return true;
+        $pending = array_keys($reachable);
+        while ($pending !== []) {
+            foreach ($predecessors[array_pop($pending)] ?? [] as $source) {
+                if (! isset($reachable[$source])) {
+                    $reachable[$source] = true;
+                    $pending[] = $source;
+                }
+            }
+        }
+
+        return $reachable;
+    }
+
+    private function questReachableEdges(array $edges, array $questReachableNodes): array
+    {
+        return array_filter($edges, static fn (stdClass $edge): bool => isset($questReachableNodes[$edge->target_node_id]));
+    }
+
+    private function isTerminatingOption(stdClass $option): bool
+    {
+        return in_array(strtoupper($option->additional_action ?? ''), self::TERMINATING_ACTIONS, true);
+    }
+
+    /** @return list<int> */
+    private function startingQuests(?string $actions, array $visibleQuestsByStep): array
+    {
+        $questIds = [];
+        foreach ($this->stepIds($actions) as $stepId) {
+            if (isset($visibleQuestsByStep[$stepId])) {
+                $questIds[] = $visibleQuestsByStep[$stepId];
+            }
+        }
+
+        return $questIds;
     }
 
     private function professionBranches(array $options, array $edgesByOption): array
@@ -231,13 +298,11 @@ class DialogQuestAvailabilityCompiler
                 || ! empty($condition['unless']) || (array) $condition['check']['rules'] !== [],
         ));
 
-        foreach ($this->stepIds($actions) as $stepId) {
-            if (isset($visibleQuestsByStep[$stepId])) {
-                $path = ['questId' => $visibleQuestsByStep[$stepId], 'conditions' => $conditions];
-                $paths[json_encode($path, JSON_THROW_ON_ERROR)] = $path;
-                if (count($paths) > 2048) {
-                    throw new DomainException('path_count');
-                }
+        foreach ($this->startingQuests($actions, $visibleQuestsByStep) as $questId) {
+            $path = ['questId' => $questId, 'conditions' => $conditions];
+            $paths[json_encode($path, JSON_THROW_ON_ERROR)] = $path;
+            if (count($paths) > 2048) {
+                throw new DomainException('path_count');
             }
         }
     }
