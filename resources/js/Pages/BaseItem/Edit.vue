@@ -17,6 +17,7 @@ import OutfitEditor from './Components/OutfitEditor.vue';
 import PetEditor from './Components/PetEditor.vue';
 import LootChestEditor from './Components/LootChestEditor.vue';
 import {calculateBaseItemPrice} from './BaseItemPriceCalculator';
+import {ITEM_EMOTION_SELECT_OPTIONS} from './itemEmotions';
 import JsonEditorVue from 'json-editor-vue';
 import 'vanilla-jsoneditor/themes/jse-theme-dark.css';
 import { useLayout } from '@/layout/composables/layout';
@@ -158,6 +159,7 @@ const tooltipAttributes = computed(() => {
             ...scaleResult.value,
             openShop: baseAttributes.openShop,
             combatSelfHeal: baseAttributes.combatSelfHeal,
+            useEmotion: baseAttributes.useEmotion,
         };
     }
 
@@ -369,7 +371,7 @@ const save = async () => {
         };
     }
 
-    for (const key of ['openShop', 'combatSelfHeal']) {
+    for (const key of ['openShop', 'combatSelfHeal', 'useEmotion']) {
         if (form.attributes[key] != null) {
             finalAttributes[key] = form.attributes[key];
         } else {
@@ -614,6 +616,21 @@ const clearCurrency = () => {
                                 @click="selectScrollShop" />
                         <Button v-if="form.attributes.openShop" type="button" label="Usuń atrybut" severity="secondary"
                                 @click="delete form.attributes.openShop" />
+                    </div>
+                    <div v-if="baseItem.category === 'consumable'" class="flex flex-wrap items-center gap-3 mb-4">
+                        <label for="use-emotion" class="font-semibold">Emocja po użyciu</label>
+                        <Select
+                            input-id="use-emotion"
+                            v-model="form.attributes.useEmotion"
+                            :options="ITEM_EMOTION_SELECT_OPTIONS"
+                            option-label="label"
+                            option-value="value"
+                            placeholder="Brak emocji"
+                            filter
+                            show-clear
+                            class="w-full md:w-96"
+                            @update:model-value="value => { if (!value) delete form.attributes.useEmotion; }"
+                        />
                     </div>
                     <AttributePointsEditor
                         v-model="form"

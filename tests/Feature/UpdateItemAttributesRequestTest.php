@@ -88,4 +88,15 @@ class UpdateItemAttributesRequestTest extends TestCase
         $this->patchJson('/testing/item-attributes', [])->assertUnprocessable()->assertJsonValidationErrors('attributes');
         $this->patchJson('/testing/item-attributes', ['attributes' => 'invalid'])->assertUnprocessable()->assertJsonValidationErrors('attributes');
     }
+
+    public function test_accepts_known_item_emotions_and_rejects_unknown_ones(): void
+    {
+        foreach (['fireworks', 'roza', 'flag-polska.gif'] as $emotion) {
+            $this->patchJson('/testing/item-attributes', ['attributes' => ['useEmotion' => $emotion]])
+                ->assertOk()->assertJsonPath('attributes.useEmotion', $emotion);
+        }
+
+        $this->patchJson('/testing/item-attributes', ['attributes' => ['useEmotion' => 'dance']])
+            ->assertUnprocessable()->assertJsonValidationErrors('attributes.useEmotion');
+    }
 }

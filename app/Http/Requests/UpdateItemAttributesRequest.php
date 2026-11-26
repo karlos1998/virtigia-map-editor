@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\ItemEmotion;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateItemAttributesRequest extends FormRequest
 {
@@ -48,6 +50,7 @@ class UpdateItemAttributesRequest extends FormRequest
                 'array',
             ],
             'attributes.combatSelfHeal' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'attributes.useEmotion' => ['sometimes', 'string', Rule::enum(ItemEmotion::class)],
             'attributes.openShop' => ['sometimes', 'array:id,name', 'required_array_keys:id,name'],
             'attributes.openShop.id' => ['required_with:attributes.openShop', 'integer', 'min:1'],
             'attributes.openShop.name' => ['required_with:attributes.openShop', 'string'],
