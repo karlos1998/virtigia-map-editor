@@ -8,7 +8,7 @@ class UpdateDialogNodeActionDataRequest extends CurrentWorldRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return in_array($this->route('dialogNode')?->type, ['teleportation', 'minigame'], true);
     }
 
     public function rules(): array

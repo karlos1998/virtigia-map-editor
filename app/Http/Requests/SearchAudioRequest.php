@@ -15,6 +15,7 @@ class SearchAudioRequest extends FormRequest
     {
         return [
             'query' => ['nullable', 'string', 'max:255'],
+            'browse' => ['sometimes', 'boolean'],
         ];
     }
 }

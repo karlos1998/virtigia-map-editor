@@ -6,6 +6,7 @@ use App\Enums\DialogNodeOptionAdditionalAction;
 use App\Rules\DialogAnswerTimeout;
 use App\Rules\DialogCounterReferences;
 use App\Rules\DialogNodeAdditionalActionsValidator;
+use App\Rules\DialogNodeEffectRules;
 use App\Rules\DialogOptionRuleValidator;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
@@ -21,6 +22,7 @@ class StoreDialogNodeFromJsonRequest extends FormRequest
     public function rules(): array
     {
         return [
+            ...DialogNodeEffectRules::for('node.action_data.effects', $this->input('node.type') === 'special'),
             'node.action_data.answerTimeout' => ['nullable', new DialogAnswerTimeout(
                 fn () => $this->input('options', []),
                 fn () => $this->input('node.type'),

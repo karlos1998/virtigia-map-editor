@@ -9,10 +9,10 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use RuntimeException;
 use Karlos3098\LaravelPrimevueTableService\Services\BaseService;
 use Karlos3098\LaravelPrimevueTableService\Services\Columns\TableTextColumn;
 use Karlos3098\LaravelPrimevueTableService\Services\TableService;
+use RuntimeException;
 
 final class AudioService extends BaseService
 {
@@ -36,11 +36,12 @@ final class AudioService extends BaseService
         );
     }
 
-    public function searchByName(string $query, int $limit = 30)
+    public function searchByName(string $query, int $limit = 30): Collection
     {
         return $this->audioModel->newQuery()
-            ->where('name', 'like', '%'.$query.'%')
+            ->when($query !== '', fn ($builder) => $builder->where('name', 'like', '%'.$query.'%'))
             ->orderBy('name')
+            ->orderBy('id')
             ->limit($limit)
             ->get(['id', 'name', 'path']);
     }

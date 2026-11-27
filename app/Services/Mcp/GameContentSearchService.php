@@ -566,7 +566,7 @@ class GameContentSearchService
                 ],
                 'special' => [
                     'purpose' => 'Visible NPC speech.',
-                    'fields' => ['content', 'action_data.focus', 'additional_actions', 'options'],
+                    'fields' => ['content', 'action_data.focus', 'action_data.effects', 'additional_actions', 'options'],
                     'requirements' => 'At least one option; content is 3-2000 characters when present.',
                 ],
                 'shop' => [
@@ -612,6 +612,12 @@ class GameContentSearchService
                     'outputs' => ['source-success' => 'win', 'source-fail' => 'loss'],
                     'requirements' => 'Each result handle may have at most one edge.',
                 ],
+            ],
+            'dialog_effects' => [
+                'placement' => 'special.action_data.effects',
+                'shake' => ['durationMs' => 'integer 100-5000', 'intensity' => 'integer 1-32'],
+                'dim' => ['durationMs' => 'integer 100-5000', 'opacity' => 'integer percent 1-100', 'holdMs' => 'integer 0-10000 or null until the next node or close'],
+                'sound' => ['audioId' => 'existing audio file ID in the current world'],
             ],
             'camera_focus' => [
                 'placement' => 'special.action_data.focus',

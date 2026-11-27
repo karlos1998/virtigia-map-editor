@@ -11,9 +11,16 @@ export interface DialogNodeFocusResource {
 
 export type DialogAnswerTimeoutAction = 'DEATH' | 'RANDOM_OPTION' | 'SELECT_OPTION' | 'CLOSE_DIALOG';
 
+export interface DialogNodeEffectsResource {
+    shake?: {durationMs: number; intensity: number};
+    dim?: {durationMs: number; opacity: number; holdMs?: number | null};
+    sound?: {audioId: number};
+}
+
 export interface DialogNodeActionDataResource {
     answerTimeout?: {seconds: number; action: DialogAnswerTimeoutAction; optionId?: number | null} | null;
     focus?: DialogNodeFocusResource | null;
+    effects?: DialogNodeEffectsResource | null;
     minigame?: {
         type?: string;
         difficulty?: number;

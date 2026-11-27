@@ -9,6 +9,7 @@ use App\Http\Resources\AudioResource;
 use App\Http\Resources\BaseItemResource;
 use App\Models\Audio;
 use App\Services\AudioService;
+use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 
 class AudioController extends Controller
@@ -24,11 +25,11 @@ class AudioController extends Controller
         ]);
     }
 
-    public function search(SearchAudioRequest $request)
+    public function search(SearchAudioRequest $request): JsonResponse
     {
-        $query = trim((string) $request->get('query', ''));
+        $query = trim((string) $request->validated('query', ''));
 
-        if ($query === '') {
+        if ($query === '' && ! $request->validated('browse', false)) {
             return response()->json([]);
         }
 

@@ -30,6 +30,7 @@ use App\Models\Shop;
 use App\Models\ShopItem;
 use App\Models\User;
 use App\Rules\DialogCounterReferences;
+use App\Rules\DialogNodeEffectRules;
 use App\Services\BaseItemService;
 use App\Services\BaseNpcService;
 use App\Services\DialogLayoutService;
@@ -792,6 +793,7 @@ class AiChangeSetService
             $nodeKeys[] = $nodeKey;
 
             $this->validateDialogContent($node['content'] ?? null, "{$prefix}: węzeł [{$nodeKey}]", $errors);
+            $this->validateDialogEffects($node['action_data']['effects'] ?? null, ($node['type'] ?? 'special') === 'special', "{$prefix}: węzeł [{$nodeKey}]", $errors);
 
             foreach ($node['options'] ?? [] as $optionIndex => $option) {
                 $optionKey = $option['key'] ?? null;
@@ -838,7 +840,8 @@ class AiChangeSetService
     {
         $nodeKeys = [];
         $optionKeys = [];
-        $dialogNodeIds = $dialog->nodes()->pluck('id')->map(fn ($id): int => (int) $id)->all();
+        $dialogNodeTypes = $dialog->nodes()->pluck('type', 'id');
+        $dialogNodeIds = $dialogNodeTypes->keys()->map(fn ($id): int => (int) $id)->all();
         $dialogOptionIds = DialogNodeOption::query()
             ->whereIn('node_id', $dialogNodeIds)
             ->pluck('id')
@@ -861,6 +864,8 @@ class AiChangeSetService
             }
 
             $this->validateDialogContent($node['content'] ?? null, "{$prefix}: węzeł ".($nodeIndex + 1), $errors);
+            $nodeType = $node['type'] ?? ($nodeId === null ? 'special' : $dialogNodeTypes->get($nodeId));
+            $this->validateDialogEffects($node['action_data']['effects'] ?? null, $nodeType === 'special', "{$prefix}: węzeł ".($nodeIndex + 1), $errors);
 
             if (is_string($nodeKey)) {
                 if (in_array($nodeKey, $nodeKeys, true)) {
@@ -949,6 +954,19 @@ class AiChangeSetService
         (new DialogCounterReferences)->validate('content', $content, function (string $message) use ($prefix, &$errors): void {
             $errors[] = "{$prefix}: {$message}";
         });
+    }
+
+    /** @param array<int, string> $errors */
+    private function validateDialogEffects(mixed $effects, bool $canDisplayEffects, string $prefix, array &$errors): void
+    {
+        if ($effects === null) {
+            return;
+        }
+
+        $validator = Validator::make(['effects' => $effects], DialogNodeEffectRules::for('effects', $canDisplayEffects));
+        foreach ($validator->errors()->all() as $message) {
+            $errors[] = "{$prefix}: {$message}";
+        }
     }
 
     /** @param array<int, string> $dialogKeys @param array<int, string> $errors */
@@ -2206,6 +2224,12 @@ class AiChangeSetService
             $nodeFields = array_intersect_key($nodeData, array_flip([
                 'type', 'position', 'content', 'action_data', 'additional_actions', 'shop_id', 'hotel_id',
             ]));
+            if (is_array($nodeFields['action_data'] ?? null)
+                && ($nodeFields['type'] ?? $node->type) === 'special'
+                && ! array_key_exists('effects', $nodeFields['action_data'])
+                && isset($node->action_data['effects'])) {
+                $nodeFields['action_data']['effects'] = $node->action_data['effects'];
+            }
             if ($node->exists && $nodeFields !== []) {
                 $node->forceFill($nodeFields)->save();
             }

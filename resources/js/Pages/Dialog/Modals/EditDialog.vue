@@ -8,6 +8,7 @@ import { useToast } from 'primevue';
 import { DialogNodeAdditionalActionsResource } from '@/Resources/DialogNodeAdditionalActions.resource';
 import AdditionalActionsEditor from '@/Pages/Dialog/Componnts/AdditionalActionsEditor.vue';
 import DialogContentEditor from '@/Pages/Dialog/Componnts/DialogContentEditor.vue';
+import DialogEffectsEditor from '@/Pages/Dialog/Componnts/DialogEffectsEditor.vue';
 import { usePage } from '@inertiajs/vue3';
 import type { DialogAnswerTimeoutAction, DialogNodeActionDataResource, DialogNodeFocusResource } from '@/Resources/DialogNodeActionData.resource';
 import type { NpcWithLocationsResource } from '@/Resources/Npc.resource';
@@ -74,6 +75,7 @@ const fallbackFocusNpcOption = ref<FocusNpcOption | null>(null);
 const additionalActionsEditor = ref<{
     getPayload: () => DialogNodeAdditionalActionsResource | null;
 } | null>(null);
+const effectsEditor = ref<InstanceType<typeof DialogEffectsEditor> | null>(null);
 
 const focusModeOptions: { label: string; value: FocusMode }[] = [
     { label: 'Bez zmiany', value: 'none' },
@@ -174,6 +176,14 @@ const buildActionDataPayload = (): DialogNodeActionDataResource | false | null =
     const actionData = { ...(form.action_data ?? {}) } as DialogNodeActionDataResource;
     delete actionData.focus;
     delete actionData.answerTimeout;
+    delete actionData.effects;
+    const effects = effectsEditor.value?.getPayload();
+    if (effects === false) {
+        return false;
+    }
+    if (effects) {
+        actionData.effects = effects;
+    }
     if (timeoutEnabled.value) {
         if (!Number.isInteger(timeoutSeconds.value) || timeoutSeconds.value! < 1 || timeoutSeconds.value! > 86400) {
             toast.add({severity: 'error', summary: 'Błąd', detail: 'Podaj czas od 1 do 86400 sekund.', life: 6000});
@@ -419,6 +429,8 @@ const save = (): void => {
                 </p>
             </template>
         </fieldset>
+
+        <DialogEffectsEditor ref="effectsEditor" :effects="form.action_data?.effects" />
 
         <div class="flex flex-col gap-2">
             <h3 class="text-lg font-semibold m-0">Akcje dodatkowe</h3>

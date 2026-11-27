@@ -720,6 +720,50 @@ class VirtigiaContentServerTest extends TestCase
         }
     }
 
+    public function test_dialog_patch_validates_effects_and_preserves_them_when_changing_camera_focus(): void
+    {
+        app(McpWorldService::class)->use('test');
+
+        try {
+            $user = \App\Models\User::factory()->create();
+            $dialog = Dialog::query()->create(['name' => 'Scena trzęsienia']);
+            $effects = ['shake' => ['durationMs' => 800, 'intensity' => 10]];
+            $node = $dialog->nodes()->create([
+                'type' => 'special',
+                'position' => ['x' => 0, 'y' => 0],
+                'content' => 'Ziemia drży.',
+                'action_data' => ['effects' => $effects],
+            ]);
+            $service = app(AiChangeSetService::class);
+
+            $badPatch = $service->validateOperations([[
+                'type' => 'patch_dialog',
+                'dialog_id' => $dialog->id,
+                'data' => ['nodes' => [[
+                    'id' => $node->id,
+                    'action_data' => ['effects' => ['shake' => ['durationMs' => 800, 'intensity' => 100]]],
+                ]]],
+            ]]);
+            $this->assertFalse($badPatch['valid']);
+
+            $focus = ['type' => 'coordinates', 'x' => 3, 'y' => 4];
+            $changeSet = $service->draft($user, 'test', 'Przesunięcie kamery', null, [[
+                'type' => 'patch_dialog',
+                'dialog_id' => $dialog->id,
+                'data' => ['nodes' => [[
+                    'id' => $node->id,
+                    'action_data' => ['focus' => $focus],
+                ]]],
+            ]]);
+            $service->apply($user, $changeSet->id, 1);
+
+            $this->assertSame($effects, $node->refresh()->action_data['effects']);
+            $this->assertSame($focus, $node->action_data['focus']);
+        } finally {
+            DynamicModel::clearGlobalConnection();
+        }
+    }
+
     public function test_map_transitions_can_be_inspected_created_updated_deleted_and_reverted(): void
     {
         app(McpWorldService::class)->use('test');
